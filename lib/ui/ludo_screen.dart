@@ -1,0 +1,263 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/game_state_provider.dart';
+import '../models/token.dart';
+import 'board_widget.dart';
+import 'token_widget.dart';
+import 'dice_widget.dart';
+import 'home_screen.dart';
+
+class LudoScreen extends ConsumerWidget {
+  const LudoScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gameState = ref.watch(gameStateProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF1E1E2C), // Modern dark background
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: const Color(0xFF2A2A3D),
+                title: const Text('Exit Game?', style: TextStyle(color: Colors.white)),
+                content: const Text('Are you sure you want to stop playing? Current progress will be lost.', style: TextStyle(color: Colors.white70)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      );
+                    },
+                    child: const Text('Exit', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        title: const Text('Ludo Prince', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top Player Panels (Red Left, Green Right)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (gameState.players.any((p) => p.color == PlayerColor.red))
+                    _buildPlayerPanel(PlayerColor.red, gameState)
+                  else const Expanded(child: SizedBox()),
+                  
+                  if (gameState.players.any((p) => p.color == PlayerColor.green))
+                    _buildPlayerPanel(PlayerColor.green, gameState)
+                  else const Expanded(child: SizedBox()),
+                ],
+              ),
+            ),
+            
+            // Ludo Board with Tokens
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        )
+                      ]
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final double boardSize = constraints.maxWidth < constraints.maxHeight
+                            ? constraints.maxWidth
+                            : constraints.maxHeight;
+                        final double cellSize = boardSize / 15;
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const BoardWidget(),
+                            // Render all tokens
+                            for (var player in gameState.players)
+                              for (var token in player.tokens)
+                                TokenWidget(token: token, cellSize: cellSize),
+                          ],
+                        );
+                      }
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            
+            // Bottom Player Panels (Blue Left, Yellow Right)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (gameState.players.any((p) => p.color == PlayerColor.blue))
+                    _buildPlayerPanel(PlayerColor.blue, gameState)
+                  else const Expanded(child: SizedBox()),
+                  
+                  if (gameState.players.any((p) => p.color == PlayerColor.yellow))
+                    _buildPlayerPanel(PlayerColor.yellow, gameState)
+                  else const Expanded(child: SizedBox()),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            
+            // Game Messages / Status
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                gameState.message,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayerPanel(PlayerColor color, GameState state) {
+    bool isTurn = color == state.currentTurn;
+    
+    Color displayColor = Colors.transparent;
+    switch (color) {
+      case PlayerColor.red: displayColor = Colors.redAccent; break;
+      case PlayerColor.green: displayColor = Colors.greenAccent.shade700; break;
+      case PlayerColor.yellow: displayColor = Colors.amber.shade600; break;
+      case PlayerColor.blue: displayColor = Colors.blueAccent; break;
+    }
+
+    Widget avatarBox = Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: displayColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: const Center(
+        child: Icon(Icons.person, color: Colors.white, size: 40),
+      ),
+    );
+
+    Widget diceBox = isTurn 
+        ? const SizedBox(width: 50, height: 50, child: DiceWidget())
+        : Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white12,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white30, width: 2, strokeAlign: BorderSide.strokeAlignInside),
+            ),
+          );
+
+    Widget nameTag = Container(
+      width: 70, // Slightly wider than avatar to anchor it
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: isTurn ? Colors.white : Colors.black45,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isTurn ? displayColor : Colors.white24, width: 1.5),
+        boxShadow: [
+          if (isTurn) BoxShadow(color: displayColor.withOpacity(0.5), blurRadius: 6, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Text(
+        state.players.firstWhere((p) => p.color == color).name,
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: isTurn ? Colors.black87 : Colors.white70,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+
+    // Assembly
+    Widget panelContent = Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: isTurn ? Colors.white.withOpacity(0.15) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isTurn ? Colors.white : Colors.white24, 
+          width: 2 // Keep width constant to prevent layout jitter shifting the board
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: color == PlayerColor.green || color == PlayerColor.yellow 
+            ? [diceBox, const SizedBox(width: 8), avatarBox]
+            : [avatarBox, const SizedBox(width: 8), diceBox],
+      ),
+    );
+
+    return Expanded(
+      child: Align(
+        alignment: color == PlayerColor.green || color == PlayerColor.yellow 
+            ? Alignment.centerRight 
+            : Alignment.centerLeft,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: color == PlayerColor.green || color == PlayerColor.yellow 
+                ? CrossAxisAlignment.end 
+                : CrossAxisAlignment.start,
+            children: [
+              panelContent,
+              // Offset the nametag so it sits under the avatar
+              Transform.translate(
+                offset: Offset(
+                  color == PlayerColor.green || color == PlayerColor.yellow ? -5 : 5, 
+                  -10
+                ),
+                child: nameTag,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+}
+
+
+
