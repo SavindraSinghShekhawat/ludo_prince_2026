@@ -14,10 +14,7 @@ class TokenWidget extends ConsumerWidget {
   bool _isMoveValid(Token t, GameState state) {
     if (t.state == TokenState.home) return state.diceValue == 6;
     if (t.state == TokenState.finished) return false;
-    if (t.state == TokenState.homeStretch) {
-      return t.position + state.diceValue <= 57;
-    }
-    return true;
+    return t.position + state.diceValue <= 56;
   }
 
   @override
@@ -87,6 +84,7 @@ class TokenWidget extends ConsumerWidget {
       height: tokenSize,
       child: GestureDetector(
         onTap: () {
+          if (!isMovable) return;
           ref.read(gameControllerProvider).sendMoveIntent(token);
         },
         child: AnimatedContainer(

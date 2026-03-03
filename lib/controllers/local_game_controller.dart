@@ -6,7 +6,6 @@ import '../models/game_state.dart';
 import '../models/player.dart';
 import '../models/token.dart';
 import '../services/audio_service.dart';
-import '../models/initial_game_state.dart';
 import '../utils/test_initialization.dart';
 import 'game_controller.dart';
 
@@ -161,6 +160,9 @@ class LocalGameController implements GameController {
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
     if (token.slot != _state.currentTurn) return;
+
+    // Prevent invalid moves from being executed
+    if (!_engine.isValidMove(token, _state.diceValue)) return;
 
     _isActionInProgress = true;
 

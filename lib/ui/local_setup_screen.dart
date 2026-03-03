@@ -4,8 +4,8 @@ import 'package:ludo_prince/controllers/local_game_controller.dart';
 import 'package:ludo_prince/models/token.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
+import 'package:ludo_prince/utils/test_initialization.dart';
 import 'ludo_screen.dart';
-import '../models/initial_game_state.dart';
 import 'rules_dialog.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {

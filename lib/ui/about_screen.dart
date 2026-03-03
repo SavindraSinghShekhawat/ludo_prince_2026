@@ -66,7 +66,7 @@ class AboutScreen extends StatelessWidget {
               _buildValueRow(
                 Icons.money_off,
                 "100% Free-to-Play",
-                "We do not sell coins, gems, or dice modifiers. There is no 'pay to win' mechanism. We believe Ludo should be a test of pure luck and equal strategy for everyone.",
+                "We do not sell coins or gems. There is no 'pay to win' mechanism. We believe Ludo should be a test of pure luck and equal strategy for everyone.",
               ),
               const SizedBox(height: 16),
               _buildValueRow(
