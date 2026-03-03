@@ -46,6 +46,10 @@ class GameEngine {
       return state; // ❗ prevent illegal multiplayer move
     }
 
+    if (!isValidMove(token, state.diceValue)) {
+      return state;
+    }
+
     bool extraTurn = state.diceValue == 6 || token.state == TokenState.finished;
 
     GameState newState = state.copyWith(

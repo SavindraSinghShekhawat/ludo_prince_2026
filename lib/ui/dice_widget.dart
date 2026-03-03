@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
-import '../providers/game_state_provider.dart';
 
 class DiceWidget extends ConsumerStatefulWidget {
   const DiceWidget({super.key});
@@ -37,7 +36,10 @@ class _DiceWidgetState extends ConsumerState<DiceWidget> with SingleTickerProvid
   }
 
   void _rollDice() {
-    final gameState = ref.read(gameStateProvider);
+    final asyncState = ref.read(gameStreamProvider);
+    final gameState = asyncState.value;
+
+    if (gameState == null) return;
     if (gameState.isDiceRolled || _isAnimating) return;
 
     setState(() {
