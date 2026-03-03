@@ -36,7 +36,7 @@ class GameEngine {
     );
   }
 
-  GameState moveToken(GameState state, int tokenId) {
+  GameState moveToken(GameState state, int tokenId, {bool captured = false}) {
     if (!state.isDiceRolled) return state;
 
     final player = _getPlayer(state, state.currentTurn);
@@ -47,11 +47,7 @@ class GameEngine {
       return state; // ❗ prevent illegal multiplayer move
     }
 
-    if (!isValidMove(token, state.diceValue)) {
-      return state;
-    }
-
-    bool extraTurn = state.diceValue == 6 || token.state == TokenState.finished;
+    bool extraTurn = state.diceValue == 6 || token.state == TokenState.finished || captured;
 
     GameState newState = state.copyWith(
       isDiceRolled: false,
@@ -74,17 +70,14 @@ class GameEngine {
     if (token.state == TokenState.finished) {
       return false;
     }
-    if (token.state == TokenState.homeStretch) {
-      return token.position + dice <= 57;
-    }
-    return true;
+    return token.position + dice <= 56;
   }
 
   Token advanceOneStep(Token token) {
     int newPos = token.position + 1;
 
     if (token.state == TokenState.board) {
-      if (newPos > 51) {
+      if (newPos > 50) {
         return token.copyWith(
           state: TokenState.homeStretch,
           position: newPos,
@@ -94,7 +87,7 @@ class GameEngine {
     }
 
     if (token.state == TokenState.homeStretch) {
-      if (newPos == 57) {
+      if (newPos == 56) {
         return token.copyWith(
           state: TokenState.finished,
           position: newPos,

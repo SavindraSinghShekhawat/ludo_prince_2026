@@ -67,8 +67,8 @@ class BoardPath {
 
   static Offset getHomeStretchCoordinate(
       PlayerSlot slot, int relativePosition) {
-    // relativePosition 52-56 are home stretch, 57 is center.
-    int step = relativePosition - 51; // 1 to 6
+    // relativePosition 51-55 are home stretch, 56 is center.
+    int step = relativePosition - 50; // 1 to 6
     if (step == 6) {
       return const Offset(7, 7);
     } // Center

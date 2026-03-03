@@ -21,6 +21,12 @@ class GameState {
   final String message;
   final GameAction lastAction;
 
+  bool get isGameOver {
+    int finishedPlayers = players.where((p) => p.tokens.every((t) => t.state == TokenState.finished)).length;
+    // Game is over if all but one player has finished (or if all players have finished)
+    return players.length > 1 && finishedPlayers >= players.length - 1;
+  }
+
   GameState({
     required this.gameId,
     required this.players,

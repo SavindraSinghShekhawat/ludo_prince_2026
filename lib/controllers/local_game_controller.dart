@@ -8,13 +8,50 @@ import '../models/token.dart';
 import '../services/audio_service.dart';
 import 'game_controller.dart';
 
+class PlayerSetupConfig {
+  final String name;
+  final bool isBot;
+
+  PlayerSetupConfig({
+    required this.name,
+    this.isBot = false,
+  });
+}
+
 class LocalGameController implements GameController {
   final _streamController = StreamController<GameState>.broadcast();
   final GameEngine _engine = GameEngine();
   late GameState _state;
+  bool _isActionInProgress = false;
 
-  LocalGameController(Map<PlayerSlot, String> config) {
+  LocalGameController(Map<PlayerSlot, PlayerSetupConfig> config) {
     _state = _createInitialState(config);
+    Future.microtask(_checkBotTurn);
+  }
+
+  void _checkBotTurn() async {
+    if (_isActionInProgress || _state.isGameOver) return;
+    final currentPlayer = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    if (!currentPlayer.isBot) return;
+
+    _isActionInProgress = true;
+    await Future.delayed(const Duration(milliseconds: 600));
+    _isActionInProgress = false;
+
+    if (_state.currentTurn != currentPlayer.slot || _state.isGameOver) return;
+
+    if (!_state.isDiceRolled) {
+      await sendRollIntent();
+    } else {
+      final validTokens = currentPlayer.tokens
+          .where((t) => _engine.isValidMove(t, _state.diceValue))
+          .toList();
+
+      if (validTokens.isNotEmpty) {
+        final token = validTokens[Random().nextInt(validTokens.length)];
+        await executeMove(token.id);
+      }
+    }
   }
 
   @override
@@ -25,18 +62,21 @@ class LocalGameController implements GameController {
 
   @override
   Future<void> sendRollIntent() async {
+    if (_isActionInProgress) return;
     final dice = Random.secure().nextInt(6) + 1;
     await executeRoll(dice);
   }
 
   @override
   Future<void> sendMoveIntent(Token token) async {
+    if (_isActionInProgress) return;
     await executeMove(token.id);
   }
 
   @override
   Future<void> executeRoll(int value) async {
-    if (_state.isDiceRolled) return;
+    if (_state.isDiceRolled || _isActionInProgress) return;
+    _isActionInProgress = true;
 
     await audioService.playRoll();
     if (value == 6) {
@@ -48,6 +88,8 @@ class LocalGameController implements GameController {
         );
 
     _streamController.add(_state);
+
+    int? autoMoveId;
 
     // Auto move if only 1 valid token or all valid token at same place
     if (_state.isDiceRolled) {
@@ -65,20 +107,24 @@ class LocalGameController implements GameController {
 
         bool allInHome = validTokens.every((t) => t.state == TokenState.home);
 
-        // Auto move only if:
-        // - Only 1 valid token
-        // OR
-        // - All share same position AND not all in home
         if (validTokens.length == 1 || (allSamePosition && !allInHome)) {
-          await Future.delayed(const Duration(milliseconds: 300));
-          await executeMove(validTokens.first.id);
+          autoMoveId = validTokens.first.id;
         }
       }
+    }
+
+    _isActionInProgress = false;
+
+    if (autoMoveId != null) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      await executeMove(autoMoveId);
+    } else {
+      _checkBotTurn();
     }
   }
 
   void _finalizeAfterMove(int tokenId, bool captured) {
-    _state = _engine.moveToken(_state, tokenId);
+    _state = _engine.moveToken(_state, tokenId, captured: captured);
 
     GameAction action = GameAction.move;
 
@@ -102,82 +148,91 @@ class LocalGameController implements GameController {
 
   @override
   Future<void> executeMove(int tokenId) async {
+    if (!_state.isDiceRolled || _isActionInProgress) return;
+    
     final player =
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
-    if (!_state.isDiceRolled || token.slot != _state.currentTurn) return;
+    if (token.slot != _state.currentTurn) return;
 
-    int steps = _state.diceValue;
-    bool captured = false;
+    _isActionInProgress = true;
 
-    // 🔥 Home exit case
-    if (token.state == TokenState.home && steps == 6) {
-      await audioService.playMove(1);
+    try {
+      int steps = _state.diceValue;
+      bool captured = false;
 
-      Token updated = token.copyWith(
-        state: TokenState.board,
-        position: 0,
-      );
+      // 🔥 Home exit case
+      if (token.state == TokenState.home && steps == 6) {
+        await audioService.playMove(1);
 
-      // Capture allowed here (this is final landing)
-      _state = _engine.applyStep(
-        _state,
-        updated,
-        onCapture: (c) => captured = c,
-      );
+        Token updated = token.copyWith(
+          state: TokenState.board,
+          position: 0,
+        );
 
-      _streamController.add(_state);
+        // Capture allowed here (this is final landing)
+        _state = _engine.applyStep(
+          _state,
+          updated,
+          onCapture: (c) => captured = c,
+        );
 
-      if (captured) {
-        await audioService.playDie();
+        _streamController.add(_state);
+
+        if (captured) {
+          await audioService.playDie();
+        }
+
+        _finalizeAfterMove(updated.id, captured);
+        return;
       }
 
-      _finalizeAfterMove(updated.id, captured);
-      return;
-    }
+      await audioService.playMove(steps);
 
-    await audioService.playMove(steps);
+      Token currentToken = token;
 
-    Token currentToken = token;
+      // Intermediate steps — NO capture
+      for (int i = 0; i < steps - 1; i++) {
+        currentToken = _engine.advanceOneStep(currentToken);
 
-    // Intermediate steps — NO capture
-    for (int i = 0; i < steps - 1; i++) {
+        _state = _engine.applyStep(
+          _state,
+          currentToken,
+          onCapture: (_) {},
+          allowCapture: false,
+        );
+
+        _streamController.add(_state);
+
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
+
+      // Final step — capture allowed
       currentToken = _engine.advanceOneStep(currentToken);
 
       _state = _engine.applyStep(
         _state,
         currentToken,
-        onCapture: (_) {},
-        allowCapture: false,
+        onCapture: (c) => captured = c,
+        allowCapture: true,
       );
 
       _streamController.add(_state);
 
-      await Future.delayed(const Duration(milliseconds: 150));
+      if (currentToken.state == TokenState.finished) {
+        await audioService.playHome();
+      }
+
+      if (captured) {
+        await audioService.playDie();
+      }
+
+      _finalizeAfterMove(currentToken.id, captured);
+    } finally {
+      _isActionInProgress = false;
+      _checkBotTurn();
     }
-
-    // Final step — capture allowed
-    currentToken = _engine.advanceOneStep(currentToken);
-
-    _state = _engine.applyStep(
-      _state,
-      currentToken,
-      onCapture: (c) => captured = c,
-      allowCapture: true,
-    );
-
-    _streamController.add(_state);
-
-    if (currentToken.state == TokenState.finished) {
-      await audioService.playHome();
-    }
-
-    if (captured) {
-      await audioService.playDie();
-    }
-
-    _finalizeAfterMove(currentToken.id, captured);
   }
 
   @override
@@ -185,11 +240,12 @@ class LocalGameController implements GameController {
     await _streamController.close();
   }
 
-  GameState _createInitialState(Map<PlayerSlot, String> config) {
+  GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config) {
     List<Player> players = config.entries.map((e) {
       return Player(
         slot: e.key,
-        name: e.value,
+        name: e.value.name,
+        isBot: e.value.isBot,
         tokens: List.generate(4, (i) => Token(id: i, slot: e.key)),
       );
     }).toList();

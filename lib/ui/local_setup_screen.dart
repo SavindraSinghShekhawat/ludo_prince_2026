@@ -17,6 +17,7 @@ class LocalSetupScreen extends ConsumerStatefulWidget {
 class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   int _numPlayers = 2;
   final Map<PlayerSlot, TextEditingController> _controllers = {};
+  final Map<PlayerSlot, bool> _isBotConfig = {};
 
   @override
   void initState() {
@@ -27,10 +28,13 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   void _initControllers() {
     _controllers.values.forEach((c) => c.dispose());
     _controllers.clear();
+    _isBotConfig.clear();
 
     final slots = _getActiveSlots(_numPlayers);
     for (int i = 0; i < slots.length; i++) {
-      _controllers[slots[i]] = TextEditingController(text: "Player ${i + 1}");
+      final slot = slots[i];
+      _controllers[slot] = TextEditingController(text: "Player ${i + 1}");
+      _isBotConfig[slot] = false;
     }
   }
 
@@ -156,26 +160,51 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
-                      child: TextField(
-                        controller: _controllers[slot],
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
-                          labelStyle: TextStyle(color: displayColor),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: displayColor.withOpacity(0.5)),
-                            borderRadius: BorderRadius.circular(15),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controllers[slot],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
+                                labelStyle: TextStyle(color: displayColor),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: displayColor.withOpacity(0.5)),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: displayColor, width: 2),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                prefixIcon: Icon(
+                                    (_isBotConfig[slot] ?? false) ? Icons.smart_toy : Icons.person,
+                                    color: displayColor),
+                                filled: true,
+                                fillColor: const Color(0xFF2A2A3D),
+                              ),
+                            ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: displayColor, width: 2),
-                            borderRadius: BorderRadius.circular(15),
+                          const SizedBox(width: 12),
+                          Column(
+                            children: [
+                              const Text('Bot',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
+                              Switch(
+                                value: _isBotConfig[slot] ?? false,
+                                activeColor: displayColor,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _isBotConfig[slot] = val;
+                                  });
+                                },
+                              ),
+                            ],
                           ),
-                          prefixIcon: Icon(Icons.person, color: displayColor),
-                          filled: true,
-                          fillColor: const Color(0xFF2A2A3D),
-                        ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -190,12 +219,16 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                       shadowColor: Colors.blueAccent.withOpacity(0.5),
                     ),
                     onPressed: () async {
-                      Map<PlayerSlot, String> config = {};
+                      Map<PlayerSlot, PlayerSetupConfig> config = {};
                       for (var slot in activeSlots) {
                         final text = _controllers[slot]!.text.trim();
-                        config[slot] = text.isEmpty
+                        final name = text.isEmpty
                             ? "Player ${activeSlots.indexOf(slot) + 1}"
                             : text;
+                        config[slot] = PlayerSetupConfig(
+                          name: name,
+                          isBot: _isBotConfig[slot] ?? false,
+                        );
                       }
 
                       await audioService.playStart();

@@ -106,7 +106,7 @@ void main() {
         id: 0,
         slot: PlayerSlot.slot1,
         state: TokenState.finished,
-        position: 57,
+        position: 56,
       );
 
       expect(engine.isValidMove(token, 1), false);
@@ -117,7 +117,7 @@ void main() {
         id: 0,
         slot: PlayerSlot.slot1,
         state: TokenState.homeStretch,
-        position: 56,
+        position: 55,
       );
 
       expect(engine.isValidMove(token, 2), false);
@@ -209,13 +209,13 @@ void main() {
         id: 0,
         slot: PlayerSlot.slot1,
         state: TokenState.board,
-        position: 51,
+        position: 50,
       );
 
       final advanced = engine.advanceOneStep(token);
 
       expect(advanced.state, TokenState.homeStretch);
-      expect(advanced.position, 52);
+      expect(advanced.position, 51);
     });
 
     test("HomeStretch to finished", () {
@@ -223,13 +223,13 @@ void main() {
         id: 0,
         slot: PlayerSlot.slot1,
         state: TokenState.homeStretch,
-        position: 56,
+        position: 55,
       );
 
       final advanced = engine.advanceOneStep(token);
 
       expect(advanced.state, TokenState.finished);
-      expect(advanced.position, 57);
+      expect(advanced.position, 56);
     });
   });
 
