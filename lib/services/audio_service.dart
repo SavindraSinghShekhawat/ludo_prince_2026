@@ -54,6 +54,19 @@ class AudioService {
     await _bgmPlayer.stop();
   }
 
+  Future<void> pauseBGM() async {
+    if (_bgmPlayer.state == PlayerState.playing) {
+      await _bgmPlayer.pause();
+    }
+  }
+
+  Future<void> resumeBGM() async {
+    if (_bgmPlayer.state == PlayerState.paused) {
+      await _bgmPlayer.resume();
+    }
+  }
+
+
   Future<void> playRoll() async {
     await _init();
     await _rollPlayer.play(AssetSource('sounds/roll.wav'));

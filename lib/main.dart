@@ -15,8 +15,34 @@ void main() {
   );
 }
 
-class LudoPrinceApp extends StatelessWidget {
+class LudoPrinceApp extends StatefulWidget {
   const LudoPrinceApp({super.key});
+
+  @override
+  State<LudoPrinceApp> createState() => _LudoPrinceAppState();
+}
+
+class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden || state == AppLifecycleState.inactive) {
+      audioService.pauseBGM();
+    } else if (state == AppLifecycleState.resumed) {
+      audioService.resumeBGM();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
