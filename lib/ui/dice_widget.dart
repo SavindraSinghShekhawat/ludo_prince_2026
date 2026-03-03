@@ -67,14 +67,29 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
       onTap: _rollDice,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFE5E4E2),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFFFFFFF), // White highlight
+              Color(0xFFE5E4E2), // Platinum base
+              Color(0xFFD0D3D6), // Slightly darker
+              Color(0xFFA0A5A9), // Deep shadow
+            ],
+            stops: [0.0, 0.4, 0.7, 1.0],
+          ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFB0B4B8), width: 2),
+          border: Border.all(color: const Color(0xFF7B8084), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.8),
               blurRadius: 4,
-              offset: const Offset(0, 2),
+              offset: const Offset(-1, -1),
             ),
           ],
         ),
@@ -100,12 +115,17 @@ class DiceFacePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = Colors.black87
-      ..style = PaintingStyle.fill;
     double r = size.width * 0.12; // dot radius
     double w = size.width;
     double h = size.height;
+
+    var paint = Paint()
+      ..shader = RadialGradient(
+        colors: const [Color(0xFF4A4A4A), Color(0xFF1A1A1A)],
+        center: const Alignment(-0.3, -0.3),
+        radius: 0.8,
+      ).createShader(Rect.fromLTWH(0, 0, w, h))
+      ..style = PaintingStyle.fill;
 
     // Centers
     Offset c = Offset(w / 2, h / 2);
