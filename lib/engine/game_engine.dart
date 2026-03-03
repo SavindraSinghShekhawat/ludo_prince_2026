@@ -105,12 +105,17 @@ class GameEngine {
     return token;
   }
 
-  GameState applyStep(GameState state, Token updatedToken, {required Function(bool captured) onCapture}) {
+  GameState applyStep(
+    GameState state,
+    Token updatedToken, {
+    required Function(bool captured) onCapture,
+    bool allowCapture = true,
+  }) {
     List<Player> players = _replaceToken(state.players, updatedToken);
 
     bool captured = false;
 
-    if (updatedToken.state == TokenState.board && !BoardPath.isSafeSpot(updatedToken.position)) {
+    if (allowCapture && updatedToken.state == TokenState.board && !BoardPath.isSafeSpot(updatedToken.position)) {
       int absPos = BoardPath.getAbsolutePosition(updatedToken.color, updatedToken.position);
 
       players = players.map((p) {

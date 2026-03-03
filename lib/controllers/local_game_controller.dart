@@ -41,15 +41,25 @@ class LocalGameController implements GameController {
 
     _streamController.add(_state);
 
-    // Auto move if only 1 valid token
+    // Auto move if only 1 valid token or all valid token at same place
     if (_state.isDiceRolled) {
       final player = _state.players.firstWhere((p) => p.color == _state.currentTurn);
 
       final validTokens = player.tokens.where((t) => _engine.isValidMove(t, _state.diceValue)).toList();
 
-      if (validTokens.length == 1) {
-        await Future.delayed(const Duration(milliseconds: 300));
-        await moveToken(validTokens.first);
+      if (validTokens.isNotEmpty) {
+        bool allSamePosition = validTokens.every((t) => t.state == validTokens.first.state && t.position == validTokens.first.position);
+
+        bool allInHome = validTokens.every((t) => t.state == TokenState.home);
+
+        // Auto move only if:
+        // - Only 1 valid token
+        // OR
+        // - All share same position AND not all in home
+        if (validTokens.length == 1 || (allSamePosition && !allInHome)) {
+          await Future.delayed(const Duration(milliseconds: 300));
+          await moveToken(validTokens.first);
+        }
       }
     }
   }
@@ -83,6 +93,7 @@ class LocalGameController implements GameController {
     int steps = _state.diceValue;
     bool captured = false;
 
+    // 🔥 Home exit case
     if (token.state == TokenState.home && steps == 6) {
       await audioService.playMove(1);
 
@@ -91,6 +102,7 @@ class LocalGameController implements GameController {
         position: 0,
       );
 
+      // Capture allowed here (this is final landing)
       _state = _engine.applyStep(
         _state,
         updated,
@@ -107,26 +119,37 @@ class LocalGameController implements GameController {
       return;
     }
 
-    // Normal move
     await audioService.playMove(steps);
 
     Token currentToken = token;
 
-    for (int i = 0; i < steps; i++) {
+    // Intermediate steps — NO capture
+    for (int i = 0; i < steps - 1; i++) {
       currentToken = _engine.advanceOneStep(currentToken);
 
       _state = _engine.applyStep(
         _state,
         currentToken,
-        onCapture: (c) {
-          if (c) captured = true;
-        },
+        onCapture: (_) {},
+        allowCapture: false,
       );
 
       _streamController.add(_state);
 
       await Future.delayed(const Duration(milliseconds: 150));
     }
+
+    // Final step — capture allowed
+    currentToken = _engine.advanceOneStep(currentToken);
+
+    _state = _engine.applyStep(
+      _state,
+      currentToken,
+      onCapture: (c) => captured = c,
+      allowCapture: true,
+    );
+
+    _streamController.add(_state);
 
     if (currentToken.state == TokenState.finished) {
       await audioService.playHome();
