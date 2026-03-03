@@ -65,12 +65,43 @@ class TokenWidget extends ConsumerWidget {
             .indexWhere((t) => t.slot == token.slot && t.id == token.id);
         double spread = tokenSize * 0.3; // 30% shift
 
-        // Arrange up to 4 tokens in a small square, and wrap if there's more (though rare in small grid)
-        overlapOffsetX = (index % 2 == 1) ? spread : -spread;
-        overlapOffsetY = (index % 4 >= 2) ? spread : -spread;
+        if (overlappingTokens.length == 2) {
+          // Side-by-side
+          overlapOffsetX = (index == 0) ? -spread / 1.5 : spread / 1.5;
+          overlapOffsetY = 0;
+        } else if (overlappingTokens.length == 3) {
+          // Triangle
+          if (index == 0) {
+            overlapOffsetX = 0;
+            overlapOffsetY = -spread;
+          } else if (index == 1) {
+            overlapOffsetX = -spread;
+            overlapOffsetY = spread;
+          } else {
+            overlapOffsetX = spread;
+            overlapOffsetY = spread;
+          }
+        } else if (overlappingTokens.length == 4) {
+          // Arrange 4 tokens in a small square
+          overlapOffsetX = (index % 2 == 1) ? spread : -spread;
+          overlapOffsetY = (index % 4 >= 2) ? spread : -spread;
+        } else {
+          // 5+ tokens: arrange in a 3x3 (up to 9) or denser grid
+          double multiSpread = spread * 0.8; // tighter spread
+          int cols =
+              (overlappingTokens.length > 4 && overlappingTokens.length <= 6)
+                  ? 3
+                  : 4;
+          int row = index ~/ cols;
+          int col = index % cols;
+          overlapOffsetX = (col - (cols - 1) / 2) * multiSpread;
+          overlapOffsetY =
+              (row - (overlappingTokens.length / cols).ceil() / 2 + 0.5) *
+                  multiSpread;
+        }
 
         // Scale down slightly when stacked to fit better
-        tokenSize *= 0.8;
+        tokenSize *= (overlappingTokens.length > 4) ? 0.6 : 0.8;
         offsetXY = (cellSize - tokenSize) / 2;
       }
     }
@@ -82,29 +113,31 @@ class TokenWidget extends ConsumerWidget {
       top: gridPos.dy * cellSize + offsetXY + overlapOffsetY,
       width: tokenSize,
       height: tokenSize,
-      child: GestureDetector(
-        onTap: () {
-          if (!isMovable) return;
-          ref.read(gameControllerProvider).sendMoveIntent(token);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _getColor(token.slot),
-            border: Border.all(
-                color: isMovable ? Colors.white : Colors.white60,
-                width: isMovable ? 3 : 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: isMovable
-                    ? _getColor(token.slot).withValues(alpha: 0.8)
-                    : Colors.black.withValues(alpha: 0.4),
-                blurRadius: isMovable ? 8 : 4,
-                spreadRadius: isMovable ? 2 : 0,
-                offset: const Offset(0, 2),
-              )
-            ],
+      child: IgnorePointer(
+        ignoring: !isMovable,
+        child: GestureDetector(
+          onTap: () {
+            ref.read(gameControllerProvider).sendMoveIntent(token);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _getColor(token.slot),
+              border: Border.all(
+                  color: isMovable ? Colors.white : Colors.white60,
+                  width: isMovable ? 3 : 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: isMovable
+                      ? _getColor(token.slot).withValues(alpha: 0.8)
+                      : Colors.black.withValues(alpha: 0.4),
+                  blurRadius: isMovable ? 8 : 4,
+                  spreadRadius: isMovable ? 2 : 0,
+                  offset: const Offset(0, 2),
+                )
+              ],
+            ),
           ),
         ),
       ),

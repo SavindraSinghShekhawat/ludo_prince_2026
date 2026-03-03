@@ -70,8 +70,17 @@ class BoardPath {
     // relativePosition 51-55 are home stretch, 56 is center.
     int step = relativePosition - 50; // 1 to 6
     if (step == 6) {
-      return const Offset(7, 7);
-    } // Center
+      switch (slot) {
+        case PlayerSlot.slot1:
+          return const Offset(6.2, 7); // Inside left triangle
+        case PlayerSlot.slot2:
+          return const Offset(7, 6.2); // Inside top triangle
+        case PlayerSlot.slot3:
+          return const Offset(7.8, 7); // Inside right triangle
+        case PlayerSlot.slot4:
+          return const Offset(7, 7.8); // Inside bottom triangle
+      }
+    }
 
     switch (slot) {
       case PlayerSlot.slot1:

@@ -4,6 +4,7 @@ import 'package:ludo_prince/providers/game_provider.dart';
 import '../providers/audio_provider.dart';
 import '../models/game_state.dart';
 import '../models/token.dart';
+import '../models/board_path.dart';
 import 'board_widget.dart';
 import 'token_widget.dart';
 import 'dice_widget.dart';
@@ -178,16 +179,56 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
                         final boardSize = constraints.biggest.shortestSide;
                         final cellSize = boardSize / 15;
 
-                        return Stack(
-                          children: [
-                            const BoardWidget(),
-                            for (var player in gameState.players)
-                              for (var token in player.tokens)
-                                TokenWidget(
-                                  token: token,
-                                  cellSize: cellSize,
-                                ),
-                          ],
+                        return GestureDetector(
+                          onTapUp: (details) {
+                            if (!gameState.isDiceRolled) return;
+
+                            bool isMoveValid(Token t, GameState state) {
+                              if (t.state == TokenState.home) {
+                                return state.diceValue == 6;
+                              }
+                              if (t.state == TokenState.finished) return false;
+                              return t.position + state.diceValue <= 56;
+                            }
+
+                            double tapX = details.localPosition.dx / cellSize;
+                            double tapY = details.localPosition.dy / cellSize;
+
+                            Token? targetToken;
+                            for (var player in gameState.players) {
+                              if (player.slot != gameState.currentTurn) continue;
+                              for (var token in player.tokens) {
+                                Offset gridPos = BoardPath.getTokenOffset(token);
+                                double gridX = gridPos.dx;
+                                double gridY = gridPos.dy;
+                                
+                                // Check if tap falls within the 1x1 block of the token's coordinate
+                                if (tapX >= gridX && tapX < gridX + 1 &&
+                                    tapY >= gridY && tapY < gridY + 1) {
+                                  if (isMoveValid(token, gameState)) {
+                                    targetToken = token;
+                                    break;
+                                  }
+                                }
+                              }
+                              if (targetToken != null) break;
+                            }
+
+                            if (targetToken != null) {
+                              ref.read(gameControllerProvider).sendMoveIntent(targetToken);
+                            }
+                          },
+                          child: Stack(
+                            children: [
+                              const BoardWidget(),
+                              for (var player in gameState.players)
+                                for (var token in player.tokens)
+                                  TokenWidget(
+                                    token: token,
+                                    cellSize: cellSize,
+                                  ),
+                            ],
+                          ),
                         );
                       },
                     ),
