@@ -29,6 +29,10 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
     final asyncState = ref.watch(gameStreamProvider);
 
     ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
+      if (next.hasValue) {
+        print(
+            "LudoScreen Stream emission: \${next.value!.players.first.tokens.first.state}");
+      }
       next.whenData((state) {
         if (state.isGameOver) {
           final prevWasOver = previous?.value?.isGameOver ?? false;

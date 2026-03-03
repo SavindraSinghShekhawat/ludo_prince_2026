@@ -6,6 +6,8 @@ import '../models/game_state.dart';
 import '../models/player.dart';
 import '../models/token.dart';
 import '../services/audio_service.dart';
+import '../models/initial_game_state.dart';
+import '../utils/test_initialization.dart';
 import 'game_controller.dart';
 
 class PlayerSetupConfig {
@@ -24,8 +26,11 @@ class LocalGameController implements GameController {
   late GameState _state;
   bool _isActionInProgress = false;
 
-  LocalGameController(Map<PlayerSlot, PlayerSetupConfig> config) {
-    _state = _createInitialState(config);
+  final InitialGameState initialState;
+
+  LocalGameController(Map<PlayerSlot, PlayerSetupConfig> config,
+      {this.initialState = InitialGameState.normal}) {
+    _state = _createInitialState(config, initialState);
     Future.microtask(_checkBotTurn);
   }
 
@@ -241,15 +246,31 @@ class LocalGameController implements GameController {
     await _streamController.close();
   }
 
-  GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config) {
+  GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config,
+      InitialGameState initialState) {
     List<Player> players = config.entries.map((e) {
+      List<Token> tokens = List.generate(4, (i) => Token(id: i, slot: e.key));
+
+      tokens = TestInitialization.applyTestState(tokens, initialState);
+
       return Player(
         slot: e.key,
         name: e.value.name,
         isBot: e.value.isBot,
-        tokens: List.generate(4, (i) => Token(id: i, slot: e.key)),
+        tokens: tokens,
       );
     }).toList();
+
+    print("--- Initial Game State ---");
+    for (var p in players) {
+      for (var t in p.tokens) {
+        if (t.state != TokenState.home) {
+          print(
+              "Player \${p.name}: Token \${t.id} -> \${t.state} at \${t.position}");
+        }
+      }
+    }
+    print("--------------------------");
 
     return GameState(
       gameId: "local_${DateTime.now().millisecondsSinceEpoch}",

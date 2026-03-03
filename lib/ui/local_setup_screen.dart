@@ -5,6 +5,7 @@ import 'package:ludo_prince/models/token.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'ludo_screen.dart';
+import '../models/initial_game_state.dart';
 import 'rules_dialog.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   int _numPlayers = 2;
   final Map<PlayerSlot, TextEditingController> _controllers = {};
   final Map<PlayerSlot, bool> _isBotConfig = {};
+  InitialGameState _initialState = InitialGameState.normal;
 
   @override
   void initState() {
@@ -212,6 +214,42 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                     );
                   }).toList(),
                   const SizedBox(height: 40),
+                  const Text(
+                    'Initial Game State (Testing)',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<InitialGameState>(
+                    value: _initialState,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFF2A2A3D),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    dropdownColor: const Color(0xFF2A2A3D),
+                    style: const TextStyle(color: Colors.white),
+                    items: InitialGameState.values.map((state) {
+                      return DropdownMenuItem(
+                        value: state,
+                        child: Text(state.name.toUpperCase()),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _initialState = val;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 40),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
@@ -242,7 +280,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                           builder: (context) => ProviderScope(
                             overrides: [
                               gameControllerProvider.overrideWithValue(
-                                  LocalGameController(config)),
+                                  LocalGameController(config,
+                                      initialState: _initialState)),
                             ],
                             child: const LudoScreen(),
                           ),

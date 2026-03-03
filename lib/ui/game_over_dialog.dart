@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:confetti/confetti.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:math';
+
 import '../models/game_state.dart';
 import '../models/player.dart';
 import '../models/token.dart';
@@ -8,7 +12,7 @@ import '../controllers/local_game_controller.dart';
 import 'home_screen.dart';
 import 'ludo_screen.dart';
 
-class GameOverDialog extends StatelessWidget {
+class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
 
   const GameOverDialog({
@@ -17,186 +21,288 @@ class GameOverDialog extends StatelessWidget {
   });
 
   @override
+  ConsumerState<GameOverDialog> createState() => _GameOverDialogState();
+}
+
+class _GameOverDialogState extends ConsumerState<GameOverDialog> {
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController.play();
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2A2A3D),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.amber, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.amber.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Game Over!",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                  shadows: [
-                    Shadow(
-                        color: Colors.black54,
-                        blurRadius: 4,
-                        offset: Offset(2, 2))
-                  ],
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Dialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2A2A3D), Color(0xFF1E1E2C)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ),
-              const SizedBox(height: 24),
-              ...List.generate(state.winners.length, (index) {
-                final playerSlot = state.winners[index];
-                final player =
-                    state.players.firstWhere((p) => p.slot == playerSlot);
-                final place = index + 1;
-                final isLast = place == state.winners.length;
-
-                Color placeColor = Colors.white;
-                String placeText = "#$place";
-                IconData? placeIcon;
-
-                if (place == 1) {
-                  placeColor = Colors.amber;
-                  placeText = "1st";
-                  placeIcon = Icons.emoji_events;
-                } else if (place == 2) {
-                  placeColor = Colors.grey.shade300;
-                  placeText = "2nd";
-                  placeIcon = Icons.military_tech;
-                } else if (place == 3) {
-                  placeColor = Colors.brown.shade400;
-                  placeText = "3rd";
-                  placeIcon = Icons.military_tech;
-                }
-
-                if (isLast) {
-                  placeColor = Colors.redAccent.shade200;
-                  placeText = "Last";
-                  placeIcon = Icons.sentiment_very_dissatisfied;
-                }
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: place == 1
-                        ? Colors.amber.withOpacity(0.1)
-                        : Colors.black26,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: placeColor.withOpacity(0.5),
-                        width: place == 1 ? 2 : 1),
-                  ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 48,
-                        child: Text(
-                          placeText,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: placeColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          player.name,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight:
-                                place == 1 ? FontWeight.bold : FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (placeIcon != null) ...[
-                        Icon(placeIcon, color: placeColor, size: 28),
-                      ]
-                    ],
-                  ),
-                );
-              }),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const HomeScreen()),
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.home, color: Colors.white),
-                      label: const Text('Home',
-                          style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Exact same specs
-                        Map<PlayerSlot, PlayerSetupConfig> config = {};
-                        for (var player in state.players) {
-                          config[player.slot] = PlayerSetupConfig(
-                            name: player.name,
-                            isBot: player.isBot,
-                          );
-                        }
-
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => ProviderScope(
-                              overrides: [
-                                gameControllerProvider.overrideWithValue(
-                                    LocalGameController(config)),
-                              ],
-                              child: const LudoScreen(),
-                            ),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.replay, color: Colors.white),
-                      label: const Text('Replay',
-                          style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent.shade700,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                    color: Colors.amberAccent.withOpacity(0.8), width: 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.amber.withOpacity(0.4),
+                    blurRadius: 30,
+                    spreadRadius: 5,
                   ),
                 ],
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Celebration Header
+                  const Icon(
+                    Icons.emoji_events,
+                    color: Colors.amber,
+                    size: 80,
+                  )
+                      .animate(onPlay: (controller) => controller.repeat())
+                      .shimmer(duration: 2000.ms)
+                      .scale(
+                          begin: const Offset(0.8, 0.8),
+                          end: const Offset(1.1, 1.1),
+                          duration: 1000.ms,
+                          curve: Curves.easeInOutSine)
+                      .then()
+                      .scale(
+                          begin: const Offset(1.1, 1.1),
+                          end: const Offset(0.8, 0.8),
+                          duration: 1000.ms,
+                          curve: Curves.easeInOutSine),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "VICTORY!",
+                    style: TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.amber,
+                      letterSpacing: 2,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black,
+                          blurRadius: 10,
+                          offset: Offset(3, 3),
+                        )
+                      ],
+                    ),
+                  ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.5),
+                  const SizedBox(height: 32),
+
+                  // Rankings
+                  ...List.generate(widget.state.winners.length, (index) {
+                    final playerSlot = widget.state.winners[index];
+                    final player = widget.state.players
+                        .firstWhere((p) => p.slot == playerSlot);
+                    final place = index + 1;
+                    final isLast = place == widget.state.winners.length;
+
+                    Color placeColor = Colors.white;
+                    String placeText = "#$place";
+                    IconData? placeIcon;
+
+                    if (place == 1) {
+                      placeColor = Colors.amber;
+                      placeText = "1st";
+                      placeIcon = Icons.star;
+                    } else if (place == 2) {
+                      placeColor = Colors.grey.shade300;
+                      placeText = "2nd";
+                      placeIcon = Icons.military_tech;
+                    } else if (place == 3) {
+                      placeColor = Colors.orange.shade400;
+                      placeText = "3rd";
+                      placeIcon = Icons.military_tech;
+                    }
+
+                    if (isLast) {
+                      placeColor = Colors.redAccent.shade200;
+                      placeText = "Last";
+                      placeIcon = Icons.sentiment_very_dissatisfied;
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: place == 1
+                            ? Colors.amber.withOpacity(0.15)
+                            : Colors.black38,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: placeColor.withOpacity(0.6),
+                            width: place == 1 ? 2.5 : 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            alignment: Alignment.center,
+                            child: Text(
+                              placeText,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: placeColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              player.name,
+                              style: TextStyle(
+                                fontSize: place == 1 ? 24 : 20,
+                                fontWeight: place == 1
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (placeIcon != null) ...[
+                            Icon(placeIcon,
+                                    color: placeColor,
+                                    size: place == 1 ? 32 : 28)
+                                .animate(target: place == 1 ? 1 : 0)
+                                .scale(
+                                    duration: 800.ms, curve: Curves.elasticOut)
+                                .shimmer(duration: 1500.ms, delay: 800.ms),
+                          ]
+                        ],
+                      ),
+                    )
+                        .animate(delay: (200 * index).ms)
+                        .fadeIn(duration: 500.ms)
+                        .slideX(begin: 0.5);
+                  }),
+
+                  const SizedBox(height: 32),
+
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (_) => const HomeScreen()),
+                              (route) => false,
+                            );
+                          },
+                          icon: const Icon(Icons.home_filled,
+                              color: Colors.white),
+                          label: const Text('Home',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent.shade400,
+                            elevation: 5,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 1000.ms).moveY(begin: 20),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // Exact same specs
+                            Map<PlayerSlot, PlayerSetupConfig> config = {};
+                            for (var player in widget.state.players) {
+                              config[player.slot] = PlayerSetupConfig(
+                                name: player.name,
+                                isBot: player.isBot,
+                              );
+                            }
+
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => ProviderScope(
+                                  overrides: [
+                                    gameControllerProvider.overrideWithValue(
+                                        LocalGameController(config)),
+                                  ],
+                                  child: const LudoScreen(),
+                                ),
+                              ),
+                              (route) => false,
+                            );
+                          },
+                          icon: const Icon(Icons.replay_circle_filled,
+                              color: Colors.white),
+                          label: const Text('Replay',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.greenAccent.shade700,
+                            elevation: 5,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 1200.ms).moveY(begin: 20),
+                    ],
+                  ),
+                ],
+              ),
+            ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
           ),
-        ),
+
+          // Confetti exactly centered at the top
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: pi / 2, // fall straight down
+              maxBlastForce: 5,
+              minBlastForce: 2,
+              emissionFrequency: 0.05,
+              numberOfParticles: 20,
+              gravity: 0.2,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+                Colors.amber
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
