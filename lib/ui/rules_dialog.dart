@@ -17,7 +17,7 @@ class RulesDialog extends StatelessWidget {
           children: [
             const Row(
               children: [
-                Icon(Icons.menu_book, color: Colors.blueAccent, size: 28),
+                Icon(Icons.menu_book, color: const Color(0xFFE5E4E2), size: 28),
                 SizedBox(width: 12),
                 Text(
                   'Game Rules',
@@ -34,18 +34,27 @@ class RulesDialog extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildRule(Icons.looks_6, Colors.amber, 'Roll a 6',
+                    _buildRule(
+                        Icons.looks_6,
+                        const Color(0xFFE5E4E2),
+                        'Roll a 6',
                         'You must roll a 6 to move a token out of your base.'),
-                    _buildRule(Icons.replay, Colors.blueAccent, 'Extra Turn',
+                    _buildRule(
+                        Icons.replay,
+                        const Color(0xFFB0B4B8),
+                        'Extra Turn',
                         'Rolling a 6 gives you an additional turn.'),
-                    _buildRule(Icons.stars, Colors.greenAccent, 'Safe Spots',
+                    _buildRule(
+                        Icons.stars,
+                        const Color(0xFF8A8D91),
+                        'Safe Spots',
                         'Tokens on marked safe spots (stars) cannot be captured.'),
                     _buildRule(
                         Icons.sports_kabaddi,
-                        Colors.redAccent,
+                        const Color(0xFFD1D1D1),
                         'Capture',
                         'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.'),
-                    _buildRule(Icons.flag, Colors.purpleAccent, 'Winning',
+                    _buildRule(Icons.flag, const Color(0xFFE5E4E2), 'Winning',
                         'The first player to move all 4 of their tokens to the home area at the center of the board wins.'),
                   ],
                 ),
@@ -54,7 +63,8 @@ class RulesDialog extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
+                backgroundColor: const Color(0xFFE5E4E2),
+                foregroundColor: const Color(0xFF1E1E2C),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -63,7 +73,7 @@ class RulesDialog extends StatelessWidget {
               child: const Text(
                 'Got it!',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFF1E1E2C),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

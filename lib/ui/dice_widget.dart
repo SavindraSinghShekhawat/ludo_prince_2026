@@ -67,8 +67,16 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
       onTap: _rollDice,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFE5E4E2),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFB0B4B8), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(8.0),

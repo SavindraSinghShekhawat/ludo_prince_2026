@@ -114,7 +114,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: const Color(0xFFE5E4E2),
+                    foregroundColor: const Color(0xFF1E1E2C),
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -141,7 +142,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFF1E1E2C),
                     ),
                   ),
                 ),

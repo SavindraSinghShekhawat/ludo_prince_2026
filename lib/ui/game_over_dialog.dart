@@ -61,10 +61,10 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                 ),
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                    color: Colors.amberAccent.withOpacity(0.8), width: 4),
+                    color: const Color(0xFFE5E4E2).withOpacity(0.8), width: 4),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.amber.withOpacity(0.4),
+                    color: const Color(0xFFE5E4E2).withOpacity(0.4),
                     blurRadius: 30,
                     spreadRadius: 5,
                   ),
@@ -76,7 +76,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                   // Celebration Header
                   const Icon(
                     Icons.emoji_events,
-                    color: Colors.amber,
+                    color: Color(0xFFE5E4E2),
                     size: 80,
                   )
                       .animate(onPlay: (controller) => controller.repeat())
@@ -98,7 +98,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     style: TextStyle(
                       fontSize: 38,
                       fontWeight: FontWeight.w900,
-                      color: Colors.amber,
+                      color: Color(0xFFE5E4E2),
                       letterSpacing: 2,
                       shadows: [
                         Shadow(
@@ -124,15 +124,15 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     IconData? placeIcon;
 
                     if (place == 1) {
-                      placeColor = Colors.amber;
+                      placeColor = const Color(0xFFE5E4E2);
                       placeText = "1st";
                       placeIcon = Icons.star;
                     } else if (place == 2) {
-                      placeColor = Colors.grey.shade300;
+                      placeColor = const Color(0xFFB0B4B8);
                       placeText = "2nd";
                       placeIcon = Icons.military_tech;
                     } else if (place == 3) {
-                      placeColor = Colors.orange.shade400;
+                      placeColor = const Color(0xFF8A8D91);
                       placeText = "3rd";
                       placeIcon = Icons.military_tech;
                     }
@@ -149,7 +149,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                           horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(
                         color: place == 1
-                            ? Colors.amber.withOpacity(0.15)
+                            ? const Color(0xFFE5E4E2).withOpacity(0.15)
                             : Colors.black38,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
@@ -217,14 +217,15 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                             );
                           },
                           icon: const Icon(Icons.home_filled,
-                              color: Colors.white),
+                              color: Color(0xFF1E1E2C)),
                           label: const Text('Home',
                               style: TextStyle(
-                                  color: Colors.white,
+                                  color: Color(0xFF1E1E2C),
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent.shade400,
+                            backgroundColor: const Color(0xFFE5E4E2),
+                            foregroundColor: const Color(0xFF1E1E2C),
                             elevation: 5,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(

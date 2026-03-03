@@ -118,6 +118,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                         selected: isSelected,
+                        checkmarkColor: const Color(0xFF1E1E2C),
                         onSelected: (selected) {
                           if (selected && _numPlayers != n) {
                             setState(() {
@@ -126,9 +127,11 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                             });
                           }
                         },
-                        selectedColor: Colors.blueAccent,
+                        selectedColor: const Color(0xFFE5E4E2),
                         labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white70),
+                            color: isSelected
+                                ? const Color(0xFF1E1E2C)
+                                : Colors.white70),
                         backgroundColor: const Color(0xFF2A2A3D),
                       );
                     }).toList(),
@@ -252,12 +255,13 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   const SizedBox(height: 40),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: const Color(0xFFE5E4E2),
+                      foregroundColor: const Color(0xFF1E1E2C),
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                       elevation: 8,
-                      shadowColor: Colors.blueAccent.withOpacity(0.5),
+                      shadowColor: const Color(0xFFE5E4E2).withOpacity(0.5),
                     ),
                     onPressed: () async {
                       Map<PlayerSlot, PlayerSetupConfig> config = {};
@@ -290,7 +294,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                     },
                     child: const Text('Start Game',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF1E1E2C),
                             fontSize: 20,
                             fontWeight: FontWeight.bold)),
                   ),
