@@ -28,7 +28,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   }
 
   void _initControllers() {
-    _controllers.values.forEach((c) => c.dispose());
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
     _controllers.clear();
     _isBotConfig.clear();
 
@@ -57,7 +59,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((c) => c.dispose());
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -177,7 +181,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                 labelStyle: TextStyle(color: displayColor),
                                 enabledBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: displayColor.withOpacity(0.5)),
+                                      color:
+                                          displayColor.withValues(alpha: 0.5)),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 focusedBorder: OutlineInputBorder(
@@ -203,7 +208,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                       color: Colors.white70, fontSize: 12)),
                               Switch(
                                 value: _isBotConfig[slot] ?? false,
-                                activeColor: displayColor,
+                                activeThumbColor: displayColor,
                                 onChanged: (val) {
                                   setState(() {
                                     _isBotConfig[slot] = val;
@@ -215,7 +220,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 40),
                   const Text(
                     'Initial Game State (Testing)',
@@ -227,7 +232,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<InitialGameState>(
-                    value: _initialState,
+                    initialValue: _initialState,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFF2A2A3D),
@@ -261,7 +266,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                       elevation: 8,
-                      shadowColor: const Color(0xFFE5E4E2).withOpacity(0.5),
+                      shadowColor:
+                          const Color(0xFFE5E4E2).withValues(alpha: 0.5),
                     ),
                     onPressed: () async {
                       Map<PlayerSlot, PlayerSetupConfig> config = {};

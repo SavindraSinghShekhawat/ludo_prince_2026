@@ -72,7 +72,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
           border: Border.all(color: const Color(0xFFB0B4B8), width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

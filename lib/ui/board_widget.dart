@@ -76,7 +76,7 @@ class BoardWidget extends StatelessWidget {
       height: 6 * cellSize,
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           border: Border.all(color: color, width: 2),
           borderRadius: BorderRadius.circular(16), // modern rounded bases
         ),
@@ -118,7 +118,8 @@ class BoardWidget extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: color,
-          border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+          border:
+              Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1),
         ),
         child: isStar
             ? Icon(Icons.star_rounded,
@@ -130,24 +131,30 @@ class BoardWidget extends StatelessWidget {
 
   Color _getCellColor(int col, int row) {
     // Red home stretch
-    if (row == 7 && col >= 1 && col <= 5)
-      return Colors.redAccent.withOpacity(0.5);
+    if (row == 7 && col >= 1 && col <= 5) {
+      return Colors.redAccent.withValues(alpha: 0.5);
+    }
     // Green home stretch
-    if (col == 7 && row >= 1 && row <= 5)
-      return Colors.greenAccent.shade700.withOpacity(0.5);
+    if (col == 7 && row >= 1 && row <= 5) {
+      return Colors.greenAccent.shade700.withValues(alpha: 0.5);
+    }
     // Yellow home stretch
-    if (row == 7 && col >= 9 && col <= 13)
-      return Colors.amber.shade600.withOpacity(0.5);
+    if (row == 7 && col >= 9 && col <= 13) {
+      return Colors.amber.shade600.withValues(alpha: 0.5);
+    }
     // Blue home stretch
-    if (col == 7 && row >= 9 && row <= 13)
-      return Colors.blueAccent.withOpacity(0.5);
+    if (col == 7 && row >= 9 && row <= 13) {
+      return Colors.blueAccent.withValues(alpha: 0.5);
+    }
 
     // Starting positions
-    if (col == 1 && row == 6) return Colors.redAccent.withOpacity(0.8);
-    if (col == 8 && row == 1)
-      return Colors.greenAccent.shade700.withOpacity(0.8);
-    if (col == 13 && row == 8) return Colors.amber.shade600.withOpacity(0.8);
-    if (col == 6 && row == 13) return Colors.blueAccent.withOpacity(0.8);
+    if (col == 1 && row == 6) return Colors.redAccent.withValues(alpha: 0.8);
+    if (col == 8 && row == 1) {
+      return Colors.greenAccent.shade700.withValues(alpha: 0.8);
+    }
+    if (col == 13 && row == 8)
+      return Colors.amber.shade600.withValues(alpha: 0.8);
+    if (col == 6 && row == 13) return Colors.blueAccent.withValues(alpha: 0.8);
 
     return Colors.white; // default path color
   }

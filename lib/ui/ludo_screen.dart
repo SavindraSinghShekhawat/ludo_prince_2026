@@ -167,7 +167,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -297,7 +297,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -336,7 +336,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
         boxShadow: [
           if (isTurn)
             BoxShadow(
-              color: displayColor.withOpacity(0.5),
+              color: displayColor.withValues(alpha: 0.5),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -357,7 +357,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
     Widget panelContent = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: isTurn ? Colors.white.withOpacity(0.15) : Colors.transparent,
+        color:
+            isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isTurn ? Colors.white : Colors.white24,

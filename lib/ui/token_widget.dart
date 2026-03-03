@@ -14,8 +14,9 @@ class TokenWidget extends ConsumerWidget {
   bool _isMoveValid(Token t, GameState state) {
     if (t.state == TokenState.home) return state.diceValue == 6;
     if (t.state == TokenState.finished) return false;
-    if (t.state == TokenState.homeStretch)
+    if (t.state == TokenState.homeStretch) {
       return t.position + state.diceValue <= 57;
+    }
     return true;
   }
 
@@ -99,8 +100,8 @@ class TokenWidget extends ConsumerWidget {
             boxShadow: [
               BoxShadow(
                 color: isMovable
-                    ? _getColor(token.slot).withOpacity(0.8)
-                    : Colors.black.withOpacity(0.4),
+                    ? _getColor(token.slot).withValues(alpha: 0.8)
+                    : Colors.black.withValues(alpha: 0.4),
                 blurRadius: isMovable ? 8 : 4,
                 spreadRadius: isMovable ? 2 : 0,
                 offset: const Offset(0, 2),

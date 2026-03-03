@@ -5,7 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math';
 
 import '../models/game_state.dart';
-import '../models/player.dart';
 import '../models/token.dart';
 import '../providers/game_provider.dart';
 import '../controllers/local_game_controller.dart';
@@ -63,10 +62,11 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                 ),
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                    color: const Color(0xFFE5E4E2).withOpacity(0.8), width: 4),
+                    color: const Color(0xFFE5E4E2).withValues(alpha: 0.8),
+                    width: 4),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE5E4E2).withOpacity(0.4),
+                    color: const Color(0xFFE5E4E2).withValues(alpha: 0.4),
                     blurRadius: 30,
                     spreadRadius: 5,
                   ),
@@ -151,11 +151,11 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                           horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(
                         color: place == 1
-                            ? const Color(0xFFE5E4E2).withOpacity(0.15)
+                            ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
                             : Colors.black38,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                            color: placeColor.withOpacity(0.6),
+                            color: placeColor.withValues(alpha: 0.6),
                             width: place == 1 ? 2.5 : 1.5),
                       ),
                       child: Row(

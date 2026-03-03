@@ -17,7 +17,7 @@ class RulesDialog extends StatelessWidget {
           children: [
             const Row(
               children: [
-                Icon(Icons.menu_book, color: const Color(0xFFE5E4E2), size: 28),
+                Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),
                 SizedBox(width: 12),
                 Text(
                   'Game Rules',
@@ -95,7 +95,7 @@ class RulesDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 24),
