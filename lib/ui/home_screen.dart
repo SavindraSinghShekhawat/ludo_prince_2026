@@ -6,6 +6,7 @@ import 'package:ludo_prince/services/audio_service.dart';
 import '../models/token.dart';
 import 'ludo_screen.dart';
 import 'about_screen.dart';
+import 'local_setup_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -41,29 +42,9 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 50),
               _buildMenuButton(
                 context,
-                ref,
-                title: '2 Players',
+                title: 'Local Multiplayer',
                 icon: Icons.people,
                 colors: [Colors.greenAccent.shade700, Colors.blueAccent],
-                numPlayers: 2,
-              ),
-              const SizedBox(height: 20),
-              _buildMenuButton(
-                context,
-                ref,
-                title: '3 Players',
-                icon: Icons.person_add,
-                colors: [Colors.redAccent, Colors.blueAccent],
-                numPlayers: 3,
-              ),
-              const SizedBox(height: 20),
-              _buildMenuButton(
-                context,
-                ref,
-                title: '4 Players',
-                icon: Icons.groups,
-                colors: [Colors.redAccent, Colors.amber.shade600],
-                numPlayers: 4,
               ),
               const SizedBox(height: 40),
               TextButton.icon(
@@ -88,16 +69,19 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuButton(BuildContext context, WidgetRef ref,
+  Widget _buildMenuButton(BuildContext context,
       {required String title,
       required IconData icon,
-      required List<Color> colors,
-      required int numPlayers}) {
+      required List<Color> colors}) {
     return InkWell(
-      onTap: () => _showPlayerNameSetupDialog(context, ref, numPlayers),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const LocalSetupScreen()),
+        );
+      },
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 250,
+        width: 300,
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -129,124 +113,6 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-
-  void _showPlayerNameSetupDialog(
-      BuildContext context, WidgetRef ref, int numPlayers) {
-    List<PlayerSlot> activeSlots;
-    if (numPlayers == 2) {
-      activeSlots = [PlayerSlot.slot4, PlayerSlot.slot2];
-    } else if (numPlayers == 3) {
-      activeSlots = [PlayerSlot.slot4, PlayerSlot.slot2, PlayerSlot.slot1];
-    } else {
-      activeSlots = [
-        PlayerSlot.slot4,
-        PlayerSlot.slot3,
-        PlayerSlot.slot2,
-        PlayerSlot.slot1
-      ];
-    }
-
-    final controllers = <PlayerSlot, TextEditingController>{};
-    for (int i = 0; i < activeSlots.length; i++) {
-      controllers[activeSlots[i]] =
-          TextEditingController(text: "Player ${i + 1}");
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF2A2A3D),
-          title: const Text('Enter Player Names',
-              style: TextStyle(color: Colors.white)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: activeSlots.map((slot) {
-                Color displayColor = Colors.white;
-                switch (slot) {
-                  case PlayerSlot.slot1:
-                    displayColor = Colors.redAccent;
-                    break;
-                  case PlayerSlot.slot2:
-                    displayColor = Colors.greenAccent.shade700;
-                    break;
-                  case PlayerSlot.slot3:
-                    displayColor = Colors.amber.shade600;
-                    break;
-                  case PlayerSlot.slot4:
-                    displayColor = Colors.blueAccent;
-                    break;
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: TextField(
-                    controller: controllers[slot],
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
-                      labelStyle: TextStyle(color: displayColor),
-                      enabledBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: displayColor.withOpacity(0.5))),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: displayColor, width: 2)),
-                      prefixIcon: Icon(Icons.person, color: displayColor),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white54)),
-            ),
-            ElevatedButton(
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-              onPressed: () async {
-                Map<PlayerSlot, String> config = {};
-
-                for (var slot in activeSlots) {
-                  config[slot] = controllers[slot]!.text.trim().isEmpty
-                      ? "Player ${activeSlots.indexOf(slot) + 1}"
-                      : controllers[slot]!.text.trim();
-                }
-
-                await audioService.playStart(); // ✅ FIX 3
-
-                Navigator.pop(context);
-
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => ProviderScope(
-                      overrides: [
-                        gameControllerProvider.overrideWithValue(
-                          LocalGameController(config),
-                        ),
-                      ],
-                      child: const LudoScreen(),
-                    ),
-                  ),
-                );
-              },
-              child: const Text(
-                'Start Game',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            )
-          ],
-        );
-      },
     );
   }
 }
