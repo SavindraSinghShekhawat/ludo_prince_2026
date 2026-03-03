@@ -167,7 +167,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               controller: _controllers[slot],
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
+                                labelText:
+                                    'Player ${activeSlots.indexOf(slot) + 1}',
                                 labelStyle: TextStyle(color: displayColor),
                                 enabledBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
@@ -180,7 +181,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 prefixIcon: Icon(
-                                    (_isBotConfig[slot] ?? false) ? Icons.smart_toy : Icons.person,
+                                    (_isBotConfig[slot] ?? false)
+                                        ? Icons.smart_toy
+                                        : Icons.person,
                                     color: displayColor),
                                 filled: true,
                                 fillColor: const Color(0xFF2A2A3D),

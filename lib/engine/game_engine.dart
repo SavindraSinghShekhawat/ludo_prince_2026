@@ -47,13 +47,25 @@ class GameEngine {
       return state; // ❗ prevent illegal multiplayer move
     }
 
-    bool extraTurn = state.diceValue == 6 || token.state == TokenState.finished || captured;
+    bool extraTurn =
+        state.diceValue == 6 || token.state == TokenState.finished || captured;
 
     GameState newState = state.copyWith(
       isDiceRolled: false,
     );
 
-    return extraTurn
+    bool hasWon = player.tokens.every((t) => t.state == TokenState.finished);
+    if (hasWon && !newState.winners.contains(player.slot)) {
+      var newWinners = [...newState.winners, player.slot];
+      if (newWinners.length == newState.players.length - 1) {
+        final lastPlayer =
+            newState.players.firstWhere((p) => !newWinners.contains(p.slot));
+        newWinners.add(lastPlayer.slot);
+      }
+      newState = newState.copyWith(winners: newWinners);
+    }
+
+    return extraTurn && !hasWon
         ? newState.copyWith(
             message: "${player.name} gets an extra turn!",
           )
@@ -141,10 +153,17 @@ class GameEngine {
   }
 
   GameState _nextTurn(GameState state, String msg) {
+    if (state.isGameOver) return state.copyWith(message: "Game Over!");
+
     final order = state.turnOrder; // ✅ stable order
 
     int idx = order.indexOf(state.currentTurn);
-    idx = (idx + 1) % order.length;
+    for (int i = 0; i < order.length; i++) {
+      idx = (idx + 1) % order.length;
+      if (!state.winners.contains(order[idx])) {
+        break;
+      }
+    }
 
     return state.copyWith(
       currentTurn: order[idx],

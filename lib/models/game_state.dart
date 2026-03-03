@@ -20,9 +20,12 @@ class GameState {
   final int consecutiveSixes;
   final String message;
   final GameAction lastAction;
+  final List<PlayerSlot> winners;
 
   bool get isGameOver {
-    int finishedPlayers = players.where((p) => p.tokens.every((t) => t.state == TokenState.finished)).length;
+    int finishedPlayers = players
+        .where((p) => p.tokens.every((t) => t.state == TokenState.finished))
+        .length;
     // Game is over if all but one player has finished (or if all players have finished)
     return players.length > 1 && finishedPlayers >= players.length - 1;
   }
@@ -37,6 +40,7 @@ class GameState {
     this.consecutiveSixes = 0,
     this.message = "Game Started!",
     this.lastAction = GameAction.none,
+    this.winners = const [],
   });
 
   GameState copyWith({
@@ -49,6 +53,7 @@ class GameState {
     int? consecutiveSixes,
     String? message,
     GameAction? lastAction,
+    List<PlayerSlot>? winners,
   }) {
     return GameState(
       gameId: gameId ?? this.gameId,
@@ -60,6 +65,7 @@ class GameState {
       consecutiveSixes: consecutiveSixes ?? this.consecutiveSixes,
       message: message ?? this.message,
       lastAction: lastAction ?? this.lastAction,
+      winners: winners ?? this.winners,
     );
   }
 
@@ -73,6 +79,7 @@ class GameState {
         "consecutiveSixes": consecutiveSixes,
         "message": message,
         "lastAction": lastAction.name,
+        "winners": winners.map((e) => e.name).toList(),
       };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
@@ -91,6 +98,10 @@ class GameState {
       message: json["message"],
       lastAction:
           GameAction.values.firstWhere((e) => e.name == json["lastAction"]),
+      winners: (json["winners"] as List?)
+              ?.map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
+              .toList() ??
+          [],
     );
   }
 }

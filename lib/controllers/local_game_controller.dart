@@ -31,7 +31,8 @@ class LocalGameController implements GameController {
 
   void _checkBotTurn() async {
     if (_isActionInProgress || _state.isGameOver) return;
-    final currentPlayer = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    final currentPlayer =
+        _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     if (!currentPlayer.isBot) return;
 
     _isActionInProgress = true;
@@ -149,7 +150,7 @@ class LocalGameController implements GameController {
   @override
   Future<void> executeMove(int tokenId) async {
     if (!_state.isDiceRolled || _isActionInProgress) return;
-    
+
     final player =
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
@@ -256,6 +257,7 @@ class LocalGameController implements GameController {
       turnOrder: config.keys.toList(),
       currentTurn: config.keys.first,
       lastAction: GameAction.none,
+      winners: const [],
     );
   }
 }

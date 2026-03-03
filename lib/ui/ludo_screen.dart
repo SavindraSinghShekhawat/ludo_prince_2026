@@ -9,6 +9,7 @@ import 'token_widget.dart';
 import 'dice_widget.dart';
 import 'home_screen.dart';
 import 'rules_dialog.dart';
+import 'game_over_dialog.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
   const LudoScreen({super.key});
@@ -26,6 +27,19 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(gameStreamProvider);
+
+    ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
+      next.whenData((state) {
+        if (state.isGameOver) {
+          final prevWasOver = previous?.value?.isGameOver ?? false;
+          if (!prevWasOver) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _showGameOverDialog(state);
+            });
+          }
+        }
+      });
+    });
 
     return asyncState.when(
       data: (gameState) => _buildGame(context, gameState),
@@ -199,6 +213,15 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showGameOverDialog(GameState state) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => GameOverDialog(state: state),
     );
   }
 

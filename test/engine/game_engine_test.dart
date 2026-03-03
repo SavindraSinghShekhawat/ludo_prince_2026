@@ -22,6 +22,7 @@ GameState baseState() {
     ],
     turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
     currentTurn: PlayerSlot.slot1,
+    winners: const [],
   );
 }
 
@@ -148,6 +149,7 @@ void main() {
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot1,
+        winners: const [],
       );
 
       bool captured = false;
@@ -188,6 +190,7 @@ void main() {
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot1,
+        winners: const [],
       );
 
       bool captured = false;
