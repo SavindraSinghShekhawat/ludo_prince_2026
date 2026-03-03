@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/models/game_state.dart';
+import 'package:ludo_prince/providers/game_provider.dart';
 import '../models/token.dart';
 import '../models/board_path.dart';
-import '../providers/game_state_provider.dart';
 
 class TokenWidget extends ConsumerWidget {
   final Token token;
@@ -19,25 +20,27 @@ class TokenWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameState = ref.watch(gameStateProvider);
+    final asyncState = ref.watch(gameStreamProvider);
+    final gameState = asyncState.value;
+    if (gameState == null) return const SizedBox();
     final isTurn = gameState.currentTurn == token.color;
     final isMovable = isTurn && gameState.isDiceRolled && _isMoveValid(token, gameState);
 
     Offset gridPos = BoardPath.getTokenOffset(token);
-    
+
     // Tokens in base should be spread out within the 6x6 base square
     // Tokens on the path or home stretch must be exactly centered in a 1x1 cell
-    
+
     double tokenSize = cellSize * 0.7; // Make token slightly smaller than cell for padding
     double offsetXY = (cellSize - tokenSize) / 2;
 
     // Handle stacking multiple tokens on the same spot
     double overlapOffsetX = 0;
     double overlapOffsetY = 0;
-    
+
     if (token.state != TokenState.home) {
       List<Token> overlappingTokens = [];
-      
+
       if (token.state == TokenState.board) {
         int myAbsPos = BoardPath.getAbsolutePosition(token.color, token.position);
         overlappingTokens = gameState.players.expand((p) => p.tokens).where((t) {
@@ -52,15 +55,15 @@ class TokenWidget extends ConsumerWidget {
             .where((t) => t.state == token.state && t.position == token.position)
             .toList();
       }
-          
+
       if (overlappingTokens.length > 1) {
         int index = overlappingTokens.indexWhere((t) => t.color == token.color && t.id == token.id);
         double spread = tokenSize * 0.3; // 30% shift
-        
+
         // Arrange up to 4 tokens in a small square, and wrap if there's more (though rare in small grid)
         overlapOffsetX = (index % 2 == 1) ? spread : -spread;
-        overlapOffsetY = (index % 4 >= 2) ? spread : -spread; 
-        
+        overlapOffsetY = (index % 4 >= 2) ? spread : -spread;
+
         // Scale down slightly when stacked to fit better
         tokenSize *= 0.8;
         offsetXY = (cellSize - tokenSize) / 2;
@@ -76,17 +79,14 @@ class TokenWidget extends ConsumerWidget {
       height: tokenSize,
       child: GestureDetector(
         onTap: () {
-          ref.read(gameStateProvider.notifier).moveToken(token);
+          ref.read(gameControllerProvider).moveToken(token);
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: _getColor(token.color),
-            border: Border.all(
-              color: isMovable ? Colors.white : Colors.white60, 
-              width: isMovable ? 3 : 1.5
-            ),
+            border: Border.all(color: isMovable ? Colors.white : Colors.white60, width: isMovable ? 3 : 1.5),
             boxShadow: [
               BoxShadow(
                 color: isMovable ? _getColor(token.color).withOpacity(0.8) : Colors.black.withOpacity(0.4),
@@ -103,10 +103,14 @@ class TokenWidget extends ConsumerWidget {
 
   Color _getColor(PlayerColor pColor) {
     switch (pColor) {
-      case PlayerColor.red: return Colors.red;
-      case PlayerColor.green: return Colors.green;
-      case PlayerColor.yellow: return Colors.amber;
-      case PlayerColor.blue: return Colors.blue;
+      case PlayerColor.red:
+        return Colors.red;
+      case PlayerColor.green:
+        return Colors.green;
+      case PlayerColor.yellow:
+        return Colors.amber;
+      case PlayerColor.blue:
+        return Colors.blue;
     }
   }
 }

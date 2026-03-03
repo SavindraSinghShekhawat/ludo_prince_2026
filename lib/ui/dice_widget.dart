@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:ludo_prince/providers/game_provider.dart';
 import '../providers/game_state_provider.dart';
 
 class DiceWidget extends ConsumerStatefulWidget {
@@ -39,17 +40,23 @@ class _DiceWidgetState extends ConsumerState<DiceWidget> with SingleTickerProvid
     final gameState = ref.read(gameStateProvider);
     if (gameState.isDiceRolled || _isAnimating) return;
 
-    setState(() { _isAnimating = true; });
+    setState(() {
+      _isAnimating = true;
+    });
 
     _controller.forward(from: 0).then((_) {
-      setState(() { _isAnimating = false; });
-      ref.read(gameStateProvider.notifier).rollDice();
+      setState(() {
+        _isAnimating = false;
+      });
+      ref.read(gameControllerProvider).rollDice();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(gameStateProvider);
+    final asyncState = ref.watch(gameStreamProvider);
+    final gameState = asyncState.value;
+    if (gameState == null) return const SizedBox();
     final displayValue = _isAnimating ? _animatingValue : gameState.diceValue;
 
     return GestureDetector(
@@ -65,11 +72,12 @@ class _DiceWidgetState extends ConsumerState<DiceWidget> with SingleTickerProvid
             painter: DiceFacePainter(displayValue),
           ),
         ),
-      ).animate(controller: _controller, autoPlay: false)
-       .shake(hz: 8, duration: 600.ms, curve: Curves.easeInOut)
-       .scaleXY(begin: 1.0, end: 1.2, duration: 300.ms)
-       .then()
-       .scaleXY(begin: 1.2, end: 1.0, duration: 300.ms),
+      )
+          .animate(controller: _controller, autoPlay: false)
+          .shake(hz: 8, duration: 600.ms, curve: Curves.easeInOut)
+          .scaleXY(begin: 1.0, end: 1.2, duration: 300.ms)
+          .then()
+          .scaleXY(begin: 1.2, end: 1.0, duration: 300.ms),
     );
   }
 }
@@ -80,22 +88,24 @@ class DiceFacePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()..color = Colors.black87..style = PaintingStyle.fill;
+    var paint = Paint()
+      ..color = Colors.black87
+      ..style = PaintingStyle.fill;
     double r = size.width * 0.12; // dot radius
     double w = size.width;
     double h = size.height;
-    
+
     // Centers
-    Offset c = Offset(w/2, h/2);
-    Offset tl = Offset(w*0.25, h*0.25);
-    Offset tr = Offset(w*0.75, h*0.25);
-    Offset bl = Offset(w*0.25, h*0.75);
-    Offset br = Offset(w*0.75, h*0.75);
-    Offset ml = Offset(w*0.25, h*0.5);
-    Offset mr = Offset(w*0.75, h*0.5);
+    Offset c = Offset(w / 2, h / 2);
+    Offset tl = Offset(w * 0.25, h * 0.25);
+    Offset tr = Offset(w * 0.75, h * 0.25);
+    Offset bl = Offset(w * 0.25, h * 0.75);
+    Offset br = Offset(w * 0.75, h * 0.75);
+    Offset ml = Offset(w * 0.25, h * 0.5);
+    Offset mr = Offset(w * 0.75, h * 0.5);
 
     if (value == 1) {
-      canvas.drawCircle(c, r, paint); 
+      canvas.drawCircle(c, r, paint);
     } else if (value == 2) {
       canvas.drawCircle(tl, r, paint);
       canvas.drawCircle(br, r, paint);
@@ -127,5 +137,3 @@ class DiceFacePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-

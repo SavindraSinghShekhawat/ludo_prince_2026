@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/game_state_provider.dart';
+import 'package:ludo_prince/providers/game_provider.dart';
+import '../models/game_state.dart';
 import '../models/token.dart';
 import 'board_widget.dart';
 import 'token_widget.dart';
@@ -22,8 +23,16 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(gameStateProvider);
+    final asyncState = ref.watch(gameStreamProvider);
 
+    return asyncState.when(
+      data: (gameState) => _buildGame(context, gameState),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(e.toString())),
+    );
+  }
+
+Widget _buildGame(BuildContext context, GameState gameState) {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E2C),
       appBar: AppBar(
@@ -152,6 +161,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
         ),
       ),
     );
+ 
   }
 
   Widget _buildTopPanels(GameState state) {

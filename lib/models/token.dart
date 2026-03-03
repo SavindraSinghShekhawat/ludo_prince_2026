@@ -1,18 +1,11 @@
 enum PlayerColor { red, green, yellow, blue }
-
-enum TokenState {
-  home, // In the base
-  board, // On the outer path
-  safe, // On a star or safe start square
-  homeStretch, // On the inner path towards center
-  finished // Reached the center
-}
+enum TokenState { home, board, homeStretch, finished }
 
 class Token {
   final int id;
   final PlayerColor color;
-  TokenState state;
-  int position; // 0-56 depending on the path (-1 when in home/finished)
+  final TokenState state;
+  final int position;
 
   Token({
     required this.id,
@@ -30,6 +23,24 @@ class Token {
       color: color,
       state: state ?? this.state,
       position: position ?? this.position,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "color": color.name,
+        "state": state.name,
+        "position": position,
+      };
+
+  factory Token.fromJson(Map<String, dynamic> json) {
+    return Token(
+      id: json["id"],
+      color: PlayerColor.values
+          .firstWhere((e) => e.name == json["color"]),
+      state:
+          TokenState.values.firstWhere((e) => e.name == json["state"]),
+      position: json["position"],
     );
   }
 }

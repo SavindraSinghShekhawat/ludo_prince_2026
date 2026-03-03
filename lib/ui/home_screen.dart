@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/game_state_provider.dart';
+import 'package:ludo_prince/controllers/local_game_controller.dart';
+import 'package:ludo_prince/providers/game_provider.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 import '../models/token.dart';
 import 'ludo_screen.dart';
 import 'about_screen.dart';
@@ -38,28 +40,28 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 50),
               _buildMenuButton(
-                context, 
-                ref, 
-                title: '2 Players', 
-                icon: Icons.people, 
+                context,
+                ref,
+                title: '2 Players',
+                icon: Icons.people,
                 colors: [Colors.greenAccent.shade700, Colors.blueAccent],
                 numPlayers: 2,
               ),
               const SizedBox(height: 20),
               _buildMenuButton(
-                context, 
-                ref, 
-                title: '3 Players', 
-                icon: Icons.person_add, 
+                context,
+                ref,
+                title: '3 Players',
+                icon: Icons.person_add,
                 colors: [Colors.redAccent, Colors.blueAccent],
                 numPlayers: 3,
               ),
               const SizedBox(height: 20),
               _buildMenuButton(
-                context, 
-                ref, 
-                title: '4 Players', 
-                icon: Icons.groups, 
+                context,
+                ref,
+                title: '4 Players',
+                icon: Icons.groups,
                 colors: [Colors.redAccent, Colors.amber.shade600],
                 numPlayers: 4,
               ),
@@ -83,7 +85,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuButton(BuildContext context, WidgetRef ref, {required String title, required IconData icon, required List<Color> colors, required int numPlayers}) {
+  Widget _buildMenuButton(BuildContext context, WidgetRef ref,
+      {required String title, required IconData icon, required List<Color> colors, required int numPlayers}) {
     return InkWell(
       onTap: () => _showPlayerNameSetupDialog(context, ref, numPlayers),
       borderRadius: BorderRadius.circular(20),
@@ -91,20 +94,19 @@ class HomeScreen extends ConsumerWidget {
         width: 250,
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colors.first.withOpacity(0.4),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            )
-          ]
-        ),
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: colors,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.first.withOpacity(0.4),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              )
+            ]),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -136,7 +138,7 @@ class HomeScreen extends ConsumerWidget {
 
     final controllers = <PlayerColor, TextEditingController>{};
     for (int i = 0; i < activeColors.length; i++) {
-        controllers[activeColors[i]] = TextEditingController(text: "Player ${i + 1}");
+      controllers[activeColors[i]] = TextEditingController(text: "Player ${i + 1}");
     }
 
     showDialog(
@@ -152,12 +154,20 @@ class HomeScreen extends ConsumerWidget {
               children: activeColors.map((color) {
                 Color displayColor = Colors.white;
                 switch (color) {
-                  case PlayerColor.red: displayColor = Colors.redAccent; break;
-                  case PlayerColor.green: displayColor = Colors.greenAccent.shade700; break;
-                  case PlayerColor.yellow: displayColor = Colors.amber.shade600; break;
-                  case PlayerColor.blue: displayColor = Colors.blueAccent; break;
+                  case PlayerColor.red:
+                    displayColor = Colors.redAccent;
+                    break;
+                  case PlayerColor.green:
+                    displayColor = Colors.greenAccent.shade700;
+                    break;
+                  case PlayerColor.yellow:
+                    displayColor = Colors.amber.shade600;
+                    break;
+                  case PlayerColor.blue:
+                    displayColor = Colors.blueAccent;
+                    break;
                 }
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: TextField(
@@ -182,22 +192,36 @@ class HomeScreen extends ConsumerWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-              onPressed: () {
+              onPressed: () async {
                 Map<PlayerColor, String> config = {};
+
                 for (var color in activeColors) {
-                  config[color] = controllers[color]!.text.trim().isEmpty 
-                      ? "Player ${activeColors.indexOf(color) + 1}" 
-                      : controllers[color]!.text.trim();
+                  config[color] =
+                      controllers[color]!.text.trim().isEmpty ? "Player ${activeColors.indexOf(color) + 1}" : controllers[color]!.text.trim();
                 }
 
-                ref.read(gameStateProvider.notifier).initializeGame(playerConfig: config);
-                Navigator.pop(context); // close dialog
+                await audioService.playStart(); // ✅ FIX 3
+
+                Navigator.pop(context);
+
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LudoScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => ProviderScope(
+                      overrides: [
+                        gameControllerProvider.overrideWithValue(
+                          LocalGameController(config),
+                        ),
+                      ],
+                      child: const LudoScreen(),
+                    ),
+                  ),
                 );
               },
-              child: const Text('Start Game', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
+              child: const Text(
+                'Start Game',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            )
           ],
         );
       },
