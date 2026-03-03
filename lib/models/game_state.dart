@@ -3,6 +3,7 @@ import 'token.dart';
 
 class GameState {
   final List<Player> players;
+  final List<PlayerColor> turnOrder;
   final PlayerColor currentTurn;
   final int diceValue;
   final bool isDiceRolled;
@@ -11,6 +12,7 @@ class GameState {
 
   GameState({
     required this.players,
+    required this.turnOrder,
     required this.currentTurn,
     this.diceValue = 1,
     this.isDiceRolled = false,
@@ -20,6 +22,7 @@ class GameState {
 
   GameState copyWith({
     List<Player>? players,
+    List<PlayerColor>? turnOrder,
     PlayerColor? currentTurn,
     int? diceValue,
     bool? isDiceRolled,
@@ -28,6 +31,7 @@ class GameState {
   }) {
     return GameState(
       players: players ?? this.players,
+      turnOrder: turnOrder ?? this.turnOrder,
       currentTurn: currentTurn ?? this.currentTurn,
       diceValue: diceValue ?? this.diceValue,
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
@@ -38,6 +42,7 @@ class GameState {
 
   Map<String, dynamic> toJson() => {
         "players": players.map((p) => p.toJson()).toList(),
+        "turnOrder": turnOrder.map((e) => e.name).toList(),
         "currentTurn": currentTurn.name,
         "diceValue": diceValue,
         "isDiceRolled": isDiceRolled,
@@ -47,11 +52,9 @@ class GameState {
 
   factory GameState.fromJson(Map<String, dynamic> json) {
     return GameState(
-      players: (json["players"] as List)
-          .map((e) => Player.fromJson(e))
-          .toList(),
-      currentTurn: PlayerColor.values
-          .firstWhere((e) => e.name == json["currentTurn"]),
+      players: (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
+      turnOrder: (json["turnOrder"] as List).map((e) => PlayerColor.values.firstWhere((p) => p.name == e)).toList(),
+      currentTurn: PlayerColor.values.firstWhere((e) => e.name == json["currentTurn"]),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       consecutiveSixes: json["consecutiveSixes"],

@@ -42,6 +42,10 @@ class GameEngine {
 
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
+    if (token.color != state.currentTurn) {
+      return state; // ❗ prevent illegal multiplayer move
+    }
+
     bool extraTurn = state.diceValue == 6 || token.state == TokenState.finished;
 
     GameState newState = state.copyWith(
@@ -131,7 +135,7 @@ class GameEngine {
   }
 
   GameState _nextTurn(GameState state, String msg) {
-    final order = state.players.map((e) => e.color).toList();
+    final order = state.turnOrder; // ✅ stable order
 
     int idx = order.indexOf(state.currentTurn);
     idx = (idx + 1) % order.length;

@@ -11,7 +11,6 @@ import 'game_controller.dart';
 
 class LocalGameController implements GameController {
   final _streamController = StreamController<GameState>.broadcast();
-
   final GameEngine _engine = GameEngine();
   late GameState _state;
 
@@ -27,7 +26,8 @@ class LocalGameController implements GameController {
 
   @override
   Future<void> rollDice() async {
-    final dice = Random().nextInt(6) + 1;
+    // ✅ Secure RNG
+    final dice = Random.secure().nextInt(6) + 1;
 
     await audioService.playRoll();
     if (dice == 6) {
@@ -141,6 +141,7 @@ class LocalGameController implements GameController {
 
     return GameState(
       players: players,
+      turnOrder: config.keys.toList(), // ✅ NEW
       currentTurn: config.keys.first,
     );
   }
