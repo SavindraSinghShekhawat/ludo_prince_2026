@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:ludo_prince/models/board_path.dart';
 
 import '../engine/game_engine.dart';
 import '../models/game_state.dart';
@@ -24,19 +23,25 @@ class LocalGameController implements GameController {
     yield* _streamController.stream;
   }
 
+  // Multiplayer-ready roll
   @override
-  Future<void> rollDice() async {
-    // ✅ Secure RNG
-    final dice = Random.secure().nextInt(6) + 1;
+  Future<void> rollDice({int? forcedValue}) async {
+    if (_state.isDiceRolled) return;
+
+    final dice = forcedValue ?? (Random.secure().nextInt(6) + 1);
 
     await audioService.playRoll();
     if (dice == 6) {
       await audioService.playSix();
     }
 
-    _state = _engine.rollDice(_state, dice);
+    _state = _engine.rollDice(_state, dice).copyWith(
+          lastAction: GameAction.roll,
+        );
+
     _streamController.add(_state);
 
+    // Auto move if only 1 valid token
     if (_state.isDiceRolled) {
       final player = _state.players.firstWhere((p) => p.color == _state.currentTurn);
 
@@ -49,14 +54,24 @@ class LocalGameController implements GameController {
     }
   }
 
-  void _finalizeAfterMove(Token token, bool captured) {
-    bool extraTurn = _state.diceValue == 6 || captured || token.state == TokenState.finished;
+  void _finalizeAfterMove(int tokenId, bool captured) {
+    _state = _engine.moveToken(_state, tokenId);
 
-    _state = _engine.moveToken(_state, token.id);
+    GameAction action = GameAction.move;
 
-    if (extraTurn) {
-      _state = _state.copyWith(message: "${_state.players.firstWhere((p) => p.color == _state.currentTurn).name} gets an extra turn!");
+    if (captured) {
+      action = GameAction.capture;
+    } else {
+      final currentPlayer = _state.players.firstWhere((p) => p.color == _state.currentTurn);
+
+      final token = currentPlayer.tokens.firstWhere((t) => t.id == tokenId);
+
+      if (token.state == TokenState.finished) {
+        action = GameAction.finish;
+      }
     }
+
+    _state = _state.copyWith(lastAction: action);
 
     _streamController.add(_state);
   }
@@ -68,11 +83,13 @@ class LocalGameController implements GameController {
     int steps = _state.diceValue;
     bool captured = false;
 
-    // 🔥 Home exit case
     if (token.state == TokenState.home && steps == 6) {
       await audioService.playMove(1);
 
-      Token updated = token.copyWith(state: TokenState.board, position: 0);
+      Token updated = token.copyWith(
+        state: TokenState.board,
+        position: 0,
+      );
 
       _state = _engine.applyStep(
         _state,
@@ -84,14 +101,13 @@ class LocalGameController implements GameController {
 
       if (captured) {
         await audioService.playDie();
-      } else {
-        await audioService.playSafe();
       }
 
-      _finalizeAfterMove(token, captured);
+      _finalizeAfterMove(updated.id, captured);
       return;
     }
 
+    // Normal move
     await audioService.playMove(steps);
 
     Token currentToken = token;
@@ -118,11 +134,9 @@ class LocalGameController implements GameController {
 
     if (captured) {
       await audioService.playDie();
-    } else if (currentToken.state == TokenState.board && BoardPath.isSafeSpot(currentToken.position)) {
-      await audioService.playSafe();
     }
 
-    _finalizeAfterMove(currentToken, captured);
+    _finalizeAfterMove(currentToken.id, captured);
   }
 
   @override
@@ -140,9 +154,11 @@ class LocalGameController implements GameController {
     }).toList();
 
     return GameState(
+      gameId: "local_${DateTime.now().millisecondsSinceEpoch}",
       players: players,
-      turnOrder: config.keys.toList(), // ✅ NEW
+      turnOrder: config.keys.toList(),
       currentTurn: config.keys.first,
+      lastAction: GameAction.none,
     );
   }
 }

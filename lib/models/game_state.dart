@@ -1,7 +1,17 @@
 import 'player.dart';
 import 'token.dart';
 
+enum GameAction {
+  none,
+  roll,
+  move,
+  capture,
+  finish,
+  skip,
+}
+
 class GameState {
+  final String gameId;
   final List<Player> players;
   final List<PlayerColor> turnOrder;
   final PlayerColor currentTurn;
@@ -9,8 +19,10 @@ class GameState {
   final bool isDiceRolled;
   final int consecutiveSixes;
   final String message;
+  final GameAction lastAction;
 
   GameState({
+    required this.gameId,
     required this.players,
     required this.turnOrder,
     required this.currentTurn,
@@ -18,9 +30,11 @@ class GameState {
     this.isDiceRolled = false,
     this.consecutiveSixes = 0,
     this.message = "Game Started!",
+    this.lastAction = GameAction.none,
   });
 
   GameState copyWith({
+    String? gameId,
     List<Player>? players,
     List<PlayerColor>? turnOrder,
     PlayerColor? currentTurn,
@@ -28,8 +42,10 @@ class GameState {
     bool? isDiceRolled,
     int? consecutiveSixes,
     String? message,
+    GameAction? lastAction,
   }) {
     return GameState(
+      gameId: gameId ?? this.gameId,
       players: players ?? this.players,
       turnOrder: turnOrder ?? this.turnOrder,
       currentTurn: currentTurn ?? this.currentTurn,
@@ -37,10 +53,12 @@ class GameState {
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
       consecutiveSixes: consecutiveSixes ?? this.consecutiveSixes,
       message: message ?? this.message,
+      lastAction: lastAction ?? this.lastAction,
     );
   }
 
   Map<String, dynamic> toJson() => {
+        "gameId": gameId,
         "players": players.map((p) => p.toJson()).toList(),
         "turnOrder": turnOrder.map((e) => e.name).toList(),
         "currentTurn": currentTurn.name,
@@ -48,10 +66,12 @@ class GameState {
         "isDiceRolled": isDiceRolled,
         "consecutiveSixes": consecutiveSixes,
         "message": message,
+        "lastAction": lastAction.name,
       };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
     return GameState(
+      gameId: json["gameId"],
       players: (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
       turnOrder: (json["turnOrder"] as List).map((e) => PlayerColor.values.firstWhere((p) => p.name == e)).toList(),
       currentTurn: PlayerColor.values.firstWhere((e) => e.name == json["currentTurn"]),
@@ -59,6 +79,7 @@ class GameState {
       isDiceRolled: json["isDiceRolled"],
       consecutiveSixes: json["consecutiveSixes"],
       message: json["message"],
+      lastAction: GameAction.values.firstWhere((e) => e.name == json["lastAction"]),
     );
   }
 }
