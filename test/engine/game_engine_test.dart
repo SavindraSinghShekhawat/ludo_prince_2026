@@ -298,15 +298,11 @@ void main() {
         ],
       );
 
-      final totalBefore = state.players
-          .expand((p) => p.tokens)
-          .length;
+      final totalBefore = state.players.expand((p) => p.tokens).length;
 
       final result = engine.rollDice(state, 3);
 
-      final totalAfter = result.players
-          .expand((p) => p.tokens)
-          .length;
+      final totalAfter = result.players.expand((p) => p.tokens).length;
 
       expect(totalBefore, totalAfter);
     });

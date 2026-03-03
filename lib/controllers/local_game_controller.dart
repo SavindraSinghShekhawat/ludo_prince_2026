@@ -51,12 +51,17 @@ class LocalGameController implements GameController {
 
     // Auto move if only 1 valid token or all valid token at same place
     if (_state.isDiceRolled) {
-      final player = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+      final player =
+          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
 
-      final validTokens = player.tokens.where((t) => _engine.isValidMove(t, _state.diceValue)).toList();
+      final validTokens = player.tokens
+          .where((t) => _engine.isValidMove(t, _state.diceValue))
+          .toList();
 
       if (validTokens.isNotEmpty) {
-        bool allSamePosition = validTokens.every((t) => t.state == validTokens.first.state && t.position == validTokens.first.position);
+        bool allSamePosition = validTokens.every((t) =>
+            t.state == validTokens.first.state &&
+            t.position == validTokens.first.position);
 
         bool allInHome = validTokens.every((t) => t.state == TokenState.home);
 
@@ -80,7 +85,8 @@ class LocalGameController implements GameController {
     if (captured) {
       action = GameAction.capture;
     } else {
-      final currentPlayer = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+      final currentPlayer =
+          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
 
       final token = currentPlayer.tokens.firstWhere((t) => t.id == tokenId);
 
@@ -96,7 +102,8 @@ class LocalGameController implements GameController {
 
   @override
   Future<void> executeMove(int tokenId) async {
-    final player = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    final player =
+        _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
     if (!_state.isDiceRolled || token.slot != _state.currentTurn) return;

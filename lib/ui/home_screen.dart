@@ -69,13 +69,16 @@ class HomeScreen extends ConsumerWidget {
               TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const AboutScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const AboutScreen()),
                   );
                 },
                 icon: const Icon(Icons.info_outline, color: Colors.white70),
                 label: const Text(
                   'About & Fairness',
-                  style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
+                  style: TextStyle(
+                      color: Colors.white70,
+                      decoration: TextDecoration.underline),
                 ),
               ),
             ],
@@ -86,7 +89,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildMenuButton(BuildContext context, WidgetRef ref,
-      {required String title, required IconData icon, required List<Color> colors, required int numPlayers}) {
+      {required String title,
+      required IconData icon,
+      required List<Color> colors,
+      required int numPlayers}) {
     return InkWell(
       onTap: () => _showPlayerNameSetupDialog(context, ref, numPlayers),
       borderRadius: BorderRadius.circular(20),
@@ -126,19 +132,26 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _showPlayerNameSetupDialog(BuildContext context, WidgetRef ref, int numPlayers) {
+  void _showPlayerNameSetupDialog(
+      BuildContext context, WidgetRef ref, int numPlayers) {
     List<PlayerSlot> activeSlots;
     if (numPlayers == 2) {
       activeSlots = [PlayerSlot.slot4, PlayerSlot.slot2];
     } else if (numPlayers == 3) {
       activeSlots = [PlayerSlot.slot4, PlayerSlot.slot2, PlayerSlot.slot1];
     } else {
-      activeSlots = [PlayerSlot.slot4, PlayerSlot.slot3, PlayerSlot.slot2, PlayerSlot.slot1];
+      activeSlots = [
+        PlayerSlot.slot4,
+        PlayerSlot.slot3,
+        PlayerSlot.slot2,
+        PlayerSlot.slot1
+      ];
     }
 
     final controllers = <PlayerSlot, TextEditingController>{};
     for (int i = 0; i < activeSlots.length; i++) {
-      controllers[activeSlots[i]] = TextEditingController(text: "Player ${i + 1}");
+      controllers[activeSlots[i]] =
+          TextEditingController(text: "Player ${i + 1}");
     }
 
     showDialog(
@@ -147,7 +160,8 @@ class HomeScreen extends ConsumerWidget {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A3D),
-          title: const Text('Enter Player Names', style: TextStyle(color: Colors.white)),
+          title: const Text('Enter Player Names',
+              style: TextStyle(color: Colors.white)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -176,8 +190,12 @@ class HomeScreen extends ConsumerWidget {
                     decoration: InputDecoration(
                       labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
                       labelStyle: TextStyle(color: displayColor),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: displayColor.withOpacity(0.5))),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: displayColor, width: 2)),
+                      enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: displayColor.withOpacity(0.5))),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: displayColor, width: 2)),
                       prefixIcon: Icon(Icons.person, color: displayColor),
                     ),
                   ),
@@ -188,16 +206,19 @@ class HomeScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
               onPressed: () async {
                 Map<PlayerSlot, String> config = {};
 
                 for (var slot in activeSlots) {
-                  config[slot] =
-                      controllers[slot]!.text.trim().isEmpty ? "Player ${activeSlots.indexOf(slot) + 1}" : controllers[slot]!.text.trim();
+                  config[slot] = controllers[slot]!.text.trim().isEmpty
+                      ? "Player ${activeSlots.indexOf(slot) + 1}"
+                      : controllers[slot]!.text.trim();
                 }
 
                 await audioService.playStart(); // ✅ FIX 3
@@ -219,7 +240,8 @@ class HomeScreen extends ConsumerWidget {
               },
               child: const Text(
                 'Start Game',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             )
           ],

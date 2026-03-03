@@ -1,4 +1,5 @@
 enum PlayerSlot { slot1, slot2, slot3, slot4 }
+
 enum TokenState { home, board, homeStretch, finished }
 
 class Token {
@@ -36,10 +37,8 @@ class Token {
   factory Token.fromJson(Map<String, dynamic> json) {
     return Token(
       id: json["id"],
-      slot: PlayerSlot.values
-          .firstWhere((e) => e.name == json["slot"]),
-      state:
-          TokenState.values.firstWhere((e) => e.name == json["state"]),
+      slot: PlayerSlot.values.firstWhere((e) => e.name == json["slot"]),
+      state: TokenState.values.firstWhere((e) => e.name == json["state"]),
       position: json["position"],
     );
   }

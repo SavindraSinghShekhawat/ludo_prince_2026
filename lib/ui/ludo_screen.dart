@@ -32,7 +32,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
     );
   }
 
-Widget _buildGame(BuildContext context, GameState gameState) {
+  Widget _buildGame(BuildContext context, GameState gameState) {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E2C),
       appBar: AppBar(
@@ -161,7 +161,6 @@ Widget _buildGame(BuildContext context, GameState gameState) {
         ),
       ),
     );
- 
   }
 
   Widget _buildTopPanels(GameState state) {
@@ -170,7 +169,10 @@ Widget _buildGame(BuildContext context, GameState gameState) {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot1)) _buildPlayerPanel(PlayerSlot.slot1, state) else const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot1))
+            _buildPlayerPanel(PlayerSlot.slot1, state)
+          else
+            const Expanded(child: SizedBox()),
           if (state.players.any((p) => p.slot == PlayerSlot.slot2))
             _buildPlayerPanel(PlayerSlot.slot2, state)
           else
@@ -302,12 +304,17 @@ Widget _buildGame(BuildContext context, GameState gameState) {
 
     return Expanded(
       child: Align(
-        alignment: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3 ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3
+            ? Alignment.centerRight
+            : Alignment.centerLeft,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3 ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
             children: [
               panelContent,
               Transform.translate(

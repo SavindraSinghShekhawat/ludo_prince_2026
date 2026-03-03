@@ -11,7 +11,8 @@ class DiceWidget extends ConsumerStatefulWidget {
   ConsumerState<DiceWidget> createState() => _DiceWidgetState();
 }
 
-class _DiceWidgetState extends ConsumerState<DiceWidget> with SingleTickerProviderStateMixin {
+class _DiceWidgetState extends ConsumerState<DiceWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   int _animatingValue = 1;
   bool _isAnimating = false;
@@ -19,7 +20,8 @@ class _DiceWidgetState extends ConsumerState<DiceWidget> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
     _controller.addListener(() {
       if (_controller.isAnimating) {
         setState(() {

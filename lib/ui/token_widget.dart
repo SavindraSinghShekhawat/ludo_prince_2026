@@ -14,7 +14,8 @@ class TokenWidget extends ConsumerWidget {
   bool _isMoveValid(Token t, GameState state) {
     if (t.state == TokenState.home) return state.diceValue == 6;
     if (t.state == TokenState.finished) return false;
-    if (t.state == TokenState.homeStretch) return t.position + state.diceValue <= 57;
+    if (t.state == TokenState.homeStretch)
+      return t.position + state.diceValue <= 57;
     return true;
   }
 
@@ -24,14 +25,16 @@ class TokenWidget extends ConsumerWidget {
     final gameState = asyncState.value;
     if (gameState == null) return const SizedBox();
     final isTurn = gameState.currentTurn == token.slot;
-    final isMovable = isTurn && gameState.isDiceRolled && _isMoveValid(token, gameState);
+    final isMovable =
+        isTurn && gameState.isDiceRolled && _isMoveValid(token, gameState);
 
     Offset gridPos = BoardPath.getTokenOffset(token);
 
     // Tokens in base should be spread out within the 6x6 base square
     // Tokens on the path or home stretch must be exactly centered in a 1x1 cell
 
-    double tokenSize = cellSize * 0.7; // Make token slightly smaller than cell for padding
+    double tokenSize =
+        cellSize * 0.7; // Make token slightly smaller than cell for padding
     double offsetXY = (cellSize - tokenSize) / 2;
 
     // Handle stacking multiple tokens on the same spot
@@ -42,8 +45,10 @@ class TokenWidget extends ConsumerWidget {
       List<Token> overlappingTokens = [];
 
       if (token.state == TokenState.board) {
-        int myAbsPos = BoardPath.getAbsolutePosition(token.slot, token.position);
-        overlappingTokens = gameState.players.expand((p) => p.tokens).where((t) {
+        int myAbsPos =
+            BoardPath.getAbsolutePosition(token.slot, token.position);
+        overlappingTokens =
+            gameState.players.expand((p) => p.tokens).where((t) {
           if (t.state != TokenState.board) return false;
           return BoardPath.getAbsolutePosition(t.slot, t.position) == myAbsPos;
         }).toList();
@@ -52,12 +57,14 @@ class TokenWidget extends ConsumerWidget {
         overlappingTokens = gameState.players
             .firstWhere((p) => p.slot == token.slot)
             .tokens
-            .where((t) => t.state == token.state && t.position == token.position)
+            .where(
+                (t) => t.state == token.state && t.position == token.position)
             .toList();
       }
 
       if (overlappingTokens.length > 1) {
-        int index = overlappingTokens.indexWhere((t) => t.slot == token.slot && t.id == token.id);
+        int index = overlappingTokens
+            .indexWhere((t) => t.slot == token.slot && t.id == token.id);
         double spread = tokenSize * 0.3; // 30% shift
 
         // Arrange up to 4 tokens in a small square, and wrap if there's more (though rare in small grid)
@@ -86,10 +93,14 @@ class TokenWidget extends ConsumerWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: _getColor(token.slot),
-            border: Border.all(color: isMovable ? Colors.white : Colors.white60, width: isMovable ? 3 : 1.5),
+            border: Border.all(
+                color: isMovable ? Colors.white : Colors.white60,
+                width: isMovable ? 3 : 1.5),
             boxShadow: [
               BoxShadow(
-                color: isMovable ? _getColor(token.slot).withOpacity(0.8) : Colors.black.withOpacity(0.4),
+                color: isMovable
+                    ? _getColor(token.slot).withOpacity(0.8)
+                    : Colors.black.withOpacity(0.4),
                 blurRadius: isMovable ? 8 : 4,
                 spreadRadius: isMovable ? 2 : 0,
                 offset: const Offset(0, 2),

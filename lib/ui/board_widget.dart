@@ -20,10 +20,14 @@ class BoardWidget extends StatelessWidget {
             children: [
               // Draw Base Areas
               // Standard layout: Slot1(top-left), Slot2(top-right), Slot3(bottom-right), Slot4(bottom-left)
-              _buildBaseArea(0, 0, Colors.redAccent, cellSize, PlayerSlot.slot1),
-              _buildBaseArea(9, 0, Colors.greenAccent.shade700, cellSize, PlayerSlot.slot2),
-              _buildBaseArea(9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot3),
-              _buildBaseArea(0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot4),
+              _buildBaseArea(
+                  0, 0, Colors.redAccent, cellSize, PlayerSlot.slot1),
+              _buildBaseArea(9, 0, Colors.greenAccent.shade700, cellSize,
+                  PlayerSlot.slot2),
+              _buildBaseArea(
+                  9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot3),
+              _buildBaseArea(
+                  0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot4),
 
               // Draw Center Home
               Positioned(
@@ -41,17 +45,17 @@ class BoardWidget extends StatelessWidget {
               for (int col = 6; col <= 8; col++)
                 for (int row = 0; row < 6; row++)
                   _buildCell(col, row, cellSize, _getCellColor(col, row)),
-                  
+
               // Bottom path (vertical blue/yellow strip)
               for (int col = 6; col <= 8; col++)
                 for (int row = 9; row < 15; row++)
                   _buildCell(col, row, cellSize, _getCellColor(col, row)),
-                  
+
               // Left path (horizontal red/blue strip)
               for (int row = 6; row <= 8; row++)
                 for (int col = 0; col < 6; col++)
                   _buildCell(col, row, cellSize, _getCellColor(col, row)),
-                  
+
               // Right path (horizontal green/yellow strip)
               for (int row = 6; row <= 8; row++)
                 for (int col = 9; col < 15; col++)
@@ -63,7 +67,8 @@ class BoardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBaseArea(int col, int row, Color color, double cellSize, PlayerSlot pSlot) {
+  Widget _buildBaseArea(
+      int col, int row, Color color, double cellSize, PlayerSlot pSlot) {
     return Positioned(
       left: col * cellSize,
       top: row * cellSize,
@@ -100,7 +105,8 @@ class BoardWidget extends StatelessWidget {
         (col == 13 && row == 8) || // index 26 (Yellow start)
         (col == 8 && row == 12) || // index 34 (Blue star)
         (col == 6 && row == 13) || // index 39 (Blue start)
-        (col == 2 && row == 8)) { // index 47 (Red star)
+        (col == 2 && row == 8)) {
+      // index 47 (Red star)
       isStar = true;
     }
 
@@ -114,8 +120,9 @@ class BoardWidget extends StatelessWidget {
           color: color,
           border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
         ),
-        child: isStar 
-            ? Icon(Icons.star_rounded, color: Colors.black12, size: cellSize * 0.8)
+        child: isStar
+            ? Icon(Icons.star_rounded,
+                color: Colors.black12, size: cellSize * 0.8)
             : null,
       ),
     );
@@ -123,17 +130,22 @@ class BoardWidget extends StatelessWidget {
 
   Color _getCellColor(int col, int row) {
     // Red home stretch
-    if (row == 7 && col >= 1 && col <= 5) return Colors.redAccent.withOpacity(0.5);
+    if (row == 7 && col >= 1 && col <= 5)
+      return Colors.redAccent.withOpacity(0.5);
     // Green home stretch
-    if (col == 7 && row >= 1 && row <= 5) return Colors.greenAccent.shade700.withOpacity(0.5);
+    if (col == 7 && row >= 1 && row <= 5)
+      return Colors.greenAccent.shade700.withOpacity(0.5);
     // Yellow home stretch
-    if (row == 7 && col >= 9 && col <= 13) return Colors.amber.shade600.withOpacity(0.5);
+    if (row == 7 && col >= 9 && col <= 13)
+      return Colors.amber.shade600.withOpacity(0.5);
     // Blue home stretch
-    if (col == 7 && row >= 9 && row <= 13) return Colors.blueAccent.withOpacity(0.5);
+    if (col == 7 && row >= 9 && row <= 13)
+      return Colors.blueAccent.withOpacity(0.5);
 
     // Starting positions
     if (col == 1 && row == 6) return Colors.redAccent.withOpacity(0.8);
-    if (col == 8 && row == 1) return Colors.greenAccent.shade700.withOpacity(0.8);
+    if (col == 8 && row == 1)
+      return Colors.greenAccent.shade700.withOpacity(0.8);
     if (col == 13 && row == 8) return Colors.amber.shade600.withOpacity(0.8);
     if (col == 6 && row == 13) return Colors.blueAccent.withOpacity(0.8);
 

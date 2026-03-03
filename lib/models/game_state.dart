@@ -72,14 +72,19 @@ class GameState {
   factory GameState.fromJson(Map<String, dynamic> json) {
     return GameState(
       gameId: json["gameId"],
-      players: (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
-      turnOrder: (json["turnOrder"] as List).map((e) => PlayerSlot.values.firstWhere((p) => p.name == e)).toList(),
-      currentTurn: PlayerSlot.values.firstWhere((e) => e.name == json["currentTurn"]),
+      players:
+          (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
+      turnOrder: (json["turnOrder"] as List)
+          .map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
+          .toList(),
+      currentTurn:
+          PlayerSlot.values.firstWhere((e) => e.name == json["currentTurn"]),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       consecutiveSixes: json["consecutiveSixes"],
       message: json["message"],
-      lastAction: GameAction.values.firstWhere((e) => e.name == json["lastAction"]),
+      lastAction:
+          GameAction.values.firstWhere((e) => e.name == json["lastAction"]),
     );
   }
 }

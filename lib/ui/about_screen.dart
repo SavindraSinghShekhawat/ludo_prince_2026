@@ -8,7 +8,8 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E2C),
       appBar: AppBar(
-        title: const Text('About Ludo Prince', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text('About Ludo Prince',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -27,7 +28,8 @@ class AboutScreen extends StatelessWidget {
                     color: Colors.amber.shade400.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.shield, size: 80, color: Colors.amber.shade400),
+                  child: Icon(Icons.shield,
+                      size: 80, color: Colors.amber.shade400),
                 ),
               ),
               const SizedBox(height: 30),
@@ -42,7 +44,8 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 16),
               const Text(
                 "In recent years, many players have reported fairness issues with popular digital Ludo applications. Claims of biased dice rolls, rigged algorithms to stimulate in-app purchases, and an unfair advantage given to certain players have ruined the fun of this classic game.",
-                style: TextStyle(fontSize: 16, color: Colors.white70, height: 1.6),
+                style:
+                    TextStyle(fontSize: 16, color: Colors.white70, height: 1.6),
               ),
               const SizedBox(height: 24),
               const Text(
@@ -107,7 +110,8 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 description,
-                style: const TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
+                style: const TextStyle(
+                    fontSize: 14, color: Colors.white70, height: 1.5),
               ),
             ],
           ),

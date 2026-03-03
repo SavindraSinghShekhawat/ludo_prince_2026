@@ -30,12 +30,9 @@ class Player {
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
-      slot: PlayerSlot.values
-          .firstWhere((e) => e.name == json["slot"]),
+      slot: PlayerSlot.values.firstWhere((e) => e.name == json["slot"]),
       name: json["name"],
-      tokens: (json["tokens"] as List)
-          .map((e) => Token.fromJson(e))
-          .toList(),
+      tokens: (json["tokens"] as List).map((e) => Token.fromJson(e)).toList(),
     );
   }
 }

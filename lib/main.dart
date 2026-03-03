@@ -7,7 +7,7 @@ import 'services/audio_service.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   audioService.playBGM(); // Start background music on app launch
-  
+
   runApp(
     const ProviderScope(
       child: LudoPrinceApp(),
@@ -22,7 +22,8 @@ class LudoPrinceApp extends StatefulWidget {
   State<LudoPrinceApp> createState() => _LudoPrinceAppState();
 }
 
-class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserver {
+class _LudoPrinceAppState extends State<LudoPrinceApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -37,7 +38,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive) {
       audioService.pauseBGM();
     } else if (state == AppLifecycleState.resumed) {
       audioService.resumeBGM();

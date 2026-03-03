@@ -18,7 +18,8 @@ class GameEngine {
 
     final player = _getPlayer(state, state.currentTurn);
 
-    final validTokens = player.tokens.where((t) => isValidMove(t, diceValue)).toList();
+    final validTokens =
+        player.tokens.where((t) => isValidMove(t, diceValue)).toList();
 
     if (validTokens.isEmpty) {
       return _nextTurn(
@@ -115,8 +116,11 @@ class GameEngine {
 
     bool captured = false;
 
-    if (allowCapture && updatedToken.state == TokenState.board && !BoardPath.isSafeSpot(updatedToken.position)) {
-      int absPos = BoardPath.getAbsolutePosition(updatedToken.slot, updatedToken.position);
+    if (allowCapture &&
+        updatedToken.state == TokenState.board &&
+        !BoardPath.isSafeSpot(updatedToken.position)) {
+      int absPos = BoardPath.getAbsolutePosition(
+          updatedToken.slot, updatedToken.position);
 
       players = players.map((p) {
         if (p.slot == updatedToken.slot) return p;

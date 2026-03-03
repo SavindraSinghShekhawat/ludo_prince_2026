@@ -15,27 +15,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _onboardingData = [
     {
       "title": "Welcome to Ludo Prince",
-      "description": "A beautifully crafted, modern take on the classic Ludo board game. Play with friends in vibrant digital arenas.",
+      "description":
+          "A beautifully crafted, modern take on the classic Ludo board game. Play with friends in vibrant digital arenas.",
       "icon": "casino"
     },
     {
       "title": "100% Fair & Certified RNG",
-      "description": "Tired of rigged dice? Ludo Prince uses true Random Number Generation. No algorithms to favor losing players. Pure luck and strategy.",
+      "description":
+          "Tired of rigged dice? Ludo Prince uses true Random Number Generation. No algorithms to favor losing players. Pure luck and strategy.",
       "icon": "gavel"
     },
     {
       "title": "Forever Free from Clutter",
-      "description": "No coins, no manipulative micro-transactions, and no hidden biases. Play pure Ludo the way it was meant to be played.",
+      "description":
+          "No coins, no manipulative micro-transactions, and no hidden biases. Play pure Ludo the way it was meant to be played.",
       "icon": "workspace_premium"
     },
   ];
 
   IconData _getIcon(String iconName) {
     switch (iconName) {
-      case 'casino': return Icons.casino;
-      case 'gavel': return Icons.gavel;
-      case 'workspace_premium': return Icons.workspace_premium;
-      default: return Icons.star;
+      case 'casino':
+        return Icons.casino;
+      case 'gavel':
+        return Icons.gavel;
+      case 'workspace_premium':
+        return Icons.workspace_premium;
+      default:
+        return Icons.star;
     }
   }
 
@@ -101,7 +108,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 40),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -116,7 +124,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     if (_currentPage == _onboardingData.length - 1) {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const HomeScreen()),
                       );
                     } else {
                       _pageController.nextPage(
@@ -126,7 +135,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     }
                   },
                   child: Text(
-                    _currentPage == _onboardingData.length - 1 ? "Start Playing" : "Continue",
+                    _currentPage == _onboardingData.length - 1
+                        ? "Start Playing"
+                        : "Continue",
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
