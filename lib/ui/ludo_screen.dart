@@ -8,6 +8,7 @@ import 'board_widget.dart';
 import 'token_widget.dart';
 import 'dice_widget.dart';
 import 'home_screen.dart';
+import 'rules_dialog.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
   const LudoScreen({super.key});
@@ -90,6 +91,16 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const RulesDialog(),
+              );
+            },
+            tooltip: 'Game Rules',
+          ),
           Consumer(
             builder: (context, ref, child) {
               final audio = ref.watch(audioProvider);
