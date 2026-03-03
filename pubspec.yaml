@@ -52,6 +52,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   # dart run rename_app:main all="Ludo Prince"
   rename_app: ^1.6.5
+  change_app_package_name: ^1.5.0
 
 
 flutter_launcher_icons:

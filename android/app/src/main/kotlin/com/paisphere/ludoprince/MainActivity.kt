@@ -1,4 +1,4 @@
-package com.example.ludo_prince_2026
+package com.paisphere.ludoprince
 
 import io.flutter.embedding.android.FlutterActivity
 
