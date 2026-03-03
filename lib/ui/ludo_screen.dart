@@ -280,10 +280,15 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
     );
 
     Widget diceBox = isTurn
-        ? const SizedBox(width: 50, height: 50, child: DiceWidget())
+        ? SizedBox(
+            width: 50,
+            height: 50,
+            child: Container(
+                padding: const EdgeInsets.all(2), child: const DiceWidget()))
         : Container(
             width: 50,
             height: 50,
+            padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: Colors.white12,
               borderRadius: BorderRadius.circular(12),
