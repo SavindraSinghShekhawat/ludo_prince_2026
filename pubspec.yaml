@@ -50,12 +50,16 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.4
+  # dart run rename_app:main all="Ludo Prince"
+  rename_app: ^1.6.5
 
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
+  adaptive_icon_foreground: null
+  remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
