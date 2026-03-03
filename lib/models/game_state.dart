@@ -13,8 +13,8 @@ enum GameAction {
 class GameState {
   final String gameId;
   final List<Player> players;
-  final List<PlayerColor> turnOrder;
-  final PlayerColor currentTurn;
+  final List<PlayerSlot> turnOrder;
+  final PlayerSlot currentTurn;
   final int diceValue;
   final bool isDiceRolled;
   final int consecutiveSixes;
@@ -36,8 +36,8 @@ class GameState {
   GameState copyWith({
     String? gameId,
     List<Player>? players,
-    List<PlayerColor>? turnOrder,
-    PlayerColor? currentTurn,
+    List<PlayerSlot>? turnOrder,
+    PlayerSlot? currentTurn,
     int? diceValue,
     bool? isDiceRolled,
     int? consecutiveSixes,
@@ -73,8 +73,8 @@ class GameState {
     return GameState(
       gameId: json["gameId"],
       players: (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
-      turnOrder: (json["turnOrder"] as List).map((e) => PlayerColor.values.firstWhere((p) => p.name == e)).toList(),
-      currentTurn: PlayerColor.values.firstWhere((e) => e.name == json["currentTurn"]),
+      turnOrder: (json["turnOrder"] as List).map((e) => PlayerSlot.values.firstWhere((p) => p.name == e)).toList(),
+      currentTurn: PlayerSlot.values.firstWhere((e) => e.name == json["currentTurn"]),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       consecutiveSixes: json["consecutiveSixes"],

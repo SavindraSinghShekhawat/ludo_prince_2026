@@ -42,7 +42,7 @@ class GameEngine {
 
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
-    if (token.color != state.currentTurn) {
+    if (token.slot != state.currentTurn) {
       return state; // ❗ prevent illegal multiplayer move
     }
 
@@ -116,16 +116,16 @@ class GameEngine {
     bool captured = false;
 
     if (allowCapture && updatedToken.state == TokenState.board && !BoardPath.isSafeSpot(updatedToken.position)) {
-      int absPos = BoardPath.getAbsolutePosition(updatedToken.color, updatedToken.position);
+      int absPos = BoardPath.getAbsolutePosition(updatedToken.slot, updatedToken.position);
 
       players = players.map((p) {
-        if (p.color == updatedToken.color) return p;
+        if (p.slot == updatedToken.slot) return p;
 
         return p.copyWith(
           tokens: p.tokens.map((t) {
             if (t.state != TokenState.board) return t;
 
-            int oppAbs = BoardPath.getAbsolutePosition(t.color, t.position);
+            int oppAbs = BoardPath.getAbsolutePosition(t.slot, t.position);
 
             if (oppAbs == absPos) {
               captured = true;
@@ -157,13 +157,13 @@ class GameEngine {
     );
   }
 
-  Player _getPlayer(GameState state, PlayerColor color) {
-    return state.players.firstWhere((p) => p.color == color);
+  Player _getPlayer(GameState state, PlayerSlot slot) {
+    return state.players.firstWhere((p) => p.slot == slot);
   }
 
   List<Player> _replaceToken(List<Player> players, Token updated) {
     return players.map((p) {
-      if (p.color != updated.color) return p;
+      if (p.slot != updated.slot) return p;
 
       return p.copyWith(
         tokens: p.tokens.map((t) {

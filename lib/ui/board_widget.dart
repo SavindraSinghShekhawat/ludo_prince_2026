@@ -19,11 +19,11 @@ class BoardWidget extends StatelessWidget {
           child: Stack(
             children: [
               // Draw Base Areas
-              // Standard layout: Red(top-left), Green(top-right), Yellow(bottom-right), Blue(bottom-left)
-              _buildBaseArea(0, 0, Colors.redAccent, cellSize, PlayerColor.red),
-              _buildBaseArea(9, 0, Colors.greenAccent.shade700, cellSize, PlayerColor.green),
-              _buildBaseArea(9, 9, Colors.amber.shade600, cellSize, PlayerColor.yellow),
-              _buildBaseArea(0, 9, Colors.blueAccent, cellSize, PlayerColor.blue),
+              // Standard layout: Slot1(top-left), Slot2(top-right), Slot3(bottom-right), Slot4(bottom-left)
+              _buildBaseArea(0, 0, Colors.redAccent, cellSize, PlayerSlot.slot1),
+              _buildBaseArea(9, 0, Colors.greenAccent.shade700, cellSize, PlayerSlot.slot2),
+              _buildBaseArea(9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot3),
+              _buildBaseArea(0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot4),
 
               // Draw Center Home
               Positioned(
@@ -63,7 +63,7 @@ class BoardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBaseArea(int col, int row, Color color, double cellSize, PlayerColor pColor) {
+  Widget _buildBaseArea(int col, int row, Color color, double cellSize, PlayerSlot pSlot) {
     return Positioned(
       left: col * cellSize,
       top: row * cellSize,

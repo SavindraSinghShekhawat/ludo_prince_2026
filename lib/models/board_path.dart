@@ -8,14 +8,14 @@ class BoardPath {
     return safeRelativeSpots.contains(relativePosition);
   }
 
-  static int getAbsolutePosition(PlayerColor color, int relativePosition) {
+  static int getAbsolutePosition(PlayerSlot slot, int relativePosition) {
     if (relativePosition > 51) return -1;
     int startAbsolute;
-    switch (color) {
-      case PlayerColor.red: startAbsolute = 0; break; // Starts at bottom-left path of the left arm
-      case PlayerColor.green: startAbsolute = 13; break; // Starts at top-left path of the top arm
-      case PlayerColor.yellow: startAbsolute = 26; break; // Starts at top-right path of the right arm
-      case PlayerColor.blue: startAbsolute = 39; break; // Starts at bottom-right path of the bottom arm
+    switch (slot) {
+      case PlayerSlot.slot1: startAbsolute = 0; break; // Starts at bottom-left path of the left arm
+      case PlayerSlot.slot2: startAbsolute = 13; break; // Starts at top-left path of the top arm
+      case PlayerSlot.slot3: startAbsolute = 26; break; // Starts at top-right path of the right arm
+      case PlayerSlot.slot4: startAbsolute = 39; break; // Starts at bottom-right path of the bottom arm
     }
     return (startAbsolute + relativePosition) % 52;
   }
@@ -49,30 +49,30 @@ class BoardPath {
     const Offset(0, 7), const Offset(0, 6)
   ];
 
-  static Offset getHomeStretchCoordinate(PlayerColor color, int relativePosition) {
+  static Offset getHomeStretchCoordinate(PlayerSlot slot, int relativePosition) {
     // relativePosition 52-56 are home stretch, 57 is center.
     int step = relativePosition - 51; // 1 to 6
     if (step == 6) { return const Offset(7, 7); } // Center
 
-    switch (color) {
-      case PlayerColor.red: return Offset(step.toDouble(), 7); // (1,7) to (5,7)
-      case PlayerColor.green: return Offset(7, step.toDouble()); // (7,1) to (7,5)
-      case PlayerColor.yellow: return Offset(14 - step.toDouble(), 7); // (13,7) to (9,7)
-      case PlayerColor.blue: return Offset(7, 14 - step.toDouble()); // (7,13) to (7,9)
+    switch (slot) {
+      case PlayerSlot.slot1: return Offset(step.toDouble(), 7); // (1,7) to (5,7)
+      case PlayerSlot.slot2: return Offset(7, step.toDouble()); // (7,1) to (7,5)
+      case PlayerSlot.slot3: return Offset(14 - step.toDouble(), 7); // (13,7) to (9,7)
+      case PlayerSlot.slot4: return Offset(7, 14 - step.toDouble()); // (7,13) to (7,9)
     }
   }
 
-  static Offset getBaseCoordinate(PlayerColor color, int tokenId) {
+  static Offset getBaseCoordinate(PlayerSlot slot, int tokenId) {
     // The exact token positions should sit aesthetically inside the base square.
     // The white inner box spans 4 cells. Its center aligns with specific coordinates.
     // By giving these exactly mathematically spaced center coordinates, the TokenWidget 
     // will center perfectly on these points.
     double bx, by;
-    switch (color) {
-      case PlayerColor.red: bx = 2.5; by = 2.5; break;
-      case PlayerColor.green: bx = 11.5; by = 2.5; break;
-      case PlayerColor.yellow: bx = 11.5; by = 11.5; break;
-      case PlayerColor.blue: bx = 2.5; by = 11.5; break;
+    switch (slot) {
+      case PlayerSlot.slot1: bx = 2.5; by = 2.5; break;
+      case PlayerSlot.slot2: bx = 11.5; by = 2.5; break;
+      case PlayerSlot.slot3: bx = 11.5; by = 11.5; break;
+      case PlayerSlot.slot4: bx = 2.5; by = 11.5; break;
     }
     
     // Spread tokens perfectly into the 4 quadrants of the white box
@@ -85,14 +85,14 @@ class BoardPath {
 
   static Offset getTokenOffset(Token token) {
     if (token.state == TokenState.home) {
-      return getBaseCoordinate(token.color, token.id);
+      return getBaseCoordinate(token.slot, token.id);
     }
     if (token.state == TokenState.board) {
-      int absPos = getAbsolutePosition(token.color, token.position);
+      int absPos = getAbsolutePosition(token.slot, token.position);
       return absolutePathCoordinates[absPos];
     }
     if (token.state == TokenState.homeStretch || token.state == TokenState.finished) {
-      return getHomeStretchCoordinate(token.color, token.position);
+      return getHomeStretchCoordinate(token.slot, token.position);
     }
     return const Offset(0, 0);
   }

@@ -170,9 +170,9 @@ Widget _buildGame(BuildContext context, GameState gameState) {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.color == PlayerColor.red)) _buildPlayerPanel(PlayerColor.red, state) else const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.color == PlayerColor.green))
-            _buildPlayerPanel(PlayerColor.green, state)
+          if (state.players.any((p) => p.slot == PlayerSlot.slot1)) _buildPlayerPanel(PlayerSlot.slot1, state) else const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot2))
+            _buildPlayerPanel(PlayerSlot.slot2, state)
           else
             const Expanded(child: SizedBox()),
         ],
@@ -186,12 +186,12 @@ Widget _buildGame(BuildContext context, GameState gameState) {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.color == PlayerColor.blue))
-            _buildPlayerPanel(PlayerColor.blue, state)
+          if (state.players.any((p) => p.slot == PlayerSlot.slot4))
+            _buildPlayerPanel(PlayerSlot.slot4, state)
           else
             const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.color == PlayerColor.yellow))
-            _buildPlayerPanel(PlayerColor.yellow, state)
+          if (state.players.any((p) => p.slot == PlayerSlot.slot3))
+            _buildPlayerPanel(PlayerSlot.slot3, state)
           else
             const Expanded(child: SizedBox()),
         ],
@@ -199,26 +199,26 @@ Widget _buildGame(BuildContext context, GameState gameState) {
     );
   }
 
-  Widget _buildPlayerPanel(PlayerColor color, GameState state) {
-    final isTurn = color == state.currentTurn;
+  Widget _buildPlayerPanel(PlayerSlot slot, GameState state) {
+    final isTurn = slot == state.currentTurn;
 
     Color displayColor;
-    switch (color) {
-      case PlayerColor.red:
+    switch (slot) {
+      case PlayerSlot.slot1:
         displayColor = Colors.redAccent;
         break;
-      case PlayerColor.green:
+      case PlayerSlot.slot2:
         displayColor = Colors.greenAccent.shade700;
         break;
-      case PlayerColor.yellow:
+      case PlayerSlot.slot3:
         displayColor = Colors.amber.shade600;
         break;
-      case PlayerColor.blue:
+      case PlayerSlot.slot4:
         displayColor = Colors.blueAccent;
         break;
     }
 
-    final playerName = state.players.firstWhere((p) => p.color == color).name;
+    final playerName = state.players.firstWhere((p) => p.slot == slot).name;
 
     Widget avatarBox = Container(
       width: 60,
@@ -294,7 +294,7 @@ Widget _buildGame(BuildContext context, GameState gameState) {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: color == PlayerColor.green || color == PlayerColor.yellow
+        children: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3
             ? [diceBox, const SizedBox(width: 8), avatarBox]
             : [avatarBox, const SizedBox(width: 8), diceBox],
       ),
@@ -302,17 +302,17 @@ Widget _buildGame(BuildContext context, GameState gameState) {
 
     return Expanded(
       child: Align(
-        alignment: color == PlayerColor.green || color == PlayerColor.yellow ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3 ? Alignment.centerRight : Alignment.centerLeft,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: color == PlayerColor.green || color == PlayerColor.yellow ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3 ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               panelContent,
               Transform.translate(
                 offset: Offset(
-                  color == PlayerColor.green || color == PlayerColor.yellow ? -5 : 5,
+                  slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3 ? -5 : 5,
                   -10,
                 ),
                 child: nameTag,

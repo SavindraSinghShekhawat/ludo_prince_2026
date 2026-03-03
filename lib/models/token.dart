@@ -1,15 +1,15 @@
-enum PlayerColor { red, green, yellow, blue }
+enum PlayerSlot { slot1, slot2, slot3, slot4 }
 enum TokenState { home, board, homeStretch, finished }
 
 class Token {
   final int id;
-  final PlayerColor color;
+  final PlayerSlot slot;
   final TokenState state;
   final int position;
 
   Token({
     required this.id,
-    required this.color,
+    required this.slot,
     this.state = TokenState.home,
     this.position = -1,
   });
@@ -20,7 +20,7 @@ class Token {
   }) {
     return Token(
       id: id,
-      color: color,
+      slot: slot,
       state: state ?? this.state,
       position: position ?? this.position,
     );
@@ -28,7 +28,7 @@ class Token {
 
   Map<String, dynamic> toJson() => {
         "id": id,
-        "color": color.name,
+        "slot": slot.name,
         "state": state.name,
         "position": position,
       };
@@ -36,8 +36,8 @@ class Token {
   factory Token.fromJson(Map<String, dynamic> json) {
     return Token(
       id: json["id"],
-      color: PlayerColor.values
-          .firstWhere((e) => e.name == json["color"]),
+      slot: PlayerSlot.values
+          .firstWhere((e) => e.name == json["slot"]),
       state:
           TokenState.values.firstWhere((e) => e.name == json["state"]),
       position: json["position"],

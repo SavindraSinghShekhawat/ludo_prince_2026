@@ -13,7 +13,7 @@ class LocalGameController implements GameController {
   final GameEngine _engine = GameEngine();
   late GameState _state;
 
-  LocalGameController(Map<PlayerColor, String> config) {
+  LocalGameController(Map<PlayerSlot, String> config) {
     _state = _createInitialState(config);
   }
 
@@ -23,19 +23,27 @@ class LocalGameController implements GameController {
     yield* _streamController.stream;
   }
 
-  // Multiplayer-ready roll
   @override
-  Future<void> rollDice({int? forcedValue}) async {
+  Future<void> sendRollIntent() async {
+    final dice = Random.secure().nextInt(6) + 1;
+    await executeRoll(dice);
+  }
+
+  @override
+  Future<void> sendMoveIntent(Token token) async {
+    await executeMove(token.id);
+  }
+
+  @override
+  Future<void> executeRoll(int value) async {
     if (_state.isDiceRolled) return;
 
-    final dice = forcedValue ?? (Random.secure().nextInt(6) + 1);
-
     await audioService.playRoll();
-    if (dice == 6) {
+    if (value == 6) {
       await audioService.playSix();
     }
 
-    _state = _engine.rollDice(_state, dice).copyWith(
+    _state = _engine.rollDice(_state, value).copyWith(
           lastAction: GameAction.roll,
         );
 
@@ -43,7 +51,7 @@ class LocalGameController implements GameController {
 
     // Auto move if only 1 valid token or all valid token at same place
     if (_state.isDiceRolled) {
-      final player = _state.players.firstWhere((p) => p.color == _state.currentTurn);
+      final player = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
 
       final validTokens = player.tokens.where((t) => _engine.isValidMove(t, _state.diceValue)).toList();
 
@@ -58,7 +66,7 @@ class LocalGameController implements GameController {
         // - All share same position AND not all in home
         if (validTokens.length == 1 || (allSamePosition && !allInHome)) {
           await Future.delayed(const Duration(milliseconds: 300));
-          await moveToken(validTokens.first);
+          await executeMove(validTokens.first.id);
         }
       }
     }
@@ -72,7 +80,7 @@ class LocalGameController implements GameController {
     if (captured) {
       action = GameAction.capture;
     } else {
-      final currentPlayer = _state.players.firstWhere((p) => p.color == _state.currentTurn);
+      final currentPlayer = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
 
       final token = currentPlayer.tokens.firstWhere((t) => t.id == tokenId);
 
@@ -87,8 +95,11 @@ class LocalGameController implements GameController {
   }
 
   @override
-  Future<void> moveToken(Token token) async {
-    if (!_state.isDiceRolled || token.color != _state.currentTurn) return;
+  Future<void> executeMove(int tokenId) async {
+    final player = _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    final token = player.tokens.firstWhere((t) => t.id == tokenId);
+
+    if (!_state.isDiceRolled || token.slot != _state.currentTurn) return;
 
     int steps = _state.diceValue;
     bool captured = false;
@@ -167,12 +178,12 @@ class LocalGameController implements GameController {
     await _streamController.close();
   }
 
-  GameState _createInitialState(Map<PlayerColor, String> config) {
+  GameState _createInitialState(Map<PlayerSlot, String> config) {
     List<Player> players = config.entries.map((e) {
       return Player(
-        color: e.key,
+        slot: e.key,
         name: e.value,
-        tokens: List.generate(4, (i) => Token(id: i, color: e.key)),
+        tokens: List.generate(4, (i) => Token(id: i, slot: e.key)),
       );
     }).toList();
 

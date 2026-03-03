@@ -4,9 +4,13 @@ import '../models/token.dart';
 abstract class GameController {
   Stream<GameState> watchGame();
 
-  Future<void> rollDice({int? forcedValue});
+  // 1. Intents (called by the UI when a user taps something)
+  Future<void> sendRollIntent();
+  Future<void> sendMoveIntent(Token token);
 
-  Future<void> moveToken(Token token);
+  // 2. Executions (called internally or by Firestore listeners)
+  Future<void> executeRoll(int value);
+  Future<void> executeMove(int tokenId);
 
   Future<void> dispose();
 }

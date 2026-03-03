@@ -10,18 +10,18 @@ GameState baseState() {
     gameId: "test",
     players: [
       Player(
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         name: "Red",
-        tokens: List.generate(4, (i) => Token(id: i, color: PlayerColor.red)),
+        tokens: List.generate(4, (i) => Token(id: i, slot: PlayerSlot.slot1)),
       ),
       Player(
-        color: PlayerColor.blue,
+        slot: PlayerSlot.slot4,
         name: "Blue",
-        tokens: List.generate(4, (i) => Token(id: i, color: PlayerColor.blue)),
+        tokens: List.generate(4, (i) => Token(id: i, slot: PlayerSlot.slot4)),
       ),
     ],
-    turnOrder: [PlayerColor.red, PlayerColor.blue],
-    currentTurn: PlayerColor.red,
+    turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
+    currentTurn: PlayerSlot.slot1,
   );
 }
 
@@ -60,7 +60,7 @@ void main() {
 
       final result = engine.rollDice(state, 2);
 
-      expect(result.currentTurn, PlayerColor.blue);
+      expect(result.currentTurn, PlayerSlot.slot4);
       expect(result.isDiceRolled, false);
     });
 
@@ -88,14 +88,14 @@ void main() {
 
       state = engine.rollDice(state, 6);
 
-      expect(state.currentTurn, PlayerColor.blue);
+      expect(state.currentTurn, PlayerSlot.slot4);
       expect(state.consecutiveSixes, 0);
     });
   });
 
   group("Move Validations", () {
     test("Home token only valid on 6", () {
-      final token = Token(id: 0, color: PlayerColor.red);
+      final token = Token(id: 0, slot: PlayerSlot.slot1);
 
       expect(engine.isValidMove(token, 6), true);
       expect(engine.isValidMove(token, 3), false);
@@ -104,7 +104,7 @@ void main() {
     test("Finished token cannot move", () {
       final token = Token(
         id: 0,
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         state: TokenState.finished,
         position: 57,
       );
@@ -115,7 +115,7 @@ void main() {
     test("Home stretch cannot overflow", () {
       final token = Token(
         id: 0,
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         state: TokenState.homeStretch,
         position: 56,
       );
@@ -128,14 +128,14 @@ void main() {
     test("Capture happens on same absolute position", () {
       final red = Token(
         id: 0,
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         state: TokenState.board,
         position: 1,
       );
 
       final blue = Token(
         id: 0,
-        color: PlayerColor.blue,
+        slot: PlayerSlot.slot4,
         state: TokenState.board,
         position: 14,
       );
@@ -143,11 +143,11 @@ void main() {
       final state = GameState(
         gameId: "x",
         players: [
-          Player(color: PlayerColor.red, name: "R", tokens: [red]),
-          Player(color: PlayerColor.blue, name: "B", tokens: [blue]),
+          Player(slot: PlayerSlot.slot1, name: "R", tokens: [red]),
+          Player(slot: PlayerSlot.slot4, name: "B", tokens: [blue]),
         ],
-        turnOrder: [PlayerColor.red, PlayerColor.blue],
-        currentTurn: PlayerColor.red,
+        turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
+        currentTurn: PlayerSlot.slot1,
       );
 
       bool captured = false;
@@ -166,14 +166,14 @@ void main() {
     test("No capture on safe spot", () {
       final red = Token(
         id: 0,
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         state: TokenState.board,
         position: 0,
       );
 
       final blue = Token(
         id: 0,
-        color: PlayerColor.blue,
+        slot: PlayerSlot.slot4,
         state: TokenState.board,
         position: 13,
       );
@@ -183,11 +183,11 @@ void main() {
       final state = GameState(
         gameId: "x",
         players: [
-          Player(color: PlayerColor.red, name: "R", tokens: [red]),
-          Player(color: PlayerColor.blue, name: "B", tokens: [blue]),
+          Player(slot: PlayerSlot.slot1, name: "R", tokens: [red]),
+          Player(slot: PlayerSlot.slot4, name: "B", tokens: [blue]),
         ],
-        turnOrder: [PlayerColor.red, PlayerColor.blue],
-        currentTurn: PlayerColor.red,
+        turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
+        currentTurn: PlayerSlot.slot1,
       );
 
       bool captured = false;
@@ -207,7 +207,7 @@ void main() {
     test("Board to homeStretch transition", () {
       final token = Token(
         id: 0,
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         state: TokenState.board,
         position: 51,
       );
@@ -221,7 +221,7 @@ void main() {
     test("HomeStretch to finished", () {
       final token = Token(
         id: 0,
-        color: PlayerColor.red,
+        slot: PlayerSlot.slot1,
         state: TokenState.homeStretch,
         position: 56,
       );
@@ -254,7 +254,7 @@ void main() {
 
       final result = engine.moveToken(state, 0);
 
-      expect(result.currentTurn, PlayerColor.red);
+      expect(result.currentTurn, PlayerSlot.slot1);
     });
 
     test("Normal move switches turn", () {
@@ -277,7 +277,7 @@ void main() {
 
       final result = engine.moveToken(state, 0);
 
-      expect(result.currentTurn, PlayerColor.blue);
+      expect(result.currentTurn, PlayerSlot.slot4);
     });
   });
 

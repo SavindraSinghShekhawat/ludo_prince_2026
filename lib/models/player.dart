@@ -1,12 +1,12 @@
 import 'package:ludo_prince/models/token.dart';
 
 class Player {
-  final PlayerColor color;
+  final PlayerSlot slot;
   final String name;
   final List<Token> tokens;
 
   Player({
-    required this.color,
+    required this.slot,
     required this.name,
     required this.tokens,
   });
@@ -16,22 +16,22 @@ class Player {
     List<Token>? tokens,
   }) {
     return Player(
-      color: color,
+      slot: slot,
       name: name ?? this.name,
       tokens: tokens ?? this.tokens,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "color": color.name,
+        "slot": slot.name,
         "name": name,
         "tokens": tokens.map((t) => t.toJson()).toList(),
       };
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
-      color: PlayerColor.values
-          .firstWhere((e) => e.name == json["color"]),
+      slot: PlayerSlot.values
+          .firstWhere((e) => e.name == json["slot"]),
       name: json["name"],
       tokens: (json["tokens"] as List)
           .map((e) => Token.fromJson(e))

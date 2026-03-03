@@ -127,18 +127,18 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showPlayerNameSetupDialog(BuildContext context, WidgetRef ref, int numPlayers) {
-    List<PlayerColor> activeColors;
+    List<PlayerSlot> activeSlots;
     if (numPlayers == 2) {
-      activeColors = [PlayerColor.blue, PlayerColor.green];
+      activeSlots = [PlayerSlot.slot4, PlayerSlot.slot2];
     } else if (numPlayers == 3) {
-      activeColors = [PlayerColor.blue, PlayerColor.green, PlayerColor.red];
+      activeSlots = [PlayerSlot.slot4, PlayerSlot.slot2, PlayerSlot.slot1];
     } else {
-      activeColors = [PlayerColor.blue, PlayerColor.yellow, PlayerColor.green, PlayerColor.red];
+      activeSlots = [PlayerSlot.slot4, PlayerSlot.slot3, PlayerSlot.slot2, PlayerSlot.slot1];
     }
 
-    final controllers = <PlayerColor, TextEditingController>{};
-    for (int i = 0; i < activeColors.length; i++) {
-      controllers[activeColors[i]] = TextEditingController(text: "Player ${i + 1}");
+    final controllers = <PlayerSlot, TextEditingController>{};
+    for (int i = 0; i < activeSlots.length; i++) {
+      controllers[activeSlots[i]] = TextEditingController(text: "Player ${i + 1}");
     }
 
     showDialog(
@@ -151,19 +151,19 @@ class HomeScreen extends ConsumerWidget {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: activeColors.map((color) {
+              children: activeSlots.map((slot) {
                 Color displayColor = Colors.white;
-                switch (color) {
-                  case PlayerColor.red:
+                switch (slot) {
+                  case PlayerSlot.slot1:
                     displayColor = Colors.redAccent;
                     break;
-                  case PlayerColor.green:
+                  case PlayerSlot.slot2:
                     displayColor = Colors.greenAccent.shade700;
                     break;
-                  case PlayerColor.yellow:
+                  case PlayerSlot.slot3:
                     displayColor = Colors.amber.shade600;
                     break;
-                  case PlayerColor.blue:
+                  case PlayerSlot.slot4:
                     displayColor = Colors.blueAccent;
                     break;
                 }
@@ -171,10 +171,10 @@ class HomeScreen extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: TextField(
-                    controller: controllers[color],
+                    controller: controllers[slot],
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      labelText: 'Player ${activeColors.indexOf(color) + 1}',
+                      labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
                       labelStyle: TextStyle(color: displayColor),
                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: displayColor.withOpacity(0.5))),
                       focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: displayColor, width: 2)),
@@ -193,11 +193,11 @@ class HomeScreen extends ConsumerWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
               onPressed: () async {
-                Map<PlayerColor, String> config = {};
+                Map<PlayerSlot, String> config = {};
 
-                for (var color in activeColors) {
-                  config[color] =
-                      controllers[color]!.text.trim().isEmpty ? "Player ${activeColors.indexOf(color) + 1}" : controllers[color]!.text.trim();
+                for (var slot in activeSlots) {
+                  config[slot] =
+                      controllers[slot]!.text.trim().isEmpty ? "Player ${activeSlots.indexOf(slot) + 1}" : controllers[slot]!.text.trim();
                 }
 
                 await audioService.playStart(); // ✅ FIX 3

@@ -50,7 +50,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget> with SingleTickerProvid
       setState(() {
         _isAnimating = false;
       });
-      ref.read(gameControllerProvider).rollDice();
+      ref.read(gameControllerProvider).sendRollIntent();
     });
   }
 
