@@ -9,6 +9,7 @@ import '../models/player.dart';
 import '../models/token.dart';
 import '../providers/game_provider.dart';
 import '../controllers/local_game_controller.dart';
+import '../services/audio_service.dart';
 import 'home_screen.dart';
 import 'ludo_screen.dart';
 
@@ -33,6 +34,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 5));
     _confettiController.play();
+    audioService.playVictory();
   }
 
   @override

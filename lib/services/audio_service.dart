@@ -16,6 +16,7 @@ class AudioService extends ChangeNotifier {
   final AudioPlayer _safePlayer = AudioPlayer();
   final AudioPlayer _startPlayer = AudioPlayer();
   final AudioPlayer _bgmPlayer = AudioPlayer();
+  final AudioPlayer _victoryPlayer = AudioPlayer();
 
   bool _initialized = false;
   bool _isBgmEnabled = true;
@@ -39,6 +40,7 @@ class AudioService extends ChangeNotifier {
       _homePlayer,
       _safePlayer,
       _startPlayer,
+      _victoryPlayer,
     ];
 
     for (final p in players) {
@@ -144,6 +146,12 @@ class AudioService extends ChangeNotifier {
     await init();
     if (!_isSfxEnabled) return;
     await _startPlayer.play(AssetSource('sounds/start.wav'));
+  }
+
+  Future<void> playVictory() async {
+    await init();
+    if (!_isSfxEnabled) return;
+    await _victoryPlayer.play(AssetSource('sounds/victory.wav'));
   }
 }
 

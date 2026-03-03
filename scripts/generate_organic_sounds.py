@@ -302,6 +302,28 @@ def generate_bgm_loop(sample_rate=44100):
         
     return samples
 
+def generate_victory_chime(sample_rate=44100):
+    # Triumphant fanfare/arpeggio (C4 -> G4 -> C5 -> E5 -> G5, C6)
+    notes = [
+        (261.63, 0.0),   # C4
+        (392.00, 0.15),  # G4
+        (523.25, 0.30),  # C5
+        (659.25, 0.45),  # E5
+        (783.99, 0.60),  # G5
+        (1046.50, 0.60)  # C6
+    ]
+    total_len = int(sample_rate * 3.0)
+    samples = [0] * total_len
+    
+    for freq, delay in notes:
+        # Longer ringing bells for victory
+        bell = generate_bell(freq, 2.4, sample_rate)
+        delay_samps = int(sample_rate * delay)
+        for i in range(len(bell)):
+            if i + delay_samps < total_len:
+                samples[i + delay_samps] += bell[i] * 1.2
+                
+    return samples
 
 out_dir = sys.argv[1]
 os.makedirs(out_dir, exist_ok=True)
@@ -316,3 +338,4 @@ write_wav(os.path.join(out_dir, 'safe.wav'), generate_safe_ding())
 write_wav(os.path.join(out_dir, 'start.wav'), generate_start_jingle())
 write_wav(os.path.join(out_dir, 'die.wav'), generate_die_thud())
 write_wav(os.path.join(out_dir, 'bgm.wav'), generate_bgm_loop())
+write_wav(os.path.join(out_dir, 'victory.wav'), generate_victory_chime())
