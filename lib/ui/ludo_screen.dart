@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
+import '../providers/audio_provider.dart';
 import '../models/game_state.dart';
 import '../models/token.dart';
 import 'board_widget.dart';
@@ -88,6 +89,33 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
             color: Colors.white,
           ),
         ),
+        actions: [
+          Consumer(
+            builder: (context, ref, child) {
+              final audio = ref.watch(audioProvider);
+              return Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
+                      color: audio.isBgmEnabled ? Colors.white : Colors.white54,
+                    ),
+                    onPressed: () => audio.toggleBGM(),
+                    tooltip: 'Toggle Background Music',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
+                      color: audio.isSfxEnabled ? Colors.white : Colors.white54,
+                    ),
+                    onPressed: () => audio.toggleSFX(),
+                    tooltip: 'Toggle Sound Effects',
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
