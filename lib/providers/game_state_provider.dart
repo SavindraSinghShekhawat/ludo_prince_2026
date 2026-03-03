@@ -10,7 +10,7 @@ class GameState {
   final PlayerColor currentTurn;
   final int diceValue;
   final bool isDiceRolled;
-  final int consecutiveSixes; // After 3 sixes, turn skips
+  final int consecutiveSixes;
   final String message;
 
   GameState({
@@ -46,23 +46,21 @@ class GameState {
 class GameStateNotifier extends Notifier<GameState> {
   @override
   GameState build() {
-    return _createInitialState(null); // Default 4 players
+    return GameState(
+      players: [],
+      currentTurn: PlayerColor.blue,
+    );
   }
 
   GameState _createInitialState(Map<PlayerColor, String>? playerConfig) {
-    if (playerConfig == null || playerConfig.isEmpty) {
-      playerConfig = {
-        PlayerColor.blue: "Player 1",
-        PlayerColor.yellow: "Player 2",
-        PlayerColor.green: "Player 3",
-        PlayerColor.red: "Player 4",
-      };
-    }
-    
+    playerConfig ??= {
+      PlayerColor.blue: "Player 1",
+      PlayerColor.yellow: "Player 2",
+      PlayerColor.green: "Player 3",
+      PlayerColor.red: "Player 4",
+    };
+
     List<Player> players = [];
-    PlayerColor startTurn = playerConfig.containsKey(PlayerColor.blue) 
-        ? PlayerColor.blue 
-        : playerConfig.keys.first;
 
     for (var entry in playerConfig.entries) {
       players.add(
@@ -70,58 +68,46 @@ class GameStateNotifier extends Notifier<GameState> {
           color: entry.key,
           name: entry.value,
           tokens: List.generate(4, (i) => Token(id: i, color: entry.key)),
-        )
+        ),
       );
     }
 
     return GameState(
       players: players,
-      currentTurn: startTurn,
+      currentTurn: playerConfig.keys.first,
     );
   }
 
-  void initializeGame({Map<PlayerColor, String>? playerConfig}) {
-    audioService.playStart();
+  Future<void> initializeGame({Map<PlayerColor, String>? playerConfig}) async {
+    await audioService.playStart();
     state = _createInitialState(playerConfig);
   }
 
-  void rollDice() {
+  Future<void> rollDice() async {
     if (state.isDiceRolled) return;
 
     final random = Random();
     final newDiceValue = random.nextInt(6) + 1;
-    
+
     int newConsecutiveSixes = state.consecutiveSixes;
+
     if (newDiceValue == 6) {
-      audioService.playSix();
+      await audioService.playRoll(); // Always roll first
+      await audioService.playSix(); // Then special six sound
       newConsecutiveSixes++;
     } else {
-      audioService.playRoll();
+      await audioService.playRoll();
       newConsecutiveSixes = 0;
     }
 
     if (newConsecutiveSixes == 3) {
-      // Rule: 3 consecutive sixes skips the turn
       _nextTurn("Rolled three 6s! Turn skipped.");
       return;
     }
 
-    // Check if player has any valid moves
     final currentPlayer = state.players.firstWhere((p) => p.color == state.currentTurn);
-    final validTokens = currentPlayer.tokens.where((token) => _isValidMove(token, newDiceValue)).toList();
 
-    if (validTokens.isEmpty) {
-      // Auto skip turn if no valid moves exist
-      state = state.copyWith(
-        diceValue: newDiceValue,
-        isDiceRolled: true,
-        consecutiveSixes: newConsecutiveSixes,
-      );
-      Future.delayed(const Duration(milliseconds: 400), () {
-        _nextTurn("No valid moves. Next turn.");
-      });
-      return;
-    }
+    final validTokens = currentPlayer.tokens.where((token) => _isValidMove(token, newDiceValue)).toList();
 
     state = state.copyWith(
       diceValue: newDiceValue,
@@ -130,11 +116,12 @@ class GameStateNotifier extends Notifier<GameState> {
       message: "${_getPlayerName(state.currentTurn)} rolled a $newDiceValue",
     );
 
-    // === AUTO-PLAY RULES ===
-    // We automatically play a token for the user ONLY if:
-    // Rule 1. There is EXACTLY 1 legally valid token that can move with this dice roll.
-    // Rule 2. There are multiple valid tokens that are identical (stacked on the same cell), AND they are NOT in the home base.
-    // This gives the player the satisfaction of manually picking a token to deploy from base on a 6.
+    if (validTokens.isEmpty) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        _nextTurn("No valid moves. Next turn.");
+      });
+      return;
+    }
 
     bool canAutoPlay = false;
     Token? tokenToAutoPlay;
@@ -142,11 +129,9 @@ class GameStateNotifier extends Notifier<GameState> {
     if (validTokens.length == 1) {
       canAutoPlay = true;
       tokenToAutoPlay = validTokens.first;
-    } else if (validTokens.length > 1) {
-      bool allIdentical = validTokens.every((t) => 
-        t.state == validTokens.first.state && 
-        t.position == validTokens.first.position
-      );
+    } else {
+      bool allIdentical = validTokens.every((t) => t.state == validTokens.first.state && t.position == validTokens.first.position);
+
       if (allIdentical && validTokens.first.state != TokenState.home) {
         canAutoPlay = true;
         tokenToAutoPlay = validTokens.first;
@@ -161,57 +146,59 @@ class GameStateNotifier extends Notifier<GameState> {
   }
 
   bool _isValidMove(Token token, int diceValue) {
-    if (token.state == TokenState.home) {
-      return diceValue == 6; // Needs a 6 to come out
-    }
-    if (token.state == TokenState.finished) {
-      return false;
-    }
+    if (token.state == TokenState.home) return diceValue == 6;
+    if (token.state == TokenState.finished) return false;
     if (token.state == TokenState.homeStretch) {
-      return token.position + diceValue <= 57; // Exact roll needed to finish
+      return token.position + diceValue <= 57;
     }
-    return true; // Can move on board
+    return true;
   }
 
   Future<void> moveToken(Token token) async {
     if (!state.isDiceRolled || token.color != state.currentTurn) return;
+
     if (!_isValidMove(token, state.diceValue)) return;
 
     int steps = state.diceValue;
-    
+
+    // 🔥 Home exit case
     if (token.state == TokenState.home && steps == 6) {
-      audioService.playMove(1);
+      await audioService.playMove(1);
+
       Token updatedToken = token.copyWith(state: TokenState.board, position: 0);
+
       _updateTokenOnly(updatedToken);
-      _checkCapture(updatedToken); // We don't need its return value here since extraTurn is true anyway
+
+      _checkCapture(updatedToken);
+
       _finalizeMove(extraTurn: true);
       return;
     }
 
-    Token currentToken = token;
+    // 🔥 Play dynamic move sound ONCE based on steps
+    await audioService.playMove(steps);
 
-    // Trigger the dynamic move sound once based on steps
-    audioService.playMove(steps);
+    Token currentToken = token;
 
     for (int i = 1; i <= steps; i++) {
       currentToken = _calculateNewTokenPosition(currentToken, 1);
-      
-      if (currentToken.state == TokenState.finished) {
-        audioService.playHome();
-      }
 
       _updateTokenOnly(currentToken);
+
       await Future.delayed(const Duration(milliseconds: 150));
-      if (currentToken.state == TokenState.finished) break;
+
+      if (currentToken.state == TokenState.finished) {
+        await audioService.playHome();
+        break;
+      }
     }
 
     bool captured = _checkCapture(currentToken);
+
     bool extraTurn = state.diceValue == 6 || captured || currentToken.state == TokenState.finished;
 
-    // Check if we arrived at a safe spot, but didn't finish or capture
     if (currentToken.state == TokenState.board && BoardPath.isSafeSpot(currentToken.position) && !captured) {
-      // Overwrite the generic move sound with the safe spot sound
-      audioService.playSafe();
+      await audioService.playSafe();
     }
 
     _finalizeMove(extraTurn: extraTurn);
@@ -221,11 +208,14 @@ class GameStateNotifier extends Notifier<GameState> {
     List<Player> updatedPlayers = List.of(state.players);
     int playerIndex = updatedPlayers.indexWhere((p) => p.color == updatedToken.color);
     var player = updatedPlayers[playerIndex];
+
     List<Token> newTokens = List.of(player.tokens);
     int tokenIndex = newTokens.indexWhere((t) => t.id == updatedToken.id);
+
     newTokens[tokenIndex] = updatedToken;
+
     updatedPlayers[playerIndex] = player.copyWith(tokens: newTokens);
-    
+
     state = state.copyWith(players: updatedPlayers);
   }
 
@@ -236,42 +226,42 @@ class GameStateNotifier extends Notifier<GameState> {
 
     bool captured = false;
     List<Player> updatedPlayers = List.of(state.players);
+
     int absPos = BoardPath.getAbsolutePosition(updatedToken.color, updatedToken.position);
 
     for (int i = 0; i < updatedPlayers.length; i++) {
       var p = updatedPlayers[i];
       if (p.color == updatedToken.color) continue;
-      
+
       List<Token> newTokens = List.of(p.tokens);
-      bool playerCaptured = false;
-      
+
       for (int j = 0; j < newTokens.length; j++) {
         var t = newTokens[j];
+
         if (t.state == TokenState.board) {
           int oppAbsPos = BoardPath.getAbsolutePosition(t.color, t.position);
+
           if (absPos == oppAbsPos) {
             audioService.playDie();
             newTokens[j] = t.copyWith(state: TokenState.home, position: -1);
             captured = true;
-            playerCaptured = true;
           }
         }
       }
-      
-      if (playerCaptured) {
-        updatedPlayers[i] = p.copyWith(tokens: newTokens);
-      }
+
+      updatedPlayers[i] = p.copyWith(tokens: newTokens);
     }
 
     if (captured) {
       state = state.copyWith(players: updatedPlayers);
     }
-    
+
     return captured;
   }
 
   void _finalizeMove({required bool extraTurn}) {
     state = state.copyWith(isDiceRolled: false);
+
     if (extraTurn) {
       state = state.copyWith(message: "${_getPlayerName(state.currentTurn)} gets an extra turn!");
     } else {
@@ -280,15 +270,10 @@ class GameStateNotifier extends Notifier<GameState> {
   }
 
   Token _calculateNewTokenPosition(Token token, int diceValue) {
-    if (token.state == TokenState.home && diceValue == 6) {
-      return token.copyWith(state: TokenState.board, position: 0); // Out on start square
-    }
-
     int newPos = token.position + diceValue;
-    
+
     if (token.state == TokenState.board) {
       if (newPos > 51) {
-        // Entering home stretch
         return token.copyWith(state: TokenState.homeStretch, position: newPos);
       }
       return token.copyWith(position: newPos);
@@ -306,21 +291,12 @@ class GameStateNotifier extends Notifier<GameState> {
 
   void _nextTurn(String msg) {
     List<PlayerColor> order = state.players.map((p) => p.color).toList();
-    if (order.isEmpty) return;
-    
+
     int currentIdx = order.indexOf(state.currentTurn);
-    PlayerColor nextColor;
-    
-    // Find next active player who hasn't finished
-    int checkedCount = 0;
-    do {
-      currentIdx = (currentIdx + 1) % order.length;
-      nextColor = order[currentIdx];
-      checkedCount++;
-    } while (state.players.firstWhere((p) => p.color == nextColor).hasFinished && checkedCount < order.length);
+    currentIdx = (currentIdx + 1) % order.length;
 
     state = state.copyWith(
-      currentTurn: nextColor,
+      currentTurn: order[currentIdx],
       isDiceRolled: false,
       consecutiveSixes: 0,
       message: msg,
@@ -332,6 +308,4 @@ class GameStateNotifier extends Notifier<GameState> {
   }
 }
 
-final gameStateProvider = NotifierProvider<GameStateNotifier, GameState>(() {
-  return GameStateNotifier();
-});
+final gameStateProvider = NotifierProvider<GameStateNotifier, GameState>(() => GameStateNotifier());
