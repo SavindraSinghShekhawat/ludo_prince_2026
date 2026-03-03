@@ -49,6 +49,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  # dart run flutter_launcher_icons
   flutter_launcher_icons: ^0.14.4
   # dart run rename_app:main all="Ludo Prince"
   rename_app: ^1.6.5
@@ -60,7 +61,8 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
-  adaptive_icon_foreground: null
+  adaptive_icon_foreground: "assets/icon_foreground.png"
+  adaptive_icon_background: "#1E1E2C"
   remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
