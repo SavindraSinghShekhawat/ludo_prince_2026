@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import '../engine/bot_ai.dart';
 import '../engine/game_engine.dart';
 import '../models/game_state.dart';
 import '../models/player.dart';
@@ -48,13 +49,9 @@ class LocalGameController implements GameController {
     if (!_state.isDiceRolled) {
       await sendRollIntent();
     } else {
-      final validTokens = currentPlayer.tokens
-          .where((t) => _engine.isValidMove(t, _state.diceValue))
-          .toList();
-
-      if (validTokens.isNotEmpty) {
-        final token = validTokens[Random().nextInt(validTokens.length)];
-        await executeMove(token.id);
+      final bestToken = BotAI.getBestMove(currentPlayer, _state);
+      if (bestToken != null) {
+        await executeMove(bestToken.id);
       }
     }
   }

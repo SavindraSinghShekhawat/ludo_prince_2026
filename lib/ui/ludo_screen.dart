@@ -196,15 +196,19 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
 
                             Token? targetToken;
                             for (var player in gameState.players) {
-                              if (player.slot != gameState.currentTurn) continue;
+                              if (player.slot != gameState.currentTurn)
+                                continue;
                               for (var token in player.tokens) {
-                                Offset gridPos = BoardPath.getTokenOffset(token);
+                                Offset gridPos =
+                                    BoardPath.getTokenOffset(token);
                                 double gridX = gridPos.dx;
                                 double gridY = gridPos.dy;
-                                
+
                                 // Check if tap falls within the 1x1 block of the token's coordinate
-                                if (tapX >= gridX && tapX < gridX + 1 &&
-                                    tapY >= gridY && tapY < gridY + 1) {
+                                if (tapX >= gridX &&
+                                    tapX < gridX + 1 &&
+                                    tapY >= gridY &&
+                                    tapY < gridY + 1) {
                                   if (isMoveValid(token, gameState)) {
                                     targetToken = token;
                                     break;
@@ -215,7 +219,9 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
                             }
 
                             if (targetToken != null) {
-                              ref.read(gameControllerProvider).sendMoveIntent(targetToken);
+                              ref
+                                  .read(gameControllerProvider)
+                                  .sendMoveIntent(targetToken);
                             }
                           },
                           child: Stack(
