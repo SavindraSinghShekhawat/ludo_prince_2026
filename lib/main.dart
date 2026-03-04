@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ui/onboarding_screen.dart';
+import 'ui/home_screen.dart';
 import 'services/audio_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  final prefs = await SharedPreferences.getInstance();
+  final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
   audioService.playBGM(); // Start background music on app launch
 
   runApp(
-    const ProviderScope(
-      child: LudoPrinceApp(),
+    ProviderScope(
+      child: LudoPrinceApp(hasSeenOnboarding: hasSeenOnboarding),
     ),
   );
 }
 
 class LudoPrinceApp extends StatefulWidget {
-  const LudoPrinceApp({super.key});
+  final bool hasSeenOnboarding;
+  const LudoPrinceApp({super.key, required this.hasSeenOnboarding});
 
   @override
   State<LudoPrinceApp> createState() => _LudoPrinceAppState();
@@ -60,7 +67,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
         textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       ),
-      home: const OnboardingScreen(),
+      home: widget.hasSeenOnboarding ? const HomeScreen() : const OnboardingScreen(),
     );
   }
 }
