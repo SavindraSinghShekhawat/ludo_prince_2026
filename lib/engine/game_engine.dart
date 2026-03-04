@@ -11,7 +11,7 @@ class GameEngine {
 
     if (newConsecutive == 3) {
       return _nextTurn(
-        state.copyWith(consecutiveSixes: 0),
+        state.copyWith(consecutiveSixes: 0, diceValue: diceValue),
         "Rolled three 6s! Turn skipped.",
       );
     }
@@ -23,7 +23,7 @@ class GameEngine {
 
     if (validTokens.isEmpty) {
       return _nextTurn(
-        state.copyWith(consecutiveSixes: newConsecutive),
+        state.copyWith(consecutiveSixes: newConsecutive, diceValue: diceValue),
         "No valid moves. Turn skipped.",
       );
     }
