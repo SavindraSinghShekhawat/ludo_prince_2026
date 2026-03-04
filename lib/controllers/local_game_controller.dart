@@ -26,6 +26,8 @@ class LocalGameController implements GameController {
   final GameEngine _engine = GameEngine();
   late GameState _state;
   bool _isActionInProgress = false;
+  bool _isPaused = false;
+  bool _isDisposed = false;
 
   final InitialGameState initialState;
 
@@ -36,7 +38,7 @@ class LocalGameController implements GameController {
   }
 
   void _checkBotTurn() async {
-    if (_isActionInProgress || _state.isGameOver) return;
+    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) return;
     final currentPlayer =
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     if (!currentPlayer.isBot) return;
@@ -45,7 +47,7 @@ class LocalGameController implements GameController {
     await Future.delayed(const Duration(milliseconds: 600));
     _isActionInProgress = false;
 
-    if (_state.currentTurn != currentPlayer.slot || _state.isGameOver) return;
+    if (_isDisposed || _isPaused || _state.currentTurn != currentPlayer.slot || _state.isGameOver) return;
 
     if (!_state.isDiceRolled) {
       await sendRollIntent();
@@ -245,7 +247,21 @@ class LocalGameController implements GameController {
   }
 
   @override
+  void pause() {
+    _isPaused = true;
+  }
+
+  @override
+  void resume() {
+    if (_isPaused) {
+      _isPaused = false;
+      _checkBotTurn();
+    }
+  }
+
+  @override
   Future<void> dispose() async {
+    _isDisposed = true;
     await _streamController.close();
   }
 

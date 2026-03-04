@@ -19,10 +19,26 @@ class LudoScreen extends ConsumerStatefulWidget {
   ConsumerState<LudoScreen> createState() => _LudoScreenState();
 }
 
-class _LudoScreenState extends ConsumerState<LudoScreen> {
+class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      ref.read(gameControllerProvider).pause();
+    } else if (state == AppLifecycleState.resumed) {
+      ref.read(gameControllerProvider).resume();
+    }
   }
 
   @override

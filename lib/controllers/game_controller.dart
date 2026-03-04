@@ -12,5 +12,8 @@ abstract class GameController {
   Future<void> executeRoll(int value);
   Future<void> executeMove(int tokenId);
 
+  void pause();
+  void resume();
+
   Future<void> dispose();
 }
