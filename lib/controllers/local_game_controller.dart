@@ -3,6 +3,7 @@ import 'dart:math';
 
 import '../engine/bot_ai.dart';
 import '../engine/game_engine.dart';
+import '../models/board_path.dart';
 import '../models/game_state.dart';
 import '../models/player.dart';
 import '../models/token.dart';
@@ -227,6 +228,9 @@ class LocalGameController implements GameController {
 
       if (currentToken.state == TokenState.finished) {
         await audioService.playHome();
+      } else if (currentToken.state == TokenState.board && 
+                 BoardPath.isSafeSpot(currentToken.position)) {
+        await audioService.playSafe();
       }
 
       if (captured) {
