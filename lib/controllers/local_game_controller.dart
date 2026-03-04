@@ -38,18 +38,26 @@ class LocalGameController implements GameController {
   }
 
   void _checkBotTurn() async {
-    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) return;
+    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver)
+      return;
     final currentPlayer =
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     if (!currentPlayer.isBot) return;
 
     _isActionInProgress = true;
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 1200));
     _isActionInProgress = false;
 
-    if (_isDisposed || _isPaused || _state.currentTurn != currentPlayer.slot || _state.isGameOver) return;
+    if (_isDisposed ||
+        _isPaused ||
+        _state.currentTurn != currentPlayer.slot ||
+        _state.isGameOver) return;
 
     if (!_state.isDiceRolled) {
+      _state = _state.copyWith(isRolling: true);
+      _streamController.add(_state);
+      await Future.delayed(const Duration(milliseconds: 600));
+      _state = _state.copyWith(isRolling: false);
       await sendRollIntent();
     } else {
       final bestToken = BotAI.getBestMove(currentPlayer, _state);
@@ -121,7 +129,7 @@ class LocalGameController implements GameController {
     _isActionInProgress = false;
 
     if (autoMoveId != null) {
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 1000));
       await executeMove(autoMoveId);
     } else {
       _checkBotTurn();
@@ -230,8 +238,8 @@ class LocalGameController implements GameController {
 
       if (currentToken.state == TokenState.finished) {
         await audioService.playHome();
-      } else if (currentToken.state == TokenState.board && 
-                 BoardPath.isSafeSpot(currentToken.position)) {
+      } else if (currentToken.state == TokenState.board &&
+          BoardPath.isSafeSpot(currentToken.position)) {
         await audioService.playSafe();
       }
 

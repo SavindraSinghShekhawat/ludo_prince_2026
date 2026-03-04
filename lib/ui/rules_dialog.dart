@@ -45,6 +45,11 @@ class RulesDialog extends StatelessWidget {
                         'Extra Turn',
                         'Rolling a 6 gives you an additional turn.'),
                     _buildRule(
+                        Icons.block,
+                        const Color(0xFF9E9E9E),
+                        'Consecutive 6s',
+                        'Rolling three consecutive 6s skips your turn and passes it to the next player.'),
+                    _buildRule(
                         Icons.stars,
                         const Color(0xFF8A8D91),
                         'Safe Spots',

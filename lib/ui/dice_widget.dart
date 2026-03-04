@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 
+import '../models/game_state.dart';
+
 class DiceWidget extends ConsumerStatefulWidget {
   const DiceWidget({super.key});
 
@@ -49,15 +51,35 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     });
 
     _controller.forward(from: 0).then((_) {
-      setState(() {
-        _isAnimating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isAnimating = false;
+        });
+        _controller.reset();
+      }
       ref.read(gameControllerProvider).sendRollIntent();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
+      final state = next.value;
+      if (state != null && state.isRolling && !_isAnimating) {
+        setState(() {
+          _isAnimating = true;
+        });
+        _controller.forward(from: 0).then((_) {
+          if (mounted) {
+            setState(() {
+              _isAnimating = false;
+            });
+            _controller.reset();
+          }
+        });
+      }
+    });
+
     final asyncState = ref.watch(gameStreamProvider);
     final gameState = asyncState.value;
     if (gameState == null) return const SizedBox();

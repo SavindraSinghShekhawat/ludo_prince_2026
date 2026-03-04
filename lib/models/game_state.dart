@@ -17,6 +17,7 @@ class GameState {
   final PlayerSlot currentTurn;
   final int diceValue;
   final bool isDiceRolled;
+  final bool isRolling;
   final int consecutiveSixes;
   final String message;
   final GameAction lastAction;
@@ -34,6 +35,7 @@ class GameState {
     required this.currentTurn,
     this.diceValue = 1,
     this.isDiceRolled = false,
+    this.isRolling = false,
     this.consecutiveSixes = 0,
     this.message = "Game Started!",
     this.lastAction = GameAction.none,
@@ -47,6 +49,7 @@ class GameState {
     PlayerSlot? currentTurn,
     int? diceValue,
     bool? isDiceRolled,
+    bool? isRolling,
     int? consecutiveSixes,
     String? message,
     GameAction? lastAction,
@@ -59,6 +62,7 @@ class GameState {
       currentTurn: currentTurn ?? this.currentTurn,
       diceValue: diceValue ?? this.diceValue,
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
+      isRolling: isRolling ?? this.isRolling,
       consecutiveSixes: consecutiveSixes ?? this.consecutiveSixes,
       message: message ?? this.message,
       lastAction: lastAction ?? this.lastAction,
@@ -73,6 +77,7 @@ class GameState {
         "currentTurn": currentTurn.name,
         "diceValue": diceValue,
         "isDiceRolled": isDiceRolled,
+        "isRolling": isRolling,
         "consecutiveSixes": consecutiveSixes,
         "message": message,
         "lastAction": lastAction.name,
@@ -91,6 +96,7 @@ class GameState {
           PlayerSlot.values.firstWhere((e) => e.name == json["currentTurn"]),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
+      isRolling: json["isRolling"] ?? false,
       consecutiveSixes: json["consecutiveSixes"],
       message: json["message"],
       lastAction:

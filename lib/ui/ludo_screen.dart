@@ -19,7 +19,8 @@ class LudoScreen extends ConsumerStatefulWidget {
   ConsumerState<LudoScreen> createState() => _LudoScreenState();
 }
 
-class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObserver {
+class _LudoScreenState extends ConsumerState<LudoScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -34,7 +35,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       ref.read(gameControllerProvider).pause();
     } else if (state == AppLifecycleState.resumed) {
       ref.read(gameControllerProvider).resume();
@@ -368,7 +370,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
           ),
         ],
       ),
-      child: Icon(isBot ? Icons.smart_toy : Icons.person, color: Colors.white, size: 40),
+      child: Icon(isBot ? Icons.smart_toy : Icons.person,
+          color: Colors.white, size: 40),
     );
 
     Widget diceBox = isTurn
