@@ -333,7 +333,9 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
         break;
     }
 
-    final playerName = state.players.firstWhere((p) => p.slot == slot).name;
+    final player = state.players.firstWhere((p) => p.slot == slot);
+    final playerName = player.name;
+    final isBot = player.isBot;
 
     Widget avatarBox = Container(
       width: 60,
@@ -350,7 +352,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen> {
           ),
         ],
       ),
-      child: const Icon(Icons.person, color: Colors.white, size: 40),
+      child: Icon(isBot ? Icons.smart_toy : Icons.person, color: Colors.white, size: 40),
     );
 
     Widget diceBox = isTurn
