@@ -217,6 +217,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                             for (var player in gameState.players) {
                               if (player.slot != gameState.currentTurn)
                                 continue;
+                              if (player.isBot) break;
+
                               for (var token in player.tokens) {
                                 Offset gridPos =
                                     BoardPath.getTokenOffset(token);

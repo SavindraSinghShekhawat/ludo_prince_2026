@@ -46,6 +46,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     if (gameState == null) return;
     if (gameState.isDiceRolled || _isAnimating) return;
 
+    final currentPlayer = gameState.players.firstWhere((p) => p.slot == gameState.currentTurn);
+    if (currentPlayer.isBot) return;
+
     setState(() {
       _isAnimating = true;
     });
