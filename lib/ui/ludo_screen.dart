@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
+import '../controllers/game_controller.dart';
 import '../providers/audio_provider.dart';
 import '../models/game_state.dart';
 import '../models/token.dart';
@@ -21,15 +22,19 @@ class LudoScreen extends ConsumerStatefulWidget {
 
 class _LudoScreenState extends ConsumerState<LudoScreen>
     with WidgetsBindingObserver {
+  late final GameController _controller;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _controller = ref.read(gameControllerProvider);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
     super.dispose();
   }
 
@@ -48,10 +53,6 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
     final asyncState = ref.watch(gameStreamProvider);
 
     ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
-      if (next.hasValue) {
-        print(
-            "LudoScreen Stream emission: \${next.value!.players.first.tokens.first.state}");
-      }
       next.whenData((state) {
         if (state.isGameOver) {
           final prevWasOver = previous?.value?.isGameOver ?? false;

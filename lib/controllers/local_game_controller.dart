@@ -55,7 +55,7 @@ class LocalGameController implements GameController {
 
     if (!_state.isDiceRolled) {
       _state = _state.copyWith(isRolling: true);
-      _streamController.add(_state);
+      if (!_isDisposed) _streamController.add(_state);
       await Future.delayed(const Duration(milliseconds: 600));
       _state = _state.copyWith(isRolling: false);
       await sendRollIntent();
@@ -100,7 +100,7 @@ class LocalGameController implements GameController {
           lastAction: GameAction.roll,
         );
 
-    _streamController.add(_state);
+    if (!_isDisposed) _streamController.add(_state);
 
     int? autoMoveId;
 
@@ -156,7 +156,7 @@ class LocalGameController implements GameController {
 
     _state = _state.copyWith(lastAction: action);
 
-    _streamController.add(_state);
+    if (!_isDisposed) _streamController.add(_state);
   }
 
   @override
@@ -194,7 +194,7 @@ class LocalGameController implements GameController {
           onCapture: (c) => captured = c,
         );
 
-        _streamController.add(_state);
+        if (!_isDisposed) _streamController.add(_state);
 
         if (captured) {
           await audioService.playDie();
@@ -219,7 +219,7 @@ class LocalGameController implements GameController {
           allowCapture: false,
         );
 
-        _streamController.add(_state);
+        if (!_isDisposed) _streamController.add(_state);
 
         await Future.delayed(const Duration(milliseconds: 150));
       }
@@ -234,7 +234,7 @@ class LocalGameController implements GameController {
         allowCapture: true,
       );
 
-      _streamController.add(_state);
+      if (!_isDisposed) _streamController.add(_state);
 
       if (currentToken.state == TokenState.finished) {
         await audioService.playHome();
@@ -287,17 +287,6 @@ class LocalGameController implements GameController {
         tokens: tokens,
       );
     }).toList();
-
-    print("--- Initial Game State ---");
-    for (var p in players) {
-      for (var t in p.tokens) {
-        if (t.state != TokenState.home) {
-          print(
-              "Player \${p.name}: Token \${t.id} -> \${t.state} at \${t.position}");
-        }
-      }
-    }
-    print("--------------------------");
 
     return GameState(
       gameId: "local_${DateTime.now().millisecondsSinceEpoch}",
