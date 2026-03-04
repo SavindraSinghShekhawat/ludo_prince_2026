@@ -18,11 +18,12 @@ class BotAI {
     if (validTokens.isEmpty) return null;
     if (validTokens.length == 1) return validTokens.first;
 
-    Token? bestToken;
-    int highestScore = -1;
-    List<Token> ties = [];
+    Token bestToken = validTokens.first;
+    int highestScore = _evaluateMove(player, validTokens.first, state, dice);
+    List<Token> ties = [validTokens.first];
 
-    for (var token in validTokens) {
+    for (int i = 1; i < validTokens.length; i++) {
+      var token = validTokens[i];
       int score = _evaluateMove(player, token, state, dice);
       if (score > highestScore) {
         highestScore = score;
