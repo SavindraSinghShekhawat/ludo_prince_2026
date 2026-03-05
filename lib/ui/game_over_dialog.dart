@@ -27,6 +27,19 @@ class GameOverDialog extends ConsumerStatefulWidget {
 class _GameOverDialogState extends ConsumerState<GameOverDialog> {
   late ConfettiController _confettiController;
 
+  Color _getPlayerColor(PlayerSlot pSlot) {
+    switch (pSlot) {
+      case PlayerSlot.slot1:
+        return Colors.red;
+      case PlayerSlot.slot2:
+        return Colors.green;
+      case PlayerSlot.slot3:
+        return Colors.amber;
+      case PlayerSlot.slot4:
+        return Colors.blue;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -146,9 +159,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     }
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
+                      margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
+                          horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: place == 1
                             ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
@@ -161,23 +174,40 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                       child: Row(
                         children: [
                           Container(
-                            width: 50,
+                            width: 40,
                             alignment: Alignment.center,
                             child: Text(
                               placeText,
                               style: TextStyle(
-                                fontSize: 22,
+                                fontSize: place == 1 ? 24 : 18,
                                 fontWeight: FontWeight.w900,
                                 color: placeColor,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          Container(
+                            width: 20,
+                            height: 20,
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _getPlayerColor(playerSlot),
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _getPlayerColor(playerSlot)
+                                      .withValues(alpha: 0.8),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ],
+                            ),
+                          ),
                           Expanded(
                             child: Text(
                               player.name,
                               style: TextStyle(
-                                fontSize: place == 1 ? 24 : 20,
+                                fontSize: place == 1 ? 20 : 18,
                                 fontWeight: place == 1
                                     ? FontWeight.w800
                                     : FontWeight.w600,
@@ -187,9 +217,10 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                             ),
                           ),
                           if (placeIcon != null) ...[
+                            const SizedBox(width: 8),
                             Icon(placeIcon,
                                     color: placeColor,
-                                    size: place == 1 ? 32 : 28)
+                                    size: place == 1 ? 28 : 24)
                                 .animate(target: place == 1 ? 1 : 0)
                                 .scale(
                                     duration: 800.ms, curve: Curves.elasticOut)
