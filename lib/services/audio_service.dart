@@ -92,17 +92,13 @@ class AudioService extends ChangeNotifier {
   }
 
   Future<void> pauseBGM() async {
-    if (_bgmPlayer.state == PlayerState.playing) {
-      await _bgmPlayer.pause();
-    }
+    await _bgmPlayer.pause();
   }
 
   Future<void> resumeBGM() async {
     await init();
     if (!_isBgmEnabled) return;
-    if (_bgmPlayer.state == PlayerState.paused) {
-      await _bgmPlayer.resume();
-    }
+    await _bgmPlayer.resume();
   }
 
   Future<void> playRoll() async {
