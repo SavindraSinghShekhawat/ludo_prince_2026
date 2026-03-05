@@ -11,12 +11,12 @@ GameState baseState() {
     players: [
       Player(
         slot: PlayerSlot.slot1,
-        name: "Red",
+        name: "Blue",
         tokens: List.generate(4, (i) => Token(id: i, slot: PlayerSlot.slot1)),
       ),
       Player(
         slot: PlayerSlot.slot4,
-        name: "Blue",
+        name: "Red",
         tokens: List.generate(4, (i) => Token(id: i, slot: PlayerSlot.slot4)),
       ),
     ],
@@ -41,8 +41,7 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0]
-                  .copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -72,8 +71,7 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0]
-                  .copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -127,25 +125,25 @@ void main() {
 
   group("Capture Logic", () {
     test("Capture happens on same absolute position", () {
-      final red = Token(
+      final blue = Token(
         id: 0,
         slot: PlayerSlot.slot1,
         state: TokenState.board,
-        position: 1,
+        position: 14,
       );
 
-      final blue = Token(
+      final red = Token(
         id: 0,
         slot: PlayerSlot.slot4,
         state: TokenState.board,
-        position: 14,
+        position: 1,
       );
 
       final state = GameState(
         gameId: "x",
         players: [
-          Player(slot: PlayerSlot.slot1, name: "R", tokens: [red]),
-          Player(slot: PlayerSlot.slot4, name: "B", tokens: [blue]),
+          Player(slot: PlayerSlot.slot1, name: "B", tokens: [blue]),
+          Player(slot: PlayerSlot.slot4, name: "R", tokens: [red]),
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot1,
@@ -156,7 +154,7 @@ void main() {
 
       final result = engine.applyStep(
         state,
-        red,
+        blue,
         onCapture: (c) => captured = c,
         allowCapture: true,
       );
@@ -166,14 +164,14 @@ void main() {
     });
 
     test("No capture on safe spot", () {
-      final red = Token(
+      final blue = Token(
         id: 0,
         slot: PlayerSlot.slot1,
         state: TokenState.board,
         position: 0,
       );
 
-      final blue = Token(
+      final red = Token(
         id: 0,
         slot: PlayerSlot.slot4,
         state: TokenState.board,
@@ -185,8 +183,8 @@ void main() {
       final state = GameState(
         gameId: "x",
         players: [
-          Player(slot: PlayerSlot.slot1, name: "R", tokens: [red]),
-          Player(slot: PlayerSlot.slot4, name: "B", tokens: [blue]),
+          Player(slot: PlayerSlot.slot1, name: "B", tokens: [blue]),
+          Player(slot: PlayerSlot.slot4, name: "R", tokens: [red]),
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot1,
@@ -244,8 +242,7 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0]
-                  .copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -267,8 +264,7 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0]
-                  .copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -292,8 +288,7 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0]
-                  .copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
