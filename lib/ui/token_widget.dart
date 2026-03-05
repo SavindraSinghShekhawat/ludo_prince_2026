@@ -129,13 +129,18 @@ class TokenWidget extends ConsumerWidget {
                   width: isMovable ? 3 : 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: isMovable
-                      ? _getColor(token.slot).withValues(alpha: 0.8)
-                      : Colors.black.withValues(alpha: 0.4),
-                  blurRadius: isMovable ? 8 : 4,
-                  spreadRadius: isMovable ? 2 : 0,
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 4,
+                  spreadRadius: 0.5,
                   offset: const Offset(0, 2),
-                )
+                ),
+                if (isMovable)
+                  BoxShadow(
+                    color: _getColor(token.slot).withValues(alpha: 0.8),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 2),
+                  ),
               ],
             ),
           ),
