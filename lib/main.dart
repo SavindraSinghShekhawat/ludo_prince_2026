@@ -8,7 +8,7 @@ import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   final prefs = await SharedPreferences.getInstance();
   final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
@@ -67,7 +67,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
         textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       ),
-      home: widget.hasSeenOnboarding ? const HomeScreen() : const OnboardingScreen(),
+      home: widget.hasSeenOnboarding
+          ? const HomeScreen()
+          : const OnboardingScreen(),
     );
   }
 }

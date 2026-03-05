@@ -48,7 +48,12 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
     } else if (numPlayers == 3) {
       return [PlayerSlot.slot1, PlayerSlot.slot3, PlayerSlot.slot4];
     } else {
-      return [PlayerSlot.slot1, PlayerSlot.slot2, PlayerSlot.slot3, PlayerSlot.slot4];
+      return [
+        PlayerSlot.slot1,
+        PlayerSlot.slot2,
+        PlayerSlot.slot3,
+        PlayerSlot.slot4
+      ];
     }
   }
 
@@ -69,7 +74,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Local Multiplayer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Local Multiplayer',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -88,7 +94,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
             child: Container(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
@@ -97,7 +104,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                 children: [
                   const Text(
                     'Select Number of Players',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -108,7 +118,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                     children: [2, 3, 4].map((n) {
                       final isSelected = _numPlayers == n;
                       return ChoiceChip(
-                        label: Text('$n Players', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        label: Text('$n Players',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                         selected: isSelected,
                         checkmarkColor: const Color(0xFF1E1E2C),
                         onSelected: (selected) {
@@ -120,7 +132,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                           }
                         },
                         selectedColor: const Color(0xFFE5E4E2),
-                        labelStyle: TextStyle(color: isSelected ? const Color(0xFF1E1E2C) : Colors.white70),
+                        labelStyle: TextStyle(
+                            color: isSelected
+                                ? const Color(0xFF1E1E2C)
+                                : Colors.white70),
                         backgroundColor: const Color(0xFF2A2A3D),
                       );
                     }).toList(),
@@ -128,7 +143,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   const SizedBox(height: 40),
                   const Text(
                     'Player Names',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -161,17 +179,25 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               controller: _controllers[slot],
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: 'Player ${activeSlots.indexOf(slot) + 1}',
+                                labelText:
+                                    'Player ${activeSlots.indexOf(slot) + 1}',
                                 labelStyle: TextStyle(color: displayColor),
                                 enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: displayColor.withValues(alpha: 0.5)),
+                                  borderSide: BorderSide(
+                                      color:
+                                          displayColor.withValues(alpha: 0.5)),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: displayColor, width: 2),
+                                  borderSide:
+                                      BorderSide(color: displayColor, width: 2),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                prefixIcon: Icon((_isBotConfig[slot] ?? false) ? Icons.smart_toy : Icons.person, color: displayColor),
+                                prefixIcon: Icon(
+                                    (_isBotConfig[slot] ?? false)
+                                        ? Icons.smart_toy
+                                        : Icons.person,
+                                    color: displayColor),
                                 filled: true,
                                 fillColor: const Color(0xFF2A2A3D),
                               ),
@@ -180,7 +206,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                           const SizedBox(width: 12),
                           Column(
                             children: [
-                              const Text('Bot', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              const Text('Bot',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
                               Switch(
                                 value: _isBotConfig[slot] ?? false,
                                 activeThumbColor: displayColor,
@@ -199,7 +227,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   const SizedBox(height: 40),
                   const Text(
                     'Initial Game State (Testing)',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -235,15 +266,19 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                       backgroundColor: const Color(0xFFE5E4E2),
                       foregroundColor: const Color(0xFF1E1E2C),
                       padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
                       elevation: 8,
-                      shadowColor: const Color(0xFFE5E4E2).withValues(alpha: 0.5),
+                      shadowColor:
+                          const Color(0xFFE5E4E2).withValues(alpha: 0.5),
                     ),
                     onPressed: () async {
                       Map<PlayerSlot, PlayerSetupConfig> config = {};
                       for (var slot in activeSlots) {
                         final text = _controllers[slot]!.text.trim();
-                        final name = text.isEmpty ? "Player ${activeSlots.indexOf(slot) + 1}" : text;
+                        final name = text.isEmpty
+                            ? "Player ${activeSlots.indexOf(slot) + 1}"
+                            : text;
                         config[slot] = PlayerSetupConfig(
                           name: name,
                           isBot: _isBotConfig[slot] ?? false,
@@ -257,14 +292,20 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                         MaterialPageRoute(
                           builder: (context) => ProviderScope(
                             overrides: [
-                              gameControllerProvider.overrideWithValue(LocalGameController(config, initialState: _initialState)),
+                              gameControllerProvider.overrideWithValue(
+                                  LocalGameController(config,
+                                      initialState: _initialState)),
                             ],
                             child: const LudoScreen(),
                           ),
                         ),
                       );
                     },
-                    child: const Text('Start Game', style: TextStyle(color: Color(0xFF1E1E2C), fontSize: 20, fontWeight: FontWeight.bold)),
+                    child: const Text('Start Game',
+                        style: TextStyle(
+                            color: Color(0xFF1E1E2C),
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

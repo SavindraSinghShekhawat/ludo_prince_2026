@@ -46,7 +46,8 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 5));
     _confettiController.play();
     audioService.playVictory();
   }
@@ -61,16 +62,16 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
   Widget build(BuildContext context) {
     final bool hasBots = widget.state.players.any((p) => p.isBot);
     final bool hasHumans = widget.state.players.any((p) => !p.isBot);
-    
+
     final List<PlayerSlot> humanWinners = widget.state.winners.where((slot) {
       return !widget.state.players.firstWhere((p) => p.slot == slot).isBot;
     }).toList();
-    
+
     final bool isAllHuman = hasHumans && !hasBots;
     final bool isAllBots = hasBots && !hasHumans;
-    
-    final int bestHumanRank = humanWinners.isNotEmpty 
-        ? widget.state.winners.indexOf(humanWinners.first) + 1 
+
+    final int bestHumanRank = humanWinners.isNotEmpty
+        ? widget.state.winners.indexOf(humanWinners.first) + 1
         : -1;
     final bool noHumanFinished = bestHumanRank == -1;
 
@@ -107,9 +108,11 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
 
     // 3. Control Sound/Confetti
     // If bots won over humans completely, we stop the celebration.
-    final bool shouldCelebrate = isAllHuman || isAllBots || (!noHumanFinished && bestHumanRank <= 3);
-    
-    if (!shouldCelebrate && _confettiController.state == ConfettiControllerState.playing) {
+    final bool shouldCelebrate =
+        isAllHuman || isAllBots || (!noHumanFinished && bestHumanRank <= 3);
+
+    if (!shouldCelebrate &&
+        _confettiController.state == ConfettiControllerState.playing) {
       _confettiController.stop();
       // Optionally stop victory audio if it plays on a loop
     }
@@ -131,7 +134,8 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: headerColor.withValues(alpha: 0.8), width: 3),
+                  border: Border.all(
+                      color: headerColor.withValues(alpha: 0.8), width: 3),
                   boxShadow: [
                     BoxShadow(
                       color: shadowColor.withValues(alpha: 0.4),
@@ -152,9 +156,17 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                       )
                           .animate(onPlay: (controller) => controller.repeat())
                           .shimmer(duration: 2000.ms)
-                          .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.05, 1.05), duration: 1500.ms, curve: Curves.easeInOutSine)
+                          .scale(
+                              begin: const Offset(0.8, 0.8),
+                              end: const Offset(1.05, 1.05),
+                              duration: 1500.ms,
+                              curve: Curves.easeInOutSine)
                           .then()
-                          .scale(begin: const Offset(1.05, 1.05), end: const Offset(0.8, 0.8), duration: 1500.ms, curve: Curves.easeInOutSine),
+                          .scale(
+                              begin: const Offset(1.05, 1.05),
+                              end: const Offset(0.8, 0.8),
+                              duration: 1500.ms,
+                              curve: Curves.easeInOutSine),
                       const SizedBox(height: 16),
                       Text(
                         headerText,
@@ -178,7 +190,8 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                       // Rankings
                       ...List.generate(widget.state.winners.length, (index) {
                         final playerSlot = widget.state.winners[index];
-                        final player = widget.state.players.firstWhere((p) => p.slot == playerSlot);
+                        final player = widget.state.players
+                            .firstWhere((p) => p.slot == playerSlot);
                         final place = index + 1;
                         final isLast = place == widget.state.winners.length;
 
@@ -208,11 +221,17 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: place == 1 ? const Color(0xFFE5E4E2).withValues(alpha: 0.15) : Colors.black38,
+                            color: place == 1
+                                ? const Color(0xFFE5E4E2)
+                                    .withValues(alpha: 0.15)
+                                : Colors.black38,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: placeColor.withValues(alpha: 0.6), width: place == 1 ? 2.5 : 1.5),
+                            border: Border.all(
+                                color: placeColor.withValues(alpha: 0.6),
+                                width: place == 1 ? 2.5 : 1.5),
                           ),
                           child: Row(
                             children: [
@@ -231,14 +250,17 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                               Container(
                                 width: 20,
                                 height: 20,
-                                margin: const EdgeInsets.symmetric(horizontal: 12),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 12),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: _getPlayerColor(playerSlot),
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _getPlayerColor(playerSlot).withValues(alpha: 0.8),
+                                      color: _getPlayerColor(playerSlot)
+                                          .withValues(alpha: 0.8),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     )
@@ -250,7 +272,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                   player.name,
                                   style: TextStyle(
                                     fontSize: place == 1 ? 20 : 18,
-                                    fontWeight: place == 1 ? FontWeight.w800 : FontWeight.w600,
+                                    fontWeight: place == 1
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
                                     color: Colors.white,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -258,14 +282,21 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                               ),
                               if (placeIcon != null) ...[
                                 const SizedBox(width: 8),
-                                Icon(placeIcon, color: placeColor, size: place == 1 ? 28 : 24)
+                                Icon(placeIcon,
+                                        color: placeColor,
+                                        size: place == 1 ? 28 : 24)
                                     .animate(target: place == 1 ? 1 : 0)
-                                    .scale(duration: 800.ms, curve: Curves.elasticOut)
+                                    .scale(
+                                        duration: 800.ms,
+                                        curve: Curves.elasticOut)
                                     .shimmer(duration: 1500.ms, delay: 800.ms),
                               ]
                             ],
                           ),
-                        ).animate(delay: (200 * index).ms).fadeIn(duration: 500.ms).slideX(begin: 0.5);
+                        )
+                            .animate(delay: (200 * index).ms)
+                            .fadeIn(duration: 500.ms)
+                            .slideX(begin: 0.5);
                       }),
 
                       const SizedBox(height: 32),
@@ -278,18 +309,26 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                  MaterialPageRoute(
+                                      builder: (_) => const HomeScreen()),
                                   (route) => false,
                                 );
                               },
-                              icon: const Icon(Icons.home_filled, color: Color(0xFF1E1E2C)),
-                              label: const Text('Home', style: TextStyle(color: Color(0xFF1E1E2C), fontSize: 18, fontWeight: FontWeight.bold)),
+                              icon: const Icon(Icons.home_filled,
+                                  color: Color(0xFF1E1E2C)),
+                              label: const Text('Home',
+                                  style: TextStyle(
+                                      color: Color(0xFF1E1E2C),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFE5E4E2),
                                 foregroundColor: const Color(0xFF1E1E2C),
                                 elevation: 5,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
                               ),
                             ),
                           ).animate().fadeIn(delay: 1000.ms).moveY(begin: 20),
@@ -310,7 +349,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                   MaterialPageRoute(
                                     builder: (context) => ProviderScope(
                                       overrides: [
-                                        gameControllerProvider.overrideWithValue(LocalGameController(config)),
+                                        gameControllerProvider
+                                            .overrideWithValue(
+                                                LocalGameController(config)),
                                       ],
                                       child: const LudoScreen(),
                                     ),
@@ -318,13 +359,20 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                   (route) => false,
                                 );
                               },
-                              icon: const Icon(Icons.replay_circle_filled, color: Colors.white),
-                              label: const Text('Replay', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              icon: const Icon(Icons.replay_circle_filled,
+                                  color: Colors.white),
+                              label: const Text('Replay',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.greenAccent.shade700,
                                 elevation: 5,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
                               ),
                             ),
                           ).animate().fadeIn(delay: 1200.ms).moveY(begin: 20),
@@ -347,7 +395,14 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                 emissionFrequency: 0.05,
                 numberOfParticles: 20,
                 gravity: 0.2,
-                colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple, Colors.amber],
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                  Colors.purple,
+                  Colors.amber
+                ],
               ),
             ),
         ],

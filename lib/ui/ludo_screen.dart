@@ -21,7 +21,8 @@ class LudoScreen extends ConsumerStatefulWidget {
   ConsumerState<LudoScreen> createState() => _LudoScreenState();
 }
 
-class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObserver {
+class _LudoScreenState extends ConsumerState<LudoScreen>
+    with WidgetsBindingObserver {
   late final GameController _controller;
 
   @override
@@ -40,7 +41,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       ref.read(gameControllerProvider).pause();
     } else if (state == AppLifecycleState.resumed) {
       ref.read(gameControllerProvider).resume();
@@ -286,7 +288,10 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
                         double gridX = gridPos.dx;
                         double gridY = gridPos.dy;
 
-                        if (tapX >= gridX && tapX < gridX + 1 && tapY >= gridY && tapY < gridY + 1) {
+                        if (tapX >= gridX &&
+                            tapX < gridX + 1 &&
+                            tapY >= gridY &&
+                            tapY < gridY + 1) {
                           if (isMoveValid(token, gameState)) {
                             targetToken = token;
                             break;
@@ -297,7 +302,9 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
                     }
 
                     if (targetToken != null) {
-                      ref.read(gameControllerProvider).sendMoveIntent(targetToken);
+                      ref
+                          .read(gameControllerProvider)
+                          .sendMoveIntent(targetToken);
                     }
                   },
                   child: Stack(
@@ -337,8 +344,14 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot4)) _buildPlayerPanel(PlayerSlot.slot4, state) else const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.slot == PlayerSlot.slot3)) _buildPlayerPanel(PlayerSlot.slot3, state) else const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot4))
+            _buildPlayerPanel(PlayerSlot.slot4, state)
+          else
+            const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot3))
+            _buildPlayerPanel(PlayerSlot.slot3, state)
+          else
+            const Expanded(child: SizedBox()),
         ],
       ),
     );
@@ -350,8 +363,14 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot1)) _buildPlayerPanel(PlayerSlot.slot1, state) else const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.slot == PlayerSlot.slot2)) _buildPlayerPanel(PlayerSlot.slot2, state) else const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot1))
+            _buildPlayerPanel(PlayerSlot.slot1, state)
+          else
+            const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot2))
+            _buildPlayerPanel(PlayerSlot.slot2, state)
+          else
+            const Expanded(child: SizedBox()),
         ],
       ),
     );
@@ -368,20 +387,24 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
         children: [
           if (isLeft) ...[
             if (state.players.any((p) => p.slot == PlayerSlot.slot4))
-              _buildPlayerPanel(PlayerSlot.slot4, state, isLandscape: true, isLeft: true)
+              _buildPlayerPanel(PlayerSlot.slot4, state,
+                  isLandscape: true, isLeft: true)
             else
               const Expanded(child: SizedBox()),
             if (state.players.any((p) => p.slot == PlayerSlot.slot1))
-              _buildPlayerPanel(PlayerSlot.slot1, state, isLandscape: true, isLeft: true)
+              _buildPlayerPanel(PlayerSlot.slot1, state,
+                  isLandscape: true, isLeft: true)
             else
               const Expanded(child: SizedBox()),
           ] else ...[
             if (state.players.any((p) => p.slot == PlayerSlot.slot3))
-              _buildPlayerPanel(PlayerSlot.slot3, state, isLandscape: true, isLeft: false)
+              _buildPlayerPanel(PlayerSlot.slot3, state,
+                  isLandscape: true, isLeft: false)
             else
               const Expanded(child: SizedBox()),
             if (state.players.any((p) => p.slot == PlayerSlot.slot2))
-              _buildPlayerPanel(PlayerSlot.slot2, state, isLandscape: true, isLeft: false)
+              _buildPlayerPanel(PlayerSlot.slot2, state,
+                  isLandscape: true, isLeft: false)
             else
               const Expanded(child: SizedBox()),
           ],
@@ -440,7 +463,9 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
                   offset: const Offset(0, 2),
                 ),
             ],
-            border: Border.all(color: badgeColor.withValues(alpha: 0.8), width: rank == 1 ? 2.5 : 1.5),
+            border: Border.all(
+                color: badgeColor.withValues(alpha: 0.8),
+                width: rank == 1 ? 2.5 : 1.5),
           ),
         ),
         Column(
@@ -487,7 +512,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
         );
   }
 
-  Widget _buildPlayerPanel(PlayerSlot slot, GameState state, {bool isLandscape = false, bool isLeft = true}) {
+  Widget _buildPlayerPanel(PlayerSlot slot, GameState state,
+      {bool isLandscape = false, bool isLeft = true}) {
     final isTurn = slot == state.currentTurn;
 
     Color displayColor;
@@ -515,7 +541,9 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
     final isBot = player.isBot;
 
     // Determine if panel should be right-aligned
-    final bool isRightAligned = isLandscape ? !isLeft : (slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3);
+    final bool isRightAligned = isLandscape
+        ? !isLeft
+        : (slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3);
 
     Widget avatarBox = Container(
       width: 60,
@@ -532,7 +560,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
           ),
         ],
       ),
-      child: Icon(isBot ? Icons.smart_toy : Icons.person, color: Colors.white, size: 40),
+      child: Icon(isBot ? Icons.smart_toy : Icons.person,
+          color: Colors.white, size: 40),
     );
 
     final int winnerRank = state.winners.indexOf(slot) + 1;
@@ -542,7 +571,11 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
     if (isWinner) {
       diceBox = _buildRankBadge(winnerRank);
     } else if (isTurn) {
-      diceBox = SizedBox(width: 50, height: 50, child: Container(padding: const EdgeInsets.all(2), child: const DiceWidget()));
+      diceBox = SizedBox(
+          width: 50,
+          height: 50,
+          child: Container(
+              padding: const EdgeInsets.all(2), child: const DiceWidget()));
     } else {
       diceBox = Container(
         width: 50,
@@ -590,7 +623,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
     Widget panelContent = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+        color:
+            isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isTurn ? Colors.white : Colors.white24,
@@ -600,18 +634,23 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: isRightAligned ? [diceBox, const SizedBox(width: 8), avatarBox] : [avatarBox, const SizedBox(width: 8), diceBox],
+        children: isRightAligned
+            ? [diceBox, const SizedBox(width: 8), avatarBox]
+            : [avatarBox, const SizedBox(width: 8), diceBox],
       ),
     );
 
     return Expanded(
       child: Align(
-        alignment: isRightAligned ? Alignment.centerRight : Alignment.centerLeft,
+        alignment:
+            isRightAligned ? Alignment.centerRight : Alignment.centerLeft,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: isRightAligned ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isRightAligned
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               panelContent,
               Transform.translate(

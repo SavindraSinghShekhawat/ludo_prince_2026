@@ -41,7 +41,8 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0]
+                  .copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -71,7 +72,8 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0]
+                  .copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -242,7 +244,8 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0]
+                  .copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -264,7 +267,8 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0]
+                  .copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
@@ -288,7 +292,8 @@ void main() {
         players: [
           state.players[0].copyWith(
             tokens: [
-              state.players[0].tokens[0].copyWith(state: TokenState.board, position: 0),
+              state.players[0].tokens[0]
+                  .copyWith(state: TokenState.board, position: 0),
               ...state.players[0].tokens.sublist(1),
             ],
           ),
