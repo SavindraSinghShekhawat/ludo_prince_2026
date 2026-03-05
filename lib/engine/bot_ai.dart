@@ -51,7 +51,7 @@ class BotAI {
 
     if (simulatedToken.state == TokenState.home && steps == 6) {
       // Escaping base
-      score += 300;
+      score += 500;
       simulatedToken = simulatedToken.copyWith(
         state: TokenState.board,
         position: 0,
@@ -72,7 +72,8 @@ class BotAI {
         int targetAbsPos = BoardPath.getAbsolutePosition(
             simulatedToken.slot, simulatedToken.position);
 
-        bool wouldCapture = false;
+        // Check for capture
+        int capturedPos = -1;
         for (var opp in state.players) {
           if (opp.slot == player.slot) continue;
           for (var oppToken in opp.tokens) {
@@ -80,16 +81,15 @@ class BotAI {
               int oppAbsPos = BoardPath.getAbsolutePosition(
                   oppToken.slot, oppToken.position);
               if (oppAbsPos == targetAbsPos) {
-                wouldCapture = true;
-                break;
+                capturedPos = max(capturedPos, oppToken.position);
               }
             }
           }
-          if (wouldCapture) break;
         }
 
-        if (wouldCapture) {
-          score += 500; // Capturing is highly prioritized
+        if (capturedPos != -1) {
+          // Weighted capture: prioritize pieces closer to home
+          score += 1100 + (capturedPos * 2);
         }
 
         // Danger evaluation
@@ -98,11 +98,11 @@ class BotAI {
 
         if (wasInDanger && !willBeInDanger) {
           score += 400; // Saved a piece!
-        } else if (!wasInDanger && willBeInDanger && !wouldCapture) {
+        } else if (!wasInDanger && willBeInDanger && capturedPos == -1) {
           score -= 200; // Moved into danger for no reason
         }
       } else {
-        score += 100; // Landing on a safe spot
+        score += 300; // Landing on a safe spot
         bool wasInDanger = _isTokenInDanger(token, state);
         if (wasInDanger) score += 400; // Reached safety
       }
@@ -112,9 +112,13 @@ class BotAI {
       if (wasInDanger) score += 400; // Escaped to home stretch
     }
 
+    // Home stretch penalty: prefer moving tokens on the board
+    if (token.state == TokenState.homeStretch) {
+      score -= 200;
+    }
+
     // Tie breaker: prefer moving tokens that are further ahead
-    if (simulatedToken.state == TokenState.board ||
-        simulatedToken.state == TokenState.homeStretch) {
+    if (simulatedToken.state == TokenState.board) {
       score += simulatedToken.position;
     }
 
