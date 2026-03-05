@@ -12,16 +12,16 @@ class BoardPath {
     if (relativePosition > 51) return -1;
     int startAbsolute;
     switch (slot) {
-      case PlayerSlot.slot1:
+      case PlayerSlot.slot4:
         startAbsolute = 0;
         break; // Starts at bottom-left path of the left arm
-      case PlayerSlot.slot2:
+      case PlayerSlot.slot3:
         startAbsolute = 13;
         break; // Starts at top-left path of the top arm
-      case PlayerSlot.slot3:
+      case PlayerSlot.slot2:
         startAbsolute = 26;
         break; // Starts at top-right path of the right arm
-      case PlayerSlot.slot4:
+      case PlayerSlot.slot1:
         startAbsolute = 39;
         break; // Starts at bottom-right path of the bottom arm
     }
@@ -71,25 +71,25 @@ class BoardPath {
     int step = relativePosition - 50; // 1 to 6
     if (step == 6) {
       switch (slot) {
-        case PlayerSlot.slot1:
-          return const Offset(6.2, 7); // Inside left triangle
-        case PlayerSlot.slot2:
-          return const Offset(7, 6.2); // Inside top triangle
-        case PlayerSlot.slot3:
-          return const Offset(7.8, 7); // Inside right triangle
         case PlayerSlot.slot4:
+          return const Offset(6.2, 7); // Inside left triangle
+        case PlayerSlot.slot3:
+          return const Offset(7, 6.2); // Inside top triangle
+        case PlayerSlot.slot2:
+          return const Offset(7.8, 7); // Inside right triangle
+        case PlayerSlot.slot1:
           return const Offset(7, 7.8); // Inside bottom triangle
       }
     }
 
     switch (slot) {
-      case PlayerSlot.slot1:
-        return Offset(step.toDouble(), 7); // (1,7) to (5,7)
-      case PlayerSlot.slot2:
-        return Offset(7, step.toDouble()); // (7,1) to (7,5)
-      case PlayerSlot.slot3:
-        return Offset(14 - step.toDouble(), 7); // (13,7) to (9,7)
       case PlayerSlot.slot4:
+        return Offset(step.toDouble(), 7); // (1,7) to (5,7)
+      case PlayerSlot.slot3:
+        return Offset(7, step.toDouble()); // (7,1) to (7,5)
+      case PlayerSlot.slot2:
+        return Offset(14 - step.toDouble(), 7); // (13,7) to (9,7)
+      case PlayerSlot.slot1:
         return Offset(7, 14 - step.toDouble()); // (7,13) to (7,9)
     }
   }
@@ -101,19 +101,19 @@ class BoardPath {
     // will center perfectly on these points.
     double bx, by;
     switch (slot) {
-      case PlayerSlot.slot1:
+      case PlayerSlot.slot4:
         bx = 2.5;
-        by = 2.5;
-        break;
-      case PlayerSlot.slot2:
-        bx = 11.5;
         by = 2.5;
         break;
       case PlayerSlot.slot3:
         bx = 11.5;
+        by = 2.5;
+        break;
+      case PlayerSlot.slot2:
+        bx = 11.5;
         by = 11.5;
         break;
-      case PlayerSlot.slot4:
+      case PlayerSlot.slot1:
         bx = 2.5;
         by = 11.5;
         break;

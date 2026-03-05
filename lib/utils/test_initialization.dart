@@ -73,16 +73,16 @@ class TestInitialization {
         if (tokens.isNotEmpty) {
           int position = 0;
           switch (tokens[0].slot) {
-            case PlayerSlot.slot1:
+            case PlayerSlot.slot4:
               position = 15;
               break;
-            case PlayerSlot.slot2:
+            case PlayerSlot.slot3:
               position = 2;
               break;
-            case PlayerSlot.slot3:
+            case PlayerSlot.slot2:
               position = 41;
               break;
-            case PlayerSlot.slot4:
+            case PlayerSlot.slot1:
               position = 28;
               break;
           }

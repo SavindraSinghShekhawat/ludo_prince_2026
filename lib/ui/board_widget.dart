@@ -8,9 +8,7 @@ class BoardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double boardSize = constraints.maxWidth < constraints.maxHeight
-            ? constraints.maxWidth
-            : constraints.maxHeight;
+        final double boardSize = constraints.maxWidth < constraints.maxHeight ? constraints.maxWidth : constraints.maxHeight;
         final double cellSize = boardSize / 15;
 
         return SizedBox(
@@ -21,13 +19,13 @@ class BoardWidget extends StatelessWidget {
               // Draw Base Areas
               // Standard layout: Slot1(top-left), Slot2(top-right), Slot3(bottom-right), Slot4(bottom-left)
               _buildBaseArea(
-                  0, 0, Colors.redAccent, cellSize, PlayerSlot.slot1),
+                  0, 0, Colors.redAccent, cellSize, PlayerSlot.slot4),
               _buildBaseArea(9, 0, Colors.greenAccent.shade700, cellSize,
-                  PlayerSlot.slot2),
+                  PlayerSlot.slot3),
               _buildBaseArea(
-                  9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot3),
+                  9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot2),
               _buildBaseArea(
-                  0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot4),
+                  0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot1),
 
               // Draw Center Home
               Positioned(
@@ -43,23 +41,19 @@ class BoardWidget extends StatelessWidget {
               // Draw Paths (horizontal and vertical strips)
               // Top path (vertical green strip)
               for (int col = 6; col <= 8; col++)
-                for (int row = 0; row < 6; row++)
-                  _buildCell(col, row, cellSize, _getCellColor(col, row)),
+                for (int row = 0; row < 6; row++) _buildCell(col, row, cellSize, _getCellColor(col, row)),
 
               // Bottom path (vertical blue/yellow strip)
               for (int col = 6; col <= 8; col++)
-                for (int row = 9; row < 15; row++)
-                  _buildCell(col, row, cellSize, _getCellColor(col, row)),
+                for (int row = 9; row < 15; row++) _buildCell(col, row, cellSize, _getCellColor(col, row)),
 
               // Left path (horizontal red/blue strip)
               for (int row = 6; row <= 8; row++)
-                for (int col = 0; col < 6; col++)
-                  _buildCell(col, row, cellSize, _getCellColor(col, row)),
+                for (int col = 0; col < 6; col++) _buildCell(col, row, cellSize, _getCellColor(col, row)),
 
               // Right path (horizontal green/yellow strip)
               for (int row = 6; row <= 8; row++)
-                for (int col = 9; col < 15; col++)
-                  _buildCell(col, row, cellSize, _getCellColor(col, row)),
+                for (int col = 9; col < 15; col++) _buildCell(col, row, cellSize, _getCellColor(col, row)),
             ],
           ),
         );
@@ -67,8 +61,7 @@ class BoardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBaseArea(
-      int col, int row, Color color, double cellSize, PlayerSlot pSlot) {
+  Widget _buildBaseArea(int col, int row, Color color, double cellSize, PlayerSlot pSlot) {
     return Positioned(
       left: col * cellSize,
       top: row * cellSize,
@@ -118,13 +111,9 @@ class BoardWidget extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: color,
-          border:
-              Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1),
         ),
-        child: isStar
-            ? Icon(Icons.star_rounded,
-                color: Colors.black12, size: cellSize * 0.8)
-            : null,
+        child: isStar ? Icon(Icons.star_rounded, color: Colors.black12, size: cellSize * 0.8) : null,
       ),
     );
   }
@@ -152,8 +141,7 @@ class BoardWidget extends StatelessWidget {
     if (col == 8 && row == 1) {
       return Colors.greenAccent.shade700.withValues(alpha: 0.8);
     }
-    if (col == 13 && row == 8)
-      return Colors.amber.shade600.withValues(alpha: 0.8);
+    if (col == 13 && row == 8) return Colors.amber.shade600.withValues(alpha: 0.8);
     if (col == 6 && row == 13) return Colors.blueAccent.withValues(alpha: 0.8);
 
     return Colors.white; // default path color

@@ -129,7 +129,7 @@ class LocalGameController implements GameController {
     _isActionInProgress = false;
 
     if (autoMoveId != null) {
-      await Future.delayed(const Duration(milliseconds: 1000));
+      await Future.delayed(const Duration(milliseconds: 250));
       await executeMove(autoMoveId);
     } else {
       _checkBotTurn();

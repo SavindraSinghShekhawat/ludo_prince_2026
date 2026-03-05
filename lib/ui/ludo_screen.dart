@@ -20,8 +20,7 @@ class LudoScreen extends ConsumerStatefulWidget {
   ConsumerState<LudoScreen> createState() => _LudoScreenState();
 }
 
-class _LudoScreenState extends ConsumerState<LudoScreen>
-    with WidgetsBindingObserver {
+class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObserver {
   late final GameController _controller;
 
   @override
@@ -40,8 +39,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       ref.read(gameControllerProvider).pause();
     } else if (state == AppLifecycleState.resumed) {
       ref.read(gameControllerProvider).resume();
@@ -75,214 +73,247 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
   Widget _buildGame(BuildContext context, GameState gameState) {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E2C),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+      appBar: _buildAppBar(context),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isLandscape = constraints.maxWidth > constraints.maxHeight;
+            if (isLandscape) {
+              return _buildLandscapeLayout(gameState);
+            } else {
+              return _buildPortraitLayout(gameState);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFF2A2A3D),
+              title: const Text(
+                'Exit Game?',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: const Text(
+                'Are you sure you want to stop playing? Current progress will be lost.',
+                style: TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const HomeScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Exit',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      title: const Text(
+        'Ludo Prince',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.help_outline, color: Colors.white),
           onPressed: () {
             showDialog(
               context: context,
-              builder: (context) => AlertDialog(
-                backgroundColor: const Color(0xFF2A2A3D),
-                title: const Text(
-                  'Exit Game?',
-                  style: TextStyle(color: Colors.white),
-                ),
-                content: const Text(
-                  'Are you sure you want to stop playing? Current progress will be lost.',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.white54),
-                    ),
+              builder: (context) => const RulesDialog(),
+            );
+          },
+          tooltip: 'Game Rules',
+        ),
+        Consumer(
+          builder: (context, ref, child) {
+            final audio = ref.watch(audioProvider);
+            return Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
+                    color: audio.isBgmEnabled ? Colors.white : Colors.white54,
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const HomeScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Exit',
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  onPressed: () => audio.toggleBGM(),
+                  tooltip: 'Toggle Background Music',
+                ),
+                IconButton(
+                  icon: Icon(
+                    audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
+                    color: audio.isSfxEnabled ? Colors.white : Colors.white54,
                   ),
-                ],
-              ),
+                  onPressed: () => audio.toggleSFX(),
+                  tooltip: 'Toggle Sound Effects',
+                ),
+              ],
             );
           },
         ),
-        title: const Text(
-          'Ludo Prince',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      ],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+    );
+  }
+
+  // ── Portrait Layout (unchanged from original) ──
+  Widget _buildPortraitLayout(GameState gameState) {
+    return Column(
+      children: [
+        _buildTopPanels(gameState),
+        _buildBoard(gameState),
+        _buildBottomPanels(gameState),
+        const SizedBox(height: 20),
+        _buildStatusMessage(gameState),
+      ],
+    );
+  }
+
+  // ── Landscape Layout ──
+  Widget _buildLandscapeLayout(GameState gameState) {
+    return Row(
+      children: [
+        // Left side: slot4 (top-left) and slot1 (bottom-left)
+        _buildLandscapeSidePanels(gameState, isLeft: true),
+        // Center: board + status message
+        Expanded(
+          child: Column(
+            children: [
+              _buildBoard(gameState),
+              _buildStatusMessage(gameState),
+            ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.white),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const RulesDialog(),
-              );
-            },
-            tooltip: 'Game Rules',
-          ),
-          Consumer(
-            builder: (context, ref, child) {
-              final audio = ref.watch(audioProvider);
-              return Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
-                      color: audio.isBgmEnabled ? Colors.white : Colors.white54,
-                    ),
-                    onPressed: () => audio.toggleBGM(),
-                    tooltip: 'Toggle Background Music',
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
-                      color: audio.isSfxEnabled ? Colors.white : Colors.white54,
-                    ),
-                    onPressed: () => audio.toggleSFX(),
-                    tooltip: 'Toggle Sound Effects',
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
+        // Right side: slot3 (top-right) and slot2 (bottom-right)
+        _buildLandscapeSidePanels(gameState, isLeft: false),
+      ],
+    );
+  }
+
+  // ── Shared widgets ──
+
+  Widget _buildStatusMessage(GameState gameState) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(
+        gameState.message,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        textAlign: TextAlign.center,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Player Panels
-            _buildTopPanels(gameState),
+    );
+  }
 
-            // Board
-            Expanded(
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final boardSize = constraints.biggest.shortestSide;
-                        final cellSize = boardSize / 15;
+  Widget _buildBoard(GameState gameState) {
+    return Expanded(
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final boardSize = constraints.biggest.shortestSide;
+                final cellSize = boardSize / 15;
 
-                        return GestureDetector(
-                          onTapUp: (details) {
-                            if (!gameState.isDiceRolled) return;
+                return GestureDetector(
+                  onTapUp: (details) {
+                    if (!gameState.isDiceRolled) return;
 
-                            bool isMoveValid(Token t, GameState state) {
-                              if (t.state == TokenState.home) {
-                                return state.diceValue == 6;
-                              }
-                              if (t.state == TokenState.finished) return false;
-                              return t.position + state.diceValue <= 56;
-                            }
+                    bool isMoveValid(Token t, GameState state) {
+                      if (t.state == TokenState.home) {
+                        return state.diceValue == 6;
+                      }
+                      if (t.state == TokenState.finished) return false;
+                      return t.position + state.diceValue <= 56;
+                    }
 
-                            double tapX = details.localPosition.dx / cellSize;
-                            double tapY = details.localPosition.dy / cellSize;
+                    double tapX = details.localPosition.dx / cellSize;
+                    double tapY = details.localPosition.dy / cellSize;
 
-                            Token? targetToken;
-                            for (var player in gameState.players) {
-                              if (player.slot != gameState.currentTurn)
-                                continue;
-                              if (player.isBot) break;
+                    Token? targetToken;
+                    for (var player in gameState.players) {
+                      if (player.slot != gameState.currentTurn) continue;
+                      if (player.isBot) break;
 
-                              for (var token in player.tokens) {
-                                Offset gridPos =
-                                    BoardPath.getTokenOffset(token);
-                                double gridX = gridPos.dx;
-                                double gridY = gridPos.dy;
+                      for (var token in player.tokens) {
+                        Offset gridPos = BoardPath.getTokenOffset(token);
+                        double gridX = gridPos.dx;
+                        double gridY = gridPos.dy;
 
-                                // Check if tap falls within the 1x1 block of the token's coordinate
-                                if (tapX >= gridX &&
-                                    tapX < gridX + 1 &&
-                                    tapY >= gridY &&
-                                    tapY < gridY + 1) {
-                                  if (isMoveValid(token, gameState)) {
-                                    targetToken = token;
-                                    break;
-                                  }
-                                }
-                              }
-                              if (targetToken != null) break;
-                            }
+                        if (tapX >= gridX && tapX < gridX + 1 && tapY >= gridY && tapY < gridY + 1) {
+                          if (isMoveValid(token, gameState)) {
+                            targetToken = token;
+                            break;
+                          }
+                        }
+                      }
+                      if (targetToken != null) break;
+                    }
 
-                            if (targetToken != null) {
-                              ref
-                                  .read(gameControllerProvider)
-                                  .sendMoveIntent(targetToken);
-                            }
-                          },
-                          child: Stack(
-                            children: [
-                              const BoardWidget(),
-                              for (var player in gameState.players)
-                                for (var token in player.tokens)
-                                  TokenWidget(
-                                    token: token,
-                                    cellSize: cellSize,
-                                  ),
-                            ],
+                    if (targetToken != null) {
+                      ref.read(gameControllerProvider).sendMoveIntent(targetToken);
+                    }
+                  },
+                  child: Stack(
+                    children: [
+                      const BoardWidget(),
+                      for (var player in gameState.players)
+                        for (var token in player.tokens)
+                          TokenWidget(
+                            token: token,
+                            cellSize: cellSize,
                           ),
-                        );
-                      },
-                    ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
-
-            // Bottom Player Panels
-            _buildBottomPanels(gameState),
-
-            const SizedBox(height: 20),
-
-            // Status Message
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                gameState.message,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -297,20 +328,16 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
     );
   }
 
+  // ── Portrait panel rows (unchanged) ──
+
   Widget _buildTopPanels(GameState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot1))
-            _buildPlayerPanel(PlayerSlot.slot1, state)
-          else
-            const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.slot == PlayerSlot.slot2))
-            _buildPlayerPanel(PlayerSlot.slot2, state)
-          else
-            const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot4)) _buildPlayerPanel(PlayerSlot.slot4, state) else const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot3)) _buildPlayerPanel(PlayerSlot.slot3, state) else const Expanded(child: SizedBox()),
         ],
       ),
     );
@@ -322,41 +349,77 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot4))
-            _buildPlayerPanel(PlayerSlot.slot4, state)
-          else
-            const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.slot == PlayerSlot.slot3))
-            _buildPlayerPanel(PlayerSlot.slot3, state)
-          else
-            const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot1)) _buildPlayerPanel(PlayerSlot.slot1, state) else const Expanded(child: SizedBox()),
+          if (state.players.any((p) => p.slot == PlayerSlot.slot2)) _buildPlayerPanel(PlayerSlot.slot2, state) else const Expanded(child: SizedBox()),
         ],
       ),
     );
   }
 
-  Widget _buildPlayerPanel(PlayerSlot slot, GameState state) {
+  // ── Landscape side panels ──
+
+  Widget _buildLandscapeSidePanels(GameState state, {required bool isLeft}) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (isLeft) ...[
+            if (state.players.any((p) => p.slot == PlayerSlot.slot4))
+              _buildPlayerPanel(PlayerSlot.slot4, state, isLandscape: true, isLeft: true)
+            else
+              const Expanded(child: SizedBox()),
+            if (state.players.any((p) => p.slot == PlayerSlot.slot1))
+              _buildPlayerPanel(PlayerSlot.slot1, state, isLandscape: true, isLeft: true)
+            else
+              const Expanded(child: SizedBox()),
+          ] else ...[
+            if (state.players.any((p) => p.slot == PlayerSlot.slot3))
+              _buildPlayerPanel(PlayerSlot.slot3, state, isLandscape: true, isLeft: false)
+            else
+              const Expanded(child: SizedBox()),
+            if (state.players.any((p) => p.slot == PlayerSlot.slot2))
+              _buildPlayerPanel(PlayerSlot.slot2, state, isLandscape: true, isLeft: false)
+            else
+              const Expanded(child: SizedBox()),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Player Panel ──
+
+  Widget _buildPlayerPanel(PlayerSlot slot, GameState state, {bool isLandscape = false, bool isLeft = true}) {
     final isTurn = slot == state.currentTurn;
 
     Color displayColor;
     switch (slot) {
       case PlayerSlot.slot1:
-        displayColor = Colors.redAccent;
+        displayColor = Colors.blueAccent;
+
         break;
       case PlayerSlot.slot2:
-        displayColor = Colors.greenAccent.shade700;
+        displayColor = Colors.amber.shade600;
+
         break;
       case PlayerSlot.slot3:
-        displayColor = Colors.amber.shade600;
+        displayColor = Colors.greenAccent.shade700;
+
         break;
       case PlayerSlot.slot4:
-        displayColor = Colors.blueAccent;
+        displayColor = Colors.redAccent;
+
         break;
     }
 
     final player = state.players.firstWhere((p) => p.slot == slot);
     final playerName = player.name;
     final isBot = player.isBot;
+
+    // Determine if panel should be right-aligned
+    final bool isRightAligned = isLandscape ? !isLeft : (slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3);
 
     Widget avatarBox = Container(
       width: 60,
@@ -373,16 +436,11 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
           ),
         ],
       ),
-      child: Icon(isBot ? Icons.smart_toy : Icons.person,
-          color: Colors.white, size: 40),
+      child: Icon(isBot ? Icons.smart_toy : Icons.person, color: Colors.white, size: 40),
     );
 
     Widget diceBox = isTurn
-        ? SizedBox(
-            width: 50,
-            height: 50,
-            child: Container(
-                padding: const EdgeInsets.all(2), child: const DiceWidget()))
+        ? SizedBox(width: 50, height: 50, child: Container(padding: const EdgeInsets.all(2), child: const DiceWidget()))
         : Container(
             width: 50,
             height: 50,
@@ -428,8 +486,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
     Widget panelContent = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color:
-            isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+        color: isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isTurn ? Colors.white : Colors.white24,
@@ -439,30 +496,23 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3
-            ? [diceBox, const SizedBox(width: 8), avatarBox]
-            : [avatarBox, const SizedBox(width: 8), diceBox],
+        children: isRightAligned ? [diceBox, const SizedBox(width: 8), avatarBox] : [avatarBox, const SizedBox(width: 8), diceBox],
       ),
     );
 
     return Expanded(
       child: Align(
-        alignment: slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3
-            ? Alignment.centerRight
-            : Alignment.centerLeft,
+        alignment: isRightAligned ? Alignment.centerRight : Alignment.centerLeft,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+            crossAxisAlignment: isRightAligned ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               panelContent,
               Transform.translate(
                 offset: Offset(
-                  slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3 ? -5 : 5,
+                  isRightAligned ? -5 : 5,
                   -10,
                 ),
                 child: nameTag,
