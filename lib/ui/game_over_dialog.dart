@@ -59,6 +59,61 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final bool hasBots = widget.state.players.any((p) => p.isBot);
+    final bool hasHumans = widget.state.players.any((p) => !p.isBot);
+    
+    final List<PlayerSlot> humanWinners = widget.state.winners.where((slot) {
+      return !widget.state.players.firstWhere((p) => p.slot == slot).isBot;
+    }).toList();
+    
+    final bool isAllHuman = hasHumans && !hasBots;
+    final bool isAllBots = hasBots && !hasHumans;
+    
+    final int bestHumanRank = humanWinners.isNotEmpty 
+        ? widget.state.winners.indexOf(humanWinners.first) + 1 
+        : -1;
+    final bool noHumanFinished = bestHumanRank == -1;
+
+    // 2. Determine UX State based on logic
+    String headerText;
+    Color headerColor;
+    IconData headerIcon;
+    Color shadowColor;
+
+    if (isAllHuman || isAllBots) {
+      headerText = "MATCH FINISHED!";
+      headerColor = const Color(0xFFE5E4E2);
+      headerIcon = Icons.emoji_events;
+      shadowColor = const Color(0xFF8B9BB4); // Cool platinum shadow
+    } else {
+      // Mixed or AI
+      if (bestHumanRank == 1) {
+        headerText = "GRAND VICTORY!";
+        headerColor = const Color(0xFFE5E4E2); // Platinum
+        headerIcon = Icons.emoji_events;
+        shadowColor = const Color(0xFF8B9BB4);
+      } else if (bestHumanRank == 2 || bestHumanRank == 3) {
+        headerText = "WELL PLAYED!";
+        headerColor = const Color(0xFFB0B4B8); // Silver
+        headerIcon = Icons.workspace_premium; // Ribbon
+        shadowColor = Colors.black54;
+      } else {
+        headerText = "GAME OVER";
+        headerColor = Colors.redAccent.shade200;
+        headerIcon = Icons.videogame_asset_off;
+        shadowColor = Colors.red.shade900;
+      }
+    }
+
+    // 3. Control Sound/Confetti
+    // If bots won over humans completely, we stop the celebration.
+    final bool shouldCelebrate = isAllHuman || isAllBots || (!noHumanFinished && bestHumanRank <= 3);
+    
+    if (!shouldCelebrate && _confettiController.state == ConfettiControllerState.playing) {
+      _confettiController.stop();
+      // Optionally stop victory audio if it plays on a loop
+    }
+
     return PopScope(
       canPop: false,
       child: Stack(
@@ -76,10 +131,10 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: const Color(0xFFE5E4E2).withValues(alpha: 0.8), width: 4),
+                  border: Border.all(color: headerColor.withValues(alpha: 0.8), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE5E4E2).withValues(alpha: 0.4),
+                      color: shadowColor.withValues(alpha: 0.4),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -90,29 +145,30 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Celebration Header
-                      const Icon(
-                        Icons.emoji_events,
-                        color: Color(0xFFE5E4E2),
+                      Icon(
+                        headerIcon,
+                        color: headerColor,
                         size: 80,
                       )
                           .animate(onPlay: (controller) => controller.repeat())
                           .shimmer(duration: 2000.ms)
-                          .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.1, 1.1), duration: 1000.ms, curve: Curves.easeInOutSine)
+                          .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.05, 1.05), duration: 1500.ms, curve: Curves.easeInOutSine)
                           .then()
-                          .scale(begin: const Offset(1.1, 1.1), end: const Offset(0.8, 0.8), duration: 1000.ms, curve: Curves.easeInOutSine),
+                          .scale(begin: const Offset(1.05, 1.05), end: const Offset(0.8, 0.8), duration: 1500.ms, curve: Curves.easeInOutSine),
                       const SizedBox(height: 16),
-                      const Text(
-                        "VICTORY!",
+                      Text(
+                        headerText,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 38,
+                          fontSize: 34,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFE5E4E2),
+                          color: headerColor,
                           letterSpacing: 2,
                           shadows: [
                             Shadow(
-                              color: Colors.black,
+                              color: shadowColor,
                               blurRadius: 10,
-                              offset: Offset(3, 3),
+                              offset: const Offset(3, 3),
                             )
                           ],
                         ),
@@ -133,15 +189,15 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                         if (place == 1) {
                           placeColor = const Color(0xFFE5E4E2);
                           placeText = "1st";
-                          placeIcon = Icons.star;
+                          placeIcon = Icons.emoji_events;
                         } else if (place == 2) {
                           placeColor = const Color(0xFFB0B4B8);
                           placeText = "2nd";
-                          placeIcon = Icons.military_tech;
+                          placeIcon = Icons.workspace_premium;
                         } else if (place == 3) {
                           placeColor = const Color(0xFF8A8D91);
                           placeText = "3rd";
-                          placeIcon = Icons.military_tech;
+                          placeIcon = Icons.workspace_premium;
                         }
 
                         if (isLast) {
@@ -279,20 +335,21 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                 ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
               )),
 
-          // Confetti exactly centered at the top
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirection: pi / 2, // fall straight down
-              maxBlastForce: 5,
-              minBlastForce: 2,
-              emissionFrequency: 0.05,
-              numberOfParticles: 20,
-              gravity: 0.2,
-              colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple, Colors.amber],
+          // Confetti exactly centered at the top (only if human deserved it)
+          if (shouldCelebrate)
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: pi / 2, // fall straight down
+                maxBlastForce: 5,
+                minBlastForce: 2,
+                emissionFrequency: 0.05,
+                numberOfParticles: 20,
+                gravity: 0.2,
+                colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple, Colors.amber],
+              ),
             ),
-          ),
         ],
       ),
     );

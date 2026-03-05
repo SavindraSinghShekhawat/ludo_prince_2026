@@ -10,8 +10,9 @@ import 'board_widget.dart';
 import 'token_widget.dart';
 import 'dice_widget.dart';
 import 'home_screen.dart';
-import 'rules_dialog.dart';
-import 'game_over_dialog.dart';
+import '../ui/rules_dialog.dart';
+import '../ui/game_over_dialog.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
   const LudoScreen({super.key});
@@ -391,6 +392,101 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
 
   // ── Player Panel ──
 
+  Widget _buildRankBadge(int rank) {
+    Color badgeColor;
+    String rankText;
+    late IconData rankIcon;
+
+    switch (rank) {
+      case 1:
+        // Platinum from GameOverDialog
+        badgeColor = const Color(0xFFE5E4E2);
+        rankText = '1st';
+        rankIcon = Icons.emoji_events;
+        break;
+      case 2:
+        // Silver from GameOverDialog
+        badgeColor = const Color(0xFFB0B4B8);
+        rankText = '2nd';
+        rankIcon = Icons.workspace_premium;
+        break;
+      case 3:
+        // Darker Silver from GameOverDialog
+        badgeColor = const Color(0xFF8A8D91);
+        rankText = '3rd';
+        rankIcon = Icons.workspace_premium;
+        break;
+      default:
+        badgeColor = Colors.redAccent.shade200;
+        rankText = '${rank}th';
+        rankIcon = Icons.sentiment_very_dissatisfied;
+    }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: badgeColor.withValues(alpha: 0.15),
+            boxShadow: [
+              if (rank <= 3)
+                BoxShadow(
+                  color: badgeColor.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+            border: Border.all(color: badgeColor.withValues(alpha: 0.8), width: rank == 1 ? 2.5 : 1.5),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              rankIcon,
+              color: badgeColor,
+              size: rank == 1 ? 22 : 18,
+            ),
+            Text(
+              rankText,
+              style: TextStyle(
+                color: badgeColor,
+                fontWeight: FontWeight.w900,
+                fontSize: rank == 1 ? 14 : 12,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black54,
+                    blurRadius: 2,
+                    offset: Offset(1, 1),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    )
+        .animate(onPlay: (controller) => controller.repeat())
+        .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5))
+        .scale(
+          begin: const Offset(0.95, 0.95),
+          end: const Offset(1.05, 1.05),
+          duration: 1000.ms,
+          curve: Curves.easeInOutSine,
+        )
+        .then()
+        .scale(
+          begin: const Offset(1.05, 1.05),
+          end: const Offset(0.95, 0.95),
+          duration: 1000.ms,
+          curve: Curves.easeInOutSine,
+        );
+  }
+
   Widget _buildPlayerPanel(PlayerSlot slot, GameState state, {bool isLandscape = false, bool isLeft = true}) {
     final isTurn = slot == state.currentTurn;
 
@@ -439,18 +535,26 @@ class _LudoScreenState extends ConsumerState<LudoScreen> with WidgetsBindingObse
       child: Icon(isBot ? Icons.smart_toy : Icons.person, color: Colors.white, size: 40),
     );
 
-    Widget diceBox = isTurn
-        ? SizedBox(width: 50, height: 50, child: Container(padding: const EdgeInsets.all(2), child: const DiceWidget()))
-        : Container(
-            width: 50,
-            height: 50,
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.white12,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white30, width: 2),
-            ),
-          );
+    final int winnerRank = state.winners.indexOf(slot) + 1;
+    final bool isWinner = winnerRank > 0;
+
+    Widget diceBox;
+    if (isWinner) {
+      diceBox = _buildRankBadge(winnerRank);
+    } else if (isTurn) {
+      diceBox = SizedBox(width: 50, height: 50, child: Container(padding: const EdgeInsets.all(2), child: const DiceWidget()));
+    } else {
+      diceBox = Container(
+        width: 50,
+        height: 50,
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: Colors.white12,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white30, width: 2),
+        ),
+      );
+    }
 
     Widget nameTag = Container(
       width: 70,
