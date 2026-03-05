@@ -85,10 +85,11 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Celebration Header
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Celebration Header
                   const Icon(
                     Icons.emoji_events,
                     color: Color(0xFFE5E4E2),
@@ -313,6 +314,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                 ],
               ),
             ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+          )
           ),
 
           // Confetti exactly centered at the top

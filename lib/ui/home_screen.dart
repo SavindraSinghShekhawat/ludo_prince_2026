@@ -12,52 +12,54 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: const Color(0xFF1E1E2C),
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Ludo Prince',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Local Multiplayer',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white70,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 50),
-              _buildMenuButton(
-                context,
-                title: 'Local Multiplayer',
-                icon: Icons.people,
-                colors: [Colors.greenAccent.shade700, Colors.blueAccent],
-              ),
-              const SizedBox(height: 40),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => const AboutScreen()),
-                  );
-                },
-                icon: const Icon(Icons.info_outline, color: Colors.white70),
-                label: const Text(
-                  'About & Fairness',
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Ludo Prince',
                   style: TextStyle(
-                      color: Colors.white70,
-                      decoration: TextDecoration.underline),
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 5),
+                const Text(
+                  'Local Multiplayer',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white70,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 50),
+                _buildMenuButton(
+                  context,
+                  title: 'Local Multiplayer',
+                  icon: Icons.people,
+                  colors: [Colors.greenAccent.shade700, Colors.blueAccent],
+                ),
+                const SizedBox(height: 40),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const AboutScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.info_outline, color: Colors.white70),
+                  label: const Text(
+                    'About & Fairness',
+                    style: TextStyle(
+                        color: Colors.white70,
+                        decoration: TextDecoration.underline),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
