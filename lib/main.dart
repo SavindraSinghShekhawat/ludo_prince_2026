@@ -1,3 +1,4 @@
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,23 @@ import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await FlameAudio.audioCache.loadAll([
+    'roll.wav',
+    'six.wav',
+    'move_1.wav',
+    'move_2.wav',
+    'move_3.wav',
+    'move_4.wav',
+    'move_5.wav',
+    'move_6.wav',
+    'die.wav',
+    'home.wav',
+    'safe.wav',
+    'start.wav',
+    'victory.wav',
+    'bgm.wav',
+  ]);
 
   final prefs = await SharedPreferences.getInstance();
   final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;

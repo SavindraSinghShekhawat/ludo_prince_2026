@@ -1,4 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,16 +7,6 @@ class AudioService extends ChangeNotifier {
   factory AudioService() => _instance;
 
   AudioService._internal();
-
-  final AudioPlayer _rollPlayer = AudioPlayer();
-  final AudioPlayer _sixPlayer = AudioPlayer();
-  final AudioPlayer _movePlayer = AudioPlayer();
-  final AudioPlayer _diePlayer = AudioPlayer();
-  final AudioPlayer _homePlayer = AudioPlayer();
-  final AudioPlayer _safePlayer = AudioPlayer();
-  final AudioPlayer _startPlayer = AudioPlayer();
-  final AudioPlayer _bgmPlayer = AudioPlayer();
-  final AudioPlayer _victoryPlayer = AudioPlayer();
 
   bool _initialized = false;
   bool _isBgmEnabled = true;
@@ -32,27 +22,6 @@ class AudioService extends ChangeNotifier {
     _isBgmEnabled = prefs.getBool('bgm_enabled') ?? true;
     _isSfxEnabled = prefs.getBool('sfx_enabled') ?? true;
 
-    final players = [
-      _rollPlayer,
-      _sixPlayer,
-      _movePlayer,
-      _diePlayer,
-      _homePlayer,
-      _safePlayer,
-      _startPlayer,
-      _victoryPlayer,
-    ];
-
-    for (final p in players) {
-      await p.setReleaseMode(ReleaseMode.stop);
-      await p.setPlayerMode(PlayerMode.lowLatency);
-    }
-
-    await _movePlayer.setVolume(0.5);
-    await _rollPlayer.setVolume(0.8);
-    await _bgmPlayer.setVolume(0.55);
-    await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
-
     _initialized = true;
     notifyListeners();
   }
@@ -60,8 +29,10 @@ class AudioService extends ChangeNotifier {
   Future<void> toggleBGM() async {
     await init();
     _isBgmEnabled = !_isBgmEnabled;
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('bgm_enabled', _isBgmEnabled);
+
     notifyListeners();
 
     if (_isBgmEnabled) {
@@ -74,80 +45,93 @@ class AudioService extends ChangeNotifier {
   Future<void> toggleSFX() async {
     await init();
     _isSfxEnabled = !_isSfxEnabled;
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('sfx_enabled', _isSfxEnabled);
+
     notifyListeners();
   }
 
   Future<void> playBGM() async {
     await init();
     if (!_isBgmEnabled) return;
-    if (_bgmPlayer.state != PlayerState.playing) {
-      await _bgmPlayer.play(AssetSource('sounds/bgm.wav'));
-    }
+
+    FlameAudio.bgm.play(
+      'bgm.wav',
+      volume: 0.55,
+    );
   }
 
   Future<void> stopBGM() async {
-    await _bgmPlayer.stop();
+    FlameAudio.bgm.stop();
   }
 
   Future<void> pauseBGM() async {
-    await _bgmPlayer.pause();
+    FlameAudio.bgm.pause();
   }
 
   Future<void> resumeBGM() async {
     await init();
     if (!_isBgmEnabled) return;
-    await _bgmPlayer.resume();
+
+    FlameAudio.bgm.resume();
   }
 
   Future<void> playRoll() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _rollPlayer.play(AssetSource('sounds/roll.wav'));
+
+    FlameAudio.play('roll.wav', volume: 0.8);
   }
 
   Future<void> playSix() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _sixPlayer.play(AssetSource('sounds/six.wav'));
+
+    FlameAudio.play('six.wav', volume: 0.8);
   }
 
   Future<void> playMove(int steps) async {
     await init();
     if (!_isSfxEnabled) return;
+
     final safeSteps = steps.clamp(1, 6);
-    await _movePlayer.play(AssetSource('sounds/move_$safeSteps.wav'));
+    FlameAudio.play('move_$safeSteps.wav', volume: 0.5);
   }
 
   Future<void> playDie() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _diePlayer.play(AssetSource('sounds/die.wav'));
+
+    FlameAudio.play('die.wav', volume: 0.8);
   }
 
   Future<void> playHome() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _homePlayer.play(AssetSource('sounds/home.wav'));
+
+    FlameAudio.play('home.wav', volume: 0.8);
   }
 
   Future<void> playSafe() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _safePlayer.play(AssetSource('sounds/safe.wav'));
+
+    FlameAudio.play('safe.wav', volume: 0.8);
   }
 
   Future<void> playStart() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _startPlayer.play(AssetSource('sounds/start.wav'));
+
+    FlameAudio.play('start.wav', volume: 0.8);
   }
 
   Future<void> playVictory() async {
     await init();
     if (!_isSfxEnabled) return;
-    await _victoryPlayer.play(AssetSource('sounds/victory.wav'));
+
+    FlameAudio.play('victory.wav', volume: 0.8);
   }
 }
 
