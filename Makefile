@@ -37,7 +37,7 @@ android-build:
 	cd android && bundle exec fastlane build
 
 ios-build:
-	@echo "iOS build lane not added yet"
+	cd ios && bundle exec fastlane build
 
 
 # ---------- Android Deploy ----------
@@ -52,18 +52,18 @@ android-production:
 # ---------- iOS Deploy ----------
 
 ios-internal:
-	@echo "iOS internal lane not added yet"
+	cd ios && bundle exec fastlane internal
 
 ios-production:
-	@echo "iOS production lane not added yet"
+	cd ios && bundle exec fastlane production
 
 
 # ---------- Platform pipelines ----------
 
-internal: version build android-internal ios-internal
+internal: version android-internal ios-internal
 	@echo ""
 	@echo "🚀 Internal release completed for $(DISPLAY_NAME)"
 
-production: version build android-production ios-production
+production: android-production ios-production
 	@echo ""
 	@echo "🚀 Production release completed for $(DISPLAY_NAME)"

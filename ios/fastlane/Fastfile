@@ -23,14 +23,16 @@ platform :ios do
 
   desc "Upload to App Store production"
   lane :production do
-    build
+    version_line = File.readlines("../../pubspec.yaml").find { |l| l.start_with?("version:") }
+    build_number = version_line.split("+")[1].strip
 
-    build_app(
-      workspace: "Runner.xcworkspace",
-      scheme: "Runner"
+    UI.message("Releasing iOS build #{build_number}")
+
+    upload_to_app_store(
+      submit_for_review: true,
+      automatic_release: true,
+      build_number: build_number
     )
-
-    upload_to_app_store
   end
 
 end

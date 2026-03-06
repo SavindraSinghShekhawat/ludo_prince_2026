@@ -1,4 +1,5 @@
 # Fastlane artifacts
+android/vendor
 android/fastlane/build
 android/fastlane/report.xml
 android/fastlane/Preview.html

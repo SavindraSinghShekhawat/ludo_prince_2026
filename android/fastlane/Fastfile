@@ -27,12 +27,16 @@ platform :android do
 
   desc "Deploy to Play Store PRODUCTION"
   lane :production do
-    build
+    version_line = File.readlines("../../pubspec.yaml").find { |l| l.start_with?("version:") }
+    version_code = version_line.split("+")[1].strip.to_i
+
+    UI.message("Promoting versionCode #{version_code}")
 
     upload_to_play_store(
-      track: "production",
-      aab: "../build/app/outputs/bundle/release/app-release.aab",
-      mapping: "../build/app/outputs/mapping/release/mapping.txt"
+      track: "internal",
+      version_code: version_code,
+      track_promote_to: "production",
+      track_promote_release_status: "completed"
     )
   end
 
