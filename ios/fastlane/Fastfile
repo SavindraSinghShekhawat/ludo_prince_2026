@@ -1,0 +1,36 @@
+default_platform(:ios)
+
+platform :ios do
+
+  desc "Build iOS app"
+  lane :build do
+    sh("flutter clean")
+    sh("flutter pub get")
+    sh("flutter build ios --release")
+  end
+
+  desc "Upload build to TestFlight"
+  lane :internal do
+    build
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner"
+    )
+
+    upload_to_testflight
+  end
+
+  desc "Upload to App Store production"
+  lane :production do
+    build
+
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner"
+    )
+
+    upload_to_app_store
+  end
+
+end

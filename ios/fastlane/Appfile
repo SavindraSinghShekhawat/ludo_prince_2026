@@ -1,0 +1,8 @@
+app_identifier("com.paisphere.ludoprince") # The bundle identifier of your app
+apple_id("shekhawatsavindra@gmail.com") # Your Apple Developer Portal username
+
+itc_team_id("127378672") # App Store Connect Team ID
+team_id("TD7K24R522") # Developer Portal Team ID
+
+# For more information about the Appfile, see:
+#     https://docs.fastlane.tools/advanced/#appfile
