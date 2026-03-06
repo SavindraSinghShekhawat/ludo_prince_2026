@@ -7,11 +7,13 @@ import 'game_engine.dart';
 
 class BotAI {
   static final GameEngine _engine = GameEngine();
+  static final Random _random = Random();
 
   static Token? getBestMove(Player player, GameState state) {
     if (!state.isDiceRolled) return null;
 
     final dice = state.diceValue;
+
     final validTokens =
         player.tokens.where((t) => _engine.isValidMove(t, dice)).toList();
 
@@ -23,8 +25,9 @@ class BotAI {
     List<Token> ties = [validTokens.first];
 
     for (int i = 1; i < validTokens.length; i++) {
-      var token = validTokens[i];
+      final token = validTokens[i];
       int score = _evaluateMove(player, token, state, dice);
+
       if (score > highestScore) {
         highestScore = score;
         bestToken = token;
@@ -34,8 +37,9 @@ class BotAI {
       }
     }
 
-    if (ties.isNotEmpty) {
-      return ties[Random().nextInt(ties.length)];
+    if (ties.length > 1) {
+      ties.sort((a, b) => _tokenProgress(b).compareTo(_tokenProgress(a)));
+      return ties.first;
     }
 
     return bestToken;
@@ -45,13 +49,18 @@ class BotAI {
       Player player, Token token, GameState state, int dice) {
     int score = 0;
 
-    // Simulate move to evaluate tactical advantages
     int steps = dice;
     Token simulatedToken = token;
 
+    // Opening strategy
+    bool anyOnBoard = player.tokens.any((t) => t.state == TokenState.board);
+    if (!anyOnBoard && dice == 6) {
+      score += 1000;
+    }
+
+    // Escape base
     if (simulatedToken.state == TokenState.home && steps == 6) {
-      // Escaping base
-      score += 500;
+      score += 600;
       simulatedToken = simulatedToken.copyWith(
         state: TokenState.board,
         position: 0,
@@ -62,95 +71,197 @@ class BotAI {
       }
     }
 
+    // Finish token
     if (simulatedToken.state == TokenState.finished) {
-      score += 1000; // Priority 1: Win the token
-    } else if (simulatedToken.state == TokenState.homeStretch) {
-      score += 200; // Entering home stretch is good
-    } else if (simulatedToken.state == TokenState.board) {
-      // Check for capture
-      if (!BoardPath.isSafeSpot(simulatedToken.position)) {
-        int targetAbsPos = BoardPath.getAbsolutePosition(
-            simulatedToken.slot, simulatedToken.position);
+      score += 4000;
+      return score;
+    }
 
-        // Check for capture
-        int capturedPos = -1;
-        for (var opp in state.players) {
-          if (opp.slot == player.slot) continue;
-          for (var oppToken in opp.tokens) {
-            if (oppToken.state == TokenState.board) {
-              int oppAbsPos = BoardPath.getAbsolutePosition(
-                  oppToken.slot, oppToken.position);
-              if (oppAbsPos == targetAbsPos) {
-                capturedPos = max(capturedPos, oppToken.position);
-              }
+    // Home stretch bonus
+    if (simulatedToken.state == TokenState.homeStretch) {
+      score += 500;
+    }
+
+    if (simulatedToken.state == TokenState.board) {
+      int targetAbsPos = BoardPath.getAbsolutePosition(
+          simulatedToken.slot, simulatedToken.position);
+
+      // Capture evaluation
+      int capturedPos = -1;
+      for (var opp in state.players) {
+        if (opp.slot == player.slot) continue;
+
+        for (var oppToken in opp.tokens) {
+          if (oppToken.state == TokenState.board) {
+            int oppAbsPos =
+                BoardPath.getAbsolutePosition(oppToken.slot, oppToken.position);
+
+            if (oppAbsPos == targetAbsPos &&
+                !BoardPath.isSafeSpot(simulatedToken.position)) {
+              capturedPos = max(capturedPos, oppToken.position);
             }
           }
         }
-
-        if (capturedPos != -1) {
-          // Weighted capture: prioritize pieces closer to home
-          score += 1100 + (capturedPos * 2);
-        }
-
-        // Danger evaluation
-        bool wasInDanger = _isTokenInDanger(token, state);
-        bool willBeInDanger = _isTokenInDanger(simulatedToken, state);
-
-        if (wasInDanger && !willBeInDanger) {
-          score += 400; // Saved a piece!
-        } else if (!wasInDanger && willBeInDanger && capturedPos == -1) {
-          score -= 200; // Moved into danger for no reason
-        }
-      } else {
-        score += 300; // Landing on a safe spot
-        bool wasInDanger = _isTokenInDanger(token, state);
-        if (wasInDanger) score += 400; // Reached safety
       }
-    } else if (simulatedToken.state == TokenState.homeStretch ||
-        simulatedToken.state == TokenState.finished) {
-      bool wasInDanger = _isTokenInDanger(token, state);
-      if (wasInDanger) score += 400; // Escaped to home stretch
+
+      if (capturedPos != -1) {
+        score += 5000 + (capturedPos * 15);
+      }
+
+      // Safe spot bonus
+      if (BoardPath.isSafeSpot(simulatedToken.position)) {
+        score += 350;
+      }
+
+      // Don't leave safe spot unnecessarily
+      if (BoardPath.isSafeSpot(token.position) &&
+          !BoardPath.isSafeSpot(simulatedToken.position)) {
+        score -= 250;
+      }
+
+      // Block formation
+      bool formsBlock = false;
+      for (var myToken in player.tokens) {
+        if (myToken == token) continue;
+        if (myToken.state == TokenState.board) {
+          int abs =
+              BoardPath.getAbsolutePosition(myToken.slot, myToken.position);
+
+          if (abs == targetAbsPos) {
+            formsBlock = true;
+            break;
+          }
+        }
+      }
+
+      if (formsBlock) {
+        score += 900;
+
+        if (simulatedToken.position >= 20 && simulatedToken.position <= 35) {
+          score += 300;
+        }
+      }
+
+      // Danger evaluation
+      int attackersBefore = _countAttackersInRange(token, state);
+      int attackersAfter = _countAttackersInRange(simulatedToken, state);
+
+      if (attackersBefore > 0) {
+        score += 3800;
+
+        if (attackersAfter == 0) {
+          score += 500;
+        }
+      } else if (attackersAfter > attackersBefore) {
+        score -= 160 * (attackersAfter - attackersBefore);
+      }
+
+      // Offensive evaluation
+      int targets = _countTargetsInRange(simulatedToken, state);
+      score += 140 * targets;
+
+      // Avoid token clumping
+      int nearbyFriends = 0;
+
+      for (var t in player.tokens) {
+        if (t == token) continue;
+
+        if (t.state == TokenState.board) {
+          if ((t.position - simulatedToken.position).abs() <= 3) {
+            nearbyFriends++;
+          }
+        }
+      }
+
+      score -= nearbyFriends * 120;
+
+      // Late game push
+      if (simulatedToken.position >= 45) {
+        score += 800;
+      }
+
+      // Forward progress
+      score += simulatedToken.position * 3;
     }
 
-    // Home stretch penalty: prefer moving tokens on the board
+    // Avoid moving home stretch token unnecessarily
     if (token.state == TokenState.homeStretch) {
-      score -= 200;
+      score -= 300;
     }
 
-    // Tie breaker: prefer moving tokens that are further ahead
-    if (simulatedToken.state == TokenState.board) {
-      score += simulatedToken.position;
-    }
+    // Aggressive mode when winning
+    int finishedCount =
+        player.tokens.where((t) => t.state == TokenState.finished).length;
 
-    // Secondary tie breaker for 6s: if we can move a piece further instead of just escaping
-    // when we already have pieces on the board, keep it balanced but let's stick to the current.
+    if (finishedCount >= 2) {
+      score += 200;
+    }
 
     return score;
   }
 
-  static bool _isTokenInDanger(Token t, GameState state) {
-    if (t.state != TokenState.board) return false;
-    if (BoardPath.isSafeSpot(t.position)) return false;
+  static int _countAttackersInRange(Token t, GameState state, {int range = 6}) {
+    if (t.state != TokenState.board) return 0;
+    if (BoardPath.isSafeSpot(t.position)) return 0;
 
     int absPos = BoardPath.getAbsolutePosition(t.slot, t.position);
+    int attackers = 0;
 
     for (var opp in state.players) {
       if (opp.slot == t.slot) continue;
+
       for (var oppToken in opp.tokens) {
         if (oppToken.state == TokenState.board) {
           int oppAbsPos =
               BoardPath.getAbsolutePosition(oppToken.slot, oppToken.position);
+
           int dist = (absPos - oppAbsPos + 52) % 52;
 
-          if (dist >= 1 && dist <= 6) {
-            // Is the opponent actually able to reach us before they turn into home stretch?
+          if (dist >= 1 && dist <= range) {
             if (oppToken.position + dist <= 50) {
-              return true;
+              attackers++;
             }
           }
         }
       }
     }
-    return false;
+
+    return attackers;
+  }
+
+  static int _countTargetsInRange(Token t, GameState state) {
+    if (t.state != TokenState.board) return 0;
+
+    int absPos = BoardPath.getAbsolutePosition(t.slot, t.position);
+    int targets = 0;
+
+    for (var opp in state.players) {
+      if (opp.slot == t.slot) continue;
+
+      for (var oppToken in opp.tokens) {
+        if (oppToken.state == TokenState.board) {
+          int oppAbsPos =
+              BoardPath.getAbsolutePosition(oppToken.slot, oppToken.position);
+
+          int dist = (oppAbsPos - absPos + 52) % 52;
+
+          if (dist >= 1 && dist <= 6) {
+            if (t.position + dist <= 50 &&
+                !BoardPath.isSafeSpot(oppToken.position)) {
+              targets++;
+            }
+          }
+        }
+      }
+    }
+
+    return targets;
+  }
+
+  static int _tokenProgress(Token t) {
+    if (t.state == TokenState.finished) return 10000;
+    if (t.state == TokenState.homeStretch) return 800 + t.position;
+    if (t.state == TokenState.board) return 500 + t.position;
+    return 0;
   }
 }

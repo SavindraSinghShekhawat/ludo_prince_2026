@@ -3,7 +3,9 @@ import 'package:ludo_prince/controllers/local_game_controller.dart';
 
 void main() {
   group('Dice Randomness Tests (via Controller)', () {
-    test('LocalGameController.generateDiceValue() distribution should be statistically fair', () {
+    test(
+        'LocalGameController.generateDiceValue() distribution should be statistically fair',
+        () {
       const iterations = 10000000;
       final results = List.filled(7, 0);
 
@@ -18,11 +20,13 @@ void main() {
       });
 
       // The critical value for Chi-Square at 5 degrees of freedom and alpha=0.01 is 15.086
-      expect(chiSquared, lessThan(15.086), 
-        reason: 'Controller dice distribution is not statistically fair (Chi-Squared: $chiSquared)');
-        
+      expect(chiSquared, lessThan(15.086),
+          reason:
+              'Controller dice distribution is not statistically fair (Chi-Squared: $chiSquared)');
+
       for (var i = 1; i <= 6; i++) {
-        expect(results[i], greaterThan(0), reason: 'Value $i was never rolled by controller');
+        expect(results[i], greaterThan(0),
+            reason: 'Value $i was never rolled by controller');
       }
     });
 
