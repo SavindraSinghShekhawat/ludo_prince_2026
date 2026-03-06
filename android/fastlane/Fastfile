@@ -1,0 +1,39 @@
+default_platform(:android)
+
+platform :android do
+
+  desc "Run tests"
+  lane :test do
+    sh("flutter test")
+  end
+
+  desc "Build Flutter App Bundle"
+  lane :build do
+    sh("flutter clean")
+    sh("flutter pub get")
+    sh("flutter build appbundle --release")
+  end
+
+  desc "Deploy to Play Store INTERNAL"
+  lane :internal do
+    build
+
+    upload_to_play_store(
+      track: "internal",
+      aab: "../build/app/outputs/bundle/release/app-release.aab",
+      mapping: "../build/app/outputs/mapping/release/mapping.txt"
+    )
+  end
+
+  desc "Deploy to Play Store PRODUCTION"
+  lane :production do
+    build
+
+    upload_to_play_store(
+      track: "production",
+      aab: "../build/app/outputs/bundle/release/app-release.aab",
+      mapping: "../build/app/outputs/mapping/release/mapping.txt"
+    )
+  end
+
+end

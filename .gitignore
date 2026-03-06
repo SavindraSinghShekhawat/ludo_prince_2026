@@ -1,3 +1,17 @@
+# Fastlane artifacts
+android/fastlane/build
+android/fastlane/report.xml
+android/fastlane/Preview.html
+android/fastlane/screenshots
+android/fastlane/test_output
+
+# Play Store API key (SECRET)
+android/fastlane/play-store-key.json
+
+# Env files
+.env
+.env.*
+
 # Miscellaneous
 *.class
 *.log
