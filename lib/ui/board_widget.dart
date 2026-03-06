@@ -152,8 +152,9 @@ class BoardWidget extends StatelessWidget {
     if (col == 8 && row == 1) {
       return Colors.greenAccent.shade700.withValues(alpha: 0.8);
     }
-    if (col == 13 && row == 8)
+    if (col == 13 && row == 8) {
       return Colors.amber.shade600.withValues(alpha: 0.8);
+    }
     if (col == 6 && row == 13) return Colors.blueAccent.withValues(alpha: 0.8);
 
     return Colors.white; // default path color

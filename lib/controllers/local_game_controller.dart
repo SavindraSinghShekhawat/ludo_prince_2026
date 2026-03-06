@@ -38,8 +38,9 @@ class LocalGameController implements GameController {
   }
 
   void _checkBotTurn() async {
-    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver)
+    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
       return;
+    }
     final currentPlayer =
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     if (!currentPlayer.isBot) return;
@@ -51,7 +52,9 @@ class LocalGameController implements GameController {
     if (_isDisposed ||
         _isPaused ||
         _state.currentTurn != currentPlayer.slot ||
-        _state.isGameOver) return;
+        _state.isGameOver) {
+      return;
+    }
 
     if (!_state.isDiceRolled) {
       _state = _state.copyWith(isRolling: true);
@@ -73,10 +76,12 @@ class LocalGameController implements GameController {
     yield* _streamController.stream;
   }
 
+  static int generateDiceValue() => Random.secure().nextInt(6) + 1;
+
   @override
   Future<void> sendRollIntent() async {
     if (_isActionInProgress) return;
-    final dice = Random.secure().nextInt(6) + 1;
+    final dice = generateDiceValue();
     await executeRoll(dice);
   }
 

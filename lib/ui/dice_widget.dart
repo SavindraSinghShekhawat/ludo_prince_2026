@@ -146,9 +146,9 @@ class DiceFacePainter extends CustomPainter {
     double h = size.height;
 
     var paint = Paint()
-      ..shader = RadialGradient(
-        colors: const [Color(0xFF4A4A4A), Color(0xFF1A1A1A)],
-        center: const Alignment(-0.3, -0.3),
+      ..shader = const RadialGradient(
+        colors: [Color(0xFF4A4A4A), Color(0xFF1A1A1A)],
+        center: Alignment(-0.3, -0.3),
         radius: 0.8,
       ).createShader(Rect.fromLTWH(0, 0, w, h))
       ..style = PaintingStyle.fill;
