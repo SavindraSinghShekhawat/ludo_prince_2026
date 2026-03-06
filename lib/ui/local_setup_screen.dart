@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/controllers/local_game_controller.dart';
@@ -224,42 +225,44 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                       ),
                     );
                   }),
-                  const SizedBox(height: 40),
-                  const Text(
-                    'Initial Game State (Testing)',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  DropdownButtonFormField<InitialGameState>(
-                    initialValue: _initialState,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFF2A2A3D),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 40),
+                    const Text(
+                      'Initial Game State (Testing)',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
                     ),
-                    dropdownColor: const Color(0xFF2A2A3D),
-                    style: const TextStyle(color: Colors.white),
-                    items: InitialGameState.values.map((state) {
-                      return DropdownMenuItem(
-                        value: state,
-                        child: Text(state.name.toUpperCase()),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          _initialState = val;
-                        });
-                      }
-                    },
-                  ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<InitialGameState>(
+                      initialValue: _initialState,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFF2A2A3D),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      dropdownColor: const Color(0xFF2A2A3D),
+                      style: const TextStyle(color: Colors.white),
+                      items: InitialGameState.values.map((state) {
+                        return DropdownMenuItem(
+                          value: state,
+                          child: Text(state.name.toUpperCase()),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _initialState = val;
+                          });
+                        }
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 40),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
