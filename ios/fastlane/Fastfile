@@ -6,7 +6,7 @@ platform :ios do
   lane :build do
     sh("flutter clean")
     sh("flutter pub get")
-    sh("flutter build ios --release")
+    sh("flutter build ios --release --no-codesign")
   end
 
   desc "Upload build to TestFlight"
@@ -15,7 +15,8 @@ platform :ios do
 
     build_app(
       workspace: "Runner.xcworkspace",
-      scheme: "Runner"
+      scheme: "Runner",
+      export_method: "app-store"
     )
 
     upload_to_testflight
@@ -31,7 +32,12 @@ platform :ios do
     upload_to_app_store(
       submit_for_review: true,
       automatic_release: true,
-      build_number: build_number
+      build_number: build_number,
+      skip_screenshots: true,
+      skip_binary_upload: true,
+      release_notes: {
+        "en-US" => "Bug fixes and performance improvements."
+      }
     )
   end
 
