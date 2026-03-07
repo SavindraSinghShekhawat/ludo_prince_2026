@@ -135,10 +135,6 @@ class LudoController implements GameController {
     }
 
     if (!_state.isDiceRolled) {
-      _state = _state.copyWith(isRolling: true);
-      if (!_isDisposed) _streamController.add(_state);
-      await Future.delayed(const Duration(milliseconds: 450));
-      _state = _state.copyWith(isRolling: false);
       await sendRollIntent();
     } else {
       final bestToken = BotAI.getBestMove(currentPlayer, _state);
@@ -181,7 +177,7 @@ class LudoController implements GameController {
     _state = _state.copyWith(isRolling: true, diceValue: value);
     if (!_isDisposed) _streamController.add(_state);
 
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 450));
     if (_isDisposed) return;
 
     _state = _state.copyWith(isRolling: false);

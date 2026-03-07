@@ -23,7 +23,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000));
+        vsync: this, duration: const Duration(milliseconds: 450));
     _controller.addListener(() {
       if (_controller.isAnimating) {
         setState(() {
@@ -111,10 +111,10 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
         ),
       )
           .animate(controller: _controller, autoPlay: false)
-          .shake(hz: 8, duration: 1000.ms, curve: Curves.easeInOut)
-          .scaleXY(begin: 1.0, end: 1.2, duration: 500.ms)
+          .shake(hz: 8, duration: 450.ms, curve: Curves.easeInOut)
+          .scaleXY(begin: 1.0, end: 1.2, duration: 225.ms)
           .then()
-          .scaleXY(begin: 1.2, end: 1.0, duration: 500.ms),
+          .scaleXY(begin: 1.2, end: 1.0, duration: 225.ms),
     );
   }
 }
