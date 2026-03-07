@@ -314,12 +314,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                   child: Stack(
                     children: [
                       const BoardWidget(),
-                      for (var player in gameState.players)
-                        for (var token in player.tokens)
-                          TokenWidget(
-                            token: token,
-                            cellSize: cellSize,
-                          ),
+                      ..._buildTokens(gameState, cellSize),
                     ],
                   ),
                 );
@@ -670,5 +665,101 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         ),
       ),
     );
+  }
+
+  List<Widget> _buildTokens(GameState gameState, double cellSize) {
+    final List<Widget> tokenWidgets = [];
+    final Map<String, List<Token>> boardOverlaps = {};
+    final Map<String, List<Token>> homeOverlaps = {};
+
+    // Grouping tokens by position to calculate overlaps efficiently
+    for (var player in gameState.players) {
+      for (var token in player.tokens) {
+        if (token.state == TokenState.board) {
+          int absPos =
+              BoardPath.getAbsolutePosition(token.slot, token.position);
+          String key = "abs_$absPos";
+          boardOverlaps.putIfAbsent(key, () => []).add(token);
+        } else if (token.state == TokenState.homeStretch ||
+            token.state == TokenState.finished) {
+          String key = "${token.slot.name}_${token.position}";
+          homeOverlaps.putIfAbsent(key, () => []).add(token);
+        }
+      }
+    }
+
+    for (var player in gameState.players) {
+      final isTurn = gameState.currentTurn == player.slot;
+      for (var token in player.tokens) {
+        bool isMovable = false;
+        if (isTurn && gameState.isDiceRolled) {
+          if (token.state == TokenState.home) {
+            isMovable = gameState.diceValue == 6;
+          } else if (token.state != TokenState.finished) {
+            isMovable = token.position + gameState.diceValue <= 56;
+          }
+        }
+
+        Offset overlapOffset = Offset.zero;
+        double scaleAdjustment = 1.0;
+
+        if (token.state != TokenState.home) {
+          List<Token>? overlapping;
+          if (token.state == TokenState.board) {
+            int absPos =
+                BoardPath.getAbsolutePosition(token.slot, token.position);
+            overlapping = boardOverlaps["abs_$absPos"];
+          } else {
+            overlapping = homeOverlaps["${token.slot.name}_${token.position}"];
+          }
+
+          if (overlapping != null && overlapping.length > 1) {
+            int index = overlapping
+                .indexWhere((t) => t.slot == token.slot && t.id == token.id);
+            double tokenSize = cellSize * 0.7;
+            double spread = tokenSize * 0.3;
+
+            if (overlapping.length == 2) {
+              overlapOffset =
+                  Offset((index == 0) ? -spread / 1.5 : spread / 1.5, 0);
+            } else if (overlapping.length == 3) {
+              if (index == 0) {
+                overlapOffset = Offset(0, -spread);
+              } else if (index == 1) {
+                overlapOffset = Offset(-spread, spread);
+              } else {
+                overlapOffset = Offset(spread, spread);
+              }
+            } else if (overlapping.length == 4) {
+              overlapOffset = Offset((index % 2 == 1) ? spread : -spread,
+                  (index % 4 >= 2) ? spread : -spread);
+            } else {
+              double multiSpread = spread * 0.8;
+              int cols =
+                  (overlapping.length > 4 && overlapping.length <= 6) ? 3 : 4;
+              int row = index ~/ cols;
+              int col = index % cols;
+              overlapOffset = Offset(
+                  (col - (cols - 1) / 2) * multiSpread,
+                  (row - (overlapping.length / cols).ceil() / 2 + 0.5) *
+                      multiSpread);
+            }
+            scaleAdjustment = (overlapping.length > 4) ? 0.6 : 0.8;
+          }
+        }
+
+        tokenWidgets.add(
+          TokenWidget(
+            key: ValueKey("token_${token.slot.name}_${token.id}"),
+            token: token,
+            cellSize: cellSize,
+            isMovable: isMovable,
+            overlapOffset: overlapOffset,
+            scaleAdjustment: scaleAdjustment,
+          ),
+        );
+      }
+    }
+    return tokenWidgets;
   }
 }
