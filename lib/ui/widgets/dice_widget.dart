@@ -5,7 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 
 import '../../models/game_state.dart';
-import '../../models/player.dart';
 
 class DiceWidget extends ConsumerStatefulWidget {
   const DiceWidget({super.key});
@@ -24,7 +23,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+        vsync: this, duration: const Duration(milliseconds: 1000));
     _controller.addListener(() {
       if (_controller.isAnimating) {
         setState(() {
@@ -47,23 +46,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     if (gameState == null) return;
     if (gameState.isDiceRolled || _isAnimating) return;
 
-    final currentPlayer =
-        gameState.players.firstWhere((p) => p.slot == gameState.currentTurn);
-    if (currentPlayer.type != PlayerType.localHuman) return;
-
-    setState(() {
-      _isAnimating = true;
-    });
-
-    _controller.forward(from: 0).then((_) {
-      if (mounted) {
-        setState(() {
-          _isAnimating = false;
-        });
-        _controller.reset();
-      }
-      ref.read(gameControllerProvider).sendRollIntent();
-    });
+    ref.read(gameControllerProvider).sendRollIntent();
   }
 
   @override
@@ -128,10 +111,10 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
         ),
       )
           .animate(controller: _controller, autoPlay: false)
-          .shake(hz: 8, duration: 600.ms, curve: Curves.easeInOut)
-          .scaleXY(begin: 1.0, end: 1.2, duration: 300.ms)
+          .shake(hz: 8, duration: 1000.ms, curve: Curves.easeInOut)
+          .scaleXY(begin: 1.0, end: 1.2, duration: 500.ms)
           .then()
-          .scaleXY(begin: 1.2, end: 1.0, duration: 300.ms),
+          .scaleXY(begin: 1.2, end: 1.0, duration: 500.ms),
     );
   }
 }

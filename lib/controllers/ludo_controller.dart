@@ -69,8 +69,11 @@ class LudoController implements GameController {
   late final MoveExecutor _executor;
   final GameEventProvider _eventProvider;
 
+  final PlayerSlot? localPlayerSlot;
+
   LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
       {this.initialState = InitialGameState.normal,
+      this.localPlayerSlot,
       GameEventProvider? eventProvider})
       : _state = GameState(
             gameId: "",
@@ -96,6 +99,9 @@ class LudoController implements GameController {
     _eventProvider.events.listen(_handleGameEvent);
     Future.microtask(_checkBotTurn);
   }
+
+  bool get isMyTurn =>
+      localPlayerSlot == null || state.currentTurn == localPlayerSlot;
 
   void _handleGameEvent(GameEvent event) async {
     if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
@@ -131,7 +137,7 @@ class LudoController implements GameController {
     if (!_state.isDiceRolled) {
       _state = _state.copyWith(isRolling: true);
       if (!_isDisposed) _streamController.add(_state);
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 450));
       _state = _state.copyWith(isRolling: false);
       await sendRollIntent();
     } else {
@@ -149,20 +155,19 @@ class LudoController implements GameController {
   }
 
   @override
-  PlayerSlot? get localPlayerSlot => null; // Local games are hotseat by default
-
-  @override
   bool get isActionInProgress => _isActionInProgress;
 
   static int generateDiceValue() => Random.secure().nextInt(6) + 1;
 
   @override
   Future<void> sendRollIntent() async {
+    if (!isMyTurn || _state.isDiceRolled || _isActionInProgress) return;
     _eventProvider.onRollRequested();
   }
 
   @override
   Future<void> sendMoveIntent(Token token) async {
+    if (!isMyTurn || !_state.isDiceRolled || _isActionInProgress) return;
     _eventProvider.onMoveRequested(token.id);
   }
 
@@ -170,6 +175,16 @@ class LudoController implements GameController {
   Future<void> executeRoll(int value) async {
     if (_state.isDiceRolled || _isActionInProgress) return;
     _isActionInProgress = true;
+
+    // Set diceValue IMMEDIATELY so UI can land on it correctly
+    _audioListener.playRollSound();
+    _state = _state.copyWith(isRolling: true, diceValue: value);
+    if (!_isDisposed) _streamController.add(_state);
+
+    await Future.delayed(const Duration(milliseconds: 1000));
+    if (_isDisposed) return;
+
+    _state = _state.copyWith(isRolling: false);
 
     final result = _engine.rollDice(_state, value);
     _state = result.state.copyWith(lastAction: GameAction.roll);
@@ -203,6 +218,7 @@ class LudoController implements GameController {
     }
 
     _isActionInProgress = false;
+    if (!_isDisposed) _streamController.add(_state);
 
     if (autoMoveId != null) {
       await Future.delayed(const Duration(milliseconds: 250));
@@ -218,6 +234,7 @@ class LudoController implements GameController {
     _isActionInProgress = true;
     await _executor.execute(_state, tokenId, _state.diceValue);
     _isActionInProgress = false;
+    if (!_isDisposed) _streamController.add(_state);
     _checkBotTurn();
   }
 

@@ -20,12 +20,18 @@ class LocalEventProvider extends GameEventProvider {
   void onRollRequested() {
     // Generate dice value here to ensure it's the source of truth
     final diceValue = LudoController.generateDiceValue();
-    _controller.add(RollEvent(diceValue));
+    _controller.add(RollEvent(
+      diceValue,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    ));
   }
 
   @override
   void onMoveRequested(int tokenId) {
-    _controller.add(MoveEvent(tokenId));
+    _controller.add(MoveEvent(
+      tokenId,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    ));
   }
 
   @override
@@ -35,16 +41,26 @@ class LocalEventProvider extends GameEventProvider {
 }
 
 sealed class GameEvent {
-  const GameEvent(); // Allow subclasses to have const constructors
+  final int timestamp;
+
+  const GameEvent({required this.timestamp});
 
   Map<String, dynamic> toJson();
 
   factory GameEvent.fromJson(Map<String, dynamic> json) {
     final type = json['type'] as String;
+    final timestamp = json['timestamp'] as int? ?? 0;
+
     if (type == 'roll') {
-      return RollEvent(json['diceValue'] as int);
+      return RollEvent(
+        json['diceValue'] as int,
+        timestamp: timestamp,
+      );
     } else if (type == 'move') {
-      return MoveEvent(json['tokenId'] as int);
+      return MoveEvent(
+        json['tokenId'] as int,
+        timestamp: timestamp,
+      );
     }
     throw Exception('Unknown GameEvent type: $type');
   }
@@ -52,22 +68,26 @@ sealed class GameEvent {
 
 class RollEvent extends GameEvent {
   final int diceValue;
-  RollEvent(this.diceValue);
+  RollEvent(this.diceValue, {required int timestamp})
+      : super(timestamp: timestamp);
 
   @override
   Map<String, dynamic> toJson() => {
         'type': 'roll',
         'diceValue': diceValue,
+        'timestamp': timestamp,
       };
 }
 
 class MoveEvent extends GameEvent {
   final int tokenId;
-  MoveEvent(this.tokenId);
+  MoveEvent(this.tokenId, {required int timestamp})
+      : super(timestamp: timestamp);
 
   @override
   Map<String, dynamic> toJson() => {
         'type': 'move',
         'tokenId': tokenId,
+        'timestamp': timestamp,
       };
 }

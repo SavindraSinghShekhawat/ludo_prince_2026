@@ -36,7 +36,7 @@ class AudioControllerListener {
     for (final event in events) {
       switch (event) {
         case EngineEvent.diceRoll:
-          await audioService.playRoll();
+          // Dice roll sound is now handled explicitly at the start of animation
           break;
         case EngineEvent.rolledSix:
           await audioService.playSix();
@@ -66,5 +66,9 @@ class AudioControllerListener {
 
   Future<void> playMoveSound(int steps) async {
     await audioService.playMove(steps);
+  }
+
+  Future<void> playRollSound() async {
+    await audioService.playRoll();
   }
 }
