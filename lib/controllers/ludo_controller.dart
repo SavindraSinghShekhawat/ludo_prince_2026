@@ -103,7 +103,7 @@ class LudoController implements GameController {
     }
 
     if (event is RollEvent) {
-      await executeRoll(generateDiceValue());
+      await executeRoll(event.diceValue);
     } else if (event is MoveEvent) {
       await executeMove(event.tokenId);
     }
