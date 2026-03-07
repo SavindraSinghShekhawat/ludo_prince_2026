@@ -176,7 +176,8 @@ class GameEngine {
     if (updatedToken.state == TokenState.finished) {
       events.add(EngineEvent.finish);
     } else if (updatedToken.state == TokenState.board &&
-        BoardPath.isSafeSpot(updatedToken.position)) {
+        BoardPath.isSafeSpot(updatedToken.position) &&
+        allowCapture) {
       events.add(EngineEvent.safeSpot);
     }
 
