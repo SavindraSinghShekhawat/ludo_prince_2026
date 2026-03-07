@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 
 import '../models/game_state.dart';
+import '../models/player.dart';
 
 class DiceWidget extends ConsumerStatefulWidget {
   const DiceWidget({super.key});
@@ -48,7 +49,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
 
     final currentPlayer =
         gameState.players.firstWhere((p) => p.slot == gameState.currentTurn);
-    if (currentPlayer.isBot) return;
+    if (currentPlayer.type != PlayerType.localHuman) return;
 
     setState(() {
       _isAnimating = true;

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
-import '../controllers/game_controller.dart';
+import 'package:ludo_prince/models/player.dart';
+import '../controllers/ludo_controller.dart';
 import '../providers/audio_provider.dart';
 import '../models/game_state.dart';
 import '../models/token.dart';
@@ -281,7 +282,10 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                     Token? targetToken;
                     for (var player in gameState.players) {
                       if (player.slot != gameState.currentTurn) continue;
-                      if (player.isBot) break;
+                      if (player.type == PlayerType.localBot ||
+                          player.type == PlayerType.remoteBot) {
+                        break;
+                      }
 
                       for (var token in player.tokens) {
                         Offset gridPos = BoardPath.getTokenOffset(token);
@@ -538,7 +542,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
     final player = state.players.firstWhere((p) => p.slot == slot);
     final playerName = player.name;
-    final isBot = player.isBot;
+    final isBot = player.type == PlayerType.localBot ||
+        player.type == PlayerType.remoteBot;
 
     // Determine if panel should be right-aligned
     final bool isRightAligned = isLandscape

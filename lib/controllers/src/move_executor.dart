@@ -1,52 +1,49 @@
 import 'dart:async';
-import '../models/game_state.dart';
-import '../models/token.dart';
-import '../engine/game_engine.dart';
+import '../../engine/game_engine.dart';
+import '../../models/game_state.dart';
+import '../../models/token.dart';
 
-/// A mixin that provides shared execution logic for game moves and rolls.
-/// This includes the step-by-step animation logic which is shared between
-/// local and online controllers.
-mixin GameExecutionMixin {
-  GameEngine get engine;
-  GameState get state;
-  set state(GameState newState);
+class MoveExecutor {
+  final GameEngine engine;
+  final Function(GameState) onStateUpdate;
+  final Function(int) onMoveStart;
+  final Function(List<EngineEvent>) onEngineEvents;
+  final bool Function() isDisposed;
 
-  bool get isDisposed;
-  StreamController<GameState> get streamController;
+  MoveExecutor({
+    required this.engine,
+    required this.onStateUpdate,
+    required this.onMoveStart,
+    required this.onEngineEvents,
+    required this.isDisposed,
+  });
 
-  void onEngineEvents(List<EngineEvent> events);
-  void onMoveStart(int steps);
-
-  Future<void> performMoveExecution(int tokenId) async {
-    if (!state.isDiceRolled) return;
-
+  Future<void> execute(GameState state, int tokenId, int diceValue) async {
     final player = state.players.firstWhere((p) => p.slot == state.currentTurn);
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
-    if (token.slot != state.currentTurn) return;
-    if (!engine.isValidMove(token, state.diceValue)) return;
-
     try {
-      int steps = state.diceValue;
+      int steps = diceValue;
       List<EngineEvent> accumulatedEvents = [];
+      GameState currentState = state;
 
       // 1. Home exit case
       if (token.state == TokenState.home && steps == 6) {
-        onMoveStart(1); // Home exit is always 1 step highlight
+        onMoveStart(1);
 
         Token updated = token.copyWith(
           state: TokenState.board,
           position: 0,
         );
 
-        final result = engine.applyStep(state, updated);
-        state = result.state;
+        final result = engine.applyStep(currentState, updated);
+        currentState = result.state;
         accumulatedEvents.addAll(result.events);
         onEngineEvents(result.events);
 
-        if (!isDisposed) streamController.add(state);
+        onStateUpdate(currentState);
 
-        _finalizeAfterMove(updated.id, accumulatedEvents);
+        _finalizeAfterMove(currentState, updated.id, accumulatedEvents);
         return;
       }
 
@@ -58,16 +55,17 @@ mixin GameExecutionMixin {
         currentToken = engine.advanceOneStep(currentToken);
 
         final result = engine.applyStep(
-          state,
+          currentState,
           currentToken,
           allowCapture: false,
         );
-        state = result.state;
+        currentState = result.state;
         accumulatedEvents.addAll(result.events);
         onEngineEvents(result.events);
 
-        if (!isDisposed) streamController.add(state);
+        onStateUpdate(currentState);
 
+        if (isDisposed()) return;
         await Future.delayed(const Duration(milliseconds: 150));
       }
 
@@ -75,34 +73,35 @@ mixin GameExecutionMixin {
       currentToken = engine.advanceOneStep(currentToken);
 
       final result = engine.applyStep(
-        state,
+        currentState,
         currentToken,
         allowCapture: true,
       );
-      state = result.state;
+      currentState = result.state;
       accumulatedEvents.addAll(result.events);
       onEngineEvents(result.events);
 
-      if (!isDisposed) streamController.add(state);
+      onStateUpdate(currentState);
 
-      _finalizeAfterMove(currentToken.id, accumulatedEvents);
+      _finalizeAfterMove(currentState, currentToken.id, accumulatedEvents);
     } catch (e) {
       // Log or handle error
     }
   }
 
-  void _finalizeAfterMove(int tokenId, List<EngineEvent> events) {
+  void _finalizeAfterMove(
+      GameState state, int tokenId, List<EngineEvent> events) {
     final result = engine.moveToken(state, tokenId,
         captured: events.contains(EngineEvent.capture));
-    state = result.state;
+    GameState finalState = result.state;
 
     GameAction action = GameAction.move;
 
     if (events.contains(EngineEvent.capture)) {
       action = GameAction.capture;
     } else {
-      final currentPlayer =
-          state.players.firstWhere((p) => p.slot == state.currentTurn);
+      final currentPlayer = finalState.players
+          .firstWhere((p) => p.slot == finalState.currentTurn);
       final token = currentPlayer.tokens.firstWhere((t) => t.id == tokenId);
 
       if (token.state == TokenState.finished) {
@@ -110,7 +109,7 @@ mixin GameExecutionMixin {
       }
     }
 
-    state = state.copyWith(lastAction: action);
-    if (!isDisposed) streamController.add(state);
+    finalState = finalState.copyWith(lastAction: action);
+    onStateUpdate(finalState);
   }
 }

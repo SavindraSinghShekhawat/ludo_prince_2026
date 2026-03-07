@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/game_controller.dart';
+import '../controllers/ludo_controller.dart';
 import '../models/game_state.dart';
 
 final gameControllerProvider = Provider<GameController>((ref) {

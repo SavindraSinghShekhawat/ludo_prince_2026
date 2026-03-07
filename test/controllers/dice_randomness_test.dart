@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ludo_prince/controllers/local_game_controller.dart';
+import 'package:ludo_prince/controllers/ludo_controller.dart';
 
 void main() {
   group('Dice Randomness Tests (via Controller)', () {
     test(
-        'LocalGameController.generateDiceValue() distribution should be statistically fair',
+        'LudoController.generateDiceValue() distribution should be statistically fair',
         () {
       const iterations = 10000000;
       final results = List.filled(7, 0);
 
       for (var i = 0; i < iterations; i++) {
-        final roll = LocalGameController.generateDiceValue();
+        final roll = LudoController.generateDiceValue();
         results[roll]++;
       }
 
@@ -32,7 +32,7 @@ void main() {
 
     test('Values should always be between 1 and 6', () {
       for (var i = 0; i < 1000; i++) {
-        final roll = LocalGameController.generateDiceValue();
+        final roll = LudoController.generateDiceValue();
         expect(roll, isIn([1, 2, 3, 4, 5, 6]));
       }
     });

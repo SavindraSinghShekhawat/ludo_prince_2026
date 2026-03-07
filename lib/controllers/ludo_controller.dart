@@ -7,25 +7,45 @@ import '../models/game_state.dart';
 import '../models/player.dart';
 import '../models/token.dart';
 import '../utils/test_initialization.dart';
-import 'audio_controller_listener.dart';
-import 'game_controller.dart';
-import 'game_execution_mixin.dart';
+import 'src/audio_listener.dart';
+import 'src/move_executor.dart';
+import 'src/game_event_provider.dart';
+
+abstract class GameController {
+  Stream<GameState> watchGame();
+  GameState get state;
+
+  PlayerSlot? get localPlayerSlot;
+  bool get isActionInProgress;
+
+  // 1. Intents (called by the UI when a user taps something)
+  Future<void> sendRollIntent();
+  Future<void> sendMoveIntent(Token token);
+
+  // 2. Executions (Apply the action to the state with animations/effects)
+  Future<void> executeRoll(int value);
+  Future<void> executeMove(int tokenId);
+
+  // 3. Status
+  void pause();
+  void resume();
+  Future<void> dispose();
+}
 
 class PlayerSetupConfig {
   final String name;
-  final bool isBot;
+  final PlayerType type;
 
   PlayerSetupConfig({
     required this.name,
-    this.isBot = false,
+    this.type = PlayerType.localHuman,
   });
 }
 
-class LocalGameController with GameExecutionMixin implements GameController {
+class LudoController implements GameController {
   final _streamController = StreamController<GameState>.broadcast();
   final GameEngine _engine = GameEngine();
 
-  @override
   GameEngine get engine => _engine;
 
   GameState _state;
@@ -33,10 +53,8 @@ class LocalGameController with GameExecutionMixin implements GameController {
   @override
   GameState get state => _state;
 
-  @override
   set state(GameState newState) => _state = newState;
 
-  @override
   StreamController<GameState> get streamController => _streamController;
 
   bool _isActionInProgress = false;
@@ -44,23 +62,51 @@ class LocalGameController with GameExecutionMixin implements GameController {
 
   bool _isDisposed = false;
 
-  @override
   bool get isDisposed => _isDisposed;
 
   final InitialGameState initialState;
   late final AudioControllerListener _audioListener;
+  late final MoveExecutor _executor;
+  final GameEventProvider _eventProvider;
 
-  LocalGameController(Map<PlayerSlot, PlayerSetupConfig> config,
-      {this.initialState = InitialGameState.normal})
+  LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
+      {this.initialState = InitialGameState.normal,
+      GameEventProvider? eventProvider})
       : _state = GameState(
             gameId: "",
             players: [],
             turnOrder: [],
-            currentTurn: PlayerSlot.slot1) {
+            currentTurn: PlayerSlot.slot1),
+        _eventProvider = eventProvider ?? LocalEventProvider() {
     _state = _createInitialState(config, initialState);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
+
+    _executor = MoveExecutor(
+      engine: _engine,
+      onStateUpdate: (state) {
+        _state = state;
+        if (!_isDisposed) _streamController.add(_state);
+      },
+      onMoveStart: (steps) => _audioListener.playMoveSound(steps),
+      onEngineEvents: (events) => _audioListener.handleEngineEvents(events),
+      isDisposed: () => _isDisposed,
+    );
+
+    _eventProvider.events.listen(_handleGameEvent);
     Future.microtask(_checkBotTurn);
+  }
+
+  void _handleGameEvent(GameEvent event) async {
+    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
+      return;
+    }
+
+    if (event is RollEvent) {
+      await executeRoll(generateDiceValue());
+    } else if (event is MoveEvent) {
+      await executeMove(event.tokenId);
+    }
   }
 
   void _checkBotTurn() async {
@@ -69,7 +115,7 @@ class LocalGameController with GameExecutionMixin implements GameController {
     }
     final currentPlayer =
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
-    if (!currentPlayer.isBot) return;
+    if (currentPlayer.type != PlayerType.localBot) return;
 
     _isActionInProgress = true;
     await Future.delayed(const Duration(milliseconds: 1200));
@@ -112,15 +158,12 @@ class LocalGameController with GameExecutionMixin implements GameController {
 
   @override
   Future<void> sendRollIntent() async {
-    if (_isActionInProgress) return;
-    final dice = generateDiceValue();
-    await executeRoll(dice);
+    _eventProvider.onRollRequested();
   }
 
   @override
   Future<void> sendMoveIntent(Token token) async {
-    if (_isActionInProgress) return;
-    await executeMove(token.id);
+    _eventProvider.onMoveRequested(token.id);
   }
 
   @override
@@ -170,27 +213,12 @@ class LocalGameController with GameExecutionMixin implements GameController {
   }
 
   @override
-  void onEngineEvents(List<EngineEvent> events) {
-    _audioListener.handleEngineEvents(events);
-  }
-
-  @override
-  void onMoveStart(int steps) {
-    _audioListener.playMoveSound(steps);
-  }
-
-  @override
   Future<void> executeMove(int tokenId) async {
-    if (!_state.isDiceRolled || _isActionInProgress) return;
-
+    if (_isActionInProgress) return;
     _isActionInProgress = true;
-
-    try {
-      await performMoveExecution(tokenId);
-    } finally {
-      _isActionInProgress = false;
-      _checkBotTurn();
-    }
+    await _executor.execute(_state, tokenId, _state.diceValue);
+    _isActionInProgress = false;
+    _checkBotTurn();
   }
 
   @override
@@ -210,6 +238,7 @@ class LocalGameController with GameExecutionMixin implements GameController {
   Future<void> dispose() async {
     _isDisposed = true;
     _audioListener.stop();
+    _eventProvider.dispose();
     await _streamController.close();
   }
 
@@ -223,7 +252,7 @@ class LocalGameController with GameExecutionMixin implements GameController {
       return Player(
         slot: e.key,
         name: e.value.name,
-        isBot: e.value.isBot,
+        type: e.value.type,
         tokens: tokens,
       );
     }).toList();
