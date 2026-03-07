@@ -1,0 +1,30 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "ludo-prince-cf74a",
+                    "appId": "1:264745171932:android:0abe28e5620f500261ad19",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "ios": {
+                "default": {
+                    "projectId": "ludo-prince-cf74a",
+                    "appId": "1:264745171932:ios:07e46f23a147f79761ad19",
+                    "uploadDebugSymbols": false,
+                    "fileOutput": "ios/Runner/GoogleService-Info.plist"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "ludo-prince-cf74a",
+                    "configurations": {
+                        "android": "1:264745171932:android:0abe28e5620f500261ad19",
+                        "ios": "1:264745171932:ios:07e46f23a147f79761ad19"
+                    }
+                }
+            }
+        }
+    }
+}

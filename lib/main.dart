@@ -1,7 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ludo_prince/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/screens/home_screen.dart';
@@ -9,6 +11,10 @@ import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await FlameAudio.audioCache.loadAll([
     'roll.wav',
@@ -47,8 +53,7 @@ class LudoPrinceApp extends StatefulWidget {
   State<LudoPrinceApp> createState() => _LudoPrinceAppState();
 }
 
-class _LudoPrinceAppState extends State<LudoPrinceApp>
-    with WidgetsBindingObserver {
+class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -63,9 +68,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden || state == AppLifecycleState.inactive) {
       audioService.pauseBGM();
     } else if (state == AppLifecycleState.resumed) {
       audioService.resumeBGM();
@@ -85,9 +88,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
         textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       ),
-      home: widget.hasSeenOnboarding
-          ? const HomeScreen()
-          : const OnboardingScreen(),
+      home: widget.hasSeenOnboarding ? const HomeScreen() : const OnboardingScreen(),
     );
   }
 }
