@@ -4,13 +4,14 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math';
 
-import '../models/game_state.dart';
-import '../models/token.dart';
-import '../providers/game_provider.dart';
-import '../controllers/local_game_controller.dart';
-import '../services/audio_service.dart';
-import 'home_screen.dart';
-import 'ludo_screen.dart';
+import '../../models/game_state.dart';
+import '../../models/player.dart';
+import '../../models/token.dart';
+import '../../providers/game_provider.dart';
+import '../../controllers/ludo_controller.dart';
+import '../../services/audio_service.dart';
+import '../screens/home_screen.dart';
+import '../screens/ludo_screen.dart';
 
 class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
@@ -60,11 +61,15 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasBots = widget.state.players.any((p) => p.isBot);
-    final bool hasHumans = widget.state.players.any((p) => !p.isBot);
+    final bool hasBots = widget.state.players.any(
+        (p) => p.type == PlayerType.localBot || p.type == PlayerType.remoteBot);
+    final bool hasHumans = widget.state.players.any((p) =>
+        p.type == PlayerType.localHuman || p.type == PlayerType.remoteHuman);
 
     final List<PlayerSlot> humanWinners = widget.state.winners.where((slot) {
-      return !widget.state.players.firstWhere((p) => p.slot == slot).isBot;
+      final p = widget.state.players.firstWhere((p) => p.slot == slot);
+      return p.type == PlayerType.localHuman ||
+          p.type == PlayerType.remoteHuman;
     }).toList();
 
     final bool isAllHuman = hasHumans && !hasBots;
@@ -341,7 +346,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                 for (var player in widget.state.players) {
                                   config[player.slot] = PlayerSetupConfig(
                                     name: player.name,
-                                    isBot: player.isBot,
+                                    type: player.type,
                                   );
                                 }
 
@@ -351,7 +356,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                       overrides: [
                                         gameControllerProvider
                                             .overrideWithValue(
-                                                LocalGameController(config)),
+                                                LudoController(config)),
                                       ],
                                       child: const LudoScreen(),
                                     ),

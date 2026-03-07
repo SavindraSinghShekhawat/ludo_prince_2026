@@ -7,7 +7,6 @@ import 'game_engine.dart';
 
 class BotAI {
   static final GameEngine _engine = GameEngine();
-  static final Random _random = Random();
 
   static Token? getBestMove(Player player, GameState state) {
     if (!state.isDiceRolled) return null;
@@ -135,10 +134,14 @@ class BotAI {
       }
 
       if (formsBlock) {
-        score += 900;
+        if (BoardPath.isSafeSpot(simulatedToken.position)) {
+          score += 1200; // Strong preference for safe blocks
+        } else {
+          score += 100; // Minimal bonus for unsafe blocks
+        }
 
         if (simulatedToken.position >= 20 && simulatedToken.position <= 35) {
-          score += 300;
+          score += 200;
         }
       }
 

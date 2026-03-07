@@ -1,3 +1,7 @@
+*.ipa
+*.dSYM.zip
+*.zip
+
 # Fastlane artifacts
 android/vendor
 android/fastlane/build

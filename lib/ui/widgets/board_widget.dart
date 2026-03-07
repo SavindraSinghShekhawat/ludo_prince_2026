@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/token.dart';
+import '../../models/token.dart';
 
 class BoardWidget extends StatelessWidget {
   const BoardWidget({super.key});
