@@ -225,52 +225,7 @@ void main() {
       // Slot 3 (Green) at Rel 26 -> Abs 13 + 26 = 39 (Collision!)
       // Slot 2 (Yellow) at Rel 13 -> Abs 26 + 13 = 39 (Collision!)
 
-      final state = GameState(
-        gameId: "4p",
-        players: [
-          Player(slot: PlayerSlot.slot1, name: "B", tokens: [
-            Token(
-                id: 0,
-                slot: PlayerSlot.slot1,
-                state: TokenState.board,
-                position: 0)
-          ]),
-          Player(slot: PlayerSlot.slot4, name: "R", tokens: [
-            Token(
-                id: 0,
-                slot: PlayerSlot.slot4,
-                state: TokenState.board,
-                position: 39)
-          ]),
-          Player(slot: PlayerSlot.slot3, name: "G", tokens: [
-            Token(
-                id: 0,
-                slot: PlayerSlot.slot3,
-                state: TokenState.board,
-                position: 26)
-          ]),
-          Player(slot: PlayerSlot.slot2, name: "Y", tokens: [
-            Token(
-                id: 0,
-                slot: PlayerSlot.slot2,
-                state: TokenState.board,
-                position: 13)
-          ]),
-        ],
-        turnOrder: [
-          PlayerSlot.slot1,
-          PlayerSlot.slot4,
-          PlayerSlot.slot3,
-          PlayerSlot.slot2
-        ],
-        currentTurn: PlayerSlot.slot1,
-        winners: const [],
-      );
-
       bool captured = false;
-
-      // Blue moves to its relative 0 (which is a safe spot)
-      // Wait, Rel 0 IS a safe spot. Let's move to Rel 1 which is NOT a safe spot.
 
       // Slot 1 (Blue) at Rel 1 -> Abs 40
       // Slot 4 (Red) at Rel 40 -> Abs 40

@@ -3,13 +3,13 @@ import 'dart:math';
 
 import '../engine/bot_ai.dart';
 import '../engine/game_engine.dart';
-import '../models/board_path.dart';
 import '../models/game_state.dart';
 import '../models/player.dart';
 import '../models/token.dart';
-import '../services/audio_service.dart';
 import '../utils/test_initialization.dart';
+import 'audio_controller_listener.dart';
 import 'game_controller.dart';
+import 'game_execution_mixin.dart';
 
 class PlayerSetupConfig {
   final String name;
@@ -21,19 +21,49 @@ class PlayerSetupConfig {
   });
 }
 
-class LocalGameController implements GameController {
+class LocalGameController with GameExecutionMixin implements GameController {
+  @override
   final _streamController = StreamController<GameState>.broadcast();
+  @override
   final GameEngine _engine = GameEngine();
-  late GameState _state;
+
+  @override
+  GameEngine get engine => _engine;
+
+  @override
+  GameState _state;
+
+  @override
+  GameState get state => _state;
+
+  @override
+  set state(GameState newState) => _state = newState;
+
+  @override
+  StreamController<GameState> get streamController => _streamController;
+
   bool _isActionInProgress = false;
   bool _isPaused = false;
+
+  @override
   bool _isDisposed = false;
 
+  @override
+  bool get isDisposed => _isDisposed;
+
   final InitialGameState initialState;
+  late final AudioControllerListener _audioListener;
 
   LocalGameController(Map<PlayerSlot, PlayerSetupConfig> config,
-      {this.initialState = InitialGameState.normal}) {
+      {this.initialState = InitialGameState.normal})
+      : _state = GameState(
+            gameId: "",
+            players: [],
+            turnOrder: [],
+            currentTurn: PlayerSlot.slot1) {
     _state = _createInitialState(config, initialState);
+    _audioListener = AudioControllerListener(this);
+    _audioListener.start();
     Future.microtask(_checkBotTurn);
   }
 
@@ -79,6 +109,9 @@ class LocalGameController implements GameController {
   @override
   PlayerSlot? get localPlayerSlot => null; // Local games are hotseat by default
 
+  @override
+  bool get isActionInProgress => _isActionInProgress;
+
   static int generateDiceValue() => Random.secure().nextInt(6) + 1;
 
   @override
@@ -102,12 +135,7 @@ class LocalGameController implements GameController {
     final result = _engine.rollDice(_state, value);
     _state = result.state.copyWith(lastAction: GameAction.roll);
 
-    if (result.events.contains(EngineEvent.diceRoll)) {
-      await audioService.playRoll();
-    }
-    if (result.events.contains(EngineEvent.rolledSix)) {
-      await audioService.playSix();
-    }
+    _audioListener.handleEngineEvents(result.events);
 
     if (!_isDisposed) _streamController.add(_state);
 
@@ -145,126 +173,24 @@ class LocalGameController implements GameController {
     }
   }
 
-  void _finalizeAfterMove(int tokenId, List<EngineEvent> events) {
-    final result = _engine.moveToken(_state, tokenId,
-        captured: events.contains(EngineEvent.capture));
-    _state = result.state;
+  @override
+  void onEngineEvents(List<EngineEvent> events) {
+    _audioListener.handleEngineEvents(events);
+  }
 
-    GameAction action = GameAction.move;
-
-    if (events.contains(EngineEvent.capture)) {
-      action = GameAction.capture;
-    } else {
-      final currentPlayer =
-          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
-
-      final token = currentPlayer.tokens.firstWhere((t) => t.id == tokenId);
-
-      if (token.state == TokenState.finished) {
-        action = GameAction.finish;
-      }
-    }
-
-    _state = _state.copyWith(lastAction: action);
-
-    if (!_isDisposed) _streamController.add(_state);
+  @override
+  void onMoveStart(int steps) {
+    _audioListener.playMoveSound(steps);
   }
 
   @override
   Future<void> executeMove(int tokenId) async {
     if (!_state.isDiceRolled || _isActionInProgress) return;
 
-    final player =
-        _state.players.firstWhere((p) => p.slot == _state.currentTurn);
-    final token = player.tokens.firstWhere((t) => t.id == tokenId);
-
-    if (token.slot != _state.currentTurn) return;
-
-    // Prevent invalid moves from being executed
-    if (!_engine.isValidMove(token, _state.diceValue)) return;
-
     _isActionInProgress = true;
 
     try {
-      int steps = _state.diceValue;
-      List<EngineEvent> accumulatedEvents = [];
-
-      // 🔥 Home exit case
-      if (token.state == TokenState.home && steps == 6) {
-        await audioService.playMove(1);
-
-        Token updated = token.copyWith(
-          state: TokenState.board,
-          position: 0,
-        );
-
-        // Capture allowed here (this is final landing)
-        final result = _engine.applyStep(
-          _state,
-          updated,
-        );
-        _state = result.state;
-        accumulatedEvents.addAll(result.events);
-
-        if (!_isDisposed) _streamController.add(_state);
-
-        if (result.events.contains(EngineEvent.tokenExitedBase)) {
-          // Play a specific sound if we had one, but for now just move audio
-        }
-
-        if (result.events.contains(EngineEvent.capture)) {
-          await audioService.playDie();
-        }
-
-        _finalizeAfterMove(updated.id, accumulatedEvents);
-        return;
-      }
-
-      await audioService.playMove(steps);
-
-      Token currentToken = token;
-
-      // Intermediate steps — NO capture
-      for (int i = 0; i < steps - 1; i++) {
-        currentToken = _engine.advanceOneStep(currentToken);
-
-        final result = _engine.applyStep(
-          _state,
-          currentToken,
-          allowCapture: false,
-        );
-        _state = result.state;
-        accumulatedEvents.addAll(result.events);
-
-        if (!_isDisposed) _streamController.add(_state);
-
-        await Future.delayed(const Duration(milliseconds: 150));
-      }
-
-      // Final step — capture allowed
-      currentToken = _engine.advanceOneStep(currentToken);
-
-      final result = _engine.applyStep(
-        _state,
-        currentToken,
-        allowCapture: true,
-      );
-      _state = result.state;
-      accumulatedEvents.addAll(result.events);
-
-      if (!_isDisposed) _streamController.add(_state);
-
-      if (result.events.contains(EngineEvent.finish)) {
-        await audioService.playHome();
-      } else if (result.events.contains(EngineEvent.safeSpot)) {
-        await audioService.playSafe();
-      }
-
-      if (result.events.contains(EngineEvent.capture)) {
-        await audioService.playDie();
-      }
-
-      _finalizeAfterMove(currentToken.id, accumulatedEvents);
+      await performMoveExecution(tokenId);
     } finally {
       _isActionInProgress = false;
       _checkBotTurn();
@@ -287,6 +213,7 @@ class LocalGameController implements GameController {
   @override
   Future<void> dispose() async {
     _isDisposed = true;
+    _audioListener.stop();
     await _streamController.close();
   }
 

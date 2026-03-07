@@ -7,7 +7,6 @@ import 'game_engine.dart';
 
 class BotAI {
   static final GameEngine _engine = GameEngine();
-  static final Random _random = Random();
 
   static Token? getBestMove(Player player, GameState state) {
     if (!state.isDiceRolled) return null;
