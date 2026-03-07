@@ -22,15 +22,12 @@ class PlayerSetupConfig {
 }
 
 class LocalGameController with GameExecutionMixin implements GameController {
-  @override
   final _streamController = StreamController<GameState>.broadcast();
-  @override
   final GameEngine _engine = GameEngine();
 
   @override
   GameEngine get engine => _engine;
 
-  @override
   GameState _state;
 
   @override
@@ -45,7 +42,6 @@ class LocalGameController with GameExecutionMixin implements GameController {
   bool _isActionInProgress = false;
   bool _isPaused = false;
 
-  @override
   bool _isDisposed = false;
 
   @override
