@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/ludo_controller.dart';
+import '../../controllers/ludo_controller.dart';
 import 'package:ludo_prince/models/player.dart';
 import 'package:ludo_prince/models/token.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
 import 'ludo_screen.dart';
-import 'rules_dialog.dart';
+import '../dialogs/rules_dialog.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
   const LocalSetupScreen({super.key});
@@ -293,10 +293,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
 
                       await audioService.playStart();
 
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                          builder: (context) => ProviderScope(
+                          builder: (childContext) => ProviderScope(
                             overrides: [
                               gameControllerProvider.overrideWithValue(
                                   LudoController(config,

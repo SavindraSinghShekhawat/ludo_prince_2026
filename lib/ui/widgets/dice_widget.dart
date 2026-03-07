@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 
-import '../models/game_state.dart';
-import '../models/player.dart';
+import '../../models/game_state.dart';
+import '../../models/player.dart';
 
 class DiceWidget extends ConsumerStatefulWidget {
   const DiceWidget({super.key});

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'ui/onboarding_screen.dart';
-import 'ui/home_screen.dart';
+import 'ui/screens/onboarding_screen.dart';
+import 'ui/screens/home_screen.dart';
 import 'services/audio_service.dart';
 
 void main() async {

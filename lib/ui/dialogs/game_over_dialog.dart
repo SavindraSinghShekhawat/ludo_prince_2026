@@ -4,14 +4,14 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math';
 
-import '../models/game_state.dart';
-import '../models/player.dart';
-import '../models/token.dart';
-import '../providers/game_provider.dart';
-import '../controllers/ludo_controller.dart';
-import '../services/audio_service.dart';
-import 'home_screen.dart';
-import 'ludo_screen.dart';
+import '../../models/game_state.dart';
+import '../../models/player.dart';
+import '../../models/token.dart';
+import '../../providers/game_provider.dart';
+import '../../controllers/ludo_controller.dart';
+import '../../services/audio_service.dart';
+import '../screens/home_screen.dart';
+import '../screens/ludo_screen.dart';
 
 class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;

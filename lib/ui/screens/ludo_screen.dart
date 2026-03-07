@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/controllers/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/models/player.dart';
-import '../controllers/ludo_controller.dart';
-import '../providers/audio_provider.dart';
-import '../models/game_state.dart';
-import '../models/token.dart';
-import '../models/board_path.dart';
-import 'board_widget.dart';
-import 'token_widget.dart';
-import 'dice_widget.dart';
+import '../../providers/audio_provider.dart';
+import '../../models/game_state.dart';
+import '../../models/token.dart';
+import '../../models/board_path.dart';
+import '../widgets/board_widget.dart';
+import '../widgets/token_widget.dart';
+import '../widgets/dice_widget.dart';
 import 'home_screen.dart';
-import '../ui/rules_dialog.dart';
-import '../ui/game_over_dialog.dart';
+import '../dialogs/rules_dialog.dart';
+import '../dialogs/game_over_dialog.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/models/game_state.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
-import '../models/token.dart';
-import '../models/board_path.dart';
+import '../../models/token.dart';
+import '../../models/board_path.dart';
 
 class TokenWidget extends ConsumerWidget {
   final Token token;
