@@ -33,12 +33,13 @@ void main() {
       bool captured = false;
       final blueToken = state.players[0].tokens[0];
 
-      final result = engine.applyStep(
+      final engineResult = engine.applyStep(
         state,
         blueToken,
-        onCapture: (c) => captured = c,
         allowCapture: true,
       );
+      captured = engineResult.events.contains(EngineEvent.capture);
+      final result = engineResult.state;
 
       expect(captured, true);
       expect(result.players[1].tokens[0].state, TokenState.home);
@@ -73,12 +74,12 @@ void main() {
       bool captured = false;
       final blueToken = state.players[0].tokens[0];
 
-      engine.applyStep(
+      final result = engine.applyStep(
         state,
         blueToken,
-        onCapture: (c) => captured = c,
         allowCapture: true,
       );
+      captured = result.events.contains(EngineEvent.capture);
 
       expect(captured, false);
     });
@@ -104,12 +105,13 @@ void main() {
       bool captured = false;
       final blueToken = state.players[0].tokens[0];
 
-      final result = engine.applyStep(
+      final engineResult = engine.applyStep(
         state,
         blueToken,
-        onCapture: (c) => captured = c,
         allowCapture: true,
       );
+      captured = engineResult.events.contains(EngineEvent.capture);
+      final result = engineResult.state;
 
       expect(captured, true);
       expect(result.players[1].tokens[0].state, TokenState.home);
@@ -137,10 +139,12 @@ void main() {
       // We need to simulate the capture happening in applyStep and then moveToken checking it
       // Actually moveToken takes a `captured` flag.
 
-      final result = engine.moveToken(state, 0, captured: true);
+      final engineResult = engine.moveToken(state, 0, captured: true);
+      final result = engineResult.state;
 
       expect(result.currentTurn, PlayerSlot.slot1);
       expect(result.message.contains("extra turn"), true);
+      expect(engineResult.events.contains(EngineEvent.extraTurn), true);
     });
     test("No capture on path (intermediate steps)", () {
       // Blue starting at relative 10, moving to 13 (rolling a 3)
@@ -169,24 +173,25 @@ void main() {
       blueToken = blueToken.copyWith(position: 11);
 
       // Call applyStep with allowCapture: false (this is how it should be called for intermediate steps)
-      final resultIntermediate = engine.applyStep(
+      final engineResultIntermediate = engine.applyStep(
         state,
         blueToken,
-        onCapture: (c) => captured = c,
         allowCapture: false,
       );
+      captured = engineResultIntermediate.events.contains(EngineEvent.capture);
+      final resultIntermediate = engineResultIntermediate.state;
 
       expect(captured, false);
       expect(resultIntermediate.players[1].tokens[0].state, TokenState.board);
 
       // Verify that if we DID allow capture at intermediate, it WOULD capture (verifying the setup)
       bool capturedInError = false;
-      engine.applyStep(
+      final engineResultError = engine.applyStep(
         state,
         blueToken,
-        onCapture: (c) => capturedInError = c,
         allowCapture: true,
       );
+      capturedInError = engineResultError.events.contains(EngineEvent.capture);
       expect(capturedInError, true);
     });
 
@@ -204,12 +209,12 @@ void main() {
       bool captured = false;
       final blueToken = state.players[0].tokens[0];
 
-      engine.applyStep(
+      final engineResult = engine.applyStep(
         state,
         blueToken,
-        onCapture: (c) => captured = c,
         allowCapture: true,
       );
+      captured = engineResult.events.contains(EngineEvent.capture);
 
       expect(captured, false);
     });
@@ -316,12 +321,13 @@ void main() {
 
       final blueToken = collidingState.players[0].tokens[0];
 
-      final result = engine.applyStep(
+      final engineResult = engine.applyStep(
         collidingState,
         blueToken,
-        onCapture: (c) => captured = c,
         allowCapture: true,
       );
+      captured = engineResult.events.contains(EngineEvent.capture);
+      final result = engineResult.state;
 
       expect(captured, true);
       // All other players' tokens at that spot should be captured
@@ -363,12 +369,12 @@ void main() {
         // Red "lands" on the spot (simulated by applyStep with allowCapture: true)
         final redToken = state.players[1].tokens[0];
 
-        engine.applyStep(
+        final engineResult = engine.applyStep(
           state,
           redToken,
-          onCapture: (c) => captured = c,
           allowCapture: true,
         );
+        captured = engineResult.events.contains(EngineEvent.capture);
 
         expect(captured, false,
             reason:

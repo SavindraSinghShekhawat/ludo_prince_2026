@@ -76,6 +76,9 @@ class LocalGameController implements GameController {
     yield* _streamController.stream;
   }
 
+  @override
+  PlayerSlot? get localPlayerSlot => null; // Local games are hotseat by default
+
   static int generateDiceValue() => Random.secure().nextInt(6) + 1;
 
   @override
@@ -96,14 +99,15 @@ class LocalGameController implements GameController {
     if (_state.isDiceRolled || _isActionInProgress) return;
     _isActionInProgress = true;
 
-    await audioService.playRoll();
-    if (value == 6) {
+    final result = _engine.rollDice(_state, value);
+    _state = result.state.copyWith(lastAction: GameAction.roll);
+
+    if (result.events.contains(EngineEvent.diceRoll)) {
+      await audioService.playRoll();
+    }
+    if (result.events.contains(EngineEvent.rolledSix)) {
       await audioService.playSix();
     }
-
-    _state = _engine.rollDice(_state, value).copyWith(
-          lastAction: GameAction.roll,
-        );
 
     if (!_isDisposed) _streamController.add(_state);
 
@@ -141,12 +145,14 @@ class LocalGameController implements GameController {
     }
   }
 
-  void _finalizeAfterMove(int tokenId, bool captured) {
-    _state = _engine.moveToken(_state, tokenId, captured: captured);
+  void _finalizeAfterMove(int tokenId, List<EngineEvent> events) {
+    final result = _engine.moveToken(_state, tokenId,
+        captured: events.contains(EngineEvent.capture));
+    _state = result.state;
 
     GameAction action = GameAction.move;
 
-    if (captured) {
+    if (events.contains(EngineEvent.capture)) {
       action = GameAction.capture;
     } else {
       final currentPlayer =
@@ -181,7 +187,7 @@ class LocalGameController implements GameController {
 
     try {
       int steps = _state.diceValue;
-      bool captured = false;
+      List<EngineEvent> accumulatedEvents = [];
 
       // 🔥 Home exit case
       if (token.state == TokenState.home && steps == 6) {
@@ -193,19 +199,24 @@ class LocalGameController implements GameController {
         );
 
         // Capture allowed here (this is final landing)
-        _state = _engine.applyStep(
+        final result = _engine.applyStep(
           _state,
           updated,
-          onCapture: (c) => captured = c,
         );
+        _state = result.state;
+        accumulatedEvents.addAll(result.events);
 
         if (!_isDisposed) _streamController.add(_state);
 
-        if (captured) {
+        if (result.events.contains(EngineEvent.tokenExitedBase)) {
+          // Play a specific sound if we had one, but for now just move audio
+        }
+
+        if (result.events.contains(EngineEvent.capture)) {
           await audioService.playDie();
         }
 
-        _finalizeAfterMove(updated.id, captured);
+        _finalizeAfterMove(updated.id, accumulatedEvents);
         return;
       }
 
@@ -217,12 +228,13 @@ class LocalGameController implements GameController {
       for (int i = 0; i < steps - 1; i++) {
         currentToken = _engine.advanceOneStep(currentToken);
 
-        _state = _engine.applyStep(
+        final result = _engine.applyStep(
           _state,
           currentToken,
-          onCapture: (_) {},
           allowCapture: false,
         );
+        _state = result.state;
+        accumulatedEvents.addAll(result.events);
 
         if (!_isDisposed) _streamController.add(_state);
 
@@ -232,27 +244,27 @@ class LocalGameController implements GameController {
       // Final step — capture allowed
       currentToken = _engine.advanceOneStep(currentToken);
 
-      _state = _engine.applyStep(
+      final result = _engine.applyStep(
         _state,
         currentToken,
-        onCapture: (c) => captured = c,
         allowCapture: true,
       );
+      _state = result.state;
+      accumulatedEvents.addAll(result.events);
 
       if (!_isDisposed) _streamController.add(_state);
 
-      if (currentToken.state == TokenState.finished) {
+      if (result.events.contains(EngineEvent.finish)) {
         await audioService.playHome();
-      } else if (currentToken.state == TokenState.board &&
-          BoardPath.isSafeSpot(currentToken.position)) {
+      } else if (result.events.contains(EngineEvent.safeSpot)) {
         await audioService.playSafe();
       }
 
-      if (captured) {
+      if (result.events.contains(EngineEvent.capture)) {
         await audioService.playDie();
       }
 
-      _finalizeAfterMove(currentToken.id, captured);
+      _finalizeAfterMove(currentToken.id, accumulatedEvents);
     } finally {
       _isActionInProgress = false;
       _checkBotTurn();

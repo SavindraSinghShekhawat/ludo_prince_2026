@@ -3,16 +3,41 @@ import '../models/token.dart';
 import '../models/player.dart';
 import '../models/board_path.dart';
 
+enum EngineEvent {
+  capture,
+  finish,
+  safeSpot,
+  diceRoll,
+  rolledSix,
+  tokenExitedBase,
+  extraTurn,
+  turnSkipped,
+}
+
+class EngineResult {
+  final GameState state;
+  final List<EngineEvent> events;
+
+  EngineResult(this.state, [this.events = const []]);
+}
+
 class GameEngine {
-  GameState rollDice(GameState state, int diceValue) {
-    if (state.isDiceRolled) return state;
+  EngineResult rollDice(GameState state, int diceValue) {
+    if (state.isDiceRolled) return EngineResult(state);
+
+    List<EngineEvent> events = [EngineEvent.diceRoll];
+    if (diceValue == 6) events.add(EngineEvent.rolledSix);
 
     int newConsecutive = diceValue == 6 ? state.consecutiveSixes + 1 : 0;
 
     if (newConsecutive == 3) {
-      return _nextTurn(
+      final skipResult = _nextTurn(
         state.copyWith(consecutiveSixes: 0, diceValue: diceValue),
         "Rolled three 6s! Turn skipped.",
+      );
+      return EngineResult(
+        skipResult.state,
+        [...events, EngineEvent.turnSkipped, ...skipResult.events],
       );
     }
 
@@ -22,33 +47,44 @@ class GameEngine {
         player.tokens.where((t) => isValidMove(t, diceValue)).toList();
 
     if (validTokens.isEmpty) {
-      return _nextTurn(
+      final skipResult = _nextTurn(
         state.copyWith(consecutiveSixes: newConsecutive, diceValue: diceValue),
         "No valid moves. Turn skipped.",
       );
+      return EngineResult(
+        skipResult.state,
+        [...events, EngineEvent.turnSkipped, ...skipResult.events],
+      );
     }
 
-    return state.copyWith(
-      diceValue: diceValue,
-      isDiceRolled: true,
-      consecutiveSixes: newConsecutive,
-      message: "${player.name} rolled a $diceValue",
+    return EngineResult(
+      state.copyWith(
+        diceValue: diceValue,
+        isDiceRolled: true,
+        consecutiveSixes: newConsecutive,
+        message: "${player.name} rolled a $diceValue",
+      ),
+      events,
     );
   }
 
-  GameState moveToken(GameState state, int tokenId, {bool captured = false}) {
-    if (!state.isDiceRolled) return state;
+  EngineResult moveToken(GameState state, int tokenId,
+      {bool captured = false}) {
+    if (!state.isDiceRolled) return EngineResult(state);
 
     final player = _getPlayer(state, state.currentTurn);
-
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
     if (token.slot != state.currentTurn) {
-      return state; // ❗ prevent illegal multiplayer move
+      return EngineResult(state); // ❗ prevent illegal multiplayer move
     }
 
-    bool extraTurn =
-        state.diceValue == 6 || token.state == TokenState.finished || captured;
+    List<EngineEvent> events = [];
+    bool isSix = state.diceValue == 6;
+    bool isFinished = token.state == TokenState.finished;
+
+    bool extraTurn = isSix || isFinished || captured;
+    if (extraTurn) events.add(EngineEvent.extraTurn);
 
     GameState newState = state.copyWith(
       isDiceRolled: false,
@@ -65,14 +101,23 @@ class GameEngine {
       newState = newState.copyWith(winners: newWinners);
     }
 
-    return extraTurn && !hasWon
-        ? newState.copyWith(
-            message: "${player.name} gets an extra turn!",
-          )
-        : _nextTurn(
-            newState,
-            "${player.name}'s turn ended.",
-          );
+    if (extraTurn && !hasWon) {
+      return EngineResult(
+        newState.copyWith(
+          message: "${player.name} gets an extra turn!",
+        ),
+        events,
+      );
+    } else {
+      final nextResult = _nextTurn(
+        newState,
+        "${player.name}'s turn ended.",
+      );
+      return EngineResult(
+        nextResult.state,
+        [...events, ...nextResult.events],
+      );
+    }
   }
 
   bool isValidMove(Token token, int dice) {
@@ -111,15 +156,29 @@ class GameEngine {
     return token;
   }
 
-  GameState applyStep(
+  EngineResult applyStep(
     GameState state,
     Token updatedToken, {
-    required Function(bool captured) onCapture,
     bool allowCapture = true,
   }) {
     List<Player> players = _replaceToken(state.players, updatedToken);
+    List<EngineEvent> events = [];
 
-    bool captured = false;
+    // Check if token exited base (was home, now board at position 0)
+    final oldToken = _getPlayer(state, updatedToken.slot)
+        .tokens
+        .firstWhere((t) => t.id == updatedToken.id);
+    if (oldToken.state == TokenState.home &&
+        updatedToken.state == TokenState.board) {
+      events.add(EngineEvent.tokenExitedBase);
+    }
+
+    if (updatedToken.state == TokenState.finished) {
+      events.add(EngineEvent.finish);
+    } else if (updatedToken.state == TokenState.board &&
+        BoardPath.isSafeSpot(updatedToken.position)) {
+      events.add(EngineEvent.safeSpot);
+    }
 
     if (allowCapture &&
         updatedToken.state == TokenState.board &&
@@ -137,7 +196,7 @@ class GameEngine {
             int oppAbs = BoardPath.getAbsolutePosition(t.slot, t.position);
 
             if (oppAbs == absPos) {
-              captured = true;
+              events.add(EngineEvent.capture);
               return t.copyWith(state: TokenState.home, position: -1);
             }
 
@@ -147,13 +206,13 @@ class GameEngine {
       }).toList();
     }
 
-    onCapture(captured);
-
-    return state.copyWith(players: players);
+    return EngineResult(state.copyWith(players: players), events);
   }
 
-  GameState _nextTurn(GameState state, String msg) {
-    if (state.isGameOver) return state.copyWith(message: "Game Over!");
+  EngineResult _nextTurn(GameState state, String msg) {
+    if (state.isGameOver) {
+      return EngineResult(state.copyWith(message: "Game Over!"));
+    }
 
     final order = state.turnOrder; // ✅ stable order
 
@@ -165,11 +224,13 @@ class GameEngine {
       }
     }
 
-    return state.copyWith(
-      currentTurn: order[idx],
-      isDiceRolled: false,
-      consecutiveSixes: 0,
-      message: msg,
+    return EngineResult(
+      state.copyWith(
+        currentTurn: order[idx],
+        isDiceRolled: false,
+        consecutiveSixes: 0,
+        message: msg,
+      ),
     );
   }
 

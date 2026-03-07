@@ -35,10 +35,10 @@ void main() {
       // Finish the last token: advance it and apply the step to the state
       final token = state.players[0].tokens[3];
       final finishedToken = engine.advanceOneStep(token);
-      state = engine.applyStep(state, finishedToken, onCapture: (_) {});
+      state = engine.applyStep(state, finishedToken).state;
 
       // Now finalize the turn
-      final result = engine.moveToken(state, 3);
+      final result = engine.moveToken(state, 3).state;
 
       expect(result.winners, [PlayerSlot.slot1, PlayerSlot.slot4]);
       expect(result.isGameOver,
@@ -68,9 +68,9 @@ void main() {
       // Finish the last token
       final token = state.players[0].tokens[3];
       final finishedToken = engine.advanceOneStep(token);
-      state = engine.applyStep(state, finishedToken, onCapture: (_) {});
+      state = engine.applyStep(state, finishedToken).state;
 
-      final result = engine.moveToken(state, 3);
+      final result = engine.moveToken(state, 3).state;
 
       expect(result.winners.length, 2);
       expect(result.winners, [PlayerSlot.slot1, PlayerSlot.slot4]);
@@ -116,7 +116,7 @@ void main() {
       final result = engine.moveToken(stateAfterRoll, 0);
 
       // Should skip Blue (slot 1) and go to Red (slot 4)
-      expect(result.currentTurn, PlayerSlot.slot4);
+      expect(result.state.currentTurn, PlayerSlot.slot4);
     });
 
     test("Turn system skips multiple winners", () {
@@ -180,7 +180,7 @@ void main() {
       final result = engine.moveToken(stateAfterRoll, 0);
 
       // Should skip Green (slot 3) and go to Yellow (slot 2)
-      expect(result.currentTurn, PlayerSlot.slot2);
+      expect(result.state.currentTurn, PlayerSlot.slot2);
     });
   });
 }

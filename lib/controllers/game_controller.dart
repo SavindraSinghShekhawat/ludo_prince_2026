@@ -4,6 +4,8 @@ import '../models/token.dart';
 abstract class GameController {
   Stream<GameState> watchGame();
 
+  PlayerSlot? get localPlayerSlot;
+
   // 1. Intents (called by the UI when a user taps something)
   Future<void> sendRollIntent();
   Future<void> sendMoveIntent(Token token);

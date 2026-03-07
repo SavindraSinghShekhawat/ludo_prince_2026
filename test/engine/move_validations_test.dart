@@ -45,7 +45,7 @@ void main() {
       var state = stateWithTokenAt(PlayerSlot.slot1, 0, TokenState.board, 0);
       state = state.copyWith(isDiceRolled: false); // Ensure dice NOT rolled
 
-      final result = engine.moveToken(state, 0);
+      final result = engine.moveToken(state, 0).state;
 
       expect(identical(result, state),
           true); // Should return unchanged state instance
