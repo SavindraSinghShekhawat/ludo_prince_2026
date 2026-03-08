@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/matchmaking_service.dart';
+import '../../services/audio_service.dart';
 import '../../models/game_state.dart';
 import '../../models/player.dart';
 import '../../models/token.dart';
@@ -368,6 +369,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       await controller.initializeFromSnapshot();
 
       if (!mounted) return;
+      await audioService.playStart();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
