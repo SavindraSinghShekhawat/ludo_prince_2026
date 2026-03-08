@@ -139,6 +139,8 @@ class MatchmakingService {
     final sixtySecondsAgo =
         DateTime.now().subtract(const Duration(seconds: 60));
 
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
     final querySnapshot = await _firestore
         .collection('ludogames')
         .where('isPrivate', isEqualTo: false)
@@ -147,6 +149,7 @@ class MatchmakingService {
         .where('gameMode', isEqualTo: gameMode.name)
         .where('hostLastSeen',
             isGreaterThan: Timestamp.fromDate(sixtySecondsAgo))
+        .where('hostUid', isNotEqualTo: uid)
         .limit(1)
         .get();
 
