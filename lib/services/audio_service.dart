@@ -1,5 +1,6 @@
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioService extends ChangeNotifier {
@@ -11,9 +12,11 @@ class AudioService extends ChangeNotifier {
   bool _initialized = false;
   bool _isBgmEnabled = true;
   bool _isSfxEnabled = true;
+  bool _isVibrationEnabled = true;
 
   bool get isBgmEnabled => _isBgmEnabled;
   bool get isSfxEnabled => _isSfxEnabled;
+  bool get isVibrationEnabled => _isVibrationEnabled;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -21,6 +24,7 @@ class AudioService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _isBgmEnabled = prefs.getBool('bgm_enabled') ?? true;
     _isSfxEnabled = prefs.getBool('sfx_enabled') ?? true;
+    _isVibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
 
     _initialized = true;
     notifyListeners();
@@ -50,6 +54,19 @@ class AudioService extends ChangeNotifier {
     await prefs.setBool('sfx_enabled', _isSfxEnabled);
 
     notifyListeners();
+  }
+
+  Future<void> toggleVibration() async {
+    await init();
+    _isVibrationEnabled = !_isVibrationEnabled;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('vibration_enabled', _isVibrationEnabled);
+
+    notifyListeners();
+    if (_isVibrationEnabled) {
+      await playVibrate();
+    }
   }
 
   Future<void> playBGM() async {
@@ -132,6 +149,14 @@ class AudioService extends ChangeNotifier {
     if (!_isSfxEnabled) return;
 
     FlameAudio.play('victory.wav', volume: 0.8);
+  }
+
+  Future<void> playVibrate() async {
+    await init();
+    if (!_isVibrationEnabled) return;
+
+    // Use HapticFeedback for vibration
+    await HapticFeedback.mediumImpact();
   }
 }
 

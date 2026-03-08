@@ -9,6 +9,7 @@ import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
 import 'ludo_screen.dart';
 import '../dialogs/rules_dialog.dart';
+import '../dialogs/settings_dialog.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
   const LocalSetupScreen({super.key});
@@ -89,6 +90,16 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               );
             },
             tooltip: 'Game Rules',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const SettingsDialog(),
+              );
+            },
+            tooltip: 'Settings',
           ),
         ],
         centerTitle: true,

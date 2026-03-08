@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
+import '../dialogs/settings_dialog.dart';
 import '../../providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -22,7 +23,7 @@ class HomeScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(ref),
+              _buildHeader(context, ref),
               Expanded(
                 child: SingleChildScrollView(
                   padding:
@@ -92,7 +93,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(WidgetRef ref) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
     final displayName = ref.watch(displayNameProvider);
 
     return Padding(
@@ -129,9 +130,14 @@ class HomeScreen extends ConsumerWidget {
           ),
           Row(
             children: [
-              _buildHeaderIcon(Icons.settings),
+              _buildHeaderIcon(context, Icons.settings, onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const SettingsDialog(),
+                );
+              }),
               const SizedBox(width: 12),
-              _buildHeaderIcon(Icons.notifications),
+              _buildHeaderIcon(context, Icons.notifications),
             ],
           ),
         ],
@@ -139,13 +145,17 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.white.withOpacity(0.05)),
-      child: Icon(icon, color: Colors.white70, size: 20),
+  Widget _buildHeaderIcon(BuildContext context, IconData icon,
+      {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.white.withValues(alpha: 0.05)),
+        child: Icon(icon, color: Colors.white70, size: 20),
+      ),
     );
   }
 
