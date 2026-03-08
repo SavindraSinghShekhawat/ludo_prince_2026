@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/ui/widgets/robot_icon.dart';
 import '../../controllers/ludo_controller.dart';
 import 'package:ludo_prince/models/player.dart';
 import 'package:ludo_prince/models/token.dart';
@@ -9,6 +10,7 @@ import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
 import 'ludo_screen.dart';
 import '../dialogs/rules_dialog.dart';
+import '../dialogs/settings_dialog.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
   const LocalSetupScreen({super.key});
@@ -76,7 +78,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Local Multiplayer',
+        title: const Text('Offline & Bot Play',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -89,6 +91,16 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               );
             },
             tooltip: 'Game Rules',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const SettingsDialog(),
+              );
+            },
+            tooltip: 'Settings',
           ),
         ],
         centerTitle: true,
@@ -195,11 +207,12 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                       BorderSide(color: displayColor, width: 2),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                prefixIcon: Icon(
-                                    (_isBotConfig[slot] ?? false)
-                                        ? Icons.smart_toy
-                                        : Icons.person,
-                                    color: displayColor),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: (_isBotConfig[slot] ?? false)
+                                      ? RobotIcon(size: 22, color: displayColor)
+                                      : Icon(Icons.person, color: displayColor),
+                                ),
                                 filled: true,
                                 fillColor: const Color(0xFF2A2A3D),
                               ),

@@ -12,6 +12,7 @@ enum EngineEvent {
   tokenExitedBase,
   extraTurn,
   turnSkipped,
+  quit,
 }
 
 class EngineResult {
@@ -90,10 +91,12 @@ class GameEngine {
       isDiceRolled: false,
     );
 
-    bool hasWon = player.tokens.every((t) => t.state == TokenState.finished);
+    bool hasWon = _checkWinner(newState, player.slot);
     if (hasWon && !newState.winners.contains(player.slot)) {
       var newWinners = [...newState.winners, player.slot];
-      if (newWinners.length == newState.players.length - 1) {
+      if (newState.gameMode == GameMode.team) {
+        // Team mode: both must finish. Handled by _checkWinner.
+      } else if (newWinners.length == newState.players.length - 1) {
         final lastPlayer =
             newState.players.firstWhere((p) => !newWinners.contains(p.slot));
         newWinners.add(lastPlayer.slot);
@@ -190,6 +193,19 @@ class GameEngine {
       players = players.map((p) {
         if (p.slot == updatedToken.slot) return p;
 
+        // Team Mode capture prevention
+        if (state.gameMode == GameMode.team) {
+          bool isTeammate = (updatedToken.slot == PlayerSlot.slot1 &&
+                  p.slot == PlayerSlot.slot3) ||
+              (updatedToken.slot == PlayerSlot.slot3 &&
+                  p.slot == PlayerSlot.slot1) ||
+              (updatedToken.slot == PlayerSlot.slot2 &&
+                  p.slot == PlayerSlot.slot4) ||
+              (updatedToken.slot == PlayerSlot.slot4 &&
+                  p.slot == PlayerSlot.slot2);
+          if (isTeammate) return p;
+        }
+
         return p.copyWith(
           tokens: p.tokens.map((t) {
             if (t.state != TokenState.board) return t;
@@ -233,6 +249,108 @@ class GameEngine {
         message: msg,
       ),
     );
+  }
+
+  EngineResult quitPlayer(GameState state, PlayerSlot slot) {
+    if (state.winners.contains(slot)) return EngineResult(state);
+
+    // Mark player as left
+    final players = state.players.map((p) {
+      if (p.slot == slot) {
+        return p.copyWith(status: PlayerStatus.left);
+      }
+      return p;
+    }).toList();
+
+    GameState newState = state.copyWith(players: players);
+
+    // If it was their turn, move to next turn
+    if (newState.currentTurn == slot) {
+      final nextResult = _nextTurn(newState, "${slot.name} left the game.");
+      newState = nextResult.state;
+    }
+
+    // Check if game should end because only one team/player remains
+    final activePlayers = newState.players
+        .where((p) =>
+            p.status == PlayerStatus.active &&
+            !newState.winners.contains(p.slot))
+        .toList();
+
+    if (activePlayers.length == 1 && newState.gameMode == GameMode.classic) {
+      // Last person wins
+      final winner = activePlayers.first;
+      final newWinners = [...newState.winners, winner.slot];
+
+      // Add all quitters/others to winners list to trigger isGameOver
+      for (var p in newState.players) {
+        if (!newWinners.contains(p.slot)) {
+          newWinners.add(p.slot);
+        }
+      }
+
+      newState = newState.copyWith(
+          winners: newWinners, message: "${winner.name} wins by forfeit!");
+    } else if (newState.gameMode == GameMode.team) {
+      // Check if both players in a team have left
+      final activeTeams = activePlayers
+          .map((p) => (p.slot == PlayerSlot.slot1 || p.slot == PlayerSlot.slot3)
+              ? "team1"
+              : "team2")
+          .toSet();
+
+      if (activeTeams.length == 1) {
+        final winningTeam = activeTeams.first;
+        final teamSlots = winningTeam == "team1"
+            ? [PlayerSlot.slot1, PlayerSlot.slot3]
+            : [PlayerSlot.slot2, PlayerSlot.slot4];
+
+        final newWinners = [...newState.winners];
+        // Add winning team first
+        for (var s in teamSlots) {
+          if (!newWinners.contains(s)) newWinners.add(s);
+        }
+        // Add losing team/others to trigger isGameOver
+        for (var p in newState.players) {
+          if (!newWinners.contains(p.slot)) {
+            newWinners.add(p.slot);
+          }
+        }
+
+        newState = newState.copyWith(
+            winners: newWinners,
+            message:
+                "Team ${winningTeam == "team1" ? "A" : "B"} wins by forfeit!");
+      }
+    }
+
+    return EngineResult(newState, [EngineEvent.quit]);
+  }
+
+  static bool _checkWinner(GameState state, PlayerSlot slot) {
+    if (state.gameMode == GameMode.team) {
+      // In team mode, both players in the team must finish
+      PlayerSlot teammate = (slot == PlayerSlot.slot1)
+          ? PlayerSlot.slot3
+          : (slot == PlayerSlot.slot3)
+              ? PlayerSlot.slot1
+              : (slot == PlayerSlot.slot2)
+                  ? PlayerSlot.slot4
+                  : PlayerSlot.slot2;
+
+      return state.players
+              .firstWhere((p) => p.slot == slot)
+              .tokens
+              .every((t) => t.state == TokenState.finished) &&
+          state.players
+              .firstWhere((p) => p.slot == teammate)
+              .tokens
+              .every((t) => t.state == TokenState.finished);
+    }
+    return state.players
+        .firstWhere((p) => p.slot == slot)
+        .tokens
+        .every((t) => t.state == TokenState.finished);
   }
 
   Player _getPlayer(GameState state, PlayerSlot slot) {

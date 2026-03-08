@@ -1,14 +1,58 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ludo_prince/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/screens/home_screen.dart';
 import 'services/audio_service.dart';
+import 'services/presence_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+  );
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  if (!kReleaseMode) {
+    const host = '127.0.0.1';
+
+    FirebaseAuth.instance.useAuthEmulator(host, 9099);
+
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: false,
+    );
+
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+
+    FirebaseDatabase.instance.useDatabaseEmulator(host, 9000);
+
+    FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+
+    if (FirebaseAuth.instance.currentUser != null) {
+      await FirebaseAuth.instance.signOut();
+    }
+  }
 
   await FlameAudio.audioCache.loadAll([
     'roll.wav',
@@ -32,6 +76,12 @@ void main() async {
 
   audioService.playBGM(); // Start background music on app launch
 
+  // Initial sign in if needed
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
+  }
+
+  presenceService.setPresence();
   runApp(
     ProviderScope(
       child: LudoPrinceApp(hasSeenOnboarding: hasSeenOnboarding),

@@ -8,6 +8,17 @@ enum GameAction {
   capture,
   finish,
   skip,
+  quit,
+}
+
+enum GameMode {
+  classic,
+  team,
+}
+
+enum GameType {
+  local,
+  online,
 }
 
 class GameState {
@@ -15,6 +26,7 @@ class GameState {
   final List<Player> players;
   final List<PlayerSlot> turnOrder;
   final PlayerSlot currentTurn;
+  final GameMode gameMode;
   final int diceValue;
   final bool isDiceRolled;
   final bool isRolling;
@@ -22,6 +34,7 @@ class GameState {
   final String message;
   final GameAction lastAction;
   final List<PlayerSlot> winners;
+  final GameType gameType;
 
   bool get isGameOver {
     // Game is over when all players are added to the winners list
@@ -33,6 +46,7 @@ class GameState {
     required this.players,
     required this.turnOrder,
     required this.currentTurn,
+    this.gameMode = GameMode.classic,
     this.diceValue = 1,
     this.isDiceRolled = false,
     this.isRolling = false,
@@ -40,6 +54,7 @@ class GameState {
     this.message = "Game Started!",
     this.lastAction = GameAction.none,
     this.winners = const [],
+    this.gameType = GameType.local,
   });
 
   GameState copyWith({
@@ -47,6 +62,7 @@ class GameState {
     List<Player>? players,
     List<PlayerSlot>? turnOrder,
     PlayerSlot? currentTurn,
+    GameMode? gameMode,
     int? diceValue,
     bool? isDiceRolled,
     bool? isRolling,
@@ -54,12 +70,14 @@ class GameState {
     String? message,
     GameAction? lastAction,
     List<PlayerSlot>? winners,
+    GameType? gameType,
   }) {
     return GameState(
       gameId: gameId ?? this.gameId,
       players: players ?? this.players,
       turnOrder: turnOrder ?? this.turnOrder,
       currentTurn: currentTurn ?? this.currentTurn,
+      gameMode: gameMode ?? this.gameMode,
       diceValue: diceValue ?? this.diceValue,
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
       isRolling: isRolling ?? this.isRolling,
@@ -67,6 +85,7 @@ class GameState {
       message: message ?? this.message,
       lastAction: lastAction ?? this.lastAction,
       winners: winners ?? this.winners,
+      gameType: gameType ?? this.gameType,
     );
   }
 
@@ -75,6 +94,7 @@ class GameState {
         "players": players.map((p) => p.toJson()).toList(),
         "turnOrder": turnOrder.map((e) => e.name).toList(),
         "currentTurn": currentTurn.name,
+        "gameMode": gameMode.name,
         "diceValue": diceValue,
         "isDiceRolled": isDiceRolled,
         "isRolling": isRolling,
@@ -82,6 +102,7 @@ class GameState {
         "message": message,
         "lastAction": lastAction.name,
         "winners": winners.map((e) => e.name).toList(),
+        "gameType": gameType.name,
       };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
@@ -105,6 +126,8 @@ class GameState {
               ?.map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
               .toList() ??
           [],
+      gameType: GameType.values.firstWhere(
+          (e) => e.name == (json["gameType"] ?? GameType.local.name)),
     );
   }
 }

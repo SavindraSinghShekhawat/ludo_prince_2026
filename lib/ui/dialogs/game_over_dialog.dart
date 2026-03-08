@@ -12,6 +12,7 @@ import '../../controllers/ludo_controller.dart';
 import '../../services/audio_service.dart';
 import '../screens/home_screen.dart';
 import '../screens/ludo_screen.dart';
+import '../screens/lobby_screen.dart';
 
 class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
@@ -190,6 +191,16 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                           ],
                         ),
                       ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.5),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.state.message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: headerColor.withValues(alpha: 0.8),
+                        ),
+                      ).animate().fadeIn(delay: 400.ms),
                       const SizedBox(height: 32),
 
                       // Rankings
@@ -320,18 +331,18 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                 );
                               },
                               icon: const Icon(Icons.home_filled,
-                                  color: Color(0xFF1E1E2C)),
+                                  color: Color(0xFF1E1E2C), size: 24),
                               label: const Text('Home',
                                   style: TextStyle(
                                       color: Color(0xFF1E1E2C),
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFE5E4E2),
                                 foregroundColor: const Color(0xFF1E1E2C),
-                                elevation: 5,
+                                elevation: 6,
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                    const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16)),
                               ),
@@ -341,41 +352,51 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                // Exact same specs
-                                Map<PlayerSlot, PlayerSetupConfig> config = {};
-                                for (var player in widget.state.players) {
-                                  config[player.slot] = PlayerSetupConfig(
-                                    name: player.name,
-                                    type: player.type,
+                                if (widget.state.gameType == GameType.online) {
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const LobbyScreen(isQuickMatch: true),
+                                    ),
+                                  );
+                                } else {
+                                  Map<PlayerSlot, PlayerSetupConfig> config =
+                                      {};
+                                  for (var player in widget.state.players) {
+                                    config[player.slot] = PlayerSetupConfig(
+                                      name: player.name,
+                                      type: player.type,
+                                    );
+                                  }
+
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (context) => ProviderScope(
+                                        overrides: [
+                                          gameControllerProvider
+                                              .overrideWithValue(
+                                                  LudoController(config)),
+                                        ],
+                                        child: const LudoScreen(),
+                                      ),
+                                    ),
+                                    (route) => false,
                                   );
                                 }
-
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                    builder: (context) => ProviderScope(
-                                      overrides: [
-                                        gameControllerProvider
-                                            .overrideWithValue(
-                                                LudoController(config)),
-                                      ],
-                                      child: const LudoScreen(),
-                                    ),
-                                  ),
-                                  (route) => false,
-                                );
                               },
-                              icon: const Icon(Icons.replay_circle_filled,
-                                  color: Colors.white),
-                              label: const Text('Replay',
+                              icon: const Icon(Icons.play_arrow_rounded,
+                                  color: Colors.white, size: 28),
+                              label: const Text('New Game',
                                   style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.greenAccent.shade700,
-                                elevation: 5,
+                                elevation: 6,
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                    const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16)),
                               ),

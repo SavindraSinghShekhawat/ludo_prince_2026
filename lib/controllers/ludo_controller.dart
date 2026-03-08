@@ -29,6 +29,7 @@ abstract class GameController {
   // 3. Status
   void pause();
   void resume();
+  void quitGame();
   Future<void> dispose();
 }
 
@@ -69,6 +70,7 @@ class LudoController implements GameController {
   late final MoveExecutor _executor;
   final GameEventProvider _eventProvider;
 
+  @override
   final PlayerSlot? localPlayerSlot;
 
   LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
@@ -96,14 +98,14 @@ class LudoController implements GameController {
       isDisposed: () => _isDisposed,
     );
 
-    _eventProvider.events.listen(_handleGameEvent);
+    _eventProvider.events.listen(handleGameEvent);
     Future.microtask(_checkBotTurn);
   }
 
   bool get isMyTurn =>
       localPlayerSlot == null || state.currentTurn == localPlayerSlot;
 
-  void _handleGameEvent(GameEvent event) async {
+  void handleGameEvent(GameEvent event) async {
     if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
       return;
     }
@@ -112,6 +114,10 @@ class LudoController implements GameController {
       await executeRoll(event.diceValue);
     } else if (event is MoveEvent) {
       await executeMove(event.tokenId);
+    } else if (event is QuitEvent) {
+      final result = _engine.quitPlayer(_state, event.playerSlot);
+      _state = result.state.copyWith(lastAction: GameAction.quit);
+      if (!_isDisposed) _streamController.add(_state);
     }
   }
 
@@ -153,7 +159,9 @@ class LudoController implements GameController {
   @override
   bool get isActionInProgress => _isActionInProgress;
 
-  static int generateDiceValue() => Random.secure().nextInt(6) + 1;
+  static final Random _rng = Random.secure();
+
+  static int generateDiceValue() => _rng.nextInt(6) + 1;
 
   @override
   Future<void> sendRollIntent() async {
@@ -235,6 +243,13 @@ class LudoController implements GameController {
   }
 
   @override
+  void quitGame() {
+    if (localPlayerSlot != null) {
+      _eventProvider.onQuitRequested(localPlayerSlot!);
+    }
+  }
+
+  @override
   void pause() {
     _isPaused = true;
   }
@@ -277,6 +292,7 @@ class LudoController implements GameController {
       currentTurn: config.keys.first,
       lastAction: GameAction.none,
       winners: const [],
+      gameType: GameType.local,
     );
   }
 }

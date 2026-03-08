@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/package_info_provider.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E2C),
       appBar: AppBar(
@@ -73,6 +76,21 @@ class AboutScreen extends StatelessWidget {
                 Icons.visibility,
                 "Transparency",
                 "No hidden mechanics. The board is clear, the rules are standard, and the execution is honest.",
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: ref.watch(packageInfoProvider).when(
+                      data: (info) => Text(
+                        "v${info.version}${kReleaseMode ? '' : '+${info.buildNumber}'}",
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (e, s) => const SizedBox.shrink(),
+                    ),
               ),
               const SizedBox(height: 40),
             ],
