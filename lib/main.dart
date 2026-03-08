@@ -64,6 +64,11 @@ void main() async {
 
   audioService.playBGM(); // Start background music on app launch
 
+  // Initial sign in if needed
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
+  }
+
   presenceService.setPresence();
   runApp(
     ProviderScope(

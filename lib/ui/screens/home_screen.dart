@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -21,7 +22,7 @@ class HomeScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(),
+              _buildHeader(ref),
               Expanded(
                 child: SingleChildScrollView(
                   padding:
@@ -91,7 +92,9 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(WidgetRef ref) {
+    final displayName = ref.watch(displayNameProvider);
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Row(
@@ -107,16 +110,16 @@ class HomeScreen extends ConsumerWidget {
                 child: const Icon(Icons.person, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 12),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Ludo Prince",
+                  const Text("Ludo Prince",
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w300)),
-                  Text("Guest Player",
-                      style: TextStyle(
+                  Text(displayName,
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold)),
