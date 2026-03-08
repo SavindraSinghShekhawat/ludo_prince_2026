@@ -17,17 +17,22 @@ import 'package:flutter/foundation.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
 
   if (kDebugMode) {
     try {
-      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-      FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
-      FirebaseDatabase.instance.useDatabaseEmulator('localhost', 9000);
-      print('Using Firebase Emulators');
+      final String host = defaultTargetPlatform == TargetPlatform.android
+          ? '10.0.2.2'
+          : 'localhost';
+      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+      FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+      FirebaseDatabase.instance.useDatabaseEmulator(host, 9000);
+      print('Using Firebase Emulators at $host');
     } catch (e) {
       print('Error connecting to Firebase Emulators: $e');
     }

@@ -54,6 +54,8 @@ class DefaultFirebaseOptions {
     appId: '1:264745171932:android:0abe28e5620f500261ad19',
     messagingSenderId: '264745171932',
     projectId: 'ludo-prince-cf74a',
+    databaseURL:
+        'https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'ludo-prince-cf74a.firebasestorage.app',
   );
 
@@ -62,6 +64,8 @@ class DefaultFirebaseOptions {
     appId: '1:264745171932:ios:07e46f23a147f79761ad19',
     messagingSenderId: '264745171932',
     projectId: 'ludo-prince-cf74a',
+    databaseURL:
+        'https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'ludo-prince-cf74a.firebasestorage.app',
     iosBundleId: 'com.paisphere.ludoprince',
   );

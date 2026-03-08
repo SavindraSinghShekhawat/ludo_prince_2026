@@ -17,7 +17,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       "title": "Welcome to Ludo Prince",
       "description":
-          "A beautifully crafted, modern take on the classic Ludo board game. Play with friends in vibrant digital arenas.",
+          "A beautifully crafted, modern take on the classic Ludo board game. Play with friends in vibrant digital boards.",
       "icon": "casino"
     },
     {
