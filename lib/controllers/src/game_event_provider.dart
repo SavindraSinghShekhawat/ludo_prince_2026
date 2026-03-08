@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../ludo_controller.dart';
+import '../../models/token.dart';
 
 abstract class GameEventProvider {
   Stream<GameEvent> get events;
   void onRollRequested();
   void onMoveRequested(int tokenId);
+  void onQuitRequested(PlayerSlot slot);
   void dispose();
 }
 
@@ -35,6 +38,14 @@ class LocalEventProvider extends GameEventProvider {
   }
 
   @override
+  void onQuitRequested(PlayerSlot slot) {
+    _controller.add(QuitEvent(
+      slot,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    ));
+  }
+
+  @override
   void dispose() {
     _controller.close();
   }
@@ -49,7 +60,13 @@ sealed class GameEvent {
 
   factory GameEvent.fromJson(Map<String, dynamic> json) {
     final type = json['type'] as String;
-    final timestamp = json['timestamp'] as int? ?? 0;
+
+    int timestamp = 0;
+    if (json['timestamp'] is Timestamp) {
+      timestamp = (json['timestamp'] as Timestamp).millisecondsSinceEpoch;
+    } else if (json['timestamp'] is int) {
+      timestamp = json['timestamp'] as int;
+    }
 
     if (type == 'roll') {
       return RollEvent(
@@ -59,6 +76,11 @@ sealed class GameEvent {
     } else if (type == 'move') {
       return MoveEvent(
         json['tokenId'] as int,
+        timestamp: timestamp,
+      );
+    } else if (type == 'quit') {
+      return QuitEvent(
+        PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
         timestamp: timestamp,
       );
     }
@@ -88,6 +110,19 @@ class MoveEvent extends GameEvent {
   Map<String, dynamic> toJson() => {
         'type': 'move',
         'tokenId': tokenId,
+        'timestamp': timestamp,
+      };
+}
+
+class QuitEvent extends GameEvent {
+  final PlayerSlot playerSlot;
+  QuitEvent(this.playerSlot, {required int timestamp})
+      : super(timestamp: timestamp);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': 'quit',
+        'playerSlot': playerSlot.name,
         'timestamp': timestamp,
       };
 }

@@ -8,6 +8,12 @@ enum GameAction {
   capture,
   finish,
   skip,
+  quit,
+}
+
+enum GameMode {
+  classic,
+  team,
 }
 
 class GameState {
@@ -15,6 +21,7 @@ class GameState {
   final List<Player> players;
   final List<PlayerSlot> turnOrder;
   final PlayerSlot currentTurn;
+  final GameMode gameMode;
   final int diceValue;
   final bool isDiceRolled;
   final bool isRolling;
@@ -33,6 +40,7 @@ class GameState {
     required this.players,
     required this.turnOrder,
     required this.currentTurn,
+    this.gameMode = GameMode.classic,
     this.diceValue = 1,
     this.isDiceRolled = false,
     this.isRolling = false,
@@ -47,6 +55,7 @@ class GameState {
     List<Player>? players,
     List<PlayerSlot>? turnOrder,
     PlayerSlot? currentTurn,
+    GameMode? gameMode,
     int? diceValue,
     bool? isDiceRolled,
     bool? isRolling,
@@ -60,6 +69,7 @@ class GameState {
       players: players ?? this.players,
       turnOrder: turnOrder ?? this.turnOrder,
       currentTurn: currentTurn ?? this.currentTurn,
+      gameMode: gameMode ?? this.gameMode,
       diceValue: diceValue ?? this.diceValue,
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
       isRolling: isRolling ?? this.isRolling,
@@ -75,6 +85,7 @@ class GameState {
         "players": players.map((p) => p.toJson()).toList(),
         "turnOrder": turnOrder.map((e) => e.name).toList(),
         "currentTurn": currentTurn.name,
+        "gameMode": gameMode.name,
         "diceValue": diceValue,
         "isDiceRolled": isDiceRolled,
         "isRolling": isRolling,

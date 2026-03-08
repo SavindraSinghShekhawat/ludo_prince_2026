@@ -1,32 +1,72 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+import {onSchedule} from "firebase-functions/v2/scheduler";
+import * as admin from "firebase-admin";
 
-import {setGlobalOptions} from "firebase-functions";
-// import {onRequest} from "firebase-functions/https";
-// import * as logger from "firebase-functions/logger";
+admin.initializeApp();
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+export const checkTurnTimeout = onSchedule("every 1 minutes", async (event) => {
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+  
+  const games = await db.collection("games")
+    .where("status", "==", "playing")
+    .get();
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+  for (const gameDoc of games.docs) {
+    const game = gameDoc.data();
+    const turnStartedAt = game.turnStartedAt;
+    const turnTimeSeconds = game.settings?.turnTimeSeconds || 30;
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    if (now.seconds - turnStartedAt.seconds > turnTimeSeconds) {
+      // Perform auto-turn
+      const currentSlot = game.currentTurn;
+      const playerRef = gameDoc.ref.collection("players").doc(currentSlot);
+      const playerDoc = await playerRef.get();
+      const player = playerDoc.data();
+
+      if (!player) continue;
+
+      const missedTurns = (player.missedTurns || 0) + 1;
+      const maxMissedTurns = game.settings?.maxMissedTurns || 5;
+
+      if (missedTurns >= maxMissedTurns) {
+        await playerRef.update({
+          status: "exited",
+          missedTurns: missedTurns
+        });
+      } else {
+        await playerRef.update({
+          missedTurns: missedTurns
+        });
+      }
+
+      // Generate random dice and move (simplified logic for Cloud Function)
+      // In a real scenario, this would trigger a move event
+      const diceValue = Math.floor(Math.random() * 6) + 1;
+      const eventCounter = (game.eventCounter || 0) + 1;
+      const eventId = eventCounter.toString().padStart(5, "0");
+
+      await gameDoc.ref.collection("events").doc(eventId).set({
+        type: "roll",
+        playerSlot: currentSlot,
+        turnNumber: game.turnNumber,
+        diceValue: diceValue,
+        auto: true,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await gameDoc.ref.collection("events").doc((eventCounter + 1).toString().padStart(5, "0")).set({
+        type: "move",
+        playerSlot: currentSlot,
+        turnNumber: game.turnNumber,
+        tokenId: 0, // Fallback to first token for simplicity in auto-play
+        auto: true,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await gameDoc.ref.update({
+        eventCounter: eventCounter + 1,
+        // Turn progression would normally be handled by the client or a background trigger
+      });
+    }
+  }
+});

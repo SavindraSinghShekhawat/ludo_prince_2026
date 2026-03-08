@@ -76,7 +76,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Local Multiplayer',
+        title: const Text('Offline & Bot Play',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [

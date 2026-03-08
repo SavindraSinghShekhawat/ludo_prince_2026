@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
+import 'lobby_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -9,110 +10,203 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Ludo Prince',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 2,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildMainCard(
+                        context,
+                        title: "PLAY ONLINE",
+                        subtitle: "Quick Match & Tournaments",
+                        icon: Icons.public,
+                        accentColor: Colors.deepPurpleAccent,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  const LobbyScreen(isQuickMatch: true)),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      /*
+                      _buildMainCard(
+                        context,
+                        title: "PLAY WITH FRIENDS",
+                        subtitle: "Invite & Create Room",
+                        icon: Icons.people,
+                        accentColor: Colors.pinkAccent,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LobbyScreen(isQuickMatch: false)),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      */
+                      _buildMainCard(
+                        context,
+                        title: "LOCAL & BOTS",
+                        subtitle: "Offline, Friends & Computer",
+                        icon: Icons.home,
+                        accentColor: Colors.blueAccent,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const LocalSetupScreen()),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      TextButton.icon(
+                        onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const AboutScreen())),
+                        icon: const Icon(Icons.info_outline,
+                            color: Colors.white60),
+                        label: const Text("About & Fairness",
+                            style: TextStyle(color: Colors.white60)),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 5),
-                const Text(
-                  'Local Multiplayer',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white70,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 50),
-                _buildMenuButton(
-                  context,
-                  title: 'Local Multiplayer',
-                  icon: Icons.people,
-                  colors: [Colors.greenAccent.shade700, Colors.blueAccent],
-                ),
-                const SizedBox(height: 40),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => const AboutScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.info_outline, color: Colors.white70),
-                  label: const Text(
-                    'About & Fairness',
-                    style: TextStyle(
-                        color: Colors.white70,
-                        decoration: TextDecoration.underline),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuButton(BuildContext context,
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1)),
+                child: const Icon(Icons.person, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 12),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Ludo Prince",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300)),
+                  Text("Guest Player",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildHeaderIcon(Icons.settings),
+              const SizedBox(width: 12),
+              _buildHeaderIcon(Icons.notifications),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderIcon(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white.withOpacity(0.05)),
+      child: Icon(icon, color: Colors.white70, size: 20),
+    );
+  }
+
+  Widget _buildMainCard(BuildContext context,
       {required String title,
+      required String subtitle,
       required IconData icon,
-      required List<Color> colors}) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const LocalSetupScreen()),
-        );
-      },
-      borderRadius: BorderRadius.circular(20),
+      required Color accentColor,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        width: 300,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+        height: 160,
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.first.withValues(alpha: 0.4),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              )
-            ]),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 30),
-            const SizedBox(width: 16),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors: [
+              accentColor.withValues(alpha: 0.15),
+              Colors.white.withValues(alpha: 0.05)
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+                color: accentColor.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                bottom: -20,
+                child: Icon(icon,
+                    size: 140, color: accentColor.withValues(alpha: 0.1)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, color: accentColor, size: 40),
+                    const SizedBox(height: 16),
+                    Text(title,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0)),
+                    Text(subtitle,
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 14)),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

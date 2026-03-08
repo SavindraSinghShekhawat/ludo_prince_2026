@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/screens/home_screen.dart';
 import 'services/audio_service.dart';
+import 'services/presence_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,14 +23,23 @@ void main() async {
   );
 
   if (!kReleaseMode) {
-    final host = defaultTargetPlatform == TargetPlatform.android
-        ? '10.0.2.2'
-        : 'localhost';
+    const host = '127.0.0.1';
 
     FirebaseAuth.instance.useAuthEmulator(host, 9099);
+
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: false,
+    );
+
     FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+
     FirebaseDatabase.instance.useDatabaseEmulator(host, 9000);
+
     FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+
+    if (FirebaseAuth.instance.currentUser != null) {
+      await FirebaseAuth.instance.signOut();
+    }
   }
 
   await FlameAudio.audioCache.loadAll([
@@ -54,6 +64,7 @@ void main() async {
 
   audioService.playBGM(); // Start background music on app launch
 
+  presenceService.setPresence();
   runApp(
     ProviderScope(
       child: LudoPrinceApp(hasSeenOnboarding: hasSeenOnboarding),

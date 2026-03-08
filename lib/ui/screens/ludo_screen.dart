@@ -59,6 +59,14 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         if (state.isGameOver) {
           final prevWasOver = previous?.value?.isGameOver ?? false;
           if (!prevWasOver) {
+            // Skip dialog if I quit
+            final localSlot = ref.read(gameControllerProvider).localPlayerSlot;
+            if (localSlot != null) {
+              final me = state.players.firstWhere((p) => p.slot == localSlot,
+                  orElse: () => state.players.first);
+              if (me.status == PlayerStatus.left) return;
+            }
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _showGameOverDialog(state);
             });
@@ -120,6 +128,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                 ),
                 TextButton(
                   onPressed: () {
+                    _controller.quitGame();
                     Navigator.of(context).pop();
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(

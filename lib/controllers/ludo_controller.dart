@@ -29,6 +29,7 @@ abstract class GameController {
   // 3. Status
   void pause();
   void resume();
+  void quitGame();
   Future<void> dispose();
 }
 
@@ -96,14 +97,14 @@ class LudoController implements GameController {
       isDisposed: () => _isDisposed,
     );
 
-    _eventProvider.events.listen(_handleGameEvent);
+    _eventProvider.events.listen(handleGameEvent);
     Future.microtask(_checkBotTurn);
   }
 
   bool get isMyTurn =>
       localPlayerSlot == null || state.currentTurn == localPlayerSlot;
 
-  void _handleGameEvent(GameEvent event) async {
+  void handleGameEvent(GameEvent event) async {
     if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
       return;
     }
@@ -112,6 +113,10 @@ class LudoController implements GameController {
       await executeRoll(event.diceValue);
     } else if (event is MoveEvent) {
       await executeMove(event.tokenId);
+    } else if (event is QuitEvent) {
+      final result = _engine.quitPlayer(_state, event.playerSlot);
+      _state = result.state.copyWith(lastAction: GameAction.quit);
+      if (!_isDisposed) _streamController.add(_state);
     }
   }
 
@@ -232,6 +237,13 @@ class LudoController implements GameController {
     _isActionInProgress = false;
     if (!_isDisposed) _streamController.add(_state);
     _checkBotTurn();
+  }
+
+  @override
+  void quitGame() {
+    if (localPlayerSlot != null) {
+      _eventProvider.onQuitRequested(localPlayerSlot!);
+    }
   }
 
   @override
