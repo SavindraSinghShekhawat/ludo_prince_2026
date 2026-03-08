@@ -9,7 +9,6 @@ import '../../models/player.dart';
 import '../../models/token.dart';
 import '../../providers/game_provider.dart';
 import '../../controllers/ludo_controller.dart';
-import '../../controllers/multiplayer_controller.dart';
 import '../../services/audio_service.dart';
 import '../screens/home_screen.dart';
 import '../screens/ludo_screen.dart';
@@ -353,12 +352,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                final controller =
-                                    ref.read(gameControllerProvider);
-                                final isMultiplayer =
-                                    controller is MultiplayerGameController;
-
-                                if (isMultiplayer) {
+                                if (widget.state.gameType == GameType.online) {
                                   Navigator.of(context).pushAndRemoveUntil(
                                     MaterialPageRoute(
                                       builder: (context) =>

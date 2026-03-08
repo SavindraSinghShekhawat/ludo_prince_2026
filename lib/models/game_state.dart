@@ -16,6 +16,11 @@ enum GameMode {
   team,
 }
 
+enum GameType {
+  local,
+  online,
+}
+
 class GameState {
   final String gameId;
   final List<Player> players;
@@ -29,6 +34,7 @@ class GameState {
   final String message;
   final GameAction lastAction;
   final List<PlayerSlot> winners;
+  final GameType gameType;
 
   bool get isGameOver {
     // Game is over when all players are added to the winners list
@@ -48,6 +54,7 @@ class GameState {
     this.message = "Game Started!",
     this.lastAction = GameAction.none,
     this.winners = const [],
+    this.gameType = GameType.local,
   });
 
   GameState copyWith({
@@ -63,6 +70,7 @@ class GameState {
     String? message,
     GameAction? lastAction,
     List<PlayerSlot>? winners,
+    GameType? gameType,
   }) {
     return GameState(
       gameId: gameId ?? this.gameId,
@@ -77,6 +85,7 @@ class GameState {
       message: message ?? this.message,
       lastAction: lastAction ?? this.lastAction,
       winners: winners ?? this.winners,
+      gameType: gameType ?? this.gameType,
     );
   }
 
@@ -93,6 +102,7 @@ class GameState {
         "message": message,
         "lastAction": lastAction.name,
         "winners": winners.map((e) => e.name).toList(),
+        "gameType": gameType.name,
       };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
@@ -116,6 +126,8 @@ class GameState {
               ?.map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
               .toList() ??
           [],
+      gameType: GameType.values.firstWhere(
+          (e) => e.name == (json["gameType"] ?? GameType.local.name)),
     );
   }
 }

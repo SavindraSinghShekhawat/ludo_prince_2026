@@ -70,6 +70,7 @@ class LudoController implements GameController {
   late final MoveExecutor _executor;
   final GameEventProvider _eventProvider;
 
+  @override
   final PlayerSlot? localPlayerSlot;
 
   LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
@@ -289,6 +290,7 @@ class LudoController implements GameController {
       currentTurn: config.keys.first,
       lastAction: GameAction.none,
       winners: const [],
+      gameType: GameType.local,
     );
   }
 }
