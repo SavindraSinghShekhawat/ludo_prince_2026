@@ -1,5 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +20,17 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  if (!kReleaseMode) {
+    final host = defaultTargetPlatform == TargetPlatform.android
+        ? '10.0.2.2'
+        : 'localhost';
+
+    FirebaseAuth.instance.useAuthEmulator(host, 9099);
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    FirebaseDatabase.instance.useDatabaseEmulator(host, 9000);
+    FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+  }
 
   await FlameAudio.audioCache.loadAll([
     'roll.wav',
@@ -53,7 +69,8 @@ class LudoPrinceApp extends StatefulWidget {
   State<LudoPrinceApp> createState() => _LudoPrinceAppState();
 }
 
-class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserver {
+class _LudoPrinceAppState extends State<LudoPrinceApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -68,7 +85,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive) {
       audioService.pauseBGM();
     } else if (state == AppLifecycleState.resumed) {
       audioService.resumeBGM();
@@ -88,7 +107,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp> with WidgetsBindingObserv
         textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       ),
-      home: widget.hasSeenOnboarding ? const HomeScreen() : const OnboardingScreen(),
+      home: widget.hasSeenOnboarding
+          ? const HomeScreen()
+          : const OnboardingScreen(),
     );
   }
 }
