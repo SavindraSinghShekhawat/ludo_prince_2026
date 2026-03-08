@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -33,11 +34,52 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   bool _isLoading = false;
   int _maxPlayers = 2;
   GameMode _gameMode = GameMode.classic;
+  Timer? _heartbeatTimer;
+  Timer? _timeoutTimer;
 
   @override
   void initState() {
     super.initState();
     _activeGameId = widget.initialGameId;
+  }
+
+  @override
+  void dispose() {
+    _heartbeatTimer?.cancel();
+    _timeoutTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startHeartbeat(String gameId) {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      matchmakingService.updateHostHeartbeat(gameId);
+    });
+  }
+
+  void _startTimeoutTimer() {
+    _timeoutTimer?.cancel();
+    _timeoutTimer = Timer(const Duration(seconds: 60), () async {
+      if (mounted && _activeGameId != null) {
+        // Only host deletes the lobby
+        final gameDoc = await FirebaseFirestore.instance
+            .collection('ludogames')
+            .doc(_activeGameId)
+            .get();
+        final currentUid = FirebaseAuth.instance.currentUser?.uid;
+        if (gameDoc.exists && gameDoc.data()?['hostUid'] == currentUid) {
+          await matchmakingService.deleteLobby(_activeGameId!);
+        }
+
+        if (mounted) {
+          _showError("No active players found. Please try again.");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -82,20 +124,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- Mode Selection Hidden for Launch ---
-              /*
-              _buildSectionTitle('CHOOSE GAME MODE'),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildModeToggle(GameMode.classic, "CLASSIC", Icons.star_border)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildModeToggle(GameMode.team, "2VS2 TEAM", Icons.groups)),
-                ],
-              ),
-              const SizedBox(height: 32),
-              */
-
               _buildSectionTitle('SELECT PLAYERS'),
               const SizedBox(height: 16),
               Container(
@@ -108,7 +136,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       spacing: 12,
                       runSpacing: 12,
                       children: [2].map((n) {
-                        // Restricted to 2 players for launch
                         final isSelected = _maxPlayers == n;
                         return ChoiceChip(
                           label: Text('$n Players'),
@@ -148,12 +175,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                   ],
                 ),
               ),
-              // --- Private Lobby Hidden for Launch ---
-              /*
-              if (!widget.isQuickMatch) ...[
-                ...
-              ]
-              */
             ],
           ),
         ),
@@ -177,6 +198,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         final status = gameData['status'];
 
         if (status == 'playing') {
+          _heartbeatTimer?.cancel();
+          _timeoutTimer?.cancel();
           _redirectToGame();
           return const Center(
               child: Text("Starting game...",
@@ -195,11 +218,18 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             final hostUid = gameData['hostUid'];
             final isActuallyHost = currentUid == hostUid;
             final maxRequired = gameData['maxPlayers'] ?? _maxPlayers;
+            final currentPlayers = gameData['currentPlayers'] ?? players.length;
+
+            // Start heartbeat and timeout if host
+            if (isActuallyHost && status == 'lobby') {
+              if (_heartbeatTimer == null) _startHeartbeat(_activeGameId!);
+              if (_timeoutTimer == null) _startTimeoutTimer();
+            }
 
             // Auto-start for public games (Quick Match) if full
             if (!isPrivate &&
                 isActuallyHost &&
-                players.length >= maxRequired &&
+                currentPlayers >= maxRequired &&
                 status == 'lobby') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 matchmakingService.startGame(_activeGameId!);
@@ -240,7 +270,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       ),
                     ),
                   ] else ...[
-                    // Quick Match "Searching..." UI
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: _cardDecoration(
@@ -278,7 +307,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       itemCount: maxRequired,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final slot = 'slot${index + 1}';
+                        final slots =
+                            PlayerSlotExtension.getSlotsFor(maxRequired);
+                        final slotEnum = slots[index];
+                        final slot = slotEnum.name;
                         final playerDoc =
                             players.where((d) => d.id == slot).firstOrNull;
 
@@ -290,7 +322,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
                                 color: playerDoc != null
-                                    ? _getSlotColor(index)
+                                    ? _getSlotColor(slotEnum.index)
                                         .withValues(alpha: 0.5)
                                     : Colors.white12),
                           ),
@@ -301,7 +333,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                       ? Icons.person
                                       : Icons.person_outline,
                                   color: playerDoc != null
-                                      ? _getSlotColor(index)
+                                      ? _getSlotColor(slotEnum.index)
                                       : Colors.white24),
                               const SizedBox(width: 16),
                               Expanded(
@@ -329,7 +361,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                   if (isActuallyHost && isPrivate)
                     _buildMainButton(
                       'START BATTLE',
-                      players.length >= maxRequired
+                      currentPlayers >= maxRequired
                           ? () => matchmakingService.startGame(_activeGameId!)
                           : null,
                     ),
@@ -371,7 +403,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       Map<PlayerSlot, PlayerSetupConfig> config = {};
 
       for (var doc in playersSnap.docs) {
-        final slot = PlayerSlot.values.firstWhere((e) => e.name == doc.id);
+        final slotStr = doc.id;
+        final slot = PlayerSlot.values.firstWhere((e) => e.name == slotStr);
         final data = doc.data();
         if (data['uid'] == currentUserUid) localSlot = slot;
         config[slot] =

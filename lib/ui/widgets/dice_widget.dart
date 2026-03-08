@@ -19,6 +19,8 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
   int _animatingValue = 1;
   bool _isAnimating = false;
 
+  static final Random _rng = Random.secure();
+
   @override
   void initState() {
     super.initState();
@@ -27,7 +29,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     _controller.addListener(() {
       if (_controller.isAnimating) {
         setState(() {
-          _animatingValue = Random().nextInt(6) + 1;
+          _animatingValue = _rng.nextInt(6) + 1;
         });
       }
     });

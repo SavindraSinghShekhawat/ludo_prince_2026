@@ -159,7 +159,9 @@ class LudoController implements GameController {
   @override
   bool get isActionInProgress => _isActionInProgress;
 
-  static int generateDiceValue() => Random.secure().nextInt(6) + 1;
+  static final Random _rng = Random.secure();
+
+  static int generateDiceValue() => _rng.nextInt(6) + 1;
 
   @override
   Future<void> sendRollIntent() async {

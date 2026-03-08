@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/game_state.dart';
+import '../models/token.dart';
 
 class MatchmakingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -19,7 +21,6 @@ class MatchmakingService {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
 
-    // Use auto-generated Firestore ID
     final gameRef = _firestore.collection('ludogames').doc();
     final gameId = gameRef.id;
 
@@ -31,7 +32,8 @@ class MatchmakingService {
         'createdAt': FieldValue.serverTimestamp(),
         'hostUid': user.uid,
         'maxPlayers': maxPlayers,
-        'playerCount': 1,
+        'currentPlayers': 1,
+        'hostLastSeen': FieldValue.serverTimestamp(),
         'currentTurn': 'slot1',
         'turnNumber': 1,
         'turnStartedAt': FieldValue.serverTimestamp(),
@@ -66,29 +68,37 @@ class MatchmakingService {
     final user = _auth.currentUser!;
 
     await _firestore.runTransaction((transaction) async {
-      final gameDoc =
-          await transaction.get(_firestore.collection('ludogames').doc(gameId));
+      final docRef = _firestore.collection('ludogames').doc(gameId);
+      final gameDoc = await transaction.get(docRef);
+
       if (!gameDoc.exists) throw Exception("Game not found");
 
-      final status = gameDoc.data()?['status'];
-      if (status != 'lobby')
-        throw Exception("Game already started or finished");
+      final data = gameDoc.data()!;
+      final status = data['status'];
+      final currentPlayers = data['currentPlayers'] as int;
+      final maxPlayers = data['maxPlayers'] as int;
+      final hostLastSeen = data['hostLastSeen'] as Timestamp?;
 
-      final playerCount = gameDoc.data()?['playerCount'] as int;
-      final maxPlayers = gameDoc.data()?['maxPlayers'] as int;
+      // 1. Verify conditions inside transaction
+      if (status != 'lobby') throw Exception("Game already started");
 
-      if (playerCount >= maxPlayers) throw Exception("Game is full");
+      if (hostLastSeen != null) {
+        final now = DateTime.now();
+        if (now.difference(hostLastSeen.toDate()).inSeconds > 60) {
+          throw Exception("Lobby host is inactive");
+        }
+      }
 
-      final playersSnap = await _firestore
-          .collection('ludogames')
-          .doc(gameId)
-          .collection('players')
-          .get();
+      if (currentPlayers >= maxPlayers) throw Exception("Game is full");
+
+      // 2. Determine first available slot
+      final playersSnap = await docRef.collection('players').get();
       final usedSlots = playersSnap.docs.map((d) => d.id).toList();
 
       String? availableSlot;
-      for (int i = 1; i <= 4; i++) {
-        final slot = 'slot$i';
+      final slots = PlayerSlotExtension.getSlotsFor(maxPlayers);
+      for (final slotEnum in slots) {
+        final slot = slotEnum.name;
         if (!usedSlots.contains(slot)) {
           availableSlot = slot;
           break;
@@ -97,67 +107,88 @@ class MatchmakingService {
 
       if (availableSlot == null) throw Exception("No available slots");
 
-      transaction.update(_firestore.collection('ludogames').doc(gameId), {
-        'playerCount': FieldValue.increment(1),
+      // 3. Update lobby and create player doc
+      transaction.update(docRef, {
+        'currentPlayers': FieldValue.increment(1),
       });
 
-      transaction.set(
-          _firestore
-              .collection('ludogames')
-              .doc(gameId)
-              .collection('players')
-              .doc(availableSlot),
-          {
-            'uid': user.uid,
-            'name': user.displayName ??
-                "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}",
-            'missedTurns': 0,
-            'connected': true,
-            'joinedAt': FieldValue.serverTimestamp(),
-            'lastSeen': FieldValue.serverTimestamp(),
-            'status': 'active',
-          });
-    }).timeout(const Duration(seconds: 10), onTimeout: () {
-      throw Exception("Join game timed out. Are emulators running?");
-    });
+      transaction.set(docRef.collection('players').doc(availableSlot), {
+        'uid': user.uid,
+        'name': user.displayName ??
+            "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}",
+        'missedTurns': 0,
+        'connected': true,
+        'joinedAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
+        'status': 'active',
+      });
+    }).timeout(const Duration(seconds: 15));
   }
 
   Future<void> startGame(String gameId) async {
     await _firestore.collection('ludogames').doc(gameId).update({
       'status': 'playing',
       'turnStartedAt': FieldValue.serverTimestamp(),
-    }).timeout(const Duration(seconds: 10), onTimeout: () {
-      throw Exception("Start game timed out.");
-    });
+    }).timeout(const Duration(seconds: 10));
   }
 
   Future<String> joinQueue(int maxPlayers, GameMode gameMode) async {
     await _ensureAuthenticated();
 
-    // 1. Try to find an existing public game
-    final publicGames = await _firestore
+    // 1. Search Active Lobby (Single Query)
+    final sixtySecondsAgo =
+        DateTime.now().subtract(const Duration(seconds: 60));
+
+    final querySnapshot = await _firestore
         .collection('ludogames')
         .where('isPrivate', isEqualTo: false)
         .where('status', isEqualTo: 'lobby')
         .where('maxPlayers', isEqualTo: maxPlayers)
         .where('gameMode', isEqualTo: gameMode.name)
-        .orderBy('createdAt', descending: false)
-        .limit(10) // Get a few to try if one fails
+        .where('hostLastSeen',
+            isGreaterThan: Timestamp.fromDate(sixtySecondsAgo))
+        .limit(1)
         .get();
 
-    for (var doc in publicGames.docs) {
+    if (querySnapshot.docs.isNotEmpty) {
+      final gameId = querySnapshot.docs.first.id;
       try {
-        await joinGame(doc.id);
-        return doc.id; // Success!
+        await joinGame(gameId);
+        return gameId;
       } catch (e) {
-        // Try the next one if this one filled up or failed
-        continue;
+        // If join fails (e.g. lobby filled up during transaction), proceed to create lobby
       }
     }
 
-    // 2. No suitable public game found, create a new one
+    // 2. No active lobby found or join failed, create a new one
     return await createGame(
         maxPlayers: maxPlayers, isPrivate: false, gameMode: gameMode);
+  }
+
+  Future<void> updateHostHeartbeat(String gameId) async {
+    await _firestore.collection('ludogames').doc(gameId).update({
+      'hostLastSeen': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteLobby(String gameId) async {
+    try {
+      final lobbyRef = _firestore.collection('ludogames').doc(gameId);
+      final batch = _firestore.batch();
+
+      // Delete all possible player slots (predictable IDs slot1-slot4)
+      // This avoids a Firestore read to fetch the slots.
+      for (int i = 1; i <= 4; i++) {
+        batch.delete(lobbyRef.collection('players').doc('slot$i'));
+      }
+
+      // Delete the lobby document itself
+      batch.delete(lobbyRef);
+
+      await batch.commit();
+    } catch (e) {
+      debugPrint("Error deleting lobby $gameId: $e");
+    }
   }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchGame(String gameId) {

@@ -1,5 +1,22 @@
 enum PlayerSlot { slot1, slot2, slot3, slot4 }
 
+extension PlayerSlotExtension on PlayerSlot {
+  static List<PlayerSlot> getSlotsFor(int numPlayers) {
+    if (numPlayers == 2) {
+      return [PlayerSlot.slot1, PlayerSlot.slot3];
+    } else if (numPlayers == 3) {
+      return [PlayerSlot.slot1, PlayerSlot.slot3, PlayerSlot.slot4];
+    } else {
+      return [
+        PlayerSlot.slot1,
+        PlayerSlot.slot2,
+        PlayerSlot.slot3,
+        PlayerSlot.slot4
+      ];
+    }
+  }
+}
+
 enum TokenState { home, board, homeStretch, finished }
 
 class Token {
