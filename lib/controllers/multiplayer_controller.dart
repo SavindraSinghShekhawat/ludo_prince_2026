@@ -18,7 +18,10 @@ class MultiplayerGameController extends LudoController {
     required PlayerSlot localPlayerSlot,
   }) : super(config,
             localPlayerSlot: localPlayerSlot,
-            eventProvider: FirebaseEventProvider(gameId: gameId));
+            eventProvider: FirebaseEventProvider(gameId: gameId)) {
+    // Mark the game as online immediately so GameOverDialog navigates correctly.
+    state = state.copyWith(gameType: GameType.online);
+  }
 
   Future<void> initializeFromSnapshot() async {
     final gameDoc = await _firestore.collection('ludogames').doc(gameId).get();
@@ -29,7 +32,8 @@ class MultiplayerGameController extends LudoController {
     if (snapshot != null) {
       final gameStateJson = snapshot['gameState'] as Map<String, dynamic>;
       _lastAppliedEventId = snapshot['lastEventId'] as int;
-      state = GameState.fromJson(gameStateJson);
+      state =
+          GameState.fromJson(gameStateJson).copyWith(gameType: GameType.online);
     }
 
     // Fetch missing events

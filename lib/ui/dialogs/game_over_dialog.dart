@@ -353,12 +353,12 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 if (widget.state.gameType == GameType.online) {
-                                  Navigator.of(context).pushAndRemoveUntil(
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pushReplacement(
                                     MaterialPageRoute(
-                                      builder: (context) =>
+                                      builder: (_) =>
                                           const LobbyScreen(isQuickMatch: true),
                                     ),
-                                    (route) => false,
                                   );
                                 } else {
                                   Map<PlayerSlot, PlayerSetupConfig> config =

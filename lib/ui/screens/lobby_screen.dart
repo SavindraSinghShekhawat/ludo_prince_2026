@@ -10,6 +10,7 @@ import '../../models/token.dart';
 import '../../controllers/ludo_controller.dart';
 import '../../controllers/multiplayer_controller.dart';
 import '../../providers/game_provider.dart';
+import 'home_screen.dart';
 import 'ludo_screen.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
@@ -46,6 +47,19 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
+            }
+          },
+        ),
         title: Text(
             _activeGameId == null
                 ? (widget.isQuickMatch ? 'Quick Match' : 'Play with Friends')
