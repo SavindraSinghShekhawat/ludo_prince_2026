@@ -16,7 +16,7 @@ class FirebaseEventProvider extends GameEventProvider {
 
   void _subscribeToEvents() {
     _subscription = _firestore
-        .collection('games')
+        .collection('ludogames')
         .doc(gameId)
         .collection('events')
         .orderBy('timestamp', descending: false)
@@ -39,7 +39,7 @@ class FirebaseEventProvider extends GameEventProvider {
   @override
   Future<void> onRollRequested() async {
     final diceValue = LudoController.generateDiceValue();
-    final gameRef = _firestore.collection('games').doc(gameId);
+    final gameRef = _firestore.collection('ludogames').doc(gameId);
 
     await _firestore.runTransaction((transaction) async {
       final gameDoc = await transaction.get(gameRef);
@@ -66,7 +66,7 @@ class FirebaseEventProvider extends GameEventProvider {
 
   @override
   Future<void> onMoveRequested(int tokenId) async {
-    final gameRef = _firestore.collection('games').doc(gameId);
+    final gameRef = _firestore.collection('ludogames').doc(gameId);
 
     await _firestore.runTransaction((transaction) async {
       final gameDoc = await transaction.get(gameRef);
@@ -93,7 +93,7 @@ class FirebaseEventProvider extends GameEventProvider {
 
   @override
   Future<void> onQuitRequested(PlayerSlot slot) async {
-    final gameRef = _firestore.collection("games").doc(gameId);
+    final gameRef = _firestore.collection("ludogames").doc(gameId);
 
     await _firestore.runTransaction((transaction) async {
       final gameDoc = await transaction.get(gameRef);

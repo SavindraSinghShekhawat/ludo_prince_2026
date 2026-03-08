@@ -6,16 +6,6 @@ class MatchmakingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  String _generateShortCode() {
-    const chars =
-        'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded O, 0, I, 1 for clarity
-    final random = DateTime.now().microsecondsSinceEpoch;
-    return List.generate(6, (index) {
-      final charIndex = (random >> (index * 5)) % chars.length;
-      return chars[charIndex];
-    }).join();
-  }
-
   Future<void> _ensureAuthenticated() async {
     if (_auth.currentUser == null) {
       await _auth.signInAnonymously().timeout(const Duration(seconds: 10));
@@ -29,22 +19,9 @@ class MatchmakingService {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
 
-    // Generate a unique short code
-    String? gameId;
-    int attempts = 0;
-    while (gameId == null && attempts < 5) {
-      final code = _generateShortCode();
-      final doc = await _firestore.collection('games').doc(code).get();
-      if (!doc.exists) {
-        gameId = code;
-      }
-      attempts++;
-    }
-
-    if (gameId == null)
-      throw Exception("Failed to generate unique lobby code.");
-
-    final gameRef = _firestore.collection('games').doc(gameId);
+    // Use auto-generated Firestore ID
+    final gameRef = _firestore.collection('ludogames').doc();
+    final gameId = gameRef.id;
 
     try {
       await gameRef.set({
@@ -90,7 +67,7 @@ class MatchmakingService {
 
     await _firestore.runTransaction((transaction) async {
       final gameDoc =
-          await transaction.get(_firestore.collection('games').doc(gameId));
+          await transaction.get(_firestore.collection('ludogames').doc(gameId));
       if (!gameDoc.exists) throw Exception("Game not found");
 
       final status = gameDoc.data()?['status'];
@@ -103,7 +80,7 @@ class MatchmakingService {
       if (playerCount >= maxPlayers) throw Exception("Game is full");
 
       final playersSnap = await _firestore
-          .collection('games')
+          .collection('ludogames')
           .doc(gameId)
           .collection('players')
           .get();
@@ -120,13 +97,13 @@ class MatchmakingService {
 
       if (availableSlot == null) throw Exception("No available slots");
 
-      transaction.update(_firestore.collection('games').doc(gameId), {
+      transaction.update(_firestore.collection('ludogames').doc(gameId), {
         'playerCount': FieldValue.increment(1),
       });
 
       transaction.set(
           _firestore
-              .collection('games')
+              .collection('ludogames')
               .doc(gameId)
               .collection('players')
               .doc(availableSlot),
@@ -146,7 +123,7 @@ class MatchmakingService {
   }
 
   Future<void> startGame(String gameId) async {
-    await _firestore.collection('games').doc(gameId).update({
+    await _firestore.collection('ludogames').doc(gameId).update({
       'status': 'playing',
       'turnStartedAt': FieldValue.serverTimestamp(),
     }).timeout(const Duration(seconds: 10), onTimeout: () {
@@ -159,7 +136,7 @@ class MatchmakingService {
 
     // 1. Try to find an existing public game
     final publicGames = await _firestore
-        .collection('games')
+        .collection('ludogames')
         .where('isPrivate', isEqualTo: false)
         .where('status', isEqualTo: 'lobby')
         .where('maxPlayers', isEqualTo: maxPlayers)
@@ -184,12 +161,12 @@ class MatchmakingService {
   }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchGame(String gameId) {
-    return _firestore.collection('games').doc(gameId).snapshots();
+    return _firestore.collection('ludogames').doc(gameId).snapshots();
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchPlayers(String gameId) {
     return _firestore
-        .collection('games')
+        .collection('ludogames')
         .doc(gameId)
         .collection('players')
         .snapshots();

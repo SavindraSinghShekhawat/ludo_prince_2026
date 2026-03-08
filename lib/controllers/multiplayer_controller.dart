@@ -21,7 +21,7 @@ class MultiplayerGameController extends LudoController {
             eventProvider: FirebaseEventProvider(gameId: gameId));
 
   Future<void> initializeFromSnapshot() async {
-    final gameDoc = await _firestore.collection('games').doc(gameId).get();
+    final gameDoc = await _firestore.collection('ludogames').doc(gameId).get();
     final data = gameDoc.data();
     if (data == null) return;
 
@@ -34,7 +34,7 @@ class MultiplayerGameController extends LudoController {
 
     // Fetch missing events
     final eventsQuery = await _firestore
-        .collection('games')
+        .collection('ludogames')
         .doc(gameId)
         .collection('events')
         .where(FieldPath.documentId,
@@ -72,7 +72,7 @@ class MultiplayerGameController extends LudoController {
   }
 
   Future<void> _saveSnapshot() async {
-    await _firestore.collection('games').doc(gameId).update({
+    await _firestore.collection('ludogames').doc(gameId).update({
       'stateSnapshot': {
         'gameState': state.toJson(),
         'lastEventId': _lastAppliedEventId,

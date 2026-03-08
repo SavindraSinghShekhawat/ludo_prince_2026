@@ -204,18 +204,23 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                               const Color(0xFFE5E4E2).withValues(alpha: 0.3)),
                       child: Column(
                         children: [
-                          const Text('INVITE CODE',
+                          const Text('GAME ID',
                               style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
                                   letterSpacing: 1.2)),
                           const SizedBox(height: 8),
                           SelectableText(_activeGameId!,
+                              textAlign: TextAlign.center,
                               style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 32,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 4)),
+                                  letterSpacing: 1)),
+                          const SizedBox(height: 4),
+                          const Text('Sharing coming soon...',
+                              style: TextStyle(
+                                  color: Colors.white24, fontSize: 10)),
                         ],
                       ),
                     ),
@@ -341,7 +346,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   void _redirectToGame() {
     Future.microtask(() async {
       final playersSnap = await FirebaseFirestore.instance
-          .collection('games')
+          .collection('ludogames')
           .doc(_activeGameId)
           .collection('players')
           .get();

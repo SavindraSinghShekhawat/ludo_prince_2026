@@ -7,7 +7,7 @@ export const checkTurnTimeout = onSchedule("every 1 minutes", async (event) => {
   const db = admin.firestore();
   const now = admin.firestore.Timestamp.now();
   
-  const games = await db.collection("games")
+  const games = await db.collection("ludogames")
     .where("status", "==", "playing")
     .get();
 
