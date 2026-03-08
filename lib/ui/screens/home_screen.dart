@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'settings_screen.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
-import '../dialogs/settings_dialog.dart';
 import '../../providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -72,15 +72,28 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 48),
-                      TextButton.icon(
-                        onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const AboutScreen())),
-                        icon: const Icon(Icons.info_outline,
-                            color: Colors.white60),
-                        label: const Text("About & Fairness",
-                            style: TextStyle(color: Colors.white60)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SettingsScreen())),
+                            child: const Text("Settings",
+                                style: TextStyle(color: Colors.white60)),
+                          ),
+                          const Text("|",
+                              style: TextStyle(color: Colors.white24)),
+                          TextButton(
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AboutScreen())),
+                            child: const Text("About & Fairness",
+                                style: TextStyle(color: Colors.white60)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -131,9 +144,9 @@ class HomeScreen extends ConsumerWidget {
           Row(
             children: [
               _buildHeaderIcon(context, Icons.settings, onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => const SettingsDialog(),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
                 );
               }),
               const SizedBox(width: 12),

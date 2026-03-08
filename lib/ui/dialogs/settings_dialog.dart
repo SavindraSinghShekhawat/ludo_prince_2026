@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/audio_provider.dart';
+import '../screens/settings_screen.dart';
 
 class SettingsDialog extends ConsumerWidget {
   const SettingsDialog({super.key});
@@ -11,12 +12,12 @@ class SettingsDialog extends ConsumerWidget {
 
     return Dialog(
       backgroundColor: const Color(0xFF2A2A3D),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        padding: const EdgeInsets.all(24),
-        constraints: const BoxConstraints(maxWidth: 400),
+        padding: const EdgeInsets.all(20),
+        constraints: const BoxConstraints(maxWidth: 320),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Column(
@@ -25,52 +26,45 @@ class SettingsDialog extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.settings,
-                      color: Colors.blueAccent, size: 24),
-                ),
-                const SizedBox(width: 16),
+                const Icon(Icons.settings, color: Colors.blueAccent, size: 20),
+                const SizedBox(width: 12),
                 const Text(
-                  'Settings',
+                  'Quick Settings',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
                   ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon:
+                      const Icon(Icons.close, color: Colors.white24, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            _buildSettingToggle(
+            const SizedBox(height: 20),
+            _buildQuickToggle(
               context,
-              title: "Background Music",
-              subtitle: "Relaxing game tunes",
               icon: audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
               value: audio.isBgmEnabled,
               onChanged: (_) => audio.toggleBGM(),
               accentColor: Colors.purpleAccent,
             ),
-            const SizedBox(height: 16),
-            _buildSettingToggle(
+            const SizedBox(height: 12),
+            _buildQuickToggle(
               context,
-              title: "Sound Effects",
-              subtitle: "Dice roll & move sounds",
               icon: audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
               value: audio.isSfxEnabled,
               onChanged: (_) => audio.toggleSFX(),
               accentColor: Colors.orangeAccent,
             ),
-            const SizedBox(height: 16),
-            _buildSettingToggle(
+            const SizedBox(height: 12),
+            _buildQuickToggle(
               context,
-              title: "Vibration",
-              subtitle: "Haptic feedback on moves",
               icon: audio.isVibrationEnabled
                   ? Icons.vibration
                   : Icons.phonelink_ring,
@@ -78,26 +72,28 @@ class SettingsDialog extends ConsumerWidget {
               onChanged: (_) => audio.toggleVibration(),
               accentColor: Colors.tealAccent,
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.05),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                ),
-                elevation: 0,
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'CLOSE',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2.0,
-                ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("ALL SETTINGS & FEEDBACK",
+                      style:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, size: 14),
+                ],
               ),
             ),
           ],
@@ -106,60 +102,41 @@ class SettingsDialog extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingToggle(
+  Widget _buildQuickToggle(
     BuildContext context, {
-    required String title,
-    required String subtitle,
     required IconData icon,
     required bool value,
     required ValueChanged<bool> onChanged,
     required Color accentColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accentColor, size: 22),
-          ),
-          const SizedBox(width: 16),
+          Icon(icon, color: accentColor.withValues(alpha: 0.7), size: 18),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+            child: Text(
+              icon == Icons.music_note || icon == Icons.music_off
+                  ? "Music"
+                  : (icon == Icons.volume_up || icon == Icons.volume_off
+                      ? "Sounds"
+                      : "Vibration"),
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ),
-          Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeColor: accentColor,
-            activeTrackColor: accentColor.withValues(alpha: 0.3),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeColor: accentColor,
+              activeTrackColor: accentColor.withValues(alpha: 0.3),
+            ),
           ),
         ],
       ),
