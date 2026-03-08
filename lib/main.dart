@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ludo_prince/firebase_options.dart';
@@ -17,6 +18,17 @@ import 'services/presence_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+  );
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

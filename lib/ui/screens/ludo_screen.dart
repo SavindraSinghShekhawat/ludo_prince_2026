@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/controllers/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/models/player.dart';
+import 'package:ludo_prince/ui/widgets/robot_icon.dart';
 import '../../models/game_state.dart';
 import '../../models/token.dart';
 import '../../models/board_path.dart';
@@ -554,8 +555,18 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
           ),
         ],
       ),
-      child: Icon(isBot ? Icons.smart_toy : Icons.person,
-          color: Colors.white, size: 40),
+      child: Center(
+        child: isBot
+            ? const RobotIcon(
+                size: 36,
+                color: Colors.white,
+              )
+            : const Icon(
+                Icons.person,
+                color: Colors.white,
+                size: 40,
+              ),
+      ),
     );
 
     final int winnerRank = state.winners.indexOf(slot) + 1;

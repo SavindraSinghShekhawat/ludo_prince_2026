@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/ui/widgets/robot_icon.dart';
 import '../../controllers/ludo_controller.dart';
 import 'package:ludo_prince/models/player.dart';
 import 'package:ludo_prince/models/token.dart';
@@ -206,11 +207,12 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                       BorderSide(color: displayColor, width: 2),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                prefixIcon: Icon(
-                                    (_isBotConfig[slot] ?? false)
-                                        ? Icons.smart_toy
-                                        : Icons.person,
-                                    color: displayColor),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: (_isBotConfig[slot] ?? false)
+                                      ? RobotIcon(size: 22, color: displayColor)
+                                      : Icon(Icons.person, color: displayColor),
+                                ),
                                 filled: true,
                                 fillColor: const Color(0xFF2A2A3D),
                               ),
