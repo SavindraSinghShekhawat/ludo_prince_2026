@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
+import 'online_setup_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -41,6 +42,25 @@ class HomeScreen extends ConsumerWidget {
                   title: 'Local Multiplayer',
                   icon: Icons.people,
                   colors: [Colors.greenAccent.shade700, Colors.blueAccent],
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const LocalSetupScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildMenuButton(
+                  context,
+                  title: 'Online Multiplayer',
+                  icon: Icons.public,
+                  colors: [Colors.orangeAccent, Colors.redAccent],
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const OnlineSetupScreen()),
+                    );
+                  },
                 ),
                 const SizedBox(height: 40),
                 TextButton.icon(
@@ -69,13 +89,10 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildMenuButton(BuildContext context,
       {required String title,
       required IconData icon,
-      required List<Color> colors}) {
+      required List<Color> colors,
+      required VoidCallback onTap}) {
     return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const LocalSetupScreen()),
-        );
-      },
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         width: 300,

@@ -74,6 +74,7 @@ class LudoController implements GameController {
   LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
       {this.initialState = InitialGameState.normal,
       this.localPlayerSlot,
+      String? gameId, // Added for online support
       GameEventProvider? eventProvider})
       : _state = GameState(
             gameId: "",
@@ -81,7 +82,7 @@ class LudoController implements GameController {
             turnOrder: [],
             currentTurn: PlayerSlot.slot1),
         _eventProvider = eventProvider ?? LocalEventProvider() {
-    _state = _createInitialState(config, initialState);
+    _state = _createInitialState(config, initialState, gameId: gameId);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
 
@@ -255,8 +256,9 @@ class LudoController implements GameController {
     await _streamController.close();
   }
 
-  GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config,
-      InitialGameState initialState) {
+  GameState _createInitialState(
+      Map<PlayerSlot, PlayerSetupConfig> config, InitialGameState initialState,
+      {String? gameId}) {
     List<Player> players = config.entries.map((e) {
       List<Token> tokens = List.generate(4, (i) => Token(id: i, slot: e.key));
 
@@ -271,7 +273,7 @@ class LudoController implements GameController {
     }).toList();
 
     return GameState(
-      gameId: "local_${DateTime.now().millisecondsSinceEpoch}",
+      gameId: gameId ?? "local_${DateTime.now().millisecondsSinceEpoch}",
       players: players,
       turnOrder: config.keys.toList(),
       currentTurn: config.keys.first,

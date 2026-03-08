@@ -10,8 +10,12 @@ enum GameAction {
   skip,
 }
 
+enum GameStatus { waiting, playing, finished }
+
 class GameState {
   final String gameId;
+  final String? hostId;
+  final GameStatus status;
   final List<Player> players;
   final List<PlayerSlot> turnOrder;
   final PlayerSlot currentTurn;
@@ -30,6 +34,8 @@ class GameState {
 
   GameState({
     required this.gameId,
+    this.hostId,
+    this.status = GameStatus.waiting,
     required this.players,
     required this.turnOrder,
     required this.currentTurn,
@@ -44,6 +50,8 @@ class GameState {
 
   GameState copyWith({
     String? gameId,
+    String? hostId,
+    GameStatus? status,
     List<Player>? players,
     List<PlayerSlot>? turnOrder,
     PlayerSlot? currentTurn,
@@ -57,6 +65,8 @@ class GameState {
   }) {
     return GameState(
       gameId: gameId ?? this.gameId,
+      hostId: hostId ?? this.hostId,
+      status: status ?? this.status,
       players: players ?? this.players,
       turnOrder: turnOrder ?? this.turnOrder,
       currentTurn: currentTurn ?? this.currentTurn,
@@ -72,6 +82,8 @@ class GameState {
 
   Map<String, dynamic> toJson() => {
         "gameId": gameId,
+        "hostId": hostId,
+        "status": status.name,
         "players": players.map((p) => p.toJson()).toList(),
         "turnOrder": turnOrder.map((e) => e.name).toList(),
         "currentTurn": currentTurn.name,
@@ -87,6 +99,11 @@ class GameState {
   factory GameState.fromJson(Map<String, dynamic> json) {
     return GameState(
       gameId: json["gameId"],
+      hostId: json["hostId"],
+      status: GameStatus.values.firstWhere(
+        (e) => e.name == (json["status"] ?? "waiting"),
+        orElse: () => GameStatus.waiting,
+      ),
       players:
           (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
       turnOrder: (json["turnOrder"] as List)
