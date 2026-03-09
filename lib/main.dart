@@ -16,6 +16,18 @@ import 'ui/screens/home_screen.dart';
 import 'services/audio_service.dart';
 import 'services/presence_service.dart';
 
+Future<void> setupFirebaseEmulators() async {
+  const host = '127.0.0.1';
+
+  FirebaseAuth.instance.useAuthEmulator(host, 9099);
+  FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+  FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL: 'http://$host:9000?ns=ludo-prince-cf74a-default-rtdb',
+  );
+  FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -35,23 +47,7 @@ void main() async {
   );
 
   if (!kReleaseMode) {
-    const host = '127.0.0.1';
-
-    FirebaseAuth.instance.useAuthEmulator(host, 9099);
-
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: false,
-    );
-
-    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
-
-    FirebaseDatabase.instance.useDatabaseEmulator(host, 9000);
-
-    FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
-
-    if (FirebaseAuth.instance.currentUser != null) {
-      await FirebaseAuth.instance.signOut();
-    }
+    await setupFirebaseEmulators();
   }
 
   await FlameAudio.audioCache.loadAll([
