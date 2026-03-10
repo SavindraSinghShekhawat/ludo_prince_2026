@@ -68,7 +68,7 @@ class LudoController implements GameController {
   final InitialGameState initialState;
   late final AudioControllerListener _audioListener;
   late final MoveExecutor _executor;
-  final GameEventProvider _eventProvider;
+  final GameEventProvider eventProvider;
 
   @override
   final PlayerSlot? localPlayerSlot;
@@ -82,7 +82,7 @@ class LudoController implements GameController {
             players: [],
             turnOrder: [],
             currentTurn: PlayerSlot.slot1),
-        _eventProvider = eventProvider ?? LocalEventProvider() {
+        eventProvider = eventProvider ?? LocalEventProvider() {
     _state = _createInitialState(config, initialState);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
@@ -98,14 +98,14 @@ class LudoController implements GameController {
       isDisposed: () => _isDisposed,
     );
 
-    _eventProvider.events.listen(handleGameEvent);
+    this.eventProvider.events.listen(handleGameEvent);
     Future.microtask(_checkBotTurn);
   }
 
   bool get isMyTurn =>
       localPlayerSlot == null || state.currentTurn == localPlayerSlot;
 
-  void handleGameEvent(GameEvent event) async {
+  Future<void> handleGameEvent(GameEvent event) async {
     if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
       return;
     }
@@ -166,13 +166,13 @@ class LudoController implements GameController {
   @override
   Future<void> sendRollIntent() async {
     if (!isMyTurn || _state.isDiceRolled || _isActionInProgress) return;
-    _eventProvider.onRollRequested();
+    eventProvider.onRollRequested();
   }
 
   @override
   Future<void> sendMoveIntent(Token token) async {
     if (!isMyTurn || !_state.isDiceRolled || _isActionInProgress) return;
-    _eventProvider.onMoveRequested(token.id);
+    eventProvider.onMoveRequested(token.id);
   }
 
   @override
@@ -245,7 +245,7 @@ class LudoController implements GameController {
   @override
   void quitGame() {
     if (localPlayerSlot != null) {
-      _eventProvider.onQuitRequested(localPlayerSlot!);
+      eventProvider.onQuitRequested(localPlayerSlot!);
     }
   }
 
@@ -266,7 +266,7 @@ class LudoController implements GameController {
   Future<void> dispose() async {
     _isDisposed = true;
     _audioListener.stop();
-    _eventProvider.dispose();
+    eventProvider.dispose();
     await _streamController.close();
   }
 

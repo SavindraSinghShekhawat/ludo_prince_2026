@@ -1,32 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ludo_prince/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/screens/home_screen.dart';
 import 'services/audio_service.dart';
 import 'services/presence_service.dart';
-
-Future<void> setupFirebaseEmulators() async {
-  const host = '127.0.0.1';
-
-  FirebaseAuth.instance.useAuthEmulator(host, 9099);
-  FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
-  FirebaseDatabase.instanceFor(
-    app: Firebase.app(),
-    databaseURL: 'http://$host:9000?ns=ludo-prince-cf74a-default-rtdb',
-  );
-  FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
-}
+import 'services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,13 +25,7 @@ void main() async {
     ),
   );
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  if (!kReleaseMode) {
-    await setupFirebaseEmulators();
-  }
+  await firebaseService.initialize();
 
   await FlameAudio.audioCache.loadAll([
     'roll.wav',
@@ -71,11 +48,6 @@ void main() async {
   final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
   audioService.playBGM(); // Start background music on app launch
-
-  // Initial sign in if needed
-  if (FirebaseAuth.instance.currentUser == null) {
-    await FirebaseAuth.instance.signInAnonymously();
-  }
 
   presenceService.setPresence();
   runApp(

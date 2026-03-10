@@ -1,17 +1,17 @@
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_service.dart';
 
 class PresenceService {
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseService _firebaseService = FirebaseService();
 
   void setPresence() {
-    final user = _auth.currentUser;
+    final user = _firebaseService.auth.currentUser;
     if (user == null) return;
 
-    final presenceRef = _database.ref("presence/${user.uid}");
+    final presenceRef = _firebaseService.database.ref("presence/${user.uid}");
 
-    _database.ref(".info/connected").onValue.listen((event) {
+    final connectedRef = _firebaseService.database.ref(".info/connected");
+    connectedRef.onValue.listen((event) {
       if (event.snapshot.value == true) {
         presenceRef.onDisconnect().set({
           "online": false,
@@ -27,7 +27,10 @@ class PresenceService {
   }
 
   Stream<bool> isUserOnline(String uid) {
-    return _database.ref("presence/$uid/online").onValue.map((event) {
+    return _firebaseService.database
+        .ref("presence/$uid/online")
+        .onValue
+        .map((event) {
       return event.snapshot.value as bool? ?? false;
     });
   }

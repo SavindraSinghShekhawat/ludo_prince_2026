@@ -77,6 +77,7 @@ sealed class GameEvent {
       return MoveEvent(
         json['tokenId'] as int,
         timestamp: timestamp,
+        autoMove: json['autoMove'] as bool? ?? false,
       );
     } else if (type == 'quit') {
       return QuitEvent(
@@ -103,7 +104,8 @@ class RollEvent extends GameEvent {
 
 class MoveEvent extends GameEvent {
   final int tokenId;
-  MoveEvent(this.tokenId, {required int timestamp})
+  final bool autoMove;
+  MoveEvent(this.tokenId, {required int timestamp, this.autoMove = false})
       : super(timestamp: timestamp);
 
   @override
@@ -111,6 +113,7 @@ class MoveEvent extends GameEvent {
         'type': 'move',
         'tokenId': tokenId,
         'timestamp': timestamp,
+        'autoMove': autoMove,
       };
 }
 

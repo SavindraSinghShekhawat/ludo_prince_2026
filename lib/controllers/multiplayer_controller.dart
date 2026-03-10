@@ -1,15 +1,17 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../models/game_state.dart';
 import '../models/token.dart';
 import '../engine/game_engine.dart';
+import '../engine/bot_ai.dart';
+import '../services/firebase_service.dart';
 import 'ludo_controller.dart';
 import 'src/firebase_event_provider.dart';
 import 'src/game_event_provider.dart';
 
 class MultiplayerGameController extends LudoController {
   final String gameId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseDatabase _db = firebaseService.database;
   int _lastAppliedEventId = 0;
 
   MultiplayerGameController(
@@ -24,32 +26,48 @@ class MultiplayerGameController extends LudoController {
   }
 
   Future<void> initializeFromSnapshot() async {
-    final gameDoc = await _firestore.collection('ludogames').doc(gameId).get();
-    final data = gameDoc.data();
-    if (data == null) return;
+    final gameEvent = await _db.ref().child('ludogames').child(gameId).once();
+    if (!gameEvent.snapshot.exists) return;
+
+    final data = Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
 
     final snapshot = data['stateSnapshot'];
     if (snapshot != null) {
-      final gameStateJson = snapshot['gameState'] as Map<String, dynamic>;
+      final gameStateJson = Map<String, dynamic>.from(snapshot['gameState']);
       _lastAppliedEventId = snapshot['lastEventId'] as int;
       state =
           GameState.fromJson(gameStateJson).copyWith(gameType: GameType.online);
     }
 
     // Fetch missing events
-    final eventsQuery = await _firestore
-        .collection('ludogames')
-        .doc(gameId)
-        .collection('events')
-        .where(FieldPath.documentId,
-            isGreaterThan: _lastAppliedEventId.toString().padLeft(5, '0'))
-        .orderBy(FieldPath.documentId)
-        .get();
+    final lastIdPad = _lastAppliedEventId.toString().padLeft(5, '0');
+    final eventsQuery = await _db
+        .ref()
+        .child('ludogames')
+        .child(gameId)
+        .child('events')
+        .orderByKey()
+        .startAt(lastIdPad)
+        .once();
 
-    for (var doc in eventsQuery.docs) {
-      final event = GameEvent.fromJson(doc.data());
-      await _applyEventLocally(event);
-      _lastAppliedEventId = int.parse(doc.id);
+    if (eventsQuery.snapshot.exists) {
+      final eventsData =
+          Map<dynamic, dynamic>.from(eventsQuery.snapshot.value as Map);
+      final sortedKeys = eventsData.keys.cast<String>().toList()..sort();
+
+      for (var key in sortedKeys) {
+        if (key == lastIdPad && _lastAppliedEventId != 0) continue;
+
+        final eventMap = Map<String, dynamic>.from(eventsData[key]);
+        final event = GameEvent.fromJson(eventMap);
+        await _applyEventLocally(event);
+        _lastAppliedEventId = int.parse(key);
+      }
+    }
+
+    // Now start listening for new events
+    if (eventProvider is FirebaseEventProvider) {
+      (eventProvider as FirebaseEventProvider).startListening(lastIdPad);
     }
 
     if (!isDisposed) streamController.add(state);
@@ -59,7 +77,16 @@ class MultiplayerGameController extends LudoController {
     if (event is RollEvent) {
       await executeRoll(event.diceValue);
     } else if (event is MoveEvent) {
-      await executeMove(event.tokenId);
+      if (event.autoMove) {
+        final currentPlayer =
+            state.players.firstWhere((p) => p.slot == state.currentTurn);
+        final bestToken = BotAI.getBestMove(currentPlayer, state);
+        if (bestToken != null) {
+          await executeMove(bestToken.id);
+        }
+      } else {
+        await executeMove(event.tokenId);
+      }
     } else if (event is QuitEvent) {
       final engine = GameEngine();
       final result = engine.quitPlayer(state, event.playerSlot);
@@ -76,7 +103,7 @@ class MultiplayerGameController extends LudoController {
   }
 
   Future<void> _saveSnapshot() async {
-    await _firestore.collection('ludogames').doc(gameId).update({
+    await _db.ref().child('ludogames').child(gameId).update({
       'stateSnapshot': {
         'gameState': state.toJson(),
         'lastEventId': _lastAppliedEventId,
@@ -85,13 +112,32 @@ class MultiplayerGameController extends LudoController {
   }
 
   @override
-  void handleGameEvent(GameEvent event) {
+  Future<void> handleGameEvent(GameEvent event) async {
     if (event is RollEvent) {
       _lastAppliedEventId++;
     } else if (event is MoveEvent) {
       _lastAppliedEventId++;
     }
-    super.handleGameEvent(event);
+    final oldTurn = state.currentTurn;
+    await super.handleGameEvent(event);
+    final newTurn = state.currentTurn;
+
+    bool shouldRestartTimer =
+        oldTurn != newTurn || event is RollEvent || event is MoveEvent;
+
+    // Push new turn to Firebase so Cloud Function timer restarts
+    if (shouldRestartTimer && !state.isGameOver) {
+      final updates = <String, dynamic>{
+        'currentTurn': newTurn.name,
+        'turnStartedAt': ServerValue.timestamp,
+      };
+      if (oldTurn != newTurn) {
+        updates['turnNumber'] =
+            ServerValue.increment(1); // Keep sync with server
+      }
+      _db.ref().child('ludogames').child(gameId).update(updates);
+    }
+
     _checkSnapshotRequirement();
   }
 }

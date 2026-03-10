@@ -1,34 +1,35 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../ludo_controller.dart';
 import 'game_event_provider.dart';
+import '../../services/firebase_service.dart';
 import '../../models/token.dart';
 
 class FirebaseEventProvider extends GameEventProvider {
   final String gameId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseDatabase _db = firebaseService.database;
   final _controller = StreamController<GameEvent>.broadcast();
   StreamSubscription? _subscription;
 
-  FirebaseEventProvider({required this.gameId}) {
-    _subscribeToEvents();
-  }
+  FirebaseEventProvider({required this.gameId});
 
-  void _subscribeToEvents() {
-    _subscription = _firestore
-        .collection('ludogames')
-        .doc(gameId)
-        .collection('events')
-        .orderBy('timestamp', descending: false)
-        .snapshots()
-        .listen((snapshot) {
-      for (var change in snapshot.docChanges) {
-        if (change.type == DocumentChangeType.added) {
-          final data = change.doc.data();
-          if (data != null) {
-            _controller.add(GameEvent.fromJson(data));
-          }
-        }
+  void startListening(String startAfterId) {
+    if (_subscription != null) return;
+
+    final eventsRef =
+        _db.ref().child('ludogames').child(gameId).child('events');
+
+    _subscription = eventsRef
+        .orderByKey()
+        .startAt(startAfterId)
+        .onChildAdded
+        .listen((event) {
+      if (event.snapshot.exists) {
+        if (event.snapshot.key == startAfterId)
+          return; // skip the one we started after
+
+        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        _controller.add(GameEvent.fromJson(data));
       }
     });
   }
@@ -39,80 +40,91 @@ class FirebaseEventProvider extends GameEventProvider {
   @override
   Future<void> onRollRequested() async {
     final diceValue = LudoController.generateDiceValue();
-    final gameRef = _firestore.collection('ludogames').doc(gameId);
+    final gameRef = _db.ref().child('ludogames').child(gameId);
 
-    await _firestore.runTransaction((transaction) async {
-      final gameDoc = await transaction.get(gameRef);
-      final eventCounter = (gameDoc.data()?['eventCounter'] as int? ?? 0) + 1;
-      final currentTurn = gameDoc.data()?['currentTurn'] as String;
-      final turnNumber = gameDoc.data()?['turnNumber'] as int;
+    await gameRef.runTransaction((Object? gameData) {
+      if (gameData == null) return Transaction.success(gameData);
+
+      Map<String, dynamic> game = Map<String, dynamic>.from(gameData as Map);
+      final eventCounter = (game['eventCounter'] as int? ?? 0) + 1;
+      final currentTurn = game['currentTurn'] as String;
+      final turnNumber = game['turnNumber'] as int;
 
       final eventId = eventCounter.toString().padLeft(5, '0');
-      final eventRef = gameRef.collection('events').doc(eventId);
 
-      transaction.set(eventRef, {
+      if (game['events'] == null) {
+        game['events'] = <String, dynamic>{};
+      }
+      game['events'][eventId] = {
         'type': 'roll',
         'playerSlot': currentTurn,
         'turnNumber': turnNumber,
         'diceValue': diceValue,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+        'timestamp': ServerValue.timestamp,
+      };
 
-      transaction.update(gameRef, {
-        'eventCounter': eventCounter,
-      });
+      game['eventCounter'] = eventCounter;
+      // We aren't doing turn progression in the transaction, only event logging!
+      // Actually turn progression happens in handleGameEvent locally.
+      return Transaction.success(game);
     });
   }
 
   @override
   Future<void> onMoveRequested(int tokenId) async {
-    final gameRef = _firestore.collection('ludogames').doc(gameId);
+    final gameRef = _db.ref().child('ludogames').child(gameId);
 
-    await _firestore.runTransaction((transaction) async {
-      final gameDoc = await transaction.get(gameRef);
-      final eventCounter = (gameDoc.data()?['eventCounter'] as int? ?? 0) + 1;
-      final currentTurn = gameDoc.data()?['currentTurn'] as String;
-      final turnNumber = gameDoc.data()?['turnNumber'] as int;
+    await gameRef.runTransaction((Object? gameData) {
+      if (gameData == null) return Transaction.success(gameData);
+
+      Map<String, dynamic> game = Map<String, dynamic>.from(gameData as Map);
+      final eventCounter = (game['eventCounter'] as int? ?? 0) + 1;
+      final currentTurn = game['currentTurn'] as String;
+      final turnNumber = game['turnNumber'] as int;
 
       final eventId = eventCounter.toString().padLeft(5, '0');
-      final eventRef = gameRef.collection('events').doc(eventId);
 
-      transaction.set(eventRef, {
+      if (game['events'] == null) {
+        game['events'] = <String, dynamic>{};
+      }
+      game['events'][eventId] = {
         'type': 'move',
         'playerSlot': currentTurn,
         'turnNumber': turnNumber,
         'tokenId': tokenId,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+        'timestamp': ServerValue.timestamp,
+      };
 
-      transaction.update(gameRef, {
-        'eventCounter': eventCounter,
-      });
+      game['eventCounter'] = eventCounter;
+      return Transaction.success(game);
     });
   }
 
   @override
   Future<void> onQuitRequested(PlayerSlot slot) async {
-    final gameRef = _firestore.collection("ludogames").doc(gameId);
+    final gameRef = _db.ref().child('ludogames').child(gameId);
 
-    await _firestore.runTransaction((transaction) async {
-      final gameDoc = await transaction.get(gameRef);
-      final eventCounter = (gameDoc.data()?["eventCounter"] as int? ?? 0) + 1;
-      final turnNumber = gameDoc.data()?["turnNumber"] as int;
+    await gameRef.runTransaction((Object? gameData) {
+      if (gameData == null) return Transaction.success(gameData);
 
-      final eventId = eventCounter.toString().padLeft(5, "0");
-      final eventRef = gameRef.collection("events").doc(eventId);
+      Map<String, dynamic> game = Map<String, dynamic>.from(gameData as Map);
+      final eventCounter = (game['eventCounter'] as int? ?? 0) + 1;
+      final turnNumber = game['turnNumber'] as int;
 
-      transaction.set(eventRef, {
-        "type": "quit",
-        "playerSlot": slot.name,
-        "turnNumber": turnNumber,
-        "timestamp": FieldValue.serverTimestamp(),
-      });
+      final eventId = eventCounter.toString().padLeft(5, '0');
 
-      transaction.update(gameRef, {
-        "eventCounter": eventCounter,
-      });
+      if (game['events'] == null) {
+        game['events'] = <String, dynamic>{};
+      }
+      game['events'][eventId] = {
+        'type': 'quit',
+        'playerSlot': slot.name,
+        'turnNumber': turnNumber,
+        'timestamp': ServerValue.timestamp,
+      };
+
+      game['eventCounter'] = eventCounter;
+      return Transaction.success(game);
     });
   }
 

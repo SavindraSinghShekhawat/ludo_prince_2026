@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
+import '../../services/firebase_service.dart';
 import '../../services/matchmaking_service.dart';
 import '../../services/audio_service.dart';
 import '../../models/game_state.dart';
@@ -62,13 +62,19 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     _timeoutTimer = Timer(const Duration(seconds: 60), () async {
       if (mounted && _activeGameId != null) {
         // Only host deletes the lobby
-        final gameDoc = await FirebaseFirestore.instance
-            .collection('ludogames')
-            .doc(_activeGameId)
-            .get();
-        final currentUid = FirebaseAuth.instance.currentUser?.uid;
-        if (gameDoc.exists && gameDoc.data()?['hostUid'] == currentUid) {
-          await matchmakingService.deleteLobby(_activeGameId!);
+        final gameEvent = await firebaseService.database
+            .ref()
+            .child('ludogames')
+            .child(_activeGameId!)
+            .once();
+
+        if (gameEvent.snapshot.exists) {
+          final gameData =
+              Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
+          final currentUid = firebaseService.auth.currentUser?.uid;
+          if (gameData['hostUid'] == currentUid) {
+            await matchmakingService.deleteLobby(_activeGameId!);
+          }
         }
 
         if (mounted) {
@@ -183,18 +189,21 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Widget _buildLobbyView() {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+    return StreamBuilder<DatabaseEvent>(
       stream: matchmakingService.watchGame(_activeGameId!),
       builder: (context, gameSnapshot) {
-        if (!gameSnapshot.hasData)
-          return const Center(child: CircularProgressIndicator());
-        if (!gameSnapshot.data!.exists) {
+        if (!gameSnapshot.hasData ||
+            gameSnapshot.data?.snapshot.value == null) {
+          if (gameSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return const Center(
               child: Text("Game not found",
                   style: TextStyle(color: Colors.white)));
         }
 
-        final gameData = gameSnapshot.data!.data()!;
+        final gameData =
+            Map<String, dynamic>.from(gameSnapshot.data!.snapshot.value as Map);
         final status = gameData['status'];
 
         if (status == 'playing') {
@@ -206,15 +215,20 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                   style: TextStyle(color: Colors.white)));
         }
 
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        return StreamBuilder<DatabaseEvent>(
           stream: matchmakingService.watchPlayers(_activeGameId!),
           builder: (context, playersSnapshot) {
-            if (!playersSnapshot.hasData)
+            if (!playersSnapshot.hasData ||
+                playersSnapshot.data?.snapshot.value == null) {
               return const Center(child: CircularProgressIndicator());
+            }
 
-            final players = playersSnapshot.data!.docs;
+            final playersMap = Map<String, dynamic>.from(
+                playersSnapshot.data!.snapshot.value as Map);
+            final players = playersMap.entries.toList();
+
             final isPrivate = gameData['isPrivate'] ?? true;
-            final currentUid = FirebaseAuth.instance.currentUser?.uid;
+            final currentUid = firebaseService.auth.currentUser?.uid;
             final hostUid = gameData['hostUid'];
             final isActuallyHost = currentUid == hostUid;
             final maxRequired = gameData['maxPlayers'] ?? _maxPlayers;
@@ -310,9 +324,14 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                         final slots =
                             PlayerSlotExtension.getSlotsFor(maxRequired);
                         final slotEnum = slots[index];
-                        final slot = slotEnum.name;
-                        final playerDoc =
-                            players.where((d) => d.id == slot).firstOrNull;
+                        final slotStr = slotEnum.name;
+                        final playerEntry =
+                            players.where((d) => d.key == slotStr).firstOrNull;
+
+                        final playerData = playerEntry != null
+                            ? Map<String, dynamic>.from(
+                                playerEntry.value as Map)
+                            : null;
 
                         return Container(
                           padding: const EdgeInsets.symmetric(
@@ -321,7 +340,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                             color: const Color(0xFF2A2A3D),
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
-                                color: playerDoc != null
+                                color: playerData != null
                                     ? _getSlotColor(slotEnum.index)
                                         .withValues(alpha: 0.5)
                                     : Colors.white12),
@@ -329,27 +348,28 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                           child: Row(
                             children: [
                               Icon(
-                                  playerDoc != null
+                                  playerData != null
                                       ? Icons.person
                                       : Icons.person_outline,
-                                  color: playerDoc != null
+                                  color: playerData != null
                                       ? _getSlotColor(slotEnum.index)
                                       : Colors.white24),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Text(
-                                  playerDoc != null
-                                      ? playerDoc.data()['name']
+                                  playerData != null
+                                      ? playerData['name']
                                       : 'Searching...',
                                   style: TextStyle(
-                                      color: playerDoc != null
+                                      color: playerData != null
                                           ? Colors.white
                                           : Colors.white24,
                                       fontWeight: FontWeight.bold),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (playerDoc != null && playerDoc.id == 'slot1')
+                              if (playerData != null &&
+                                  playerEntry!.key == 'slot1')
                                 const Icon(Icons.star,
                                     color: Colors.amber, size: 16),
                             ],
@@ -392,23 +412,30 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   void _redirectToGame() {
     Future.microtask(() async {
-      final playersSnap = await FirebaseFirestore.instance
-          .collection('ludogames')
-          .doc(_activeGameId)
-          .collection('players')
-          .get();
-      final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+      final playersEvent = await firebaseService.database
+          .ref()
+          .child('ludogames')
+          .child(_activeGameId!)
+          .child('players')
+          .once();
+
+      final currentUserUid = firebaseService.auth.currentUser!.uid;
 
       PlayerSlot localSlot = PlayerSlot.slot1;
       Map<PlayerSlot, PlayerSetupConfig> config = {};
 
-      for (var doc in playersSnap.docs) {
-        final slotStr = doc.id;
-        final slot = PlayerSlot.values.firstWhere((e) => e.name == slotStr);
-        final data = doc.data();
-        if (data['uid'] == currentUserUid) localSlot = slot;
-        config[slot] =
-            PlayerSetupConfig(name: data['name'], type: PlayerType.remoteHuman);
+      if (playersEvent.snapshot.exists) {
+        final playersData =
+            Map<String, dynamic>.from(playersEvent.snapshot.value as Map);
+        for (var entry in playersData.entries) {
+          final slotStr = entry.key;
+          final slot = PlayerSlot.values.firstWhere((e) => e.name == slotStr);
+          final data = Map<String, dynamic>.from(entry.value as Map);
+          if (data['uid'] == currentUserUid) localSlot = slot;
+          // All remote players and bots are treated as remoteHuman by local UI, server handles bot turns
+          config[slot] = PlayerSetupConfig(
+              name: data['name'], type: PlayerType.remoteHuman);
+        }
       }
 
       final controller = MultiplayerGameController(config,
