@@ -45,7 +45,15 @@ class FirebaseService {
     }
 
     // Initial sign in if needed
-    if (auth.currentUser == null) {
+    try {
+      if (auth.currentUser == null) {
+        await auth.signInAnonymously();
+      } else {
+        await auth.currentUser!.reload();
+      }
+    } catch (e) {
+      // If reload fails (e.g., emulator data cleared), sign in again
+      await auth.signOut();
       await auth.signInAnonymously();
     }
 
