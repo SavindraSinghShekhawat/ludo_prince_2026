@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:ludo_prince/services/network_service.dart';
 import '../../services/firebase_service.dart';
 import '../../services/matchmaking_service.dart';
 import '../../services/audio_service.dart';
@@ -400,6 +401,22 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     setState(() {
       _isLoading = true;
     });
+
+    final online = await NetworkService.hasInternet();
+
+    if (!online) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text("No internet connection. Please connect to play online."),
+          ),
+        );
+      }
+      setState(() => _isLoading = false);
+      return;
+    }
+
     try {
       final gameId = await matchmakingService.joinQueue(_maxPlayers, _gameMode);
       if (mounted) setState(() => _activeGameId = gameId);

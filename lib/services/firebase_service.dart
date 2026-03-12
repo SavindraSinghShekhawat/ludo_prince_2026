@@ -29,6 +29,10 @@ class FirebaseService {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    // Enable offline persistence
+    FirebaseDatabase.instance.setPersistenceEnabled(true);
+    FirebaseDatabase.instance.setPersistenceCacheSizeBytes(10000000);
+
     auth = FirebaseAuth.instance;
     firestore = FirebaseFirestore.instance;
     functions = FirebaseFunctions.instance;
