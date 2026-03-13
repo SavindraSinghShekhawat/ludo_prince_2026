@@ -82,5 +82,19 @@ void main() {
       expect(result.state.message.contains("extra turn"), true);
       expect(result.events.contains(EngineEvent.extraTurn), true);
     });
+
+    test("Extra turn stacking (6 + capture)", () {
+      // Blue rolls 6, moves to a spot and captures Red
+      var state = stateWithTokenAt(PlayerSlot.slot1, 0, TokenState.board, 0);
+      state = state.copyWith(diceValue: 6, isDiceRolled: true);
+
+      // We simulate the capture flag being passed to moveToken
+      // (The engine calls moveToken(state, tokenId, captured: true))
+      final result = engine.moveToken(state, 0, captured: true);
+
+      expect(result.state.currentTurn, PlayerSlot.slot1);
+      expect(result.events.contains(EngineEvent.extraTurn), true);
+      // We just want to ensure it doesn't break or double skip
+    });
   });
 }

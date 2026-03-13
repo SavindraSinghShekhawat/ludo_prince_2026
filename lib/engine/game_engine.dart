@@ -93,10 +93,18 @@ class GameEngine {
 
     bool hasWon = _checkWinner(newState, player.slot);
     if (hasWon && !newState.winners.contains(player.slot)) {
-      var newWinners = [...newState.winners, player.slot];
+      var newWinners = [...newState.winners];
       if (newState.gameMode == GameMode.team) {
-        // Team mode: both must finish. Handled by _checkWinner.
-      } else if (newWinners.length == newState.players.length - 1) {
+        // Add both teammates
+        PlayerSlot teammate = _getTeammate(player.slot);
+        if (!newWinners.contains(player.slot)) newWinners.add(player.slot);
+        if (!newWinners.contains(teammate)) newWinners.add(teammate);
+      } else {
+        newWinners.add(player.slot);
+      }
+
+      if (newWinners.length == newState.players.length - 1 &&
+          newState.gameMode == GameMode.classic) {
         final lastPlayer =
             newState.players.firstWhere((p) => !newWinners.contains(p.slot));
         newWinners.add(lastPlayer.slot);
@@ -236,9 +244,16 @@ class GameEngine {
     int idx = order.indexOf(state.currentTurn);
     for (int i = 0; i < order.length; i++) {
       idx = (idx + 1) % order.length;
-      if (!state.winners.contains(order[idx])) {
-        break;
-      }
+      PlayerSlot nextSlot = order[idx];
+
+      // Skip if winner
+      if (state.winners.contains(nextSlot)) continue;
+
+      // Skip if finished all tokens (Team mode rule: finished player is skipped)
+      final p = _getPlayer(state, nextSlot);
+      if (p.tokens.every((t) => t.state == TokenState.finished)) continue;
+
+      break;
     }
 
     return EngineResult(
@@ -292,25 +307,33 @@ class GameEngine {
       newState = newState.copyWith(
           winners: newWinners, message: "${winner.name} wins by forfeit!");
     } else if (newState.gameMode == GameMode.team) {
-      // Check if both players in a team have left
-      final activeTeams = activePlayers
-          .map((p) => (p.slot == PlayerSlot.slot1 || p.slot == PlayerSlot.slot3)
-              ? "team1"
-              : "team2")
-          .toSet();
+      // Check if any player's teammate has left OR check if any opponent has left
+      // Actually, per user: "team wins if any of the opponent quits"
 
-      if (activeTeams.length == 1) {
-        final winningTeam = activeTeams.first;
+      bool opponentLeft = newState.players.any((p) =>
+          p.status == PlayerStatus.left && !newState.winners.contains(p.slot));
+
+      if (opponentLeft) {
+        // Find which team remains. For simplicity, find non-left players.
+        // Wait, if ANY opponent left, the OTHER team wins.
+        // Let's identify the quitter's team.
+        final quitter =
+            newState.players.firstWhere((p) => p.status == PlayerStatus.left);
+        final quitterTeam = (quitter.slot == PlayerSlot.slot1 ||
+                quitter.slot == PlayerSlot.slot3)
+            ? "team1"
+            : "team2";
+        final winningTeam = quitterTeam == "team1" ? "team2" : "team1";
+
         final teamSlots = winningTeam == "team1"
             ? [PlayerSlot.slot1, PlayerSlot.slot3]
             : [PlayerSlot.slot2, PlayerSlot.slot4];
 
         final newWinners = [...newState.winners];
-        // Add winning team first
         for (var s in teamSlots) {
           if (!newWinners.contains(s)) newWinners.add(s);
         }
-        // Add losing team/others to trigger isGameOver
+        // Add others to trigger isGameOver
         for (var p in newState.players) {
           if (!newWinners.contains(p.slot)) {
             newWinners.add(p.slot);
@@ -330,13 +353,7 @@ class GameEngine {
   static bool _checkWinner(GameState state, PlayerSlot slot) {
     if (state.gameMode == GameMode.team) {
       // In team mode, both players in the team must finish
-      PlayerSlot teammate = (slot == PlayerSlot.slot1)
-          ? PlayerSlot.slot3
-          : (slot == PlayerSlot.slot3)
-              ? PlayerSlot.slot1
-              : (slot == PlayerSlot.slot2)
-                  ? PlayerSlot.slot4
-                  : PlayerSlot.slot2;
+      PlayerSlot teammate = _getTeammate(slot);
 
       return state.players
               .firstWhere((p) => p.slot == slot)
@@ -351,6 +368,16 @@ class GameEngine {
         .firstWhere((p) => p.slot == slot)
         .tokens
         .every((t) => t.state == TokenState.finished);
+  }
+
+  static PlayerSlot _getTeammate(PlayerSlot slot) {
+    return (slot == PlayerSlot.slot1)
+        ? PlayerSlot.slot3
+        : (slot == PlayerSlot.slot3)
+            ? PlayerSlot.slot1
+            : (slot == PlayerSlot.slot2)
+                ? PlayerSlot.slot4
+                : PlayerSlot.slot2;
   }
 
   Player _getPlayer(GameState state, PlayerSlot slot) {

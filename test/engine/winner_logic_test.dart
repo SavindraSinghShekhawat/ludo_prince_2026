@@ -182,5 +182,25 @@ void main() {
       // Should skip Green (slot 3) and go to Yellow (slot 2)
       expect(result.state.currentTurn, PlayerSlot.slot2);
     });
+
+    test("Extra turn on finishing a token", () {
+      var state =
+          stateWithTokenAt(PlayerSlot.slot1, 0, TokenState.homeStretch, 55);
+      state = state.copyWith(diceValue: 1, isDiceRolled: true);
+
+      // We need to simulate the finish happening.
+      // moveToken doesn't take an isFinished flag, it derives it from the token state.
+      // But applyStep updates the token state.
+
+      final token = state.players[0].tokens[0];
+      final finishedToken = engine.advanceOneStep(token);
+      state = engine.applyStep(state, finishedToken).state;
+
+      final result = engine.moveToken(state, 0);
+
+      expect(result.state.currentTurn, PlayerSlot.slot1,
+          reason: "Should get extra turn");
+      expect(result.events.contains(EngineEvent.extraTurn), true);
+    });
   });
 }

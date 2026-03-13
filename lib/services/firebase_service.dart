@@ -47,7 +47,8 @@ class FirebaseService {
     } else {
       database = FirebaseDatabase.instanceFor(
         app: Firebase.app(),
-        databaseURL: 'https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app?ns=ludo-prince-cf74a-default-rtdb',
+        databaseURL:
+            'https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app?ns=ludo-prince-cf74a-default-rtdb',
       );
     }
 
@@ -76,7 +77,8 @@ class FirebaseService {
       functions.useFunctionsEmulator(host, 5001);
     } catch (e) {
       // Ignored if already connected
-      debugPrint('Firebase Emulator connection error (likely already connected): $e');
+      debugPrint(
+          'Firebase Emulator connection error (likely already connected): $e');
     }
   }
 }
