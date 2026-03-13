@@ -5,6 +5,7 @@ import '../../providers/audio_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/package_info_provider.dart';
 import '../../services/feedback_service.dart';
+import 'dice_randomness_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -113,7 +114,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
               value: audio.isBgmEnabled,
               onChanged: (_) => audio.toggleBGM(),
-              accentColor: Colors.purpleAccent,
+              accentColor: const Color(0xFF00D1FF), // Azure
             ),
             const SizedBox(height: 12),
             _buildSettingToggle(
@@ -122,7 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
               value: audio.isSfxEnabled,
               onChanged: (_) => audio.toggleSFX(),
-              accentColor: Colors.orangeAccent,
+              accentColor: const Color(0xFFFFB800), // Gold
             ),
             const SizedBox(height: 12),
             _buildSettingToggle(
@@ -133,7 +134,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   : Icons.phonelink_ring,
               value: audio.isVibrationEnabled,
               onChanged: (_) => audio.toggleVibration(),
-              accentColor: Colors.tealAccent,
+              accentColor: const Color(0xFF00FFA3), // Emerald
             ),
             const SizedBox(height: 40),
 
@@ -170,25 +171,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ElevatedButton(
                     onPressed: _isFeedbackSubmitting ? null : _submitFeedback,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pinkAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
+                      backgroundColor: Colors.transparent,
                     ),
-                    child: _isFeedbackSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text("SEND TO DEVELOPERS",
-                            style: TextStyle(fontWeight: FontWeight.w900)),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFE5E4E2), // Platinum
+                            Color(0xFFB0B4B8), // Silver
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        alignment: Alignment.center,
+                        child: _isFeedbackSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Color(0xFF1A1A2E)),
+                              )
+                            : const Text(
+                                "SEND TO DEVELOPERS",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(
+                                      0xFF1A1A2E), // Dark text on light button
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Developer/Advanced Section
+            _buildSectionHeader("Advanced"),
+            const SizedBox(height: 16),
+            _buildSettingButton(
+              title: "Dice Fairness Check",
+              subtitle: "Run 100M simulations to verify RNG",
+              icon: Icons.analytics_outlined,
+              accentColor: Colors.blueAccent,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DiceRandomnessScreen()),
               ),
             ),
             const SizedBox(height: 48),
@@ -275,6 +313,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             activeTrackColor: accentColor.withValues(alpha: 0.3),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingButton({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: accentColor, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
+                  Text(subtitle,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white24),
+          ],
+        ),
       ),
     );
   }

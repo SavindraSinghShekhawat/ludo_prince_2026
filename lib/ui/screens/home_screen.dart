@@ -45,20 +45,6 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      /*
-                      _buildMainCard(
-                        context,
-                        title: "PLAY WITH FRIENDS",
-                        subtitle: "Invite & Create Room",
-                        icon: Icons.people,
-                        accentColor: Colors.pinkAccent,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LobbyScreen(isQuickMatch: false)),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      */
                       _buildMainCard(
                         context,
                         title: "LOCAL & BOTS",
