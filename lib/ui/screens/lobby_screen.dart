@@ -142,7 +142,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       alignment: WrapAlignment.center,
                       spacing: 12,
                       runSpacing: 12,
-                      children: [2].map((n) {
+                      children: [2, 3, 4].map((n) {
                         final isSelected = _maxPlayers == n;
                         return ChoiceChip(
                           label: Text('$n Players'),
@@ -165,7 +165,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '4-Player & 2vs2 Team Mode Coming Soon!',
+                      '2vs2 Team Mode Coming Soon!',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.3),
                         fontSize: 11,
