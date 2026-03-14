@@ -4,3 +4,4 @@ admin.initializeApp();
 
 export {handleMoveRequest} from "./handleMoveRequest";
 export {handleRollRequest} from "./handleRollRequest";
+export {handleMatchmaking} from "./handleMatchmaking";

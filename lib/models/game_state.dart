@@ -115,6 +115,8 @@ class GameState {
           .toList(),
       currentTurn:
           PlayerSlot.values.firstWhere((e) => e.name == json["currentTurn"]),
+      gameMode: GameMode.values.firstWhere(
+          (e) => e.name == (json["gameMode"] ?? GameMode.classic.name)),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       isRolling: json["isRolling"] ?? false,

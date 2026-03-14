@@ -308,7 +308,8 @@ class GameEngine {
           winners: newWinners, message: "${winner.name} wins by forfeit!");
     } else if (newState.gameMode == GameMode.team) {
       // Rule: If any player leaves, their team loses and the other team wins.
-      final quitterTeam = (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3) ? "A" : "B";
+      final quitterTeam =
+          (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3) ? "A" : "B";
       final winningTeam = quitterTeam == "A" ? "B" : "A";
 
       final teamASlots = [PlayerSlot.slot1, PlayerSlot.slot3];

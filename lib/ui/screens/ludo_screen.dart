@@ -308,7 +308,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                   },
                   child: Stack(
                     children: [
-                      const BoardWidget(),
+                      BoardWidget(gameMode: gameState.gameMode),
                       ..._buildTokens(gameState, cellSize),
                     ],
                   ),

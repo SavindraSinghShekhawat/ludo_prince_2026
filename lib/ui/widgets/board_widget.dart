@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/token.dart';
+import '../../models/game_state.dart';
 
 class BoardWidget extends StatelessWidget {
-  const BoardWidget({super.key});
+  final GameMode gameMode;
+  const BoardWidget({super.key, this.gameMode = GameMode.classic});
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +98,7 @@ class BoardWidget extends StatelessWidget {
                 ),
               ),
             ),
-            if (teamLabel != null)
+            if (teamLabel != null && gameMode == GameMode.team)
               Positioned(
                 top:
                     (col == 0 && row == 9) || (col == 9 && row == 9) ? 0 : null,

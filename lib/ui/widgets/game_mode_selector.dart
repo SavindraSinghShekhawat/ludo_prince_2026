@@ -28,9 +28,10 @@ class GameModeSelector extends StatelessWidget {
             isEnabled: true,
             infoTitle: 'Classic Mode',
             infoItems: [
-              _InfoItem(
-                  Icons.person, Colors.blueAccent, 'Solo Play', 'Standard Ludo. Every player for themselves.'),
-              _InfoItem(Icons.flag, Colors.greenAccent, 'Winning', 'First to get all tokens home wins!'),
+              _InfoItem(Icons.person, Colors.blueAccent, 'Solo Play',
+                  'Standard Ludo. Every player for themselves.'),
+              _InfoItem(Icons.flag, Colors.greenAccent, 'Winning',
+                  'First to get all tokens home wins!'),
             ],
           ),
         ),
@@ -45,11 +46,16 @@ class GameModeSelector extends StatelessWidget {
             isEnabled: isTeamModeEnabled,
             infoTitle: 'Team Mode (2vs2)',
             infoItems: [
-              _InfoItem(Icons.group, Colors.orangeAccent, 'Partnership', 'Team up with the player opposite to you.'),
-              _InfoItem(Icons.shield, Colors.blueAccent, 'No Capture', "Partners don't capture each other!"),
-              _InfoItem(Icons.hourglass_empty, Colors.redAccent, 'Wait Rule', 'If you finish early, you wait for your partner (no helping with rolls).'),
-              _InfoItem(Icons.exit_to_app, Colors.deepOrangeAccent, 'Abandonment', 'If a teammate leaves, the whole team loses!'),
-              _InfoItem(Icons.stars, Colors.amberAccent, 'Victory', 'Your team wins when both are home.'),
+              _InfoItem(Icons.group, Colors.orangeAccent, 'Partnership',
+                  'Team up with the player opposite to you.'),
+              _InfoItem(Icons.shield, Colors.blueAccent, 'No Capture',
+                  "Partners don't capture each other!"),
+              _InfoItem(Icons.hourglass_empty, Colors.redAccent, 'Wait Rule',
+                  'If you finish early, you wait for your partner (no helping with rolls).'),
+              _InfoItem(Icons.exit_to_app, Colors.deepOrangeAccent,
+                  'Abandonment', 'If a teammate leaves, the whole team loses!'),
+              _InfoItem(Icons.stars, Colors.amberAccent, 'Victory',
+                  'Your team wins when both are home.'),
             ],
           ),
         ),
@@ -104,6 +110,7 @@ class GameModeSelector extends StatelessWidget {
                   : [],
             ),
             child: Stack(
+              alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
                 Column(
@@ -159,7 +166,8 @@ class GameModeSelector extends StatelessWidget {
     );
   }
 
-  void _showInfoDialog(BuildContext context, String title, List<_InfoItem> items, IconData headerIcon) {
+  void _showInfoDialog(BuildContext context, String title,
+      List<_InfoItem> items, IconData headerIcon) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -200,7 +208,8 @@ class GameModeSelector extends StatelessWidget {
                   backgroundColor: const Color(0xFFE5E4E2),
                   foregroundColor: const Color(0xFF1E1E2C),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text(

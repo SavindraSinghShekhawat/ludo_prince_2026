@@ -136,50 +136,65 @@ class MatchmakingService {
     }).timeout(const Duration(seconds: 10));
   }
 
-  Future<String> joinQueue(int maxPlayers, GameMode gameMode) async {
+  String _getModeQueueName(int maxPlayers, GameMode gameMode) {
+    if (gameMode == GameMode.team) {
+      return 'team_2v2';
+    }
+    return 'classic_${maxPlayers}p';
+  }
+
+  Future<Stream<String?>> joinQueue(int maxPlayers, GameMode gameMode) async {
+    await _ensureAuthenticated();
+    final user = _auth.currentUser!;
+    final uid = user.uid;
+    final modeQueue = _getModeQueueName(maxPlayers, gameMode);
+
+    final queueRef = _db
+        .ref()
+        .child('matchmaking')
+        .child(modeQueue)
+        .child('queue')
+        .child(uid);
+    final assignmentRef = _db.ref().child('matchmakingAssignments').child(uid);
+
+    // 1. Clear any old assignment
+    await assignmentRef.remove();
+
+    // 2. Join the queue
+    final playerName = user.displayName ??
+        "Guest #${uid.substring(uid.length > 4 ? uid.length - 4 : 0).toUpperCase()}";
+
+    await queueRef.set({
+      'joinedAt': ServerValue.timestamp,
+      'name': playerName,
+    });
+
+    // 3. Setup disconnect handler to remove from queue if player goes offline
+    await queueRef.onDisconnect().remove();
+
+    // 4. Return a stream that listens for the assignment
+    return assignmentRef.onValue.map((event) {
+      if (event.snapshot.exists) {
+        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        return data['gameId'] as String?;
+      }
+      return null;
+    });
+  }
+
+  Future<void> leaveQueue(int maxPlayers, GameMode gameMode) async {
     await _ensureAuthenticated();
     final uid = _auth.currentUser!.uid;
+    final modeQueue = _getModeQueueName(maxPlayers, gameMode);
 
-    final query = _db
+    await _db
         .ref()
-        .child('ludogames')
-        .orderByChild('status')
-        .equalTo('lobby')
-        .limitToFirst(50);
-
-    final snapshot = await query.get();
-
-    debugPrint("Matchmaking found ${snapshot.children.length} lobbies");
-
-    if (snapshot.exists) {
-      for (final gameSnap in snapshot.children) {
-        final gameId = gameSnap.key!;
-        final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
-
-        if (gameData['isPrivate'] == true) continue;
-        if (gameData['maxPlayers'] != maxPlayers) continue;
-        if (gameData['gameMode'] != gameMode.name) continue;
-        if (gameData['hostUid'] == uid) continue;
-
-        final currentPlayers = gameData['currentPlayers'] ?? 0;
-        final maxPlayersLobby = gameData['maxPlayers'] ?? maxPlayers;
-
-        if (currentPlayers >= maxPlayersLobby) continue;
-
-        try {
-          await joinGame(gameId);
-          return gameId;
-        } catch (e) {
-          debugPrint("Join failed for $gameId: $e");
-
-          // try next lobby
-        }
-      }
-    }
-
-    // No active lobby found or join failed, create a new one
-    return await createGame(
-        maxPlayers: maxPlayers, isPrivate: false, gameMode: gameMode);
+        .child('matchmaking')
+        .child(modeQueue)
+        .child('queue')
+        .child(uid)
+        .remove();
+    await _db.ref().child('matchmakingAssignments').child(uid).remove();
   }
 
   Future<void> updateHostHeartbeat(String gameId) async {

@@ -40,6 +40,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   GameMode _gameMode = GameMode.classic;
   Timer? _heartbeatTimer;
   Timer? _timeoutTimer;
+  StreamSubscription<String?>? _matchmakingSubscription;
 
   @override
   void initState() {
@@ -51,6 +52,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   void dispose() {
     _heartbeatTimer?.cancel();
     _timeoutTimer?.cancel();
+    _matchmakingSubscription?.cancel();
+    // Only leave queue if no game was found yet
+    if (_activeGameId == null) {
+      matchmakingService.leaveQueue(_maxPlayers, _gameMode);
+    }
     super.dispose();
   }
 
@@ -455,11 +461,21 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     }
 
     try {
-      final gameId = await matchmakingService.joinQueue(maxPlayers, gameMode);
-      if (mounted) setState(() => _activeGameId = gameId);
+      final assignmentStream =
+          await matchmakingService.joinQueue(maxPlayers, gameMode);
+      _matchmakingSubscription?.cancel();
+      _matchmakingSubscription = assignmentStream.listen((gameId) {
+        if (gameId != null && mounted) {
+          _matchmakingSubscription?.cancel();
+          setState(() {
+            _activeGameId = gameId;
+            _isLoading = false;
+          });
+          _redirectToGame();
+        }
+      });
     } catch (e) {
       _showError("Matchmaking failed: $e");
-    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }

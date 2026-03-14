@@ -1,22 +1,27 @@
-import {onValueCreated} from "firebase-functions/v2/database";
+import {onValueWritten} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 import {ServerValue} from "firebase-admin/database";
+import {GameDocument} from "./models/GameDocument";
+import {MoveEvent} from "./models/GameEvent";
 
-export const handleMoveRequest = onValueCreated(
+const REGION = "europe-west1";
+
+export const handleMoveRequest = onValueWritten(
   {
     ref: "/ludogames/{gameId}/moveRequests/{uid}",
-    region: "europe-west1",
+    instance: "ludo-prince-cf74a-default-rtdb",
+    region: REGION,
   },
   async (event) => {
+    console.log(`[handleMoveRequest] Triggered for gameId: ${event.params.gameId}, uid: ${event.params.uid}`);
     const gameId = event.params.gameId;
     const uid = event.params.uid;
-    const data = event.data?.val();
-
-    const tokenId = data.tokenId;
+    const data = event.data?.after.val();
+    const tokenId = (data as {tokenId: number}).tokenId;
 
     const gameRef = admin.database().ref(`ludogames/${gameId}`);
     const gameSnap = await gameRef.get();
-    const game = gameSnap.val();
+    const game = gameSnap.val() as GameDocument | null;
 
     if (!game) return;
 
@@ -39,13 +44,15 @@ export const handleMoveRequest = onValueCreated(
     const eventCounter = (game.eventCounter || 0) + 1;
     const eventId = String(eventCounter).padStart(5, "0");
 
-    await gameRef.child("events").child(eventId).set({
+    const moveEvent: MoveEvent = {
       type: "move",
       playerSlot: currentTurn,
       tokenId: tokenId,
       turnNumber: game.turnNumber,
       timestamp: ServerValue.TIMESTAMP,
-    });
+    };
+
+    await gameRef.child("events").child(eventId).set(moveEvent);
 
     await gameRef.update({
       eventCounter: eventCounter,

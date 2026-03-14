@@ -3,7 +3,26 @@
     ".read": true,
     ".write": true,
     "ludogames": {
-      ".indexOn": ["status"]
+      ".indexOn": ["status"],
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "matchmaking": {
+      "$mode": {
+        "queue": {
+          ".indexOn": ["joinedAt"],
+          "$uid": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    },
+    "matchmakingAssignments": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
     }
   }
 }
