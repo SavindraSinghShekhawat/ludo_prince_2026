@@ -4,13 +4,10 @@ import {ServerValue} from "firebase-admin/database";
 import {GameDocument} from "./models/GameDocument";
 import {MoveEvent} from "./models/GameEvent";
 
-const REGION = "europe-west1";
-
 export const handleMoveRequest = onValueWritten(
   {
     ref: "/ludogames/{gameId}/moveRequests/{uid}",
     instance: "ludo-prince-cf74a-default-rtdb",
-    region: REGION,
   },
   async (event) => {
     console.log(`[handleMoveRequest] Triggered for gameId: ${event.params.gameId}, uid: ${event.params.uid}`);

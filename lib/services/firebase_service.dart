@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,7 +27,7 @@ class FirebaseService {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    await Firebase.initializeApp(
+    var app = await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
@@ -38,15 +40,17 @@ class FirebaseService {
     functions = FirebaseFunctions.instance;
 
     if (!kReleaseMode) {
+      final host = Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';
+
       database = FirebaseDatabase.instanceFor(
-        app: Firebase.app(),
-        databaseURL: 'http://127.0.0.1:9000?ns=ludo-prince-cf74a-default-rtdb',
+        app: app,
+        databaseURL: 'http://$host:9000?ns=ludo-prince-cf74a-default-rtdb',
       );
       // Removed database.useDatabaseEmulator to fix connection drops
-      await _setupEmulators();
+      await _setupEmulators(host);
     } else {
       database = FirebaseDatabase.instanceFor(
-        app: Firebase.app(),
+        app: app,
         databaseURL:
             'https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app?ns=ludo-prince-cf74a-default-rtdb',
       );
@@ -68,17 +72,13 @@ class FirebaseService {
     _initialized = true;
   }
 
-  Future<void> _setupEmulators() async {
-    const host = '127.0.0.1';
-
+  Future<void> _setupEmulators(String host) async {
     try {
       auth.useAuthEmulator(host, 9099);
       firestore.useFirestoreEmulator(host, 8080);
       functions.useFunctionsEmulator(host, 5001);
     } catch (e) {
-      // Ignored if already connected
-      debugPrint(
-          'Firebase Emulator connection error (likely already connected): $e');
+      debugPrint('Firebase Emulator already connected: $e');
     }
   }
 }

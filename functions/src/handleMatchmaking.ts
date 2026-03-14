@@ -5,8 +5,6 @@ import {PlayerMatchInfo} from "./models/Matchmaking";
 import {PlayerEntry} from "./models/Player";
 import {GameDocument} from "./models/GameDocument";
 
-const REGION = "europe-west1";
-
 /**
  * Matchmaking Cloud Function
  * Triggered when a player joins a queue for a specific game mode.
@@ -15,7 +13,6 @@ export const handleMatchmaking = onValueWritten(
   {
     ref: "/matchmaking/{mode}/queue/{uid}",
     instance: "ludo-prince-cf74a-default-rtdb",
-    region: REGION,
   },
   async (event) => {
     console.log(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);

@@ -5,13 +5,10 @@ import {ServerValue} from "firebase-admin/database";
 import {GameDocument} from "./models/GameDocument";
 import {RollEvent} from "./models/GameEvent";
 
-const REGION = "europe-west1";
-
 export const handleRollRequest = onValueWritten(
   {
     ref: "/ludogames/{gameId}/rollRequests/{uid}",
     instance: "ludo-prince-cf74a-default-rtdb",
-    region: REGION,
   },
   async (event) => {
     console.log(`[handleRollRequest] Triggered for gameId: ${event.params.gameId}, uid: ${event.params.uid}`);
