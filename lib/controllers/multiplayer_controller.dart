@@ -37,6 +37,13 @@ class MultiplayerGameController extends LudoController {
       _lastAppliedEventId = snapshot['lastEventId'] as int;
       state =
           GameState.fromJson(gameStateJson).copyWith(gameType: GameType.online);
+    } else {
+      // If no snapshot, ensure state has correct mode from DB
+      final dbMode = data['gameMode'];
+      if (dbMode != null) {
+        final mode = GameMode.values.firstWhere((e) => e.name == dbMode);
+        state = state.copyWith(gameMode: mode);
+      }
     }
 
     // Fetch missing events

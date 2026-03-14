@@ -148,7 +148,14 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                           label: Text('$n Players'),
                           selected: isSelected,
                           onSelected: (val) {
-                            if (val) setState(() => _maxPlayers = n);
+                            if (val && _maxPlayers != n) {
+                              setState(() {
+                                _maxPlayers = n;
+                                if (_maxPlayers < 4) {
+                                  _gameMode = GameMode.classic;
+                                }
+                              });
+                            }
                           },
                           selectedColor: const Color(0xFFE5E4E2),
                           checkmarkColor: Colors.black,
@@ -163,21 +170,43 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '2vs2 Team Mode Coming Soon!',
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Select Game Mode',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                      ),
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildGameModeChip(
+                          mode: GameMode.classic,
+                          label: 'Classic',
+                          description: 'Standard',
+                          icon: Icons.person,
+                          isEnabled: true,
+                        ),
+                        const SizedBox(width: 12),
+                        _buildGameModeChip(
+                          mode: GameMode.team,
+                          label: '2vs2 Team',
+                          description: '4 Players Only',
+                          icon: Icons.group,
+                          isEnabled: _maxPlayers == 4,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 32),
                     _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : _buildMainButton(
                             'QUICK MATCH',
-                            _joinQueue,
+                            () => _joinQueue(_maxPlayers, _gameMode),
                           ),
                   ],
                 ),
@@ -318,65 +347,92 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: ListView.separated(
-                      itemCount: maxRequired,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
+                    child: ListView(
+                      children: (() {
+                        List<Widget> listWidgets = [];
                         final slots =
                             PlayerSlotExtension.getSlotsFor(maxRequired);
-                        final slotEnum = slots[index];
-                        final slotStr = slotEnum.name;
-                        final playerEntry =
-                            players.where((d) => d.key == slotStr).firstOrNull;
+                        bool isTeam =
+                            _gameMode == GameMode.team && maxRequired == 4;
 
-                        final playerData = playerEntry != null
-                            ? Map<String, dynamic>.from(
-                                playerEntry.value as Map)
-                            : null;
+                        List<PlayerSlot> displaySlots = List.from(slots);
+                        if (isTeam) {
+                          displaySlots = [
+                            PlayerSlot.slot1,
+                            PlayerSlot.slot3,
+                            PlayerSlot.slot2,
+                            PlayerSlot.slot4
+                          ];
+                        }
 
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2A2A3D),
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                                color: playerData != null
-                                    ? _getSlotColor(slotEnum.index)
-                                        .withValues(alpha: 0.5)
-                                    : Colors.white12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                  playerData != null
-                                      ? Icons.person
-                                      : Icons.person_outline,
-                                  color: playerData != null
-                                      ? _getSlotColor(slotEnum.index)
-                                      : Colors.white24),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  playerData != null
-                                      ? playerData['name']
-                                      : 'Searching...',
-                                  style: TextStyle(
-                                      color: playerData != null
-                                          ? Colors.white
-                                          : Colors.white24,
-                                      fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                        for (int i = 0; i < displaySlots.length; i++) {
+                          final slotEnum = displaySlots[i];
+                          if (isTeam && i == 0) {
+                            listWidgets.add(_buildTeamHeader("TEAM A"));
+                          } else if (isTeam && i == 2) {
+                            listWidgets.add(_buildVsDivider());
+                            listWidgets.add(_buildTeamHeader("TEAM B"));
+                          }
+
+                          final slotStr = slotEnum.name;
+                          final playerEntry = players
+                              .where((d) => d.key == slotStr)
+                              .firstOrNull;
+                          final playerData = playerEntry != null
+                              ? Map<String, dynamic>.from(
+                                  playerEntry.value as Map)
+                              : null;
+
+                          listWidgets.add(
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2A2A3D),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                    color: playerData != null
+                                        ? _getSlotColor(slotEnum.index)
+                                            .withValues(alpha: 0.5)
+                                        : Colors.white12),
                               ),
-                              if (playerData != null &&
-                                  playerEntry!.key == 'slot1')
-                                const Icon(Icons.star,
-                                    color: Colors.amber, size: 16),
-                            ],
-                          ),
-                        );
-                      },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                      playerData != null
+                                          ? Icons.person
+                                          : Icons.person_outline,
+                                      color: playerData != null
+                                          ? _getSlotColor(slotEnum.index)
+                                          : Colors.white24),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Text(
+                                      playerData != null
+                                          ? playerData['name']
+                                          : 'Searching...',
+                                      style: TextStyle(
+                                          color: playerData != null
+                                              ? Colors.white
+                                              : Colors.white24,
+                                          fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (playerData != null &&
+                                      playerEntry!.key == 'slot1') ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.star,
+                                        color: Colors.amber, size: 16),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return listWidgets;
+                      })(),
                     ),
                   ),
                   if (isActuallyHost && isPrivate)
@@ -397,7 +453,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   // --- Logic ---
 
-  Future<void> _joinQueue() async {
+  Future<void> _joinQueue(int maxPlayers, GameMode gameMode) async {
     setState(() {
       _isLoading = true;
     });
@@ -418,7 +474,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     }
 
     try {
-      final gameId = await matchmakingService.joinQueue(_maxPlayers, _gameMode);
+      final gameId = await matchmakingService.joinQueue(maxPlayers, gameMode);
       if (mounted) setState(() => _activeGameId = gameId);
     } catch (e) {
       _showError("Matchmaking failed: $e");
@@ -554,5 +610,153 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       default:
         return Colors.white;
     }
+  }
+
+  Widget _buildTeamHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0, top: 8.0),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 20,
+            decoration: BoxDecoration(
+              color: title.contains('A') ? Colors.blueAccent : Colors.redAccent,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVsDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.blueAccent.withValues(alpha: 0.8),
+                  Colors.redAccent.withValues(alpha: 0.8)
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blueAccent.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: const Text(
+              'VS',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameModeChip({
+    required GameMode mode,
+    required String label,
+    required String description,
+    required IconData icon,
+    required bool isEnabled,
+  }) {
+    final isSelected = _gameMode == mode;
+    final color = isSelected ? const Color(0xFFE5E4E2) : Colors.white70;
+
+    return Tooltip(
+      message: isEnabled ? '' : '2vs2 mode requires exactly 4 players',
+      child: GestureDetector(
+        onTap: isEnabled
+            ? () {
+                setState(() {
+                  _gameMode = mode;
+                });
+              }
+            : null,
+        child: Opacity(
+          opacity: isEnabled ? 1.0 : 0.4,
+          child: Container(
+            width: 150,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFFE5E4E2)
+                  : const Color(0xFF2A2A3D),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.blueAccent.withValues(alpha: 0.5)
+                    : Colors.white10,
+                width: 2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.blueAccent.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      )
+                    ]
+                  : [],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? const Color(0xFF1E1E2C) : color,
+                  size: 28,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? const Color(0xFF1E1E2C) : color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isEnabled ? description : 'Locked',
+                  style: TextStyle(
+                    color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                        .withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

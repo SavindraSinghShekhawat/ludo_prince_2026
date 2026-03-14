@@ -72,10 +72,12 @@ class LudoController implements GameController {
 
   @override
   final PlayerSlot? localPlayerSlot;
+  final GameMode gameMode;
 
   LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
       {this.initialState = InitialGameState.normal,
       this.localPlayerSlot,
+      this.gameMode = GameMode.classic,
       GameEventProvider? eventProvider})
       : _state = GameState(
             gameId: "",
@@ -83,7 +85,7 @@ class LudoController implements GameController {
             turnOrder: [],
             currentTurn: PlayerSlot.slot1),
         eventProvider = eventProvider ?? LocalEventProvider() {
-    _state = _createInitialState(config, initialState);
+    _state = _createInitialState(config, initialState, gameMode);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
 
@@ -271,7 +273,7 @@ class LudoController implements GameController {
   }
 
   GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config,
-      InitialGameState initialState) {
+      InitialGameState initialState, GameMode gameMode) {
     List<Player> players = config.entries.map((e) {
       List<Token> tokens = List.generate(4, (i) => Token(id: i, slot: e.key));
 
@@ -290,6 +292,7 @@ class LudoController implements GameController {
       players: players,
       turnOrder: config.keys.toList(),
       currentTurn: config.keys.first,
+      gameMode: gameMode,
       lastAction: GameAction.none,
       winners: const [],
       gameType: GameType.local,

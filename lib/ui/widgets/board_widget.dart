@@ -20,14 +20,17 @@ class BoardWidget extends StatelessWidget {
             children: [
               // Draw Base Areas
               // Standard layout: Slot1(top-left), Slot2(top-right), Slot3(bottom-right), Slot4(bottom-left)
+              _buildBaseArea(0, 0, Colors.redAccent, cellSize, PlayerSlot.slot4,
+                  teamLabel: 'B'),
               _buildBaseArea(
-                  0, 0, Colors.redAccent, cellSize, PlayerSlot.slot4),
-              _buildBaseArea(9, 0, Colors.greenAccent.shade700, cellSize,
-                  PlayerSlot.slot3),
+                  9, 0, Colors.greenAccent.shade700, cellSize, PlayerSlot.slot3,
+                  teamLabel: 'A'),
               _buildBaseArea(
-                  9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot2),
+                  9, 9, Colors.amber.shade600, cellSize, PlayerSlot.slot2,
+                  teamLabel: 'B'),
               _buildBaseArea(
-                  0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot1),
+                  0, 9, Colors.blueAccent, cellSize, PlayerSlot.slot1,
+                  teamLabel: 'A'),
 
               // Draw Center Home
               Positioned(
@@ -68,7 +71,8 @@ class BoardWidget extends StatelessWidget {
   }
 
   Widget _buildBaseArea(
-      int col, int row, Color color, double cellSize, PlayerSlot pSlot) {
+      int col, int row, Color color, double cellSize, PlayerSlot pSlot,
+      {String? teamLabel}) {
     return Positioned(
       left: col * cellSize,
       top: row * cellSize,
@@ -78,18 +82,62 @@ class BoardWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.2),
           border: Border.all(color: color, width: 2),
-          borderRadius: BorderRadius.circular(16), // modern rounded bases
+          borderRadius: BorderRadius.circular(16),
         ),
-        child: Center(
-          child: Container(
-            width: 4 * cellSize,
-            height: 4 * cellSize,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                width: 4 * cellSize,
+                height: 4 * cellSize,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
-            // Tokens in base will be rendered on top of the BoardWidget by a separate TokenWidget layer.
-          ),
+            if (teamLabel != null)
+              Positioned(
+                top:
+                    (col == 0 && row == 9) || (col == 9 && row == 9) ? 0 : null,
+                bottom:
+                    (col == 0 && row == 0) || (col == 9 && row == 0) ? 0 : null,
+                left:
+                    (col == 9 && row == 0) || (col == 9 && row == 9) ? 0 : null,
+                right:
+                    (col == 0 && row == 0) || (col == 0 && row == 9) ? 0 : null,
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Container(
+                    width: cellSize * 0.55,
+                    height: cellSize * 0.55,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black45,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        teamLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          height: 1.0, // Ensures no baseline offset
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
