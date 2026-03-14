@@ -14,6 +14,9 @@ import '../../controllers/multiplayer_controller.dart';
 import '../../providers/game_provider.dart';
 import 'home_screen.dart';
 import 'ludo_screen.dart';
+import '../widgets/ludo_card.dart';
+import '../widgets/player_count_selector.dart';
+import '../widgets/game_mode_selector.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -123,93 +126,73 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Widget _buildSelectionView() {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+    return SafeArea(
+      child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 450),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildSectionTitle('SELECT PLAYERS'),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: _cardDecoration(),
-                child: Column(
-                  children: [
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [2, 3, 4].map((n) {
-                        final isSelected = _maxPlayers == n;
-                        return ChoiceChip(
-                          label: Text('$n Players'),
-                          selected: isSelected,
-                          onSelected: (val) {
-                            if (val && _maxPlayers != n) {
-                              setState(() {
-                                _maxPlayers = n;
-                                if (_maxPlayers < 4) {
-                                  _gameMode = GameMode.classic;
-                                }
-                              });
-                            }
-                          },
-                          selectedColor: const Color(0xFFE5E4E2),
-                          checkmarkColor: Colors.black,
-                          backgroundColor: Colors.white.withValues(alpha: 0.05),
-                          side: BorderSide(
-                              color: isSelected
-                                  ? Colors.transparent
-                                  : Colors.white24),
-                          labelStyle: TextStyle(
-                              color: isSelected ? Colors.black : Colors.white70,
-                              fontWeight: FontWeight.bold),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Select Game Mode',
-                      style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: LudoCard(
+                    child: Column(
                       children: [
-                        _buildGameModeChip(
-                          mode: GameMode.classic,
-                          label: 'Classic',
-                          description: 'Standard',
-                          icon: Icons.person,
-                          isEnabled: true,
+                        const Text(
+                          'SELECT NUMBER OF PLAYERS',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(width: 12),
-                        _buildGameModeChip(
-                          mode: GameMode.team,
-                          label: '2vs2 Team',
-                          description: '4 Players Only',
-                          icon: Icons.group,
-                          isEnabled: _maxPlayers == 4,
+                        const SizedBox(height: 20),
+                        PlayerCountSelector(
+                          currentCount: _maxPlayers,
+                          onCountChanged: (n) {
+                            setState(() {
+                              _maxPlayers = n;
+                              if (_maxPlayers < 4) {
+                                _gameMode = GameMode.classic;
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'SELECT GAME MODE',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        GameModeSelector(
+                          currentMode: _gameMode,
+                          isTeamModeEnabled: _maxPlayers == 4,
+                          onModeChanged: (mode) {
+                            setState(() {
+                              _gameMode = mode;
+                            });
+                          },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
-                    _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : _buildMainButton(
-                            'QUICK MATCH',
-                            () => _joinQueue(_maxPlayers, _gameMode),
-                          ),
-                  ],
+                  ),
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24.0),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : _buildMainButton(
+                        'QUICK MATCH',
+                        () => _joinQueue(_maxPlayers, _gameMode),
+                      ),
               ),
             ],
           ),
@@ -286,11 +269,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isPrivate) ...[
-                    Container(
+                    LudoCard(
                       padding: const EdgeInsets.all(20),
-                      decoration: _cardDecoration(
-                          borderColor:
-                              const Color(0xFFE5E4E2).withValues(alpha: 0.3)),
+                      borderColor:
+                          const Color(0xFFE5E4E2).withValues(alpha: 0.3),
                       child: Column(
                         children: [
                           const Text('GAME ID',
@@ -314,11 +296,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       ),
                     ),
                   ] else ...[
-                    Container(
+                    LudoCard(
                       padding: const EdgeInsets.all(32),
-                      decoration: _cardDecoration(
-                          borderColor:
-                              Colors.deepPurpleAccent.withValues(alpha: 0.3)),
+                      borderColor:
+                          Colors.deepPurpleAccent.withValues(alpha: 0.3),
                       child: const Column(
                         children: [
                           CircularProgressIndicator(
@@ -531,30 +512,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   // --- UI Helpers ---
 
-  Widget _buildSectionTitle(String title) {
-    return Text(title,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5));
-  }
-
-  BoxDecoration _cardDecoration({Color? borderColor}) {
-    return BoxDecoration(
-      color: const Color(0xFF2A2A3D),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: borderColor ?? Colors.white10),
-      boxShadow: [
-        BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4)),
-      ],
-    );
-  }
-
   Widget _buildMainButton(String title, VoidCallback? onTap,
       {bool isSecondary = false}) {
     return Container(
@@ -675,87 +632,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           ),
           Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGameModeChip({
-    required GameMode mode,
-    required String label,
-    required String description,
-    required IconData icon,
-    required bool isEnabled,
-  }) {
-    final isSelected = _gameMode == mode;
-    final color = isSelected ? const Color(0xFFE5E4E2) : Colors.white70;
-
-    return Tooltip(
-      message: isEnabled ? '' : '2vs2 mode requires exactly 4 players',
-      child: GestureDetector(
-        onTap: isEnabled
-            ? () {
-                setState(() {
-                  _gameMode = mode;
-                });
-              }
-            : null,
-        child: Opacity(
-          opacity: isEnabled ? 1.0 : 0.4,
-          child: Container(
-            width: 150,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFFE5E4E2)
-                  : const Color(0xFF2A2A3D),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.blueAccent.withValues(alpha: 0.5)
-                    : Colors.white10,
-                width: 2,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.blueAccent.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      )
-                    ]
-                  : [],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected ? const Color(0xFF1E1E2C) : color,
-                  size: 28,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? const Color(0xFF1E1E2C) : color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isEnabled ? description : 'Locked',
-                  style: TextStyle(
-                    color: (isSelected ? const Color(0xFF1E1E2C) : color)
-                        .withValues(alpha: 0.7),
-                    fontSize: 10,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

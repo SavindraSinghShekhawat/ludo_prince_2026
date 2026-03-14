@@ -12,6 +12,9 @@ import '../dialogs/settings_dialog.dart';
 import '../../models/game_state.dart';
 import '../../controllers/ludo_controller.dart';
 import '../../models/token.dart';
+import '../widgets/ludo_card.dart';
+import '../widgets/player_count_selector.dart';
+import '../widgets/game_mode_selector.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
   const LocalSetupScreen({super.key});
@@ -111,39 +114,32 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Select Number of Players',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: [2, 3, 4].map((n) {
-                      final isSelected = _numPlayers == n;
-                      return ChoiceChip(
-                        label: Text('$n Players',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        selected: isSelected,
-                        checkmarkColor: const Color(0xFF1E1E2C),
-                        onSelected: (selected) {
-                          if (selected && _numPlayers != n) {
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 450),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: LudoCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'SELECT NUMBER OF PLAYERS',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        PlayerCountSelector(
+                          currentCount: _numPlayers,
+                          onCountChanged: (n) {
                             setState(() {
                               _numPlayers = n;
                               // Force Classic mode if players < 4
@@ -152,198 +148,196 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               }
                               _initControllers();
                             });
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'SELECT GAME MODE',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        GameModeSelector(
+                          currentMode: _gameMode,
+                          isTeamModeEnabled: _numPlayers == 4,
+                          onModeChanged: (mode) {
+                            setState(() {
+                              _gameMode = mode;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 40),
+                        const Text(
+                          'PLAYER NAMES',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        ...(() {
+                          List<PlayerSlot> displaySlots =
+                              List.from(activeSlots);
+                          bool isTeam =
+                              _gameMode == GameMode.team && _numPlayers == 4;
+
+                          if (isTeam) {
+                            displaySlots = [
+                              PlayerSlot.slot1,
+                              PlayerSlot.slot3,
+                              PlayerSlot.slot2,
+                              PlayerSlot.slot4
+                            ];
                           }
-                        },
-                        selectedColor: const Color(0xFFE5E4E2),
-                        labelStyle: TextStyle(
-                            color: isSelected
-                                ? const Color(0xFF1E1E2C)
-                                : Colors.white70),
-                        backgroundColor: const Color(0xFF2A2A3D),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Select Game Mode',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildGameModeChip(
-                        mode: GameMode.classic,
-                        label: 'Classic',
-                        description: 'Standard Rules',
-                        icon: Icons.person,
-                        isEnabled: true,
-                      ),
-                      const SizedBox(width: 16),
-                      _buildGameModeChip(
-                        mode: GameMode.team,
-                        label: '2vs2 Team',
-                        description: 'Requires 4 Players',
-                        icon: Icons.group,
-                        isEnabled: _numPlayers == 4,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  const Text(
-                    'Player Names',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  ...(() {
-                    List<PlayerSlot> displaySlots = List.from(activeSlots);
-                    bool isTeam =
-                        _gameMode == GameMode.team && _numPlayers == 4;
 
-                    if (isTeam) {
-                      displaySlots = [
-                        PlayerSlot.slot1,
-                        PlayerSlot.slot3,
-                        PlayerSlot.slot2,
-                        PlayerSlot.slot4
-                      ];
-                    }
+                          List<Widget> widgets = [];
+                          for (int i = 0; i < displaySlots.length; i++) {
+                            final slot = displaySlots[i];
 
-                    List<Widget> widgets = [];
-                    for (int i = 0; i < displaySlots.length; i++) {
-                      final slot = displaySlots[i];
+                            if (isTeam && i == 0) {
+                              widgets.add(_buildTeamHeader("TEAM A"));
+                            } else if (isTeam && i == 2) {
+                              widgets.add(_buildVsDivider());
+                              widgets.add(_buildTeamHeader("TEAM B"));
+                            }
 
-                      if (isTeam && i == 0) {
-                        widgets.add(_buildTeamHeader("TEAM A"));
-                      } else if (isTeam && i == 2) {
-                        widgets.add(_buildVsDivider());
-                        widgets.add(_buildTeamHeader("TEAM B"));
-                      }
+                            Color displayColor = Colors.white;
+                            switch (slot) {
+                              case PlayerSlot.slot1:
+                                displayColor = Colors.blueAccent;
+                                break;
+                              case PlayerSlot.slot2:
+                                displayColor = Colors.amber.shade600;
+                                break;
+                              case PlayerSlot.slot3:
+                                displayColor = Colors.greenAccent.shade700;
+                                break;
+                              case PlayerSlot.slot4:
+                                displayColor = Colors.redAccent;
+                                break;
+                            }
 
-                      Color displayColor = Colors.white;
-                      switch (slot) {
-                        case PlayerSlot.slot1:
-                          displayColor = Colors.blueAccent;
-                          break;
-                        case PlayerSlot.slot2:
-                          displayColor = Colors.amber.shade600;
-                          break;
-                        case PlayerSlot.slot3:
-                          displayColor = Colors.greenAccent.shade700;
-                          break;
-                        case PlayerSlot.slot4:
-                          displayColor = Colors.redAccent;
-                          break;
-                      }
-
-                      widgets.add(
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _controllers[slot],
-                                  style: const TextStyle(color: Colors.white),
-                                  decoration: InputDecoration(
-                                    labelText: 'Player ${slot.index + 1}',
-                                    labelStyle: TextStyle(color: displayColor),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: displayColor.withValues(
-                                              alpha: 0.5)),
-                                      borderRadius: BorderRadius.circular(15),
+                            widgets.add(
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _controllers[slot],
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                        decoration: InputDecoration(
+                                          labelText: 'Player ${slot.index + 1}',
+                                          labelStyle:
+                                              TextStyle(color: displayColor),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: displayColor.withValues(
+                                                    alpha: 0.5)),
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(
+                                                color: displayColor, width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                          ),
+                                          prefixIcon: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: (_isBotConfig[slot] ?? false)
+                                                ? RobotIcon(
+                                                    size: 22,
+                                                    color: displayColor)
+                                                : Icon(Icons.person,
+                                                    color: displayColor),
+                                          ),
+                                          filled: true,
+                                          fillColor: const Color(0xFF2A2A3D),
+                                        ),
+                                      ),
                                     ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: displayColor, width: 2),
-                                      borderRadius: BorderRadius.circular(15),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      children: [
+                                        const Text('Bot',
+                                            style: TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12)),
+                                        Switch(
+                                          value: _isBotConfig[slot] ?? false,
+                                          activeThumbColor: displayColor,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              _isBotConfig[slot] = val;
+                                            });
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                    prefixIcon: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: (_isBotConfig[slot] ?? false)
-                                          ? RobotIcon(
-                                              size: 22, color: displayColor)
-                                          : Icon(Icons.person,
-                                              color: displayColor),
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFF2A2A3D),
-                                  ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Column(
-                                children: [
-                                  const Text('Bot',
-                                      style: TextStyle(
-                                          color: Colors.white70, fontSize: 12)),
-                                  Switch(
-                                    value: _isBotConfig[slot] ?? false,
-                                    activeThumbColor: displayColor,
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _isBotConfig[slot] = val;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
+                            );
+                          }
+                          return widgets;
+                        })(),
+                        if (kDebugMode) ...[
+                          const SizedBox(height: 40),
+                          const Text(
+                            'INITIAL GAME STATE (TESTING)',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                      );
-                    }
-                    return widgets;
-                  })(),
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 40),
-                    const Text(
-                      'Initial Game State (Testing)',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
+                          const SizedBox(height: 20),
+                          DropdownButtonFormField<InitialGameState>(
+                            initialValue: _initialState,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFF2A2A3D),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            dropdownColor: const Color(0xFF2A2A3D),
+                            style: const TextStyle(color: Colors.white),
+                            items: InitialGameState.values.map((state) {
+                              return DropdownMenuItem(
+                                value: state,
+                                child: Text(state.name.toUpperCase()),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _initialState = val;
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    DropdownButtonFormField<InitialGameState>(
-                      initialValue: _initialState,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color(0xFF2A2A3D),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      dropdownColor: const Color(0xFF2A2A3D),
-                      style: const TextStyle(color: Colors.white),
-                      items: InitialGameState.values.map((state) {
-                        return DropdownMenuItem(
-                          value: state,
-                          child: Text(state.name.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _initialState = val;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 40),
-                  ElevatedButton(
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFE5E4E2),
                       foregroundColor: const Color(0xFF1E1E2C),
@@ -392,9 +386,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                             fontSize: 20,
                             fontWeight: FontWeight.bold)),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -464,87 +458,6 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           ),
           Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGameModeChip({
-    required GameMode mode,
-    required String label,
-    required String description,
-    required IconData icon,
-    required bool isEnabled,
-  }) {
-    final isSelected = _gameMode == mode;
-    final color = isSelected ? const Color(0xFFE5E4E2) : Colors.white70;
-
-    return Tooltip(
-      message: isEnabled ? '' : '2vs2 mode requires exactly 4 players',
-      child: GestureDetector(
-        onTap: isEnabled
-            ? () {
-                setState(() {
-                  _gameMode = mode;
-                });
-              }
-            : null,
-        child: Opacity(
-          opacity: isEnabled ? 1.0 : 0.4,
-          child: Container(
-            width: 150,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFFE5E4E2)
-                  : const Color(0xFF2A2A3D),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.blueAccent.withValues(alpha: 0.5)
-                    : Colors.white10,
-                width: 2,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.blueAccent.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      )
-                    ]
-                  : [],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected ? const Color(0xFF1E1E2C) : color,
-                  size: 28,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? const Color(0xFF1E1E2C) : color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isEnabled ? description : 'Locked',
-                  style: TextStyle(
-                    color: (isSelected ? const Color(0xFF1E1E2C) : color)
-                        .withValues(alpha: 0.7),
-                    fontSize: 10,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
