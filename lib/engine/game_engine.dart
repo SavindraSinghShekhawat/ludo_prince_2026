@@ -307,44 +307,29 @@ class GameEngine {
       newState = newState.copyWith(
           winners: newWinners, message: "${winner.name} wins by forfeit!");
     } else if (newState.gameMode == GameMode.team) {
-      // Check if any player's teammate has left OR check if any opponent has left
-      // Actually, per user: "team wins if any of the opponent quits"
+      // Rule: If any player leaves, their team loses and the other team wins.
+      final quitterTeam = (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3) ? "A" : "B";
+      final winningTeam = quitterTeam == "A" ? "B" : "A";
 
-      bool opponentLeft = newState.players.any((p) =>
-          p.status == PlayerStatus.left && !newState.winners.contains(p.slot));
+      final teamASlots = [PlayerSlot.slot1, PlayerSlot.slot3];
+      final teamBSlots = [PlayerSlot.slot2, PlayerSlot.slot4];
+      final winningSlots = winningTeam == "A" ? teamASlots : teamBSlots;
 
-      if (opponentLeft) {
-        // Find which team remains. For simplicity, find non-left players.
-        // Wait, if ANY opponent left, the OTHER team wins.
-        // Let's identify the quitter's team.
-        final quitter =
-            newState.players.firstWhere((p) => p.status == PlayerStatus.left);
-        final quitterTeam = (quitter.slot == PlayerSlot.slot1 ||
-                quitter.slot == PlayerSlot.slot3)
-            ? "team1"
-            : "team2";
-        final winningTeam = quitterTeam == "team1" ? "team2" : "team1";
-
-        final teamSlots = winningTeam == "team1"
-            ? [PlayerSlot.slot1, PlayerSlot.slot3]
-            : [PlayerSlot.slot2, PlayerSlot.slot4];
-
-        final newWinners = [...newState.winners];
-        for (var s in teamSlots) {
-          if (!newWinners.contains(s)) newWinners.add(s);
-        }
-        // Add others to trigger isGameOver
-        for (var p in newState.players) {
-          if (!newWinners.contains(p.slot)) {
-            newWinners.add(p.slot);
-          }
-        }
-
-        newState = newState.copyWith(
-            winners: newWinners,
-            message:
-                "Team ${winningTeam == "team1" ? "A" : "B"} wins by forfeit!");
+      final newWinners = [...newState.winners];
+      for (var s in winningSlots) {
+        if (!newWinners.contains(s)) newWinners.add(s);
       }
+      // Add all other players to winners list to trigger isGameOver
+      for (var p in newState.players) {
+        if (!newWinners.contains(p.slot)) {
+          newWinners.add(p.slot);
+        }
+      }
+
+      newState = newState.copyWith(
+        winners: newWinners,
+        message: "Team $quitterTeam members left. Team $winningTeam wins!",
+      );
     }
 
     return EngineResult(newState, [EngineEvent.quit]);
