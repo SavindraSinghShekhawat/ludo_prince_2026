@@ -17,7 +17,11 @@ export const handleMoveRequest = onValueWritten(
     const gameId = event.params.gameId;
     const uid = event.params.uid;
     const data = event.data?.after.val();
-    const tokenId = (data as {tokenId: number}).tokenId;
+    if (!data) {
+      console.log("[handleMoveRequest] Request was deleted. Skipping.");
+      return;
+    }
+    const tokenId = (data as { tokenId: number }).tokenId;
 
     const gameRef = admin.database().ref(`ludogames/${gameId}`);
     const gameSnap = await gameRef.get();

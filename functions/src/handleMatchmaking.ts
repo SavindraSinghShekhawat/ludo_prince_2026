@@ -20,6 +20,11 @@ export const handleMatchmaking = onValueWritten(
   async (event) => {
     console.log(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);
     const mode = event.params.mode;
+
+    if (!event.data?.after.exists()) {
+      console.log("[handleMatchmaking] Player removed from queue. Skipping.");
+      return;
+    }
     // const uid = event.params.uid; // Triggered by this user
 
     const queueRef = admin.database().ref(`matchmaking/${mode}/queue`);

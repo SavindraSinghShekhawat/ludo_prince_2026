@@ -18,6 +18,11 @@ export const handleRollRequest = onValueWritten(
     const gameId = event.params.gameId;
     const uid = event.params.uid;
 
+    if (!event.data?.after.exists()) {
+      console.log("[handleRollRequest] Request was deleted. Skipping.");
+      return;
+    }
+
     const gameRef = admin.database().ref(`ludogames/${gameId}`);
 
     const gameSnap = await gameRef.get();
