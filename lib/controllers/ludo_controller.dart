@@ -17,6 +17,7 @@ abstract class GameController {
 
   PlayerSlot? get localPlayerSlot;
   bool get isActionInProgress;
+  bool get isDisposed;
 
   // 1. Intents (called by the UI when a user taps something)
   Future<void> sendRollIntent();
@@ -167,35 +168,52 @@ class LudoController implements GameController {
 
   @override
   Future<void> sendRollIntent() async {
-    if (!isMyTurn || _state.isDiceRolled || _isActionInProgress) return;
+    if (_isDisposed ||
+        !isMyTurn ||
+        _state.isDiceRolled ||
+        _isActionInProgress) {
+      return;
+    }
     eventProvider.onRollRequested();
   }
 
   @override
   Future<void> sendMoveIntent(Token token) async {
-    if (!isMyTurn || !_state.isDiceRolled || _isActionInProgress) return;
+    if (_isDisposed ||
+        !isMyTurn ||
+        !_state.isDiceRolled ||
+        _isActionInProgress) {
+      return;
+    }
     eventProvider.onMoveRequested(token.id);
   }
 
   @override
-  Future<void> executeRoll(int value) async {
-    if (_state.isDiceRolled || _isActionInProgress) return;
+  Future<void> executeRoll(int value, {bool skipSounds = false}) async {
+    if (_isDisposed || _state.isDiceRolled || _isActionInProgress) return;
     _isActionInProgress = true;
 
     // Set diceValue IMMEDIATELY so UI can land on it correctly
-    _audioListener.playRollSound();
+    if (!skipSounds && !_isDisposed) {
+      _audioListener.playRollSound();
+    }
     _state = _state.copyWith(isRolling: true, diceValue: value);
     if (!_isDisposed) _streamController.add(_state);
 
     await Future.delayed(const Duration(milliseconds: 450));
-    if (_isDisposed) return;
+    if (_isDisposed) {
+      _isActionInProgress = false;
+      return;
+    }
 
     _state = _state.copyWith(isRolling: false);
 
     final result = _engine.rollDice(_state, value);
     _state = result.state.copyWith(lastAction: GameAction.roll);
 
-    _audioListener.handleEngineEvents(result.events);
+    if (!skipSounds && !_isDisposed) {
+      _audioListener.handleEngineEvents(result.events);
+    }
 
     if (!_isDisposed) _streamController.add(_state);
 
@@ -236,7 +254,7 @@ class LudoController implements GameController {
 
   @override
   Future<void> executeMove(int tokenId) async {
-    if (_isActionInProgress) return;
+    if (_isDisposed || _isActionInProgress) return;
     _isActionInProgress = true;
     await _executor.execute(_state, tokenId, _state.diceValue);
     _isActionInProgress = false;
@@ -246,6 +264,9 @@ class LudoController implements GameController {
 
   @override
   void quitGame() {
+    _isDisposed =
+        true; // Mark as disposed immediately to silence further actions
+    _audioListener.stop();
     if (localPlayerSlot != null) {
       eventProvider.onQuitRequested(localPlayerSlot!);
     }
@@ -266,10 +287,14 @@ class LudoController implements GameController {
 
   @override
   Future<void> dispose() async {
+    if (_isDisposed && _streamController.isClosed) return;
+
     _isDisposed = true;
     _audioListener.stop();
     eventProvider.dispose();
-    await _streamController.close();
+    if (!_streamController.isClosed) {
+      await _streamController.close();
+    }
   }
 
   GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config,

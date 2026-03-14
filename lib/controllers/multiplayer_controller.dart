@@ -67,7 +67,7 @@ class MultiplayerGameController extends LudoController {
 
         final eventMap = Map<String, dynamic>.from(eventsData[key]);
         final event = GameEvent.fromJson(eventMap);
-        await _applyEventLocally(event);
+        await _applyEventLocally(event, isInitialSync: true);
         _lastAppliedEventId = int.parse(key);
       }
     }
@@ -80,9 +80,10 @@ class MultiplayerGameController extends LudoController {
     if (!isDisposed) streamController.add(state);
   }
 
-  Future<void> _applyEventLocally(GameEvent event) async {
+  Future<void> _applyEventLocally(GameEvent event,
+      {bool isInitialSync = false}) async {
     if (event is RollEvent) {
-      await executeRoll(event.diceValue);
+      await executeRoll(event.diceValue, skipSounds: isInitialSync);
     } else if (event is MoveEvent) {
       if (event.autoMove) {
         final currentPlayer =
@@ -120,6 +121,8 @@ class MultiplayerGameController extends LudoController {
 
   @override
   Future<void> handleGameEvent(GameEvent event) async {
+    if (isDisposed) return;
+
     if (event is RollEvent) {
       _lastAppliedEventId++;
     } else if (event is MoveEvent) {
