@@ -171,9 +171,15 @@ class LudoController implements GameController {
     if (_isDisposed ||
         !isMyTurn ||
         _state.isDiceRolled ||
+        _state.isRolling ||
         _isActionInProgress) {
       return;
     }
+
+    _audioListener.playRollSound();
+    _state = _state.copyWith(isRolling: true);
+    if (!_isDisposed) _streamController.add(_state);
+
     eventProvider.onRollRequested();
   }
 
@@ -193,8 +199,10 @@ class LudoController implements GameController {
     if (_isDisposed || _state.isDiceRolled || _isActionInProgress) return;
     _isActionInProgress = true;
 
+    bool wasAlreadyRolling = _state.isRolling;
+
     // Set diceValue IMMEDIATELY so UI can land on it correctly
-    if (!skipSounds && !_isDisposed) {
+    if (!skipSounds && !_isDisposed && !wasAlreadyRolling) {
       _audioListener.playRollSound();
     }
     _state = _state.copyWith(isRolling: true, diceValue: value);

@@ -14,6 +14,11 @@ class MultiplayerGameController extends LudoController {
   final FirebaseDatabase _db = firebaseService.database;
   int _lastAppliedEventId = 0;
 
+  final List<int> _pendingMoves = [];
+  bool _optimisticTurnChangePending = false;
+
+  bool get hasPendingMoves => _pendingMoves.isNotEmpty;
+
   MultiplayerGameController(
     Map<PlayerSlot, PlayerSetupConfig> config, {
     required this.gameId,
@@ -120,6 +125,33 @@ class MultiplayerGameController extends LudoController {
   }
 
   @override
+  Future<void> sendRollIntent() async {
+    if (hasPendingMoves) return;
+    await super.sendRollIntent();
+  }
+
+  @override
+  Future<void> sendMoveIntent(Token token) async {
+    if (hasPendingMoves) return;
+    if (isDisposed || !isMyTurn || !state.isDiceRolled || isActionInProgress)
+      return;
+
+    // We must call super first to send the request to the server
+    await super.sendMoveIntent(token);
+
+    // Optimistically execute the move locally to hide latency (0ms UI feedback)
+    _pendingMoves.add(token.id);
+    final oldTurn = state.currentTurn;
+
+    await executeMove(token.id);
+
+    final newTurn = state.currentTurn;
+    if (oldTurn != newTurn) {
+      _optimisticTurnChangePending = true;
+    }
+  }
+
+  @override
   Future<void> handleGameEvent(GameEvent event) async {
     if (isDisposed) return;
 
@@ -129,11 +161,33 @@ class MultiplayerGameController extends LudoController {
       _lastAppliedEventId++;
     }
     final oldTurn = state.currentTurn;
-    await super.handleGameEvent(event);
-    final newTurn = state.currentTurn;
 
-    bool shouldRestartTimer =
-        oldTurn != newTurn || event is RollEvent || event is MoveEvent;
+    bool skipSuper = false;
+    if (event is MoveEvent && !event.autoMove) {
+      if (_pendingMoves.isNotEmpty && _pendingMoves.first == event.tokenId) {
+        _pendingMoves.removeAt(0);
+        skipSuper = true; // We already optimistically executed this move
+      }
+    }
+
+    if (!skipSuper) {
+      await super.handleGameEvent(event);
+    }
+    final newTurn = state.currentTurn;
+    bool shouldRestartTimer = false;
+    bool turnChangedLocally = false;
+
+    if (skipSuper) {
+      shouldRestartTimer = true;
+      if (_optimisticTurnChangePending) {
+        turnChangedLocally = true;
+        _optimisticTurnChangePending = false;
+      }
+    } else {
+      shouldRestartTimer =
+          oldTurn != newTurn || event is RollEvent || event is MoveEvent;
+      turnChangedLocally = oldTurn != newTurn;
+    }
 
     // Push new turn to Firebase so Cloud Function timer restarts
     if (shouldRestartTimer && !state.isGameOver) {
@@ -141,10 +195,11 @@ class MultiplayerGameController extends LudoController {
         'currentTurn': newTurn.name,
         'turnStartedAt': ServerValue.timestamp,
       };
-      if (oldTurn != newTurn) {
-        updates['turnNumber'] =
-            ServerValue.increment(1); // Keep sync with server
+
+      if (turnChangedLocally) {
+        updates['turnNumber'] = ServerValue.increment(1);
       }
+
       _db.ref().child('ludogames').child(gameId).update(updates);
     }
 

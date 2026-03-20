@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
-import '../ludo_controller.dart';
 import 'game_event_provider.dart';
 import '../../services/firebase_service.dart';
 import '../../models/token.dart';

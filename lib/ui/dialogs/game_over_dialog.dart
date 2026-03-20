@@ -319,34 +319,24 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
 
                       // Action Buttons
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                      builder: (_) => const HomeScreen()),
-                                  (route) => false,
-                                );
-                              },
-                              icon: const Icon(Icons.home_filled,
-                                  color: Color(0xFF1E1E2C), size: 24),
-                              label: const Text('Home',
-                                  style: TextStyle(
-                                      color: Color(0xFF1E1E2C),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE5E4E2),
-                                foregroundColor: const Color(0xFF1E1E2C),
-                                elevation: 6,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 18),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
-                              ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (_) => const HomeScreen()),
+                                (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE5E4E2),
+                              foregroundColor: const Color(0xFF1E1E2C),
+                              elevation: 6,
+                              padding: const EdgeInsets.all(18),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
                             ),
+                            child: const Icon(Icons.home_filled, size: 28),
                           ).animate().fadeIn(delay: 1000.ms).moveY(begin: 20),
                           const SizedBox(width: 16),
                           Expanded(
@@ -390,7 +380,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                               label: const Text('New Game',
                                   style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 16,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.greenAccent.shade700,
@@ -400,8 +390,8 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16)),
                               ),
-                            ),
-                          ).animate().fadeIn(delay: 1200.ms).moveY(begin: 20),
+                            ).animate().fadeIn(delay: 1200.ms).moveY(begin: 20),
+                          ),
                         ],
                       ),
                     ],
