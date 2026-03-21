@@ -82,26 +82,10 @@ class BoardWidget extends StatelessWidget {
       height: 6 * cellSize,
       child: Container(
         decoration: BoxDecoration(
-            gradient: RadialGradient(
-              colors: [
-                color.withValues(alpha: 0.1),
-                color.withValues(alpha: 0.25)
-              ],
-              center: Alignment.topLeft,
-              radius: 1.5,
-            ),
-            border: Border.all(color: color.withValues(alpha: 0.7), width: 2.5),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: color.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  spreadRadius: 2),
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 5,
-                  offset: const Offset(2, 2)),
-            ]),
+          color: color.withValues(alpha: 0.15),
+          border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Stack(
           children: [
             Center(
@@ -109,23 +93,32 @@ class BoardWidget extends StatelessWidget {
                 width: 4 * cellSize,
                 height: 4 * cellSize,
                 decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.white, Color(0xFFE5E4E2)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2)),
-                      BoxShadow(
-                          color: Colors.white,
-                          blurRadius: 2,
-                          offset: const Offset(-1, -1)),
-                    ]),
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.8), width: 2),
+                ),
               ),
+            ),
+            Positioned(
+              left: 1.65 * cellSize,
+              top: 1.65 * cellSize,
+              child: _buildEmptySpot(cellSize, color),
+            ),
+            Positioned(
+              left: 3.65 * cellSize,
+              top: 1.65 * cellSize,
+              child: _buildEmptySpot(cellSize, color),
+            ),
+            Positioned(
+              left: 1.65 * cellSize,
+              top: 3.65 * cellSize,
+              child: _buildEmptySpot(cellSize, color),
+            ),
+            Positioned(
+              left: 3.65 * cellSize,
+              top: 3.65 * cellSize,
+              child: _buildEmptySpot(cellSize, color),
             ),
             if (teamLabel != null && gameMode == GameMode.team)
               Positioned(
@@ -144,17 +137,9 @@ class BoardWidget extends StatelessWidget {
                     width: cellSize * 0.55,
                     height: cellSize * 0.55,
                     decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        colors: [color.withValues(alpha: 0.7), color],
-                      ),
+                      color: color.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black45,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: Center(
                       child: Text(
@@ -172,6 +157,18 @@ class BoardWidget extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptySpot(double cellSize, Color color) {
+    return Container(
+      width: cellSize * 0.7,
+      height: cellSize * 0.7,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
       ),
     );
   }
@@ -200,33 +197,17 @@ class BoardWidget extends StatelessWidget {
       height: cellSize,
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDefault
-                ? [
-                    Colors.white.withValues(alpha: 0.25),
-                    color,
-                    Colors.black.withValues(alpha: 0.1),
-                  ]
-                : [
-                    Colors.black.withValues(alpha: 0.1),
-                    color,
-                    Colors.white.withValues(alpha: 0.3),
-                  ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
+          color: isDefault
+              ? Colors.black.withValues(alpha: 0.02)
+              : color.withValues(alpha: 0.25),
           border: Border.all(
-              color: isDefault
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.3),
-              width: 0.5),
+              color: Colors.black.withValues(alpha: 0.1), width: 0.5),
         ),
         child: isStar
             ? Icon(Icons.star_rounded,
                 color: isDefault
-                    ? Colors.white24
-                    : Colors.black.withValues(alpha: 0.2),
+                    ? Colors.black.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.8),
                 size: cellSize * 0.8)
             : null,
       ),
@@ -261,7 +242,8 @@ class BoardWidget extends StatelessWidget {
     }
     if (col == 6 && row == 13) return Colors.blueAccent.withValues(alpha: 0.8);
 
-    return Colors.white.withValues(alpha: 0.15); // Glass default path color
+    return Colors.white
+        .withValues(alpha: 0.15); // Frosted glass default path color
   }
 }
 
@@ -273,15 +255,10 @@ class CenterHomePainter extends CustomPainter {
 
     // Center point
     final Offset center = Offset(w / 2, h / 2);
-    final Rect rect = Rect.fromLTWH(0, 0, w, h);
 
     Paint getPaint(Color color) {
       return Paint()
-        ..shader = RadialGradient(
-          colors: [color.withValues(alpha: 0.6), color],
-          center: Alignment.center,
-          radius: 0.8,
-        ).createShader(rect)
+        ..color = color.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
     }
 

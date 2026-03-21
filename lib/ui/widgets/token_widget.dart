@@ -30,7 +30,7 @@ class TokenWidget extends StatelessWidget {
     double offsetXY = (cellSize - tokenSize) / 2;
 
     return AnimatedPositioned(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 150),
       curve: Curves.linear,
       left: gridPos.dx * cellSize + offsetXY + overlapOffset.dx,
       top: gridPos.dy * cellSize + offsetXY + overlapOffset.dy,
@@ -48,35 +48,46 @@ class TokenWidget extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      Colors.white.withValues(alpha: 0.9), // Specular highlight
-                      _getColor(token.slot), // Base color
-                      _getColor(token.slot)
-                          .withValues(alpha: 0.6), // Dark edge shadow
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                    center: const Alignment(-0.35, -0.35),
-                    radius: 0.8,
-                  ),
+                  color: _getColor(token.slot),
                   border: Border.all(
-                      color: isMovable ? Colors.white : Colors.white60,
-                      width: isMovable ? 2.5 : 1.0),
+                      color: isMovable ? Colors.white : Colors.white70,
+                      width: isMovable ? 2.5 : 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      blurRadius: 5,
-                      spreadRadius: 1,
-                      offset: const Offset(1, 4),
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 3,
+                      offset: const Offset(0, 2),
                     ),
                     if (isMovable)
                       BoxShadow(
-                        color: _getColor(token.slot).withValues(alpha: 0.9),
-                        blurRadius: 12,
-                        spreadRadius: 3,
-                        offset: const Offset(0, 0),
+                        color: _getColor(token.slot).withValues(alpha: 0.8),
+                        blurRadius: 10,
+                        spreadRadius: 2,
                       ),
                   ],
+                ),
+                child: Center(
+                  child: Container(
+                    width: tokenSize * 0.55,
+                    height: tokenSize * 0.55,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: tokenSize * 0.15,
+                        height: tokenSize * 0.15,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             );
