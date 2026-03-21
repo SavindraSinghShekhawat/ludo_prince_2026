@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../controllers/ludo_controller.dart';
+import '../widgets/shared_ui.dart';
 
 class DiceRandomnessScreen extends StatefulWidget {
   const DiceRandomnessScreen({super.key});
@@ -93,8 +94,9 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+    return AnimatedBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Dice Fairness Check',
             style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
@@ -117,17 +119,12 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildInfoCard() {
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(15),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(25)),
-      ),
       child: Column(
         children: [
           Row(
@@ -203,12 +200,8 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
 
     return AspectRatio(
       aspectRatio: 1.4,
-      child: Container(
+      child: GlassContainer(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withAlpha(5),
-          borderRadius: BorderRadius.circular(24),
-        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -320,13 +313,8 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
     }
     final fairnessScore = (100 - (totalDev / 6 * 100)).clamp(0, 100);
 
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withAlpha(10)),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

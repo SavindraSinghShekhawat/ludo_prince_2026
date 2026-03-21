@@ -10,6 +10,7 @@ import '../../models/board_path.dart';
 import '../widgets/board_widget.dart';
 import '../widgets/token_widget.dart';
 import '../widgets/dice_widget.dart';
+import '../widgets/shared_ui.dart';
 import 'home_screen.dart';
 import '../dialogs/rules_dialog.dart';
 import '../dialogs/settings_dialog.dart';
@@ -84,8 +85,9 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
   }
 
   Widget _buildGame(BuildContext context, GameState gameState) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+    return AnimatedBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: _buildAppBar(context),
       body: SafeArea(
         child: LayoutBuilder(
@@ -99,7 +101,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
           },
         ),
       ),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
