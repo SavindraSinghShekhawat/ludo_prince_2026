@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -75,6 +76,7 @@ class GlassCard extends StatefulWidget {
   final Color accentColor;
   final VoidCallback onTap;
   final bool isPrimary;
+  final bool isComingSoon;
 
   const GlassCard({
     super.key,
@@ -84,6 +86,7 @@ class GlassCard extends StatefulWidget {
     required this.accentColor,
     required this.onTap,
     this.isPrimary = false,
+    this.isComingSoon = false,
   });
 
   @override
@@ -96,12 +99,16 @@ class _GlassCardState extends State<GlassCard> {
   @override
   Widget build(BuildContext context) {
     Widget card = GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
+      onTapDown:
+          widget.isComingSoon ? null : (_) => setState(() => _isPressed = true),
+      onTapUp: widget.isComingSoon
+          ? null
+          : (_) {
+              setState(() => _isPressed = false);
+              widget.onTap();
+            },
+      onTapCancel:
+          widget.isComingSoon ? null : () => setState(() => _isPressed = false),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -135,7 +142,36 @@ class _GlassCardState extends State<GlassCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(widget.icon, color: widget.accentColor, size: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(widget.icon,
+                              color: widget.accentColor, size: 40),
+                          if (widget.isComingSoon)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color:
+                                    widget.accentColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: widget.accentColor
+                                        .withValues(alpha: 0.4),
+                                    width: 1),
+                              ),
+                              child: Text(
+                                "COMING SOON",
+                                style: TextStyle(
+                                  color: widget.accentColor,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       Text(widget.title,
                           style: const TextStyle(
@@ -159,11 +195,9 @@ class _GlassCardState extends State<GlassCard> {
         .animate(target: _isPressed ? 1 : 0)
         .scaleXY(end: 0.95, duration: 100.ms, curve: Curves.easeOut);
 
-    if (widget.isPrimary) {
-      card = card
-          .animate(onPlay: (c) => c.repeat(reverse: true))
-          .shimmer(duration: 3.seconds, color: Colors.white24);
-    }
+    card = card.animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
+        duration: widget.isPrimary ? 2.seconds : 4.seconds,
+        color: Colors.white.withValues(alpha: widget.isPrimary ? 0.2 : 0.1));
 
     return card;
   }
@@ -207,5 +241,106 @@ class GlassContainer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class CustomSnackBar {
+  static OverlayEntry? _currentEntry;
+  static Timer? _timer;
+
+  static void show(
+    BuildContext context, {
+    required String message,
+    IconData icon = Icons.info_outline,
+    Color? color,
+    bool isError = false,
+    bool isSuccess = false,
+  }) {
+    final snackBarColor = isError
+        ? Colors.redAccent
+        : isSuccess
+            ? const Color(0xFF00FFA3)
+            : color ?? Colors.cyanAccent;
+
+    _timer?.cancel();
+    if (_currentEntry != null && _currentEntry!.mounted) {
+      _currentEntry!.remove();
+    }
+
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: MediaQuery.of(context).padding.bottom + 42,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E2C).withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: snackBarColor.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: snackBarColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isError
+                        ? Icons.error_outline
+                        : isSuccess
+                            ? Icons.check_circle_outline
+                            : icon,
+                    color: snackBarColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 300.ms).slideY(
+                begin: 1,
+                end: 0,
+                duration: 400.ms,
+                curve: Curves.easeOutBack,
+              ),
+        ),
+      ),
+    );
+
+    _currentEntry = entry;
+    overlay.insert(entry);
+
+    _timer = Timer(const Duration(seconds: 4), () {
+      if (entry.mounted) {
+        entry.remove();
+        if (_currentEntry == entry) _currentEntry = null;
+      }
+    });
   }
 }

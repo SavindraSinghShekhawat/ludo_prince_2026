@@ -112,43 +112,87 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: const Color(0xFF2A2A3D),
-              title: const Text(
-                'Exit Game?',
-                style: TextStyle(color: Colors.white),
-              ),
-              content: const Text(
-                'Are you sure you want to stop playing? Current progress will be lost.',
-                style: TextStyle(color: Colors.white70),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.white54),
-                  ),
+            builder: (context) => Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: MediaQuery.of(context).orientation ==
+                      Orientation.portrait
+                  ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
+                  : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).orientation ==
+                          Orientation.landscape
+                      ? 500
+                      : double.infinity,
                 ),
-                TextButton(
-                  onPressed: () {
-                    _controller.quitGame();
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const HomeScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Exit',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
+                child: GlassContainer(
+                  padding: const EdgeInsets.all(24),
+                  color: const Color(0xFF1E1E2C).withValues(alpha: 0.9),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Exit Game?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Are you sure you want to stop playing? Current progress will be lost.',
+                          style: TextStyle(color: Colors.white70, fontSize: 16),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(color: Colors.white54),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: () {
+                                _controller.quitGame();
+                                Navigator.of(context).pop();
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (_) => const HomeScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Colors.redAccent.withValues(alpha: 0.2),
+                                foregroundColor: Colors.redAccent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: const BorderSide(
+                                      color: Colors.redAccent, width: 1),
+                                ),
+                              ),
+                              child: const Text(
+                                'Exit',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           );
         },
@@ -241,73 +285,76 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
   Widget _buildBoard(GameState gameState) {
     return Expanded(
-      child: Center(
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: GlassContainer(
-            padding: EdgeInsets.zero,
-            borderRadius: 16,
-            color: AppColors.boardGlassBackground,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final boardSize = constraints.biggest.shortestSide;
-                final cellSize = boardSize / 15;
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: GlassContainer(
+              padding: EdgeInsets.zero,
+              borderRadius: 16,
+              color: AppColors.boardGlassBackground,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final boardSize = constraints.biggest.shortestSide;
+                  final cellSize = boardSize / 15;
 
-                return GestureDetector(
-                  onTapUp: (details) {
-                    if (!gameState.isDiceRolled) return;
+                  return GestureDetector(
+                    onTapUp: (details) {
+                      if (!gameState.isDiceRolled) return;
 
-                    bool isMoveValid(Token t, GameState state) {
-                      if (t.state == TokenState.home) {
-                        return state.diceValue == 6;
-                      }
-                      if (t.state == TokenState.finished) return false;
-                      return t.position + state.diceValue <= 56;
-                    }
-
-                    double tapX = details.localPosition.dx / cellSize;
-                    double tapY = details.localPosition.dy / cellSize;
-
-                    Token? targetToken;
-                    for (var player in gameState.players) {
-                      if (player.slot != gameState.currentTurn) continue;
-                      if (player.type == PlayerType.localBot ||
-                          player.type == PlayerType.remoteBot) {
-                        break;
+                      bool isMoveValid(Token t, GameState state) {
+                        if (t.state == TokenState.home) {
+                          return state.diceValue == 6;
+                        }
+                        if (t.state == TokenState.finished) return false;
+                        return t.position + state.diceValue <= 56;
                       }
 
-                      for (var token in player.tokens) {
-                        Offset gridPos = BoardPath.getTokenOffset(token);
-                        double gridX = gridPos.dx;
-                        double gridY = gridPos.dy;
+                      double tapX = details.localPosition.dx / cellSize;
+                      double tapY = details.localPosition.dy / cellSize;
 
-                        if (tapX >= gridX &&
-                            tapX < gridX + 1 &&
-                            tapY >= gridY &&
-                            tapY < gridY + 1) {
-                          if (isMoveValid(token, gameState)) {
-                            targetToken = token;
-                            break;
+                      Token? targetToken;
+                      for (var player in gameState.players) {
+                        if (player.slot != gameState.currentTurn) continue;
+                        if (player.type == PlayerType.localBot ||
+                            player.type == PlayerType.remoteBot) {
+                          break;
+                        }
+
+                        for (var token in player.tokens) {
+                          Offset gridPos = BoardPath.getTokenOffset(token);
+                          double gridX = gridPos.dx;
+                          double gridY = gridPos.dy;
+
+                          if (tapX >= gridX &&
+                              tapX < gridX + 1 &&
+                              tapY >= gridY &&
+                              tapY < gridY + 1) {
+                            if (isMoveValid(token, gameState)) {
+                              targetToken = token;
+                              break;
+                            }
                           }
                         }
+                        if (targetToken != null) break;
                       }
-                      if (targetToken != null) break;
-                    }
 
-                    if (targetToken != null) {
-                      ref
-                          .read(gameControllerProvider)
-                          .sendMoveIntent(targetToken);
-                    }
-                  },
-                  child: Stack(
-                    children: [
-                      BoardWidget(gameMode: gameState.gameMode),
-                      ..._buildTokens(gameState, cellSize),
-                    ],
-                  ),
-                );
-              },
+                      if (targetToken != null) {
+                        ref
+                            .read(gameControllerProvider)
+                            .sendMoveIntent(targetToken);
+                      }
+                    },
+                    child: Stack(
+                      children: [
+                        BoardWidget(gameMode: gameState.gameMode),
+                        ..._buildTokens(gameState, cellSize),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),

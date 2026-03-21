@@ -114,11 +114,17 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
         ],
         centerTitle: true,
       ),
-      body: SafeArea(
+      body: Center(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 450),
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.of(context).orientation == Orientation.landscape
+                    ? 800
+                    : double.infinity,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: SingleChildScrollView(
@@ -389,7 +395,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text('Start Game',
+                    child: const Text('START GAME',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,

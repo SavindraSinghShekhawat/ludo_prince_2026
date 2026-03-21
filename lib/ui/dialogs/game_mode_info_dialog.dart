@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
 import '../widgets/shared_ui.dart';
 
-class RulesDialog extends StatelessWidget {
-  const RulesDialog({super.key});
+class GameModeInfoItem {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String content;
+
+  GameModeInfoItem(this.icon, this.color, this.title, this.content);
+}
+
+class GameModeInfoDialog extends StatelessWidget {
+  final String title;
+  final List<GameModeInfoItem> items;
+  final IconData headerIcon;
+
+  const GameModeInfoDialog({
+    super.key,
+    required this.title,
+    required this.items,
+    required this.headerIcon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +45,13 @@ class RulesDialog extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),
-                    SizedBox(width: 12),
+                    Icon(headerIcon, color: const Color(0xFFE5E4E2), size: 28),
+                    const SizedBox(width: 12),
                     Text(
-                      'Game Rules',
-                      style: TextStyle(
+                      title,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -44,23 +62,7 @@ class RulesDialog extends StatelessWidget {
                 const Divider(color: Colors.white24, height: 32),
                 Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildRule(Icons.looks_6, Colors.amberAccent, 'Roll a 6',
-                        'You must roll a 6 to move a token out of your base.'),
-                    _buildRule(Icons.replay, Colors.cyanAccent, 'Extra Turn',
-                        'Rolling a 6 gives you an additional turn.'),
-                    _buildRule(Icons.block, Colors.redAccent, 'Consecutive 6s',
-                        'Rolling three consecutive 6s skips your turn and passes it to the next player.'),
-                    _buildRule(Icons.stars, Colors.greenAccent, 'Safe Spots',
-                        'Tokens on marked safe spots (stars) cannot be captured.'),
-                    _buildRule(
-                        Icons.sports_kabaddi,
-                        Colors.orangeAccent,
-                        'Capture',
-                        'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.'),
-                    _buildRule(Icons.flag, const Color(0xFFE5E4E2), 'Winning',
-                        'The first player to move all 4 of their tokens to the home area at the center of the board wins.'),
-                  ],
+                  children: items.map((item) => _buildRule(item)).toList(),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -89,8 +91,7 @@ class RulesDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildRule(
-      IconData icon, Color color, String title, String description) {
+  Widget _buildRule(GameModeInfoItem item) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -99,10 +100,10 @@ class RulesDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: item.color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(item.icon, color: item.color, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -110,7 +111,7 @@ class RulesDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  item.title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -119,7 +120,7 @@ class RulesDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  description,
+                  item.content,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 14,

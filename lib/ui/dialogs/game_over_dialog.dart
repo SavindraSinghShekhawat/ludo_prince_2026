@@ -127,268 +127,294 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
           Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              child: GlassContainer(
-                padding: const EdgeInsets.all(24),
-                color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Celebration Header
-                      Icon(
-                        headerIcon,
-                        color: headerColor,
-                        size: 80,
-                      )
-                          .animate(onPlay: (controller) => controller.repeat())
-                          .shimmer(duration: 2000.ms)
-                          .scale(
-                              begin: const Offset(0.8, 0.8),
-                              end: const Offset(1.05, 1.05),
-                              duration: 1500.ms,
-                              curve: Curves.easeInOutSine)
-                          .then()
-                          .scale(
-                              begin: const Offset(1.05, 1.05),
-                              end: const Offset(0.8, 0.8),
-                              duration: 1500.ms,
-                              curve: Curves.easeInOutSine),
-                      const SizedBox(height: 16),
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: headerColor == const Color(0xFFE5E4E2)
-                              ? const [
-                                  Color(0xFFE5E4E2),
-                                  Color(0xFFFFFFFF),
-                                  Color(0xFFA0A0A0),
-                                  Color(0xFFE5E4E2)
-                                ]
-                              : [
-                                  headerColor.withValues(alpha: 0.6),
-                                  headerColor
-                                ],
-                          stops: const [0.0, 0.4, 0.6, 1.0],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds),
-                        child: Text(
-                          headerText,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.5),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.state.message,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: headerColor.withValues(alpha: 0.8),
-                        ),
-                      ).animate().fadeIn(delay: 400.ms),
-                      const SizedBox(height: 32),
-
-                      // Rankings
-                      ...List.generate(widget.state.winners.length, (index) {
-                        final playerSlot = widget.state.winners[index];
-                        final player = widget.state.players
-                            .firstWhere((p) => p.slot == playerSlot);
-                        final place = index + 1;
-                        final isLast = place == widget.state.winners.length;
-
-                        Color placeColor = Colors.white;
-                        String placeText = "#$place";
-                        IconData? placeIcon;
-
-                        if (place == 1) {
-                          placeColor = const Color(0xFFE5E4E2);
-                          placeText = "1st";
-                          placeIcon = Icons.emoji_events;
-                        } else if (place == 2) {
-                          placeColor = const Color(0xFFB0B4B8);
-                          placeText = "2nd";
-                          placeIcon = Icons.workspace_premium;
-                        } else if (place == 3) {
-                          placeColor = const Color(0xFF8A8D91);
-                          placeText = "3rd";
-                          placeIcon = Icons.workspace_premium;
-                        }
-
-                        if (isLast) {
-                          placeColor = Colors.redAccent.shade200;
-                          placeText = "Last";
-                          placeIcon = Icons.sentiment_very_dissatisfied;
-                        }
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: place == 1
-                                ? const Color(0xFFE5E4E2)
-                                    .withValues(alpha: 0.15)
-                                : Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: placeColor.withValues(alpha: 0.3),
-                                width: place == 1 ? 2.5 : 1.5),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                alignment: Alignment.center,
-                                child: Text(
-                                  placeText,
-                                  style: TextStyle(
-                                    fontSize: place == 1 ? 24 : 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: placeColor,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                width: 20,
-                                height: 20,
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _getPlayerColor(playerSlot),
-                                  border:
-                                      Border.all(color: Colors.white, width: 2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: _getPlayerColor(playerSlot)
-                                          .withValues(alpha: 0.8),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  player.name,
-                                  style: TextStyle(
-                                    fontSize: place == 1 ? 20 : 18,
-                                    fontWeight: place == 1
-                                        ? FontWeight.w800
-                                        : FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (placeIcon != null) ...[
-                                const SizedBox(width: 8),
-                                Icon(placeIcon,
-                                        color: placeColor,
-                                        size: place == 1 ? 28 : 24)
-                                    .animate(target: place == 1 ? 1 : 0)
-                                    .scale(
-                                        duration: 800.ms,
-                                        curve: Curves.elasticOut)
-                                    .shimmer(duration: 1500.ms, delay: 800.ms),
-                              ]
-                            ],
-                          ),
-                        )
-                            .animate(delay: (200 * index).ms)
-                            .fadeIn(duration: 500.ms)
-                            .slideX(begin: 0.5);
-                      }),
-
-                      const SizedBox(height: 32),
-
-                      // Action Buttons
-                      Row(
+              insetPadding: MediaQuery.of(context).orientation ==
+                      Orientation.portrait
+                  ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
+                  : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+              child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).orientation ==
+                            Orientation.landscape
+                        ? 500
+                        : double.infinity,
+                  ),
+                  child: GlassContainer(
+                    padding: const EdgeInsets.all(24),
+                    color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (_) => const HomeScreen()),
-                                (route) => false,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE5E4E2),
-                              foregroundColor: const Color(0xFF1E1E2C),
-                              elevation: 6,
-                              padding: const EdgeInsets.all(18),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16)),
+                          // Celebration Header
+                          Icon(
+                            headerIcon,
+                            color: headerColor,
+                            size: 80,
+                          )
+                              .animate(
+                                  onPlay: (controller) => controller.repeat())
+                              .shimmer(duration: 2000.ms)
+                              .scale(
+                                  begin: const Offset(0.8, 0.8),
+                                  end: const Offset(1.05, 1.05),
+                                  duration: 1500.ms,
+                                  curve: Curves.easeInOutSine)
+                              .then()
+                              .scale(
+                                  begin: const Offset(1.05, 1.05),
+                                  end: const Offset(0.8, 0.8),
+                                  duration: 1500.ms,
+                                  curve: Curves.easeInOutSine),
+                          const SizedBox(height: 16),
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: headerColor == const Color(0xFFE5E4E2)
+                                  ? const [
+                                      Color(0xFFE5E4E2),
+                                      Color(0xFFFFFFFF),
+                                      Color(0xFFA0A0A0),
+                                      Color(0xFFE5E4E2)
+                                    ]
+                                  : [
+                                      headerColor.withValues(alpha: 0.6),
+                                      headerColor
+                                    ],
+                              stops: const [0.0, 0.4, 0.6, 1.0],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ).createShader(bounds),
+                            child: Text(
+                              headerText,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2,
+                              ),
                             ),
-                            child: const Icon(Icons.home_filled, size: 28),
-                          ).animate().fadeIn(delay: 1000.ms).moveY(begin: 20),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                if (widget.state.gameType == GameType.online) {
-                                  Navigator.of(context).pop();
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const LobbyScreen(isQuickMatch: true),
-                                    ),
-                                  );
-                                } else {
-                                  Map<PlayerSlot, PlayerSetupConfig> config =
-                                      {};
-                                  for (var player in widget.state.players) {
-                                    config[player.slot] = PlayerSetupConfig(
-                                      name: player.name,
-                                      type: player.type,
-                                    );
-                                  }
+                          )
+                              .animate()
+                              .fadeIn(duration: 600.ms)
+                              .slideY(begin: -0.5),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.state.message,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: headerColor.withValues(alpha: 0.8),
+                            ),
+                          ).animate().fadeIn(delay: 400.ms),
+                          const SizedBox(height: 32),
 
-                                  Navigator.of(context).pushAndRemoveUntil(
-                                    MaterialPageRoute(
-                                      builder: (context) => ProviderScope(
-                                        overrides: [
-                                          gameControllerProvider
-                                              .overrideWithValue(
-                                                  LudoController(config)),
-                                        ],
-                                        child: const LudoScreen(),
+                          // Rankings
+                          ...List.generate(widget.state.winners.length,
+                              (index) {
+                            final playerSlot = widget.state.winners[index];
+                            final player = widget.state.players
+                                .firstWhere((p) => p.slot == playerSlot);
+                            final place = index + 1;
+                            final isLast = place == widget.state.winners.length;
+
+                            Color placeColor = Colors.white;
+                            String placeText = "#$place";
+                            IconData? placeIcon;
+
+                            if (place == 1) {
+                              placeColor = const Color(0xFFE5E4E2);
+                              placeText = "1st";
+                              placeIcon = Icons.emoji_events;
+                            } else if (place == 2) {
+                              placeColor = const Color(0xFFB0B4B8);
+                              placeText = "2nd";
+                              placeIcon = Icons.workspace_premium;
+                            } else if (place == 3) {
+                              placeColor = const Color(0xFF8A8D91);
+                              placeText = "3rd";
+                              placeIcon = Icons.workspace_premium;
+                            }
+
+                            if (isLast) {
+                              placeColor = Colors.redAccent.shade200;
+                              placeText = "Last";
+                              placeIcon = Icons.sentiment_very_dissatisfied;
+                            }
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: place == 1
+                                    ? const Color(0xFFE5E4E2)
+                                        .withValues(alpha: 0.15)
+                                    : Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: placeColor.withValues(alpha: 0.3),
+                                    width: place == 1 ? 2.5 : 1.5),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      placeText,
+                                      style: TextStyle(
+                                        fontSize: place == 1 ? 24 : 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: placeColor,
                                       ),
                                     ),
+                                  ),
+                                  Container(
+                                    width: 20,
+                                    height: 20,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _getPlayerColor(playerSlot),
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: _getPlayerColor(playerSlot)
+                                              .withValues(alpha: 0.8),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      player.name,
+                                      style: TextStyle(
+                                        fontSize: place == 1 ? 20 : 18,
+                                        fontWeight: place == 1
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (placeIcon != null) ...[
+                                    const SizedBox(width: 8),
+                                    Icon(placeIcon,
+                                            color: placeColor,
+                                            size: place == 1 ? 28 : 24)
+                                        .animate(target: place == 1 ? 1 : 0)
+                                        .scale(
+                                            duration: 800.ms,
+                                            curve: Curves.elasticOut)
+                                        .shimmer(
+                                            duration: 1500.ms, delay: 800.ms),
+                                  ]
+                                ],
+                              ),
+                            )
+                                .animate(delay: (200 * index).ms)
+                                .fadeIn(duration: 500.ms)
+                                .slideX(begin: 0.5);
+                          }),
+
+                          const SizedBox(height: 32),
+
+                          // Action Buttons
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (_) => const HomeScreen()),
                                     (route) => false,
                                   );
-                                }
-                              },
-                              icon: const Icon(Icons.play_arrow_rounded,
-                                  color: Colors.white, size: 28),
-                              label: const Text('New Game',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.greenAccent.shade700,
-                                elevation: 6,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 18),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE5E4E2),
+                                  foregroundColor: const Color(0xFF1E1E2C),
+                                  elevation: 6,
+                                  padding: const EdgeInsets.all(18),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
+                                ),
+                                child: const Icon(Icons.home_filled, size: 28),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 1000.ms)
+                                  .moveY(begin: 20),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    if (widget.state.gameType ==
+                                        GameType.online) {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (_) => const LobbyScreen(
+                                              isQuickMatch: true),
+                                        ),
+                                      );
+                                    } else {
+                                      Map<PlayerSlot, PlayerSetupConfig>
+                                          config = {};
+                                      for (var player in widget.state.players) {
+                                        config[player.slot] = PlayerSetupConfig(
+                                          name: player.name,
+                                          type: player.type,
+                                        );
+                                      }
+
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (context) => ProviderScope(
+                                            overrides: [
+                                              gameControllerProvider
+                                                  .overrideWithValue(
+                                                      LudoController(config)),
+                                            ],
+                                            child: const LudoScreen(),
+                                          ),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(Icons.play_arrow_rounded,
+                                      color: Colors.white, size: 28),
+                                  label: const Text('New Game',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Colors.greenAccent.shade700,
+                                    elevation: 6,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 18),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                  ),
+                                )
+                                    .animate()
+                                    .fadeIn(delay: 1200.ms)
+                                    .moveY(begin: 20),
                               ),
-                            ).animate().fadeIn(delay: 1200.ms).moveY(begin: 20),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-              )),
+                    ),
+                  ))),
 
           // Confetti exactly centered at the top (only if human deserved it)
           if (shouldCelebrate)

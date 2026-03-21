@@ -105,18 +105,20 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            _buildInfoCard(),
-            const SizedBox(height: 32),
-            _buildChart(),
-            const SizedBox(height: 32),
-            _buildStats(),
-            const SizedBox(height: 48),
-            _buildControls(),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              _buildInfoCard(),
+              const SizedBox(height: 32),
+              _buildChart(),
+              const SizedBox(height: 32),
+              _buildStats(),
+              const SizedBox(height: 48),
+              _buildControls(),
+            ],
+          ),
         ),
       ),
     ));

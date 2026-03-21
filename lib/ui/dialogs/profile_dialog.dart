@@ -22,152 +22,159 @@ class ProfileDialog extends ConsumerWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(24),
-        child: userProfileAsync.when(
-          data: (profile) {
-            final isAnonymous = user.isAnonymous;
+      insetPadding: MediaQuery.of(context).orientation == Orientation.portrait
+          ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).orientation == Orientation.landscape
+              ? 500
+              : double.infinity,
+        ),
+        child: GlassContainer(
+          padding: const EdgeInsets.all(24),
+          color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+          child: userProfileAsync.when(
+            data: (profile) {
+              final isAnonymous = user.isAnonymous;
 
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'PLAYER PROFILE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'PLAYER PROFILE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white54),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white54),
-                      onPressed: () => Navigator.pop(context),
+                    const SizedBox(height: 24),
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      backgroundImage: profile?.photoURL != null
+                          ? NetworkImage(profile!.photoURL!)
+                          : null,
+                      child: profile?.photoURL == null
+                          ? const Icon(Icons.person,
+                              size: 40, color: Colors.white)
+                          : null,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
-                  backgroundImage: profile?.photoURL != null
-                      ? NetworkImage(profile!.photoURL!)
-                      : null,
-                  child: profile?.photoURL == null
-                      ? const Icon(Icons.person, size: 40, color: Colors.white)
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  profile?.displayName ??
-                      (user.displayName != null && user.displayName!.isNotEmpty
-                          ? user.displayName!
-                          : 'Anonymous King'),
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold),
-                ),
-                if (isAnonymous)
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.amber.withValues(alpha: 0.5)),
-                    ),
-                    child: const Text(
-                      'GUEST ACCOUNT',
-                      style: TextStyle(
-                          color: Colors.amber,
-                          fontSize: 10,
+                    const SizedBox(height: 16),
+                    Text(
+                      profile?.displayName ??
+                          (user.displayName != null &&
+                                  user.displayName!.isNotEmpty
+                              ? user.displayName!
+                              : 'Anonymous King'),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold),
                     ),
-                  ),
-                const SizedBox(height: 32),
-                _buildStatRow(Icons.emoji_events, 'Games Won',
-                    '${profile?.gamesWon ?? 0}'),
-                const SizedBox(height: 12),
-                _buildStatRow(Icons.videogame_asset, 'Games Played',
-                    '${profile?.gamesPlayed ?? 0}'),
-                const SizedBox(height: 12),
-                _buildStatRow(
-                    Icons.people, 'Friends', '${profile?.friendsCount ?? 0}'),
-                const SizedBox(height: 24),
-                _buildActionButton(
-                  context,
-                  isAnonymous ? 'FRIENDS' : 'FRIENDS',
-                  isAnonymous ? Icons.lock_outline : Icons.people_outline,
-                  isAnonymous
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.cyanAccent, // Greenish like the icons
-                  isAnonymous
-                      ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Link your account to unlock Friends!',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              backgroundColor: Color(0xFFE0E0E0), // Light grey
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      : () {
+                    if (isAnonymous)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.5)),
+                        ),
+                        child: const Text(
+                          'GUEST ACCOUNT',
+                          style: TextStyle(
+                              color: Colors.amber,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    const SizedBox(height: 32),
+                    _buildStatRow(Icons.emoji_events, 'Games Won',
+                        '${profile?.gamesWon ?? 0}'),
+                    const SizedBox(height: 12),
+                    _buildStatRow(Icons.videogame_asset, 'Games Played',
+                        '${profile?.gamesPlayed ?? 0}'),
+                    const SizedBox(height: 12),
+                    _buildStatRow(Icons.people, 'Friends',
+                        '${profile?.friendsCount ?? 0}'),
+                    const SizedBox(height: 24),
+                    _buildActionButton(
+                      context,
+                      isAnonymous ? 'FRIENDS' : 'FRIENDS',
+                      isAnonymous ? Icons.lock_outline : Icons.people_outline,
+                      isAnonymous
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.cyanAccent, // Greenish like the icons
+                      isAnonymous
+                          ? () {
+                              CustomSnackBar.show(
+                                context,
+                                message: 'Link your account to unlock Friends!',
+                                color: Colors.cyanAccent,
+                              );
+                            }
+                          : () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const FriendsScreen()));
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    if (isAnonymous)
+                      _buildActionButton(
+                        context,
+                        'LINK ACCOUNT',
+                        Icons.link,
+                        const Color(0xFFE5E4E2),
+                        () {
                           Navigator.pop(context);
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const FriendsScreen()));
+                                  builder: (_) => const AuthScreen()));
                         },
+                        isPlatinum: true,
+                      )
+                    else
+                      _buildActionButton(
+                        context,
+                        'SIGN OUT',
+                        Icons.logout,
+                        Colors.redAccent.withValues(alpha: 0.8),
+                        () async {
+                          await authService.signOut();
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                if (isAnonymous)
-                  _buildActionButton(
-                    context,
-                    'LINK ACCOUNT',
-                    Icons.link,
-                    const Color(0xFFE5E4E2),
-                    () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const AuthScreen()));
-                    },
-                    isPlatinum: true,
-                  )
-                else
-                  _buildActionButton(
-                    context,
-                    'SIGN OUT',
-                    Icons.logout,
-                    Colors.redAccent.withValues(alpha: 0.8),
-                    () async {
-                      await authService.signOut();
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                  ),
-              ],
-            );
-          },
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
-          error: (err, stack) => Center(
-            child: Text(
-              'Error loading profile',
-              style: TextStyle(color: Colors.redAccent),
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+            error: (err, stack) => Center(
+              child: Text(
+                'Error loading profile',
+                style: TextStyle(color: Colors.redAccent),
+              ),
             ),
           ),
         ),

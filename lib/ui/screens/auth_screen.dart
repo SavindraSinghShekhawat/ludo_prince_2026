@@ -38,46 +38,85 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void _showSwitchAccountDialog(AuthCredential credential) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2C),
-        title: const Text('Account Already Linked',
-            style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'This account is already linked to another profile. Would you like to switch to that profile? (Current guest progress will not be merged)',
-          style: TextStyle(color: Colors.white70),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: MediaQuery.of(context).orientation == Orientation.portrait
+            ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
+            : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.of(context).orientation == Orientation.landscape
+                    ? 500
+                    : double.infinity,
+          ),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(24),
+            color: const Color(0xFF1E1E2C).withValues(alpha: 0.9),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Account Already Linked',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'This account is already linked to another profile. Would you like to switch to that profile? (Current guest progress will not be merged)',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel',
+                            style: TextStyle(color: Colors.white38)),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurpleAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          setState(() => _isLoading = true);
+                          try {
+                            await FirebaseAuth.instance
+                                .signInWithCredential(credential);
+                            if (mounted) Navigator.pop(context);
+                          } catch (e) {
+                            _showError('Failed to switch account: $e');
+                          } finally {
+                            if (mounted) setState(() => _isLoading = false);
+                          }
+                        },
+                        child: const Text('Switch Account'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child:
-                const Text('Cancel', style: TextStyle(color: Colors.white38)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent),
-            onPressed: () async {
-              Navigator.pop(context);
-              setState(() => _isLoading = true);
-              try {
-                await FirebaseAuth.instance.signInWithCredential(credential);
-                if (mounted) Navigator.pop(context);
-              } catch (e) {
-                _showError('Failed to switch account: $e');
-              } finally {
-                if (mounted) setState(() => _isLoading = false);
-              }
-            },
-            child: const Text('Switch Account'),
-          ),
-        ],
       ),
     );
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
-    );
+    CustomSnackBar.show(context, message: message, isError: true);
   }
 
   @override
@@ -93,56 +132,59 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.account_circle_outlined,
-                        size: 100, color: Colors.white)
-                    .animate()
-                    .scale(duration: 600.ms, curve: Curves.easeOutBack),
-                const SizedBox(height: 32),
-                const Text(
-                  'JOIN THE ROYAL COURT',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
-                ).animate().fadeIn(delay: 200.ms),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sign in to save progress and play with friends',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ).animate().fadeIn(delay: 400.ms),
-                const SizedBox(height: 48),
-                if (_isLoading)
-                  const CircularProgressIndicator(color: Colors.white)
-                else ...[
-                  _AuthButton(
-                    label: 'Continue with Google',
-                    icon: Icons.g_mobiledata,
-                    onPressed: () =>
-                        _handleSignIn(authService.signInWithGoogle),
-                    color: Colors.white,
-                    textColor: Colors.black87,
-                  ).animate().slideY(
-                      begin: 0.5, duration: 400.ms, curve: Curves.easeOut),
-                  const SizedBox(height: 16),
-                  _AuthButton(
-                    label: 'Continue with Apple',
-                    icon: Icons.apple,
-                    onPressed: () => _handleSignIn(authService.signInWithApple),
-                    color: Colors.black,
-                    textColor: Colors.white,
-                  ).animate().slideY(
-                      begin: 0.5, duration: 500.ms, curve: Curves.easeOut),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.account_circle_outlined,
+                          size: 100, color: Colors.white)
+                      .animate()
+                      .scale(duration: 600.ms, curve: Curves.easeOutBack),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'JOIN THE ROYAL COURT',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Sign in to save progress and play with friends',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ).animate().fadeIn(delay: 400.ms),
+                  const SizedBox(height: 48),
+                  if (_isLoading)
+                    const CircularProgressIndicator(color: Colors.white)
+                  else ...[
+                    _AuthButton(
+                      label: 'Continue with Google',
+                      icon: Icons.g_mobiledata,
+                      onPressed: () =>
+                          _handleSignIn(authService.signInWithGoogle),
+                      color: Colors.white,
+                      textColor: Colors.black87,
+                    ).animate().slideY(
+                        begin: 0.5, duration: 400.ms, curve: Curves.easeOut),
+                    const SizedBox(height: 16),
+                    _AuthButton(
+                      label: 'Continue with Apple',
+                      icon: Icons.apple,
+                      onPressed: () =>
+                          _handleSignIn(authService.signInWithApple),
+                      color: Colors.black,
+                      textColor: Colors.white,
+                    ).animate().slideY(
+                        begin: 0.5, duration: 500.ms, curve: Curves.easeOut),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

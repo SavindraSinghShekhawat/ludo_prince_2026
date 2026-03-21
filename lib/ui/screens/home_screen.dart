@@ -42,6 +42,15 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 24),
                       GlassCard(
+                        title: "PLAY WITH FRIENDS",
+                        subtitle: "Private Rooms & Friends",
+                        icon: Icons.people,
+                        accentColor: Colors.tealAccent,
+                        isComingSoon: true,
+                        onTap: () {},
+                      ),
+                      const SizedBox(height: 24),
+                      GlassCard(
                         title: "LOCAL & BOTS",
                         subtitle: "Offline, Friends & Computer",
                         icon: Icons.home,
