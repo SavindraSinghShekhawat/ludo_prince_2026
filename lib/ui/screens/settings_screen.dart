@@ -7,6 +7,7 @@ import '../../providers/package_info_provider.dart';
 import '../../services/feedback_service.dart';
 import 'dice_randomness_screen.dart';
 import '../widgets/shared_ui.dart';
+import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -94,9 +95,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor:
-                            Colors.blueAccent.withValues(alpha: 0.2),
-                        child:
-                            const Icon(Icons.person, color: Colors.blueAccent),
+                            AppColors.player1BlueUI.withValues(alpha: 0.2),
+                        child: const Icon(Icons.person,
+                            color: AppColors.player1BlueUI),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -241,7 +242,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: "Dice Fairness Check",
                 subtitle: "Run 100M simulations to verify RNG",
                 icon: Icons.analytics_outlined,
-                accentColor: Colors.blueAccent,
+                accentColor: AppColors.player1BlueUI,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(

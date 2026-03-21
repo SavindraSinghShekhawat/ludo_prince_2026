@@ -156,23 +156,23 @@ class BoardWidget extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 1.65 * cellSize,
-                  top: 1.65 * cellSize,
+                  left: 1.575 * cellSize,
+                  top: 1.575 * cellSize,
                   child: _buildEmptySpot(cellSize, color),
                 ),
                 Positioned(
-                  left: 3.65 * cellSize,
-                  top: 1.65 * cellSize,
+                  left: 3.575 * cellSize,
+                  top: 1.575 * cellSize,
                   child: _buildEmptySpot(cellSize, color),
                 ),
                 Positioned(
-                  left: 1.65 * cellSize,
-                  top: 3.65 * cellSize,
+                  left: 1.575 * cellSize,
+                  top: 3.575 * cellSize,
                   child: _buildEmptySpot(cellSize, color),
                 ),
                 Positioned(
-                  left: 3.65 * cellSize,
-                  top: 3.65 * cellSize,
+                  left: 3.575 * cellSize,
+                  top: 3.575 * cellSize,
                   child: _buildEmptySpot(cellSize, color),
                 ),
                 if (teamLabel != null && gameMode == GameMode.team)
@@ -233,8 +233,8 @@ class BoardWidget extends StatelessWidget {
 
   Widget _buildEmptySpot(double cellSize, Color color) {
     return Container(
-      width: cellSize * 0.7,
-      height: cellSize * 0.7,
+      width: cellSize * 0.85,
+      height: cellSize * 0.85,
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.15),
         shape: BoxShape.circle,

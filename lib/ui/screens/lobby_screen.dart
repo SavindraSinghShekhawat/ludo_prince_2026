@@ -19,6 +19,7 @@ import '../widgets/game_mode_selector.dart';
 import '../widgets/shared_ui.dart';
 import '../dialogs/profile_dialog.dart';
 import '../dialogs/settings_dialog.dart';
+import '../../utils/colors.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -607,18 +608,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Color _getSlotColor(int index) {
-    switch (index) {
-      case 0:
-        return Colors.blueAccent;
-      case 1:
-        return Colors.amber.shade600;
-      case 2:
-        return Colors.greenAccent.shade700;
-      case 3:
-        return Colors.redAccent;
-      default:
-        return Colors.white;
-    }
+    return AppColors.getUiColorForSlot(PlayerSlot.values[index]);
   }
 
   Widget _buildTeamHeader(String title) {
@@ -630,7 +620,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             width: 4,
             height: 20,
             decoration: BoxDecoration(
-              color: title.contains('A') ? Colors.blueAccent : Colors.redAccent,
+              color: title.contains('A')
+                  ? AppColors.player1BlueUI
+                  : AppColors.player4RedUI,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -667,7 +659,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blueAccent.withValues(alpha: 0.3),
+                  color: AppColors.player1BlueUI.withValues(alpha: 0.3),
                   blurRadius: 10,
                 ),
               ],

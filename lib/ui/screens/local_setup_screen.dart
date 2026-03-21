@@ -7,6 +7,7 @@ import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
 import 'ludo_screen.dart';
+import '../../utils/colors.dart';
 import '../dialogs/rules_dialog.dart';
 import '../dialogs/settings_dialog.dart';
 import '../../models/game_state.dart';
@@ -214,21 +215,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               widgets.add(_buildTeamHeader("TEAM B"));
                             }
 
-                            Color displayColor = Colors.white;
-                            switch (slot) {
-                              case PlayerSlot.slot1:
-                                displayColor = Colors.blueAccent;
-                                break;
-                              case PlayerSlot.slot2:
-                                displayColor = Colors.amber.shade600;
-                                break;
-                              case PlayerSlot.slot3:
-                                displayColor = Colors.greenAccent.shade700;
-                                break;
-                              case PlayerSlot.slot4:
-                                displayColor = Colors.redAccent;
-                                break;
-                            }
+                            Color displayColor =
+                                AppColors.getUiColorForSlot(slot);
 
                             widgets.add(
                               Padding(
@@ -419,7 +407,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
             width: 4,
             height: 20,
             decoration: BoxDecoration(
-              color: title.contains('A') ? Colors.blueAccent : Colors.redAccent,
+              color: title.contains('A')
+                  ? AppColors.player1BlueUI
+                  : AppColors.player4RedUI,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -456,7 +446,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blueAccent.withValues(alpha: 0.3),
+                  color: AppColors.player1BlueUI.withValues(alpha: 0.3),
                   blurRadius: 10,
                 ),
               ],

@@ -26,7 +26,7 @@ class TokenWidget extends StatelessWidget {
     Offset gridPos = BoardPath.getTokenOffset(token);
 
     double tokenSize = cellSize *
-        0.7 *
+        0.85 *
         scaleAdjustment; // Applied scale adjustment for stacking
     double offsetXY = (cellSize - tokenSize) / 2;
 
@@ -54,8 +54,8 @@ class TokenWidget extends StatelessWidget {
                       _getGlowColor(token.slot),
                       _getColor(token.slot),
                     ],
-                    center: const Alignment(-0.3, -0.3),
-                    radius: 0.8,
+                    center: Alignment.center,
+                    radius: 1.0,
                   ),
                   border: Border.all(
                       color: Colors.white
@@ -63,9 +63,14 @@ class TokenWidget extends StatelessWidget {
                       width: isMovable ? 2.0 : 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withOpacity(0.45),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1.5),
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      spreadRadius: 1,
                     ),
                     if (isMovable)
                       BoxShadow(
@@ -88,10 +93,10 @@ class TokenWidget extends StatelessWidget {
                             colors: [
                               Colors.white.withValues(
                                   alpha: AppColors.tokenReflectionAlpha),
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.1),
+                              Colors.white.withValues(alpha: 0.05),
+                              Colors.black.withValues(alpha: 0.05),
                             ],
-                            stops: const [0.0, 0.5, 1.0],
+                            stops: const [0.0, 0.4, 1.0],
                           ),
                         ),
                       ),
@@ -99,13 +104,13 @@ class TokenWidget extends StatelessWidget {
                     // Inner ring for premium look
                     Center(
                       child: Container(
-                        width: tokenSize * 0.6,
-                        height: tokenSize * 0.6,
+                        width: tokenSize * 0.76,
+                        height: tokenSize * 0.76,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.25),
-                            width: 1.2,
+                            color: Colors.white.withValues(alpha: 0.2),
+                            width: 1.0,
                           ),
                         ),
                       ),

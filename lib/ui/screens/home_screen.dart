@@ -7,6 +7,7 @@ import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../widgets/shared_ui.dart';
+import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -54,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
                         title: "LOCAL & BOTS",
                         subtitle: "Offline, Friends & Computer",
                         icon: Icons.home,
-                        accentColor: Colors.blueAccent,
+                        accentColor: AppColors.player1BlueUI,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(

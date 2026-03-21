@@ -4,6 +4,7 @@ import 'package:ludo_prince/controllers/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/models/player.dart';
 import 'package:ludo_prince/ui/widgets/robot_icon.dart';
+import '../../utils/colors.dart';
 import '../../models/game_state.dart';
 import '../../models/token.dart';
 import '../../models/board_path.dart';
@@ -15,7 +16,6 @@ import 'home_screen.dart';
 import '../dialogs/rules_dialog.dart';
 import '../dialogs/settings_dialog.dart';
 import '../dialogs/game_over_dialog.dart';
-import '../../utils/colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
@@ -551,25 +551,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       {bool isLandscape = false, bool isLeft = true}) {
     final isTurn = slot == state.currentTurn;
 
-    Color displayColor;
-    switch (slot) {
-      case PlayerSlot.slot1:
-        displayColor = Colors.blueAccent;
-
-        break;
-      case PlayerSlot.slot2:
-        displayColor = Colors.amber.shade600;
-
-        break;
-      case PlayerSlot.slot3:
-        displayColor = Colors.greenAccent.shade700;
-
-        break;
-      case PlayerSlot.slot4:
-        displayColor = Colors.redAccent;
-
-        break;
-    }
+    final Color displayColor = AppColors.getUiColorForSlot(slot);
 
     final player = state.players.firstWhere((p) => p.slot == slot);
     final playerName = player.name;
@@ -782,7 +764,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
           if (overlapping != null && overlapping.length > 1) {
             int index = overlapping
                 .indexWhere((t) => t.slot == token.slot && t.id == token.id);
-            double tokenSize = cellSize * 0.7;
+            double tokenSize = cellSize * 0.85;
             double spread = tokenSize * 0.3;
 
             if (overlapping.length == 2) {
