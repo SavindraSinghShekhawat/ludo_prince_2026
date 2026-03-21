@@ -30,7 +30,7 @@ class TokenWidget extends StatelessWidget {
     double offsetXY = (cellSize - tokenSize) / 2;
 
     return AnimatedPositioned(
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 250),
       curve: Curves.linear,
       left: gridPos.dx * cellSize + offsetXY + overlapOffset.dx,
       top: gridPos.dy * cellSize + offsetXY + overlapOffset.dy,
@@ -48,23 +48,33 @@ class TokenWidget extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _getColor(token.slot),
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.9), // Specular highlight
+                      _getColor(token.slot), // Base color
+                      _getColor(token.slot)
+                          .withValues(alpha: 0.6), // Dark edge shadow
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                    center: const Alignment(-0.35, -0.35),
+                    radius: 0.8,
+                  ),
                   border: Border.all(
                       color: isMovable ? Colors.white : Colors.white60,
-                      width: isMovable ? 3 : 1.5),
+                      width: isMovable ? 2.5 : 1.0),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 4,
-                      spreadRadius: 0.5,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(alpha: 0.6),
+                      blurRadius: 5,
+                      spreadRadius: 1,
+                      offset: const Offset(1, 4),
                     ),
                     if (isMovable)
                       BoxShadow(
-                        color: _getColor(token.slot).withValues(alpha: 0.8),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 2),
+                        color: _getColor(token.slot).withValues(alpha: 0.9),
+                        blurRadius: 12,
+                        spreadRadius: 3,
+                        offset: const Offset(0, 0),
                       ),
                   ],
                 ),

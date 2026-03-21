@@ -540,34 +540,54 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         ? !isLeft
         : (slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3);
 
-    Widget avatarBox = Container(
+    Widget avatarContent = Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
         color: displayColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white, width: 2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: isTurn ? Colors.white : Colors.white70,
+            width: isTurn ? 3 : 2),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+          if (isTurn)
+            BoxShadow(
+              color: displayColor.withValues(alpha: 0.8),
+              blurRadius: 15,
+              spreadRadius: 2,
+            )
+          else
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
         ],
       ),
       child: Center(
         child: isBot
-            ? const RobotIcon(
+            ? RobotIcon(
                 size: 36,
-                color: Colors.white,
+                color: isTurn ? Colors.white : Colors.white70,
               )
-            : const Icon(
+            : Icon(
                 Icons.person,
-                color: Colors.white,
+                color: isTurn ? Colors.white : Colors.white70,
                 size: 40,
               ),
       ),
     );
+
+    Widget avatarBox = isTurn
+        ? avatarContent
+            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+            .scaleXY(
+                begin: 1.0,
+                end: 1.08,
+                duration: 800.ms,
+                curve: Curves.easeInOut)
+            .shimmer(duration: 2.seconds, color: Colors.white24)
+        : avatarContent;
 
     final int winnerRank = state.winners.indexOf(slot) + 1;
     final bool isWinner = winnerRank > 0;
