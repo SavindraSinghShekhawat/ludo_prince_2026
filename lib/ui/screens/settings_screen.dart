@@ -80,6 +80,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             // Profile Section
             _buildSectionHeader("Account"),
+            const SizedBox(height: 16),
             InkWell(
               onTap: () {
                 showDialog(

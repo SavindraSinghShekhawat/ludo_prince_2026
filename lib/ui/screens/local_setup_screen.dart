@@ -336,19 +336,18 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24.0),
-                child: SizedBox(
-                  width: double.infinity,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE5E4E2).withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE5E4E2),
-                      foregroundColor: const Color(0xFF1E1E2C),
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
-                      elevation: 8,
-                      shadowColor:
-                          const Color(0xFFE5E4E2).withValues(alpha: 0.5),
-                    ),
                     onPressed: () async {
                       Map<PlayerSlot, PlayerSetupConfig> config = {};
                       for (var slot in activeSlots) {
@@ -381,11 +380,20 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                         ),
                       );
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE5E4E2),
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size.fromHeight(60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      elevation: 0,
+                    ),
                     child: const Text('Start Game',
                         style: TextStyle(
-                            color: Color(0xFF1E1E2C),
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            letterSpacing: 1.2)),
                   ),
                 ),
               ),

@@ -18,6 +18,7 @@ import '../widgets/player_count_selector.dart';
 import '../widgets/game_mode_selector.dart';
 import '../widgets/shared_ui.dart';
 import '../dialogs/profile_dialog.dart';
+import '../dialogs/settings_dialog.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -137,6 +138,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 builder: (context) => const ProfileDialog(),
               );
             },
+            tooltip: 'Player Profile',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const SettingsDialog(),
+              );
+            },
+            tooltip: 'Settings',
           ),
         ],
       ),

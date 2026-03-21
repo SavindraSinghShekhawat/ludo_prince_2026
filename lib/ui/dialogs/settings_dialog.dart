@@ -15,7 +15,7 @@ class SettingsDialog extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: GlassContainer(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 320),
@@ -24,25 +24,21 @@ class SettingsDialog extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.settings,
-                      color: Colors.blueAccent, size: 20),
-                  const SizedBox(width: 12),
                   const Text(
-                    'Quick Settings',
+                    'QUICK SETTINGS',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
                     ),
                   ),
-                  const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close,
-                        color: Colors.white24, size: 20),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                        color: Colors.white54, size: 24),
                   ),
                 ],
               ),
