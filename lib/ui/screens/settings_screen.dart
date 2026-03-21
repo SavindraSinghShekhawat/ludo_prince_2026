@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/package_info_provider.dart';
 import '../../services/feedback_service.dart';
 import 'dice_randomness_screen.dart';
+import '../widgets/shared_ui.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -60,8 +61,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final audio = ref.watch(audioProvider);
     final displayName = ref.watch(displayNameProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+    return AnimatedBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Settings',
             style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
@@ -78,13 +80,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             // Profile Section
             _buildSectionHeader("Account"),
             const SizedBox(height: 16),
-            Container(
+            GlassContainer(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              ),
               child: Row(
                 children: [
                   CircleAvatar(
@@ -141,13 +138,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             // Feedback Section
             _buildSectionHeader("Share Feedback"),
             const SizedBox(height: 16),
-            Container(
+            GlassContainer(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -249,7 +241,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildSectionHeader(String title) {
@@ -272,13 +264,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required ValueChanged<bool> onChanged,
     required Color accentColor,
   }) {
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
       child: Row(
         children: [
           Container(
@@ -327,13 +314,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: GlassContainer(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
         child: Row(
           children: [
             Container(

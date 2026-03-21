@@ -12,9 +12,9 @@ import '../dialogs/settings_dialog.dart';
 import '../../models/game_state.dart';
 import '../../controllers/ludo_controller.dart';
 import '../../models/token.dart';
-import '../widgets/ludo_card.dart';
 import '../widgets/player_count_selector.dart';
 import '../widgets/game_mode_selector.dart';
+import '../widgets/shared_ui.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
   const LocalSetupScreen({super.key});
@@ -81,8 +81,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   Widget build(BuildContext context) {
     final activeSlots = _getActiveSlots(_numPlayers);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+    return AnimatedBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -122,7 +123,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: LudoCard(
+                  child: GlassContainer(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -392,7 +393,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildTeamHeader(String title) {

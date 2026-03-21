@@ -14,9 +14,9 @@ import '../../controllers/multiplayer_controller.dart';
 import '../../providers/game_provider.dart';
 import 'home_screen.dart';
 import 'ludo_screen.dart';
-import '../widgets/ludo_card.dart';
 import '../widgets/player_count_selector.dart';
 import '../widgets/game_mode_selector.dart';
+import '../widgets/shared_ui.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -100,8 +100,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+    return AnimatedBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -127,8 +128,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
       ),
-      body: _activeGameId == null ? _buildSelectionView() : _buildLobbyView(),
-    );
+      body: SafeArea(
+        child:
+            _activeGameId == null ? _buildSelectionView() : _buildLobbyView(),
+      ),
+    ));
   }
 
   Widget _buildSelectionView() {
@@ -142,7 +146,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: LudoCard(
+                  child: GlassContainer(
                     child: Column(
                       children: [
                         const Text(
@@ -275,10 +279,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isPrivate) ...[
-                    LudoCard(
+                    GlassContainer(
                       padding: const EdgeInsets.all(20),
-                      borderColor:
-                          const Color(0xFFE5E4E2).withValues(alpha: 0.3),
                       child: Column(
                         children: [
                           const Text('GAME ID',
@@ -302,10 +304,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       ),
                     ),
                   ] else ...[
-                    LudoCard(
+                    GlassContainer(
                       padding: const EdgeInsets.all(32),
-                      borderColor:
-                          Colors.deepPurpleAccent.withValues(alpha: 0.3),
+                      color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
                       child: const Column(
                         children: [
                           CircularProgressIndicator(

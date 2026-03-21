@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/audio_provider.dart';
 import '../screens/settings_screen.dart';
+import '../widgets/shared_ui.dart';
 
 class SettingsDialog extends ConsumerWidget {
   const SettingsDialog({super.key});
@@ -11,92 +12,92 @@ class SettingsDialog extends ConsumerWidget {
     final audio = ref.watch(audioProvider);
 
     return Dialog(
-      backgroundColor: const Color(0xFF2A2A3D),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: GlassContainer(
         padding: const EdgeInsets.all(20),
-        constraints: const BoxConstraints(maxWidth: 320),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.settings, color: Colors.blueAccent, size: 20),
-                const SizedBox(width: 12),
-                const Text(
-                  'Quick Settings',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon:
-                      const Icon(Icons.close, color: Colors.white24, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildQuickToggle(
-              context,
-              icon: audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
-              value: audio.isBgmEnabled,
-              onChanged: (_) => audio.toggleBGM(),
-              accentColor: Colors.purpleAccent,
-            ),
-            const SizedBox(height: 12),
-            _buildQuickToggle(
-              context,
-              icon: audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
-              value: audio.isSfxEnabled,
-              onChanged: (_) => audio.toggleSFX(),
-              accentColor: Colors.orangeAccent,
-            ),
-            const SizedBox(height: 12),
-            _buildQuickToggle(
-              context,
-              icon: audio.isVibrationEnabled
-                  ? Icons.vibration
-                  : Icons.phonelink_ring,
-              value: audio.isVibrationEnabled,
-              onChanged: (_) => audio.toggleVibration(),
-              accentColor: Colors.tealAccent,
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blueAccent,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
                 children: [
-                  Text("ALL SETTINGS & FEEDBACK",
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, size: 14),
+                  const Icon(Icons.settings,
+                      color: Colors.blueAccent, size: 20),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Quick Settings',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close,
+                        color: Colors.white24, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              _buildQuickToggle(
+                context,
+                icon: audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
+                value: audio.isBgmEnabled,
+                onChanged: (_) => audio.toggleBGM(),
+                accentColor: Colors.purpleAccent,
+              ),
+              const SizedBox(height: 12),
+              _buildQuickToggle(
+                context,
+                icon: audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
+                value: audio.isSfxEnabled,
+                onChanged: (_) => audio.toggleSFX(),
+                accentColor: Colors.orangeAccent,
+              ),
+              const SizedBox(height: 12),
+              _buildQuickToggle(
+                context,
+                icon: audio.isVibrationEnabled
+                    ? Icons.vibration
+                    : Icons.phonelink_ring,
+                value: audio.isVibrationEnabled,
+                onChanged: (_) => audio.toggleVibration(),
+                accentColor: Colors.tealAccent,
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("ALL SETTINGS & FEEDBACK",
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w900)),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward, size: 14),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

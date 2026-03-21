@@ -2,14 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/package_info_provider.dart';
+import '../widgets/shared_ui.dart';
 
 class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+    return AnimatedBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('About Ludo Prince',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
@@ -97,7 +99,7 @@ class AboutScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildValueRow(IconData icon, String title, String description) {

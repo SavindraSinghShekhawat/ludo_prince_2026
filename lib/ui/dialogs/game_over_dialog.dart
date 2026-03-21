@@ -13,6 +13,7 @@ import '../../services/audio_service.dart';
 import '../screens/home_screen.dart';
 import '../screens/ludo_screen.dart';
 import '../screens/lobby_screen.dart';
+import '../widgets/shared_ui.dart';
 
 class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
@@ -85,30 +86,25 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
     String headerText;
     Color headerColor;
     IconData headerIcon;
-    Color shadowColor;
 
     if (isAllHuman || isAllBots) {
       headerText = "MATCH FINISHED!";
       headerColor = const Color(0xFFE5E4E2);
       headerIcon = Icons.emoji_events;
-      shadowColor = const Color(0xFF8B9BB4); // Cool platinum shadow
     } else {
       // Mixed or AI
       if (bestHumanRank == 1) {
         headerText = "GRAND VICTORY!";
         headerColor = const Color(0xFFE5E4E2); // Platinum
         headerIcon = Icons.emoji_events;
-        shadowColor = const Color(0xFF8B9BB4);
       } else if (bestHumanRank == 2 || bestHumanRank == 3) {
         headerText = "WELL PLAYED!";
         headerColor = const Color(0xFFB0B4B8); // Silver
         headerIcon = Icons.workspace_premium; // Ribbon
-        shadowColor = Colors.black54;
       } else {
         headerText = "GAME OVER";
         headerColor = Colors.redAccent.shade200;
         headerIcon = Icons.videogame_asset_off;
-        shadowColor = Colors.red.shade900;
       }
     }
 
@@ -131,25 +127,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
           Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              child: Container(
+              child: GlassContainer(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2A2A3D), Color(0xFF1E1E2C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                      color: headerColor.withValues(alpha: 0.8), width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: shadowColor.withValues(alpha: 0.4),
-                      blurRadius: 30,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
+                color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -174,21 +154,32 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                               duration: 1500.ms,
                               curve: Curves.easeInOutSine),
                       const SizedBox(height: 16),
-                      Text(
-                        headerText,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          color: headerColor,
-                          letterSpacing: 2,
-                          shadows: [
-                            Shadow(
-                              color: shadowColor,
-                              blurRadius: 10,
-                              offset: const Offset(3, 3),
-                            )
-                          ],
+                      ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: headerColor == const Color(0xFFE5E4E2)
+                              ? const [
+                                  Color(0xFFE5E4E2),
+                                  Color(0xFFFFFFFF),
+                                  Color(0xFFA0A0A0),
+                                  Color(0xFFE5E4E2)
+                                ]
+                              : [
+                                  headerColor.withValues(alpha: 0.6),
+                                  headerColor
+                                ],
+                          stops: const [0.0, 0.4, 0.6, 1.0],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds),
+                        child: Text(
+                          headerText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 2,
+                          ),
                         ),
                       ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.5),
                       const SizedBox(height: 8),
@@ -243,10 +234,10 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                             color: place == 1
                                 ? const Color(0xFFE5E4E2)
                                     .withValues(alpha: 0.15)
-                                : Colors.black38,
+                                : Colors.white.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                                color: placeColor.withValues(alpha: 0.6),
+                                color: placeColor.withValues(alpha: 0.3),
                                 width: place == 1 ? 2.5 : 1.5),
                           ),
                           child: Row(

@@ -82,10 +82,26 @@ class BoardWidget extends StatelessWidget {
       height: 6 * cellSize,
       child: Container(
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.2),
-          border: Border.all(color: color, width: 2),
-          borderRadius: BorderRadius.circular(16),
-        ),
+            gradient: RadialGradient(
+              colors: [
+                color.withValues(alpha: 0.1),
+                color.withValues(alpha: 0.25)
+              ],
+              center: Alignment.topLeft,
+              radius: 1.5,
+            ),
+            border: Border.all(color: color.withValues(alpha: 0.7), width: 2.5),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                  color: color.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  spreadRadius: 2),
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 5,
+                  offset: const Offset(2, 2)),
+            ]),
         child: Stack(
           children: [
             Center(
@@ -93,9 +109,22 @@ class BoardWidget extends StatelessWidget {
                 width: 4 * cellSize,
                 height: 4 * cellSize,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.white, Color(0xFFE5E4E2)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2)),
+                      BoxShadow(
+                          color: Colors.white,
+                          blurRadius: 2,
+                          offset: const Offset(-1, -1)),
+                    ]),
               ),
             ),
             if (teamLabel != null && gameMode == GameMode.team)
@@ -115,13 +144,15 @@ class BoardWidget extends StatelessWidget {
                     width: cellSize * 0.55,
                     height: cellSize * 0.55,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.9),
+                      gradient: RadialGradient(
+                        colors: [color.withValues(alpha: 0.7), color],
+                      ),
                       shape: BoxShape.circle,
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black45,
                           blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
@@ -132,7 +163,7 @@ class BoardWidget extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
-                          height: 1.0, // Ensures no baseline offset
+                          height: 1.0,
                         ),
                       ),
                     ),
@@ -147,7 +178,7 @@ class BoardWidget extends StatelessWidget {
 
   Widget _buildCell(int col, int row, double cellSize, Color color) {
     bool isStar = false;
-    // Map safe star spots to logical grid (based on absolute path index 0, 8, 13, 21, 26, 34, 39, 47)
+    // Map safe star spots to logical grid
     if ((col == 1 && row == 6) || // index 0 (Red start)
         (col == 6 && row == 2) || // index 8 (Green star)
         (col == 8 && row == 1) || // index 13 (Green start)
@@ -160,6 +191,8 @@ class BoardWidget extends StatelessWidget {
       isStar = true;
     }
 
+    final isDefault = color.alpha == 38; // alpha 0.15 * 255 = 38
+
     return Positioned(
       left: col * cellSize,
       top: row * cellSize,
@@ -167,13 +200,34 @@ class BoardWidget extends StatelessWidget {
       height: cellSize,
       child: Container(
         decoration: BoxDecoration(
-          color: color,
-          border:
-              Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDefault
+                ? [
+                    Colors.white.withValues(alpha: 0.25),
+                    color,
+                    Colors.black.withValues(alpha: 0.1),
+                  ]
+                : [
+                    Colors.black.withValues(alpha: 0.1),
+                    color,
+                    Colors.white.withValues(alpha: 0.3),
+                  ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+          border: Border.all(
+              color: isDefault
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.3),
+              width: 0.5),
         ),
         child: isStar
             ? Icon(Icons.star_rounded,
-                color: Colors.black12, size: cellSize * 0.8)
+                color: isDefault
+                    ? Colors.white24
+                    : Colors.black.withValues(alpha: 0.2),
+                size: cellSize * 0.8)
             : null,
       ),
     );
@@ -207,7 +261,7 @@ class BoardWidget extends StatelessWidget {
     }
     if (col == 6 && row == 13) return Colors.blueAccent.withValues(alpha: 0.8);
 
-    return Colors.white; // default path color
+    return Colors.white.withValues(alpha: 0.15); // Glass default path color
   }
 }
 
@@ -219,11 +273,22 @@ class CenterHomePainter extends CustomPainter {
 
     // Center point
     final Offset center = Offset(w / 2, h / 2);
+    final Rect rect = Rect.fromLTWH(0, 0, w, h);
 
-    final Paint redPaint = Paint()..color = Colors.redAccent;
-    final Paint greenPaint = Paint()..color = Colors.greenAccent.shade700;
-    final Paint yellowPaint = Paint()..color = Colors.amber.shade600;
-    final Paint bluePaint = Paint()..color = Colors.blueAccent;
+    Paint getPaint(Color color) {
+      return Paint()
+        ..shader = RadialGradient(
+          colors: [color.withValues(alpha: 0.6), color],
+          center: Alignment.center,
+          radius: 0.8,
+        ).createShader(rect)
+        ..style = PaintingStyle.fill;
+    }
+
+    final Paint redPaint = getPaint(Colors.redAccent);
+    final Paint greenPaint = getPaint(Colors.greenAccent.shade700);
+    final Paint yellowPaint = getPaint(Colors.amber.shade600);
+    final Paint bluePaint = getPaint(Colors.blueAccent);
 
     // Top Triangle (Green)
     Path topPath = Path()
@@ -256,6 +321,17 @@ class CenterHomePainter extends CustomPainter {
       ..lineTo(center.dx, center.dy)
       ..close();
     canvas.drawPath(leftPath, redPaint);
+
+    // Draw lines to separate triangles clearly
+    Paint linePaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.3)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawLine(const Offset(0, 0), center, linePaint);
+    canvas.drawLine(Offset(w, 0), center, linePaint);
+    canvas.drawLine(Offset(0, h), center, linePaint);
+    canvas.drawLine(Offset(w, h), center, linePaint);
   }
 
   @override
