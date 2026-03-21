@@ -8,6 +8,12 @@ final authStateProvider = StreamProvider<User?>((ref) {
 });
 
 final displayNameProvider = Provider<String>((ref) {
+  final userProfile = ref.watch(userProfileProvider).value;
+  if (userProfile?.displayName != null &&
+      userProfile!.displayName!.isNotEmpty) {
+    return userProfile.displayName!;
+  }
+
   final user = ref.watch(authStateProvider).value;
   if (user == null) return "Guest";
 

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../services/profile_service.dart';
 import '../../services/auth_service.dart';
-import '../../models/user_profile.dart';
+
+import '../../providers/auth_provider.dart';
+
 import '../screens/auth_screen.dart';
+
 import '../screens/friends_screen.dart';
 import '../widgets/shared_ui.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class ProfileDialog extends ConsumerWidget {
   const ProfileDialog({super.key});
@@ -17,15 +18,15 @@ class ProfileDialog extends ConsumerWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const SizedBox.shrink();
 
+    final userProfileAsync = ref.watch(userProfileProvider);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: GlassContainer(
         padding: const EdgeInsets.all(24),
-        child: FutureBuilder<UserProfile?>(
-          future: profileService.getUserProfile(user.uid),
-          builder: (context, snapshot) {
-            final profile = snapshot.data;
+        child: userProfileAsync.when(
+          data: (profile) {
             final isAnonymous = user.isAnonymous;
 
             return Column(
@@ -52,17 +53,20 @@ class ProfileDialog extends ConsumerWidget {
                 const SizedBox(height: 24),
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: Colors.deepPurpleAccent,
+                  backgroundColor: Colors.white.withValues(alpha: 0.1),
                   backgroundImage: profile?.photoURL != null
                       ? NetworkImage(profile!.photoURL!)
                       : null,
                   child: profile?.photoURL == null
                       ? const Icon(Icons.person, size: 40, color: Colors.white)
                       : null,
-                ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
+                ),
                 const SizedBox(height: 16),
                 Text(
-                  profile?.displayName ?? 'Anonymous King',
+                  profile?.displayName ??
+                      (user.displayName != null && user.displayName!.isNotEmpty
+                          ? user.displayName!
+                          : 'Anonymous King'),
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -99,16 +103,33 @@ class ProfileDialog extends ConsumerWidget {
                 const SizedBox(height: 24),
                 _buildActionButton(
                   context,
-                  'FRIENDS',
-                  Icons.people_outline,
-                  Colors.blueAccent.withValues(alpha: 0.8),
-                  () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const FriendsScreen()));
-                  },
+                  isAnonymous ? 'FRIENDS' : 'FRIENDS',
+                  isAnonymous ? Icons.lock_outline : Icons.people_outline,
+                  isAnonymous
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.cyanAccent, // Greenish like the icons
+                  isAnonymous
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Link your account to unlock Friends!',
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              backgroundColor: Color(0xFFE0E0E0), // Light grey
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      : () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const FriendsScreen()));
+                        },
                 ),
                 const SizedBox(height: 12),
                 if (isAnonymous)
@@ -116,7 +137,7 @@ class ProfileDialog extends ConsumerWidget {
                     context,
                     'LINK ACCOUNT',
                     Icons.link,
-                    Colors.deepPurpleAccent,
+                    const Color(0xFFE5E4E2),
                     () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -124,6 +145,7 @@ class ProfileDialog extends ConsumerWidget {
                           MaterialPageRoute(
                               builder: (_) => const AuthScreen()));
                     },
+                    isPlatinum: true,
                   )
                 else
                   _buildActionButton(
@@ -139,46 +161,98 @@ class ProfileDialog extends ConsumerWidget {
               ],
             );
           },
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+          error: (err, stack) => Center(
+            child: Text(
+              'Error loading profile',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildStatRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white70, size: 20),
-        const SizedBox(width: 12),
-        Text(label,
-            style: const TextStyle(color: Colors.white70, fontSize: 14)),
-        const Spacer(),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFFE5E4E2), size: 18),
+          const SizedBox(width: 12),
+          Text(label,
+              style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          const Spacer(),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 
   Widget _buildActionButton(BuildContext context, String label, IconData icon,
-      Color color, VoidCallback onPressed) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
+      Color color, VoidCallback onPressed,
+      {bool isPlatinum = false}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          height: 54,
+          decoration: BoxDecoration(
+            color: isPlatinum ? null : color.withValues(alpha: 0.1),
+            gradient: isPlatinum
+                ? const LinearGradient(
+                    colors: [Color(0xFFE5E4E2), Color(0xFFB0B4B8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+                color:
+                    isPlatinum ? Colors.white54 : color.withValues(alpha: 0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: isPlatinum
+                    ? Colors.black.withValues(alpha: 0.2)
+                    : color.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  color: isPlatinum ? const Color(0xFF1A1A2E) : color,
+                  size: 20),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isPlatinum ? const Color(0xFF1A1A2E) : color,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
-        icon: Icon(icon, size: 20),
-        label: Text(label,
-            style:
-                const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
       ),
     );
   }

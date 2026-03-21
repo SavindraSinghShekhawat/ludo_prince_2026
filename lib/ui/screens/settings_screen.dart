@@ -7,6 +7,7 @@ import '../../providers/package_info_provider.dart';
 import '../../services/feedback_service.dart';
 import 'dice_randomness_screen.dart';
 import '../widgets/shared_ui.dart';
+import '../dialogs/profile_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -79,25 +80,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             // Profile Section
             _buildSectionHeader("Account"),
-            const SizedBox(height: 16),
-            GlassContainer(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.2),
-                    child: const Icon(Icons.person, color: Colors.blueAccent),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    displayName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            InkWell(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const ProfileDialog(),
+                );
+              },
+              borderRadius: BorderRadius.circular(24),
+              child: GlassContainer(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.2),
+                      child: const Icon(Icons.person, color: Colors.blueAccent),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Text(
+                            "Tap to view profile details",
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.white24),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

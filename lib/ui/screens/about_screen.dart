@@ -13,7 +13,7 @@ class AboutScreen extends ConsumerWidget {
         child: Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('About Ludo Prince',
+        title: const Text('About & Fairness',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,

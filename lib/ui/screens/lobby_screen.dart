@@ -122,8 +122,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         ),
         title: Text(
             _activeGameId == null
-                ? (widget.isQuickMatch ? 'Quick Match' : 'Play with Friends')
-                : 'Game Lobby',
+                ? (widget.isQuickMatch ? 'PLAY ONLINE' : 'PLAY WITH FRIENDS')
+                : 'GAME LOBBY',
             style: const TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
