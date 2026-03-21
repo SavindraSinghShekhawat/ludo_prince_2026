@@ -15,6 +15,7 @@ import 'home_screen.dart';
 import '../dialogs/rules_dialog.dart';
 import '../dialogs/settings_dialog.dart';
 import '../dialogs/game_over_dialog.dart';
+import '../../utils/colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
@@ -243,19 +244,10 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       child: Center(
         child: AspectRatio(
           aspectRatio: 1,
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
+          child: GlassContainer(
+            padding: EdgeInsets.zero,
+            borderRadius: 16,
+            color: AppColors.boardGlassBackground,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final boardSize = constraints.biggest.shortestSide;

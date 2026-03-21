@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import '../../models/token.dart';
 import '../../models/board_path.dart';
+import '../../utils/colors.dart';
 
 class TokenWidget extends StatelessWidget {
   final Token token;
@@ -48,46 +49,79 @@ class TokenWidget extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _getColor(token.slot),
+                  gradient: RadialGradient(
+                    colors: [
+                      _getGlowColor(token.slot),
+                      _getColor(token.slot),
+                    ],
+                    center: const Alignment(-0.3, -0.3),
+                    radius: 0.8,
+                  ),
                   border: Border.all(
-                      color: isMovable ? Colors.white : Colors.white70,
-                      width: isMovable ? 2.5 : 1.5),
+                      color: Colors.white
+                          .withValues(alpha: AppColors.tokenBorderOpacity),
+                      width: isMovable ? 2.0 : 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 3,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
                     ),
                     if (isMovable)
                       BoxShadow(
-                        color: _getColor(token.slot).withValues(alpha: 0.8),
-                        blurRadius: 10,
-                        spreadRadius: 2,
+                        color: _getGlowColor(token.slot).withValues(alpha: 0.6),
+                        blurRadius: 15,
+                        spreadRadius: 3,
                       ),
                   ],
                 ),
-                child: Center(
-                  child: Container(
-                    width: tokenSize * 0.55,
-                    height: tokenSize * 0.55,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        width: 1.5,
+                child: Stack(
+                  children: [
+                    // Gloss/Reflection layer
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(
+                                  alpha: AppColors.tokenReflectionAlpha),
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.1),
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                        ),
                       ),
                     ),
-                    child: Center(
+                    // Inner ring for premium look
+                    Center(
+                      child: Container(
+                        width: tokenSize * 0.6,
+                        height: tokenSize * 0.6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Center dot
+                    Center(
                       child: Container(
                         width: tokenSize * 0.15,
                         height: tokenSize * 0.15,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: Colors.white.withValues(alpha: 0.6),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             );
@@ -97,16 +131,29 @@ class TokenWidget extends StatelessWidget {
     );
   }
 
+  Color _getGlowColor(PlayerSlot pSlot) {
+    switch (pSlot) {
+      case PlayerSlot.slot1:
+        return AppColors.player1BlueGlow;
+      case PlayerSlot.slot2:
+        return AppColors.player2YellowGlow;
+      case PlayerSlot.slot3:
+        return AppColors.player3GreenGlow;
+      case PlayerSlot.slot4:
+        return AppColors.player4RedGlow;
+    }
+  }
+
   Color _getColor(PlayerSlot pSlot) {
     switch (pSlot) {
       case PlayerSlot.slot1:
-        return Colors.blue;
+        return AppColors.player1Blue;
       case PlayerSlot.slot2:
-        return Colors.amber;
+        return AppColors.player2Yellow;
       case PlayerSlot.slot3:
-        return Colors.green;
+        return AppColors.player3Green;
       case PlayerSlot.slot4:
-        return Colors.red;
+        return AppColors.player4Red;
     }
   }
 }
