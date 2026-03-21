@@ -7,6 +7,7 @@ import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../widgets/shared_ui.dart';
+import '../dialogs/profile_dialog.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -88,52 +89,72 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
     final displayName = ref.watch(displayNameProvider);
+    final profile = ref.watch(userProfileProvider).value;
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => const ProfileDialog(),
+              );
+            },
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1)),
-                child: const Icon(Icons.person, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [
-                        Color(0xFFE5E4E2),
-                        Color(0xFFFFFFFF),
-                        Color(0xFFA0A0A0),
-                        Color(0xFFE5E4E2)
-                      ],
-                      stops: [0.0, 0.4, 0.6, 1.0],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ).createShader(bounds),
-                    child: const Text("LUDO PRINCE",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 2.0)),
+                    border: Border.all(color: Colors.white24, width: 2),
                   ),
-                  Text(displayName,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ],
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    backgroundImage: profile?.photoURL != null
+                        ? NetworkImage(profile!.photoURL!)
+                        : null,
+                    child: profile?.photoURL == null
+                        ? const Icon(Icons.person,
+                            color: Colors.white, size: 20)
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [
+                          Color(0xFFE5E4E2),
+                          Color(0xFFFFFFFF),
+                          Color(0xFFA0A0A0),
+                          Color(0xFFE5E4E2)
+                        ],
+                        stops: [0.0, 0.4, 0.6, 1.0],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds),
+                      child: const Text("LUDO PRINCE",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2.0)),
+                    ),
+                    Text(profile?.displayName ?? displayName,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
           ),
           Row(
             children: [

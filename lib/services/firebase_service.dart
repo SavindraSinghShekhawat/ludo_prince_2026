@@ -7,6 +7,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import '../firebase_options.dart';
+import 'profile_service.dart';
+import '../models/user_profile.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -70,6 +72,27 @@ class FirebaseService {
     }
 
     _initialized = true;
+
+    // Listen for auth changes and sync profile
+    auth.authStateChanges().listen((user) async {
+      if (user != null) {
+        final profile = await profileService.getUserProfile(user.uid);
+        if (profile == null) {
+          // Create new profile for first-time sign in (or anonymous)
+          final newProfile = UserProfile(
+            uid: user.uid,
+            displayName:
+                user.displayName ?? 'Player ${user.uid.substring(0, 4)}',
+            email: user.email,
+            photoURL: user.photoURL,
+            createdAt: DateTime.now(),
+          );
+          await profileService.createOrUpdateProfile(newProfile);
+        } else {
+          await profileService.updateLastActive(user.uid);
+        }
+      }
+    });
   }
 
   Future<void> _setupEmulators(String host) async {

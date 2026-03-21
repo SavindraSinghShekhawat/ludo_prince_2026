@@ -51,6 +51,8 @@ dependencies:
   package_info_plus: ^9.0.0
   flutter_svg: ^2.2.4
   connectivity_plus: ^7.0.0
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
 
 dev_dependencies:
   flutter_test:

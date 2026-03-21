@@ -17,6 +17,7 @@ import 'ludo_screen.dart';
 import '../widgets/player_count_selector.dart';
 import '../widgets/game_mode_selector.dart';
 import '../widgets/shared_ui.dart';
+import '../dialogs/profile_dialog.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -127,6 +128,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const ProfileDialog(),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child:

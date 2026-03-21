@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>264745171932-8cb0f3leuo7lhheqder6attdgmoekp31.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.264745171932-8cb0f3leuo7lhheqder6attdgmoekp31</string>
 	<key>API_KEY</key>
 	<string>AIzaSyB5oq9hyjBkwN-Ofzd_HYAk5frrCeVIfB8</string>
 	<key>GCM_SENDER_ID</key>
@@ -26,5 +30,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:264745171932:ios:07e46f23a147f79761ad19</string>
+	<key>DATABASE_URL</key>
+	<string>https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app</string>
 </dict>
 </plist>

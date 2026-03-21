@@ -201,6 +201,15 @@ class MultiplayerGameController extends LudoController {
       }
 
       _db.ref().child('ludogames').child(gameId).update(updates);
+    } else if (state.isGameOver) {
+      final winnerUids = state.winners.map((slot) {
+        return state.players.firstWhere((p) => p.slot == slot).uid;
+      }).toList();
+
+      _db.ref().child('ludogames').child(gameId).update({
+        'status': 'finished',
+        'winners': winnerUids,
+      });
     }
 
     _checkSnapshotRequirement();
