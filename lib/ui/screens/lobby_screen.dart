@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:ludo_prince/services/network_service.dart';
@@ -223,12 +225,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : _buildMainButton(
-                      'QUICK MATCH',
-                      () => _joinQueue(_maxPlayers, _gameMode),
-                    ),
+              child: _buildMainButton(
+                _isLoading ? 'SEARCHING...' : 'QUICK MATCH',
+                _isLoading ? null : () => _joinQueue(_maxPlayers, _gameMode),
+                isLoading: _isLoading,
+              ),
             ),
           ],
         ),
@@ -243,7 +244,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         if (!gameSnapshot.hasData ||
             gameSnapshot.data?.snapshot.value == null) {
           if (gameSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: MatchmakingLoader(size: 60));
           }
           return const Center(
               child: Text("Game not found",
@@ -268,7 +269,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           builder: (context, playersSnapshot) {
             if (!playersSnapshot.hasData ||
                 playersSnapshot.data?.snapshot.value == null) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: MatchmakingLoader(size: 60));
             }
 
             final playersMap = Map<String, dynamic>.from(
@@ -338,24 +339,43 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                         ),
                       ] else ...[
                         GlassContainer(
-                          padding: const EdgeInsets.all(32),
+                          padding: const EdgeInsets.all(40),
                           color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
-                          child: const Column(
+                          child: Column(
                             children: [
-                              CircularProgressIndicator(
-                                  color: Colors.deepPurpleAccent),
-                              SizedBox(height: 24),
-                              Text('SEARCHING FOR PLAYERS...',
+                              const MatchmakingLoader(size: 100),
+                              const SizedBox(height: 32),
+                              ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                  colors: [
+                                    Colors.white,
+                                    Colors.deepPurpleAccent,
+                                    Colors.white
+                                  ],
+                                ).createShader(bounds),
+                                child: const Text(
+                                  'SEARCHING FOR PLAYERS...',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5)),
-                              SizedBox(height: 8),
-                              Text('Matchmaking in progress...',
-                                  style: TextStyle(
-                                      color: Colors.white38, fontSize: 12)),
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                              )
+                                  .animate(onPlay: (c) => c.repeat())
+                                  .shimmer(duration: 2.seconds),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Finding the best match for you...',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -566,39 +586,62 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   // --- UI Helpers ---
 
   Widget _buildMainButton(String title, VoidCallback? onTap,
-      {bool isSecondary = false}) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: (onTap != null && !isSecondary)
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFE5E4E2).withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ]
-            : null,
-      ),
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isSecondary ? Colors.transparent : const Color(0xFFE5E4E2),
-          foregroundColor: isSecondary ? Colors.white : Colors.black,
-          minimumSize: const Size.fromHeight(60),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-              side: isSecondary
-                  ? const BorderSide(color: Colors.white24)
-                  : BorderSide.none),
-          elevation: 0,
-          disabledBackgroundColor: Colors.white10,
-        ),
-        child: Text(title,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 18, letterSpacing: 1.2)),
-      ),
+      {bool isSecondary = false, bool isLoading = false}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        // Ensure we handle infinite or invalid constraints gracefully
+        final baseWidth = maxWidth.isFinite ? maxWidth : 320.0;
+
+        return Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+            width: isLoading ? 70 : baseWidth,
+            height: 70, // Slightly taller button for better presence
+            constraints: const BoxConstraints(minWidth: 70),
+            decoration: BoxDecoration(
+              color: isSecondary ? Colors.transparent : const Color(0xFFE5E4E2),
+              borderRadius: BorderRadius.circular(isLoading ? 35 : 15),
+              border: isSecondary ? Border.all(color: Colors.white24) : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isLoading ? null : onTap,
+                borderRadius: BorderRadius.circular(isLoading ? 35 : 15),
+                child: Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Text layer
+                      AnimatedOpacity(
+                        opacity: isLoading ? 0.0 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      // Loader layer
+                      if (isLoading)
+                        const LudoLoadingDots(size: 35)
+                            .animate()
+                            .fadeIn(duration: 300.ms),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -344,3 +344,117 @@ class CustomSnackBar {
     });
   }
 }
+
+class MatchmakingLoader extends StatelessWidget {
+  final double size;
+  final Color? color;
+
+  const MatchmakingLoader({super.key, this.size = 80, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer pulsing ring
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color:
+                    (color ?? Colors.deepPurpleAccent).withValues(alpha: 0.2),
+                width: 2,
+              ),
+            ),
+          ),
+
+          // Use the shared LudoLoadingDots
+          LudoLoadingDots(size: size * 0.6),
+
+          // Center icon or dot
+          Container(
+            width: size * 0.3,
+            height: size * 0.3,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white24,
+                  blurRadius: 15,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.public,
+              size: size * 0.2,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A reusable Ludo-themed loading animation with 4 rotating and pulsating dots.
+class LudoLoadingDots extends StatelessWidget {
+  final double size;
+  const LudoLoadingDots({super.key, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Stack(
+            children: List.generate(4, (index) {
+              final colors = [
+                const Color(0xFF2196F3),
+                const Color.fromARGB(255, 212, 164, 6),
+                const Color(0xFF4CAF50),
+                const Color(0xFFF44336),
+              ];
+              return RotationTransition(
+                turns: AlwaysStoppedAnimation(index * 0.25),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    width: size * 0.25,
+                    height: size * 0.25,
+                    decoration: BoxDecoration(
+                      color: colors[index],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          )
+              .animate(onPlay: (c) => c.repeat())
+              .rotate(duration: 2.seconds, curve: Curves.linear)
+              .animate(onPlay: (c) => c.repeat())
+              .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.15, 1.15),
+                  duration: 800.ms,
+                  curve: Curves.easeInOutSine)
+              .then()
+              .scale(
+                  begin: const Offset(1.15, 1.15),
+                  end: const Offset(1, 1),
+                  duration: 800.ms,
+                  curve: Curves.easeInOutSine),
+        ],
+      ),
+    );
+  }
+}
