@@ -6,6 +6,7 @@ import 'about_screen.dart';
 import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
 import '../../providers/auth_provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/shared_ui.dart';
 import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
@@ -46,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
                         title: "PLAY WITH FRIENDS",
                         subtitle: "Private Rooms & Friends",
                         icon: Icons.people,
-                        accentColor: Colors.tealAccent,
+                        accentColor: Colors.cyanAccent,
                         isComingSoon: true,
                         onTap: () {},
                       ),
@@ -138,14 +139,16 @@ class HomeScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ShaderMask(
+                      blendMode: BlendMode.srcIn,
                       shaderCallback: (bounds) => const LinearGradient(
                         colors: [
-                          Color(0xFFE5E4E2),
-                          Color(0xFFFFFFFF),
-                          Color(0xFFA0A0A0),
-                          Color(0xFFE5E4E2)
+                          Color(0xFFE5E4E2), // Platinum base
+                          Color(0xFFFFFFFF), // White highlight
+                          Color(0xFFD9E0E7), // AppColors.starPlatinum
+                          Color(0xFFBCC6CC), // Silver/Metallic
+                          Color(0xFFE5E4E2), // Return to base
                         ],
-                        stops: [0.0, 0.4, 0.6, 1.0],
+                        stops: [0.0, 0.2, 0.5, 0.8, 1.0],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ).createShader(bounds),
@@ -155,7 +158,9 @@ class HomeScreen extends ConsumerWidget {
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 2.0)),
-                    ),
+                    ).animate(onPlay: (c) => c.repeat()).shimmer(
+                        duration: 3.seconds,
+                        color: Colors.white.withValues(alpha: 0.3)),
                     Text(profile?.displayName ?? displayName,
                         style: const TextStyle(
                             color: Colors.white,

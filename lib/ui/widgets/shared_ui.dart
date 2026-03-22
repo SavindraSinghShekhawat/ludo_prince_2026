@@ -169,7 +169,16 @@ class _GlassCardState extends State<GlassCard> {
                                   letterSpacing: 1.2,
                                 ),
                               ),
-                            ),
+                            )
+                                .animate(onPlay: (c) => c.repeat(reverse: true))
+                                .scale(
+                                    begin: const Offset(1, 1),
+                                    end: const Offset(1.05, 1.05),
+                                    duration: 1.5.seconds,
+                                    curve: Curves.easeInOut)
+                                .shimmer(
+                                    duration: 3.seconds,
+                                    color: Colors.white.withValues(alpha: 0.2)),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -195,9 +204,46 @@ class _GlassCardState extends State<GlassCard> {
         .animate(target: _isPressed ? 1 : 0)
         .scaleXY(end: 0.95, duration: 100.ms, curve: Curves.easeOut);
 
-    card = card.animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
-        duration: widget.isPrimary ? 2.seconds : 4.seconds,
-        color: Colors.white.withValues(alpha: widget.isPrimary ? 0.2 : 0.1));
+    // Add a more premium, color-integrated shimmer
+    card = card
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          duration: 2.5.seconds,
+          color: widget.accentColor.withValues(alpha: 0.15),
+        )
+        .shimmer(
+          duration: 3.seconds,
+          delay: 1.seconds,
+          color: Colors.white.withValues(alpha: 0.1),
+        );
+
+    // Add a very subtle pulse for the primary card to make it feel alive
+    if (widget.isPrimary) {
+      card = card.animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+            begin: const Offset(1, 1),
+            end: const Offset(1.02, 1.02),
+            duration: 3.seconds,
+            curve: Curves.easeInOut,
+          );
+
+      // Add a soft breathing glow
+      card = card.animate(onPlay: (c) => c.repeat(reverse: true)).custom(
+            duration: 3.seconds,
+            builder: (context, value, child) => Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.accentColor.withValues(alpha: 0.1 * value),
+                    blurRadius: 15 + (10 * value),
+                    spreadRadius: 2 * value,
+                  ),
+                ],
+              ),
+              child: child,
+            ),
+          );
+    }
 
     return card;
   }
@@ -246,7 +292,6 @@ class GlassContainer extends StatelessWidget {
 
 class CustomSnackBar {
   static OverlayEntry? _currentEntry;
-  static Timer? _timer;
 
   static void show(
     BuildContext context, {
@@ -255,93 +300,167 @@ class CustomSnackBar {
     Color? color,
     bool isError = false,
     bool isSuccess = false,
+    Duration? duration,
   }) {
-    final snackBarColor = isError
-        ? Colors.redAccent
-        : isSuccess
-            ? const Color(0xFF00FFA3)
-            : color ?? Colors.cyanAccent;
-
-    _timer?.cancel();
+    // If there's an existing entry, remove it immediately to show the new one
+    // In a more advanced version, we could tell the old one to animate out first.
     if (_currentEntry != null && _currentEntry!.mounted) {
       _currentEntry!.remove();
     }
 
+    // Calculate ideal duration if not provided
+    // Base 2s + 50ms per character, clamped between 3s and 7s
+    final calculatedDuration = duration ??
+        Duration(
+          milliseconds: (2000 + (message.length * 50)).clamp(3000, 7000),
+        );
+
     final overlay = Overlay.of(context);
     final entry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: MediaQuery.of(context).padding.bottom + 42,
-        left: 20,
-        right: 20,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E2C).withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: snackBarColor.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: snackBarColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isError
-                        ? Icons.error_outline
-                        : isSuccess
-                            ? Icons.check_circle_outline
-                            : icon,
-                    color: snackBarColor,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 300.ms).slideY(
-                begin: 1,
-                end: 0,
-                duration: 400.ms,
-                curve: Curves.easeOutBack,
-              ),
-        ),
+      builder: (context) => _SnackBarContent(
+        message: message,
+        icon: icon,
+        color: color,
+        isError: isError,
+        isSuccess: isSuccess,
+        duration: calculatedDuration,
+        onDismissed: () {
+          if (_currentEntry?.mounted ?? false) {
+            _currentEntry!.remove();
+            _currentEntry = null;
+          }
+        },
       ),
     );
 
     _currentEntry = entry;
     overlay.insert(entry);
+  }
+}
 
-    _timer = Timer(const Duration(seconds: 4), () {
-      if (entry.mounted) {
-        entry.remove();
-        if (_currentEntry == entry) _currentEntry = null;
+class _SnackBarContent extends StatefulWidget {
+  final String message;
+  final IconData icon;
+  final Color? color;
+  final bool isError;
+  final bool isSuccess;
+  final Duration duration;
+  final VoidCallback onDismissed;
+
+  const _SnackBarContent({
+    required this.message,
+    this.icon = Icons.info_outline,
+    this.color,
+    this.isError = false,
+    this.isSuccess = false,
+    required this.duration,
+    required this.onDismissed,
+  });
+
+  @override
+  State<_SnackBarContent> createState() => _SnackBarContentState();
+}
+
+class _SnackBarContentState extends State<_SnackBarContent> {
+  bool _isVisible = false;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start entrance animation
+    Future.microtask(() {
+      if (mounted) setState(() => _isVisible = true);
+    });
+
+    // Schedule exit animation and dismissal
+    _timer = Timer(widget.duration, () {
+      if (mounted) {
+        setState(() => _isVisible = false);
+        // Wait for exit animation to complete (400ms match slideY duration)
+        Future.delayed(400.ms, () {
+          if (mounted) widget.onDismissed();
+        });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snackBarColor = widget.isError
+        ? Colors.redAccent
+        : widget.isSuccess
+            ? const Color(0xFF00FFA3)
+            : widget.color ?? Colors.cyanAccent;
+
+    return Positioned(
+      bottom: MediaQuery.of(context).padding.bottom + 42,
+      left: 20,
+      right: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E2C).withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: snackBarColor.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: snackBarColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  widget.isError
+                      ? Icons.error_outline
+                      : widget.isSuccess
+                          ? Icons.check_circle_outline
+                          : widget.icon,
+                  color: snackBarColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  widget.message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ).animate(target: _isVisible ? 1 : 0).fadeIn(duration: 300.ms).slideY(
+              begin: 1,
+              end: 0,
+              duration: 400.ms,
+              curve: Curves.easeOutBack,
+            ),
+      ),
+    );
   }
 }
 
@@ -359,6 +478,33 @@ class MatchmakingLoader extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Expanding "Radar" Rings
+          ...List.generate(3, (index) {
+            return Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: (color ?? Colors.deepPurpleAccent)
+                      .withValues(alpha: 0.15),
+                  width: 1,
+                ),
+              ),
+            )
+                .animate(
+                  onPlay: (controller) => controller.repeat(),
+                )
+                .scale(
+                  begin: const Offset(0.5, 0.5),
+                  end: const Offset(2.0, 2.0),
+                  duration: 3.seconds,
+                  delay: (index * 1.0).seconds,
+                  curve: Curves.easeOut,
+                )
+                .fadeOut(duration: 3.seconds);
+          }),
+
           // Outer pulsing ring
           Container(
             width: size,
@@ -371,31 +517,59 @@ class MatchmakingLoader extends StatelessWidget {
                 width: 2,
               ),
             ),
-          ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.1, 1.1),
+                duration: 2.seconds,
+                curve: Curves.easeInOut,
+              ),
+
+          // Secondary rotating gradient ring
+          Container(
+            width: size * 1.1,
+            height: size * 1.1,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.fromBorderSide(BorderSide(
+                color:
+                    (color ?? Colors.deepPurpleAccent).withValues(alpha: 0.1),
+                width: 1,
+              )),
+            ),
+          ).animate(onPlay: (c) => c.repeat()).rotate(duration: 5.seconds),
 
           // Use the shared LudoLoadingDots
           LudoLoadingDots(size: size * 0.6),
 
           // Center icon or dot
           Container(
-            width: size * 0.3,
-            height: size * 0.3,
+            width: size * 0.35,
+            height: size * 0.35,
             decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.white24,
+                  color: Colors.white54,
                   blurRadius: 15,
+                  spreadRadius: 2,
                 ),
               ],
             ),
             child: Icon(
               Icons.public,
-              size: size * 0.2,
+              size: size * 0.22,
               color: Colors.black,
             ),
-          ),
+          )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.15, 1.15),
+                duration: 1.5.seconds,
+                curve: Curves.easeInOut,
+              )
+              .shimmer(duration: 3.seconds),
         ],
       ),
     );
@@ -409,50 +583,54 @@ class LudoLoadingDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dotSize = size * 0.28;
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Rotating container
           Stack(
             children: List.generate(4, (index) {
               final colors = [
-                const Color(0xFF2196F3),
-                const Color.fromARGB(255, 212, 164, 6),
-                const Color(0xFF4CAF50),
-                const Color(0xFFF44336),
+                const Color(0xFF2196F3), // Blue
+                const Color(0xFFFFC107), // Yellow
+                const Color(0xFF4CAF50), // Green
+                const Color(0xFFF44336), // Red
               ];
+
               return RotationTransition(
                 turns: AlwaysStoppedAnimation(index * 0.25),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Container(
-                    width: size * 0.25,
-                    height: size * 0.25,
+                    width: dotSize,
+                    height: dotSize,
                     decoration: BoxDecoration(
                       color: colors[index],
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors[index].withValues(alpha: 0.6),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
-                  ),
+                  ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                        begin: const Offset(0.7, 0.7),
+                        end: const Offset(1.2, 1.2),
+                        duration: 800.ms,
+                        delay: (index * 200).ms,
+                        curve: Curves.easeInOut,
+                      ),
                 ),
               );
             }),
           )
               .animate(onPlay: (c) => c.repeat())
-              .rotate(duration: 2.seconds, curve: Curves.linear)
-              .animate(onPlay: (c) => c.repeat())
-              .scale(
-                  begin: const Offset(1, 1),
-                  end: const Offset(1.15, 1.15),
-                  duration: 800.ms,
-                  curve: Curves.easeInOutSine)
-              .then()
-              .scale(
-                  begin: const Offset(1.15, 1.15),
-                  end: const Offset(1, 1),
-                  duration: 800.ms,
-                  curve: Curves.easeInOutSine),
+              .rotate(duration: 3.seconds, curve: Curves.linear),
         ],
       ),
     );

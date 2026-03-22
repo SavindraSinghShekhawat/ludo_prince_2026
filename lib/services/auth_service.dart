@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -24,6 +25,7 @@ class AuthService {
 
       return await _linkOrSignIn(credential);
     } catch (e) {
+      if (_isCancellation(e)) return null;
       debugPrint('Error signing in with Google: $e');
       rethrow;
     }
@@ -45,6 +47,7 @@ class AuthService {
 
       return await _linkOrSignIn(credential);
     } catch (e) {
+      if (_isCancellation(e)) return null;
       debugPrint('Error signing in with Apple: $e');
       rethrow;
     }
@@ -73,6 +76,17 @@ class AuthService {
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
+  }
+
+  bool _isCancellation(dynamic e) {
+    final s = e.toString().toLowerCase();
+    return s.contains('canceled') ||
+        s.contains('cancelled') ||
+        s.contains('1000') ||
+        s.contains('1001') ||
+        s.contains('12501') ||
+        (e is PlatformException &&
+            (e.code == 'sign_in_canceled' || e.code == '12501'));
   }
 }
 

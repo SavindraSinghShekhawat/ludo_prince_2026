@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -45,6 +44,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   GameMode _gameMode = GameMode.classic;
   Timer? _heartbeatTimer;
   Timer? _timeoutTimer;
+  Timer? _uiTimer;
+  int _matchmakingSeconds = 60;
   StreamSubscription<String?>? _matchmakingSubscription;
 
   @override
@@ -57,6 +58,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   void dispose() {
     _heartbeatTimer?.cancel();
     _timeoutTimer?.cancel();
+    _uiTimer?.cancel();
     _matchmakingSubscription?.cancel();
     // Only leave queue if no game was found yet
     if (_activeGameId == null) {
@@ -226,7 +228,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: _buildMainButton(
-                _isLoading ? 'SEARCHING...' : 'QUICK MATCH',
+                _isLoading
+                    ? 'SEARCHING... (${_matchmakingSeconds}s)'
+                    : 'QUICK MATCH',
                 _isLoading ? null : () => _joinQueue(_maxPlayers, _gameMode),
                 isLoading: _isLoading,
               ),
@@ -354,10 +358,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                     Colors.white
                                   ],
                                 ).createShader(bounds),
-                                child: const Text(
-                                  'SEARCHING FOR PLAYERS...',
+                                child: Text(
+                                  'SEARCHING FOR PLAYERS... (${_matchmakingSeconds}s)',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
@@ -505,12 +509,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     final online = await NetworkService.hasInternet();
 
     if (!online) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text("No internet connection. Please connect to play online."),
-          ),
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          message: "No internet connection. Please connect to play online.",
+          isError: true,
         );
       }
       setState(() => _isLoading = false);
@@ -518,11 +521,39 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     }
 
     try {
+      _matchmakingSeconds = 60;
+      _uiTimer?.cancel();
+      _uiTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) {
+          setState(() {
+            if (_matchmakingSeconds > 0) {
+              _matchmakingSeconds--;
+            } else {
+              _uiTimer?.cancel();
+              _matchmakingSubscription?.cancel();
+              matchmakingService.leaveQueue(maxPlayers, gameMode);
+              setState(() {
+                _isLoading = false;
+                _activeGameId = null;
+              });
+              CustomSnackBar.show(
+                context,
+                message: "Matchmaking failed: no players found",
+                isError: true,
+              );
+            }
+          });
+        } else {
+          timer.cancel();
+        }
+      });
+
       final assignmentStream =
           await matchmakingService.joinQueue(maxPlayers, gameMode);
       _matchmakingSubscription?.cancel();
       _matchmakingSubscription = assignmentStream.listen((gameId) {
         if (gameId != null && mounted) {
+          _uiTimer?.cancel();
           _matchmakingSubscription?.cancel();
           setState(() {
             _activeGameId = gameId;
@@ -532,6 +563,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         }
       });
     } catch (e) {
+      _uiTimer?.cancel();
       _showError("Matchmaking failed: $e");
       if (mounted) setState(() => _isLoading = false);
     }
@@ -593,61 +625,133 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         // Ensure we handle infinite or invalid constraints gracefully
         final baseWidth = maxWidth.isFinite ? maxWidth : 320.0;
 
-        return Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOutCubic,
-            width: isLoading ? 70 : baseWidth,
-            height: 70, // Slightly taller button for better presence
-            constraints: const BoxConstraints(minWidth: 70),
-            decoration: BoxDecoration(
-              color: isSecondary ? Colors.transparent : const Color(0xFFE5E4E2),
-              borderRadius: BorderRadius.circular(isLoading ? 35 : 15),
-              border: isSecondary ? Border.all(color: Colors.white24) : null,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isLoading ? null : onTap,
-                borderRadius: BorderRadius.circular(isLoading ? 35 : 15),
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Text layer
-                      AnimatedOpacity(
-                        opacity: isLoading ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            letterSpacing: 1.2,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.fastOutSlowIn, // More premium, fluid curve
+                width: isLoading ? 60 : baseWidth,
+                height: 60,
+                constraints: const BoxConstraints(minWidth: 60),
+                decoration: BoxDecoration(
+                  color: isSecondary
+                      ? Colors.transparent
+                      : const Color(0xFFE5E4E2),
+                  borderRadius: BorderRadius.circular(isLoading ? 30 : 15),
+                  border:
+                      isSecondary ? Border.all(color: Colors.white24) : null,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(
+                          alpha: isLoading ? 0.15 : 0.0), // Fade in shadow
+                      blurRadius: 15,
+                      spreadRadius: 1,
+                    )
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: isLoading ? null : onTap,
+                    borderRadius: BorderRadius.circular(isLoading ? 30 : 15),
+                    child: Center(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Button Title Text
+                          AnimatedOpacity(
+                            opacity: isLoading ? 0.0 : 1.0,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+
+                          // Loader layer (Always there but hidden)
+                          IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: isLoading ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // The dots
+                                  LudoLoadingDots(size: isLoading ? 35 : 10),
+
+                                  // The progress ring
+                                  SizedBox(
+                                    width: 50,
+                                    height: 50,
+                                    child: CircularProgressIndicator(
+                                      value: _matchmakingSeconds / 60,
+                                      strokeWidth: 2,
+                                      backgroundColor:
+                                          Colors.black.withValues(alpha: 0.05),
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                              Colors.black26),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      // Loader layer
-                      if (isLoading)
-                        const LudoLoadingDots(size: 35)
-                            .animate()
-                            .fadeIn(duration: 300.ms),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+            // Status Feedback (Always present but fades in/out)
+            AnimatedOpacity(
+              opacity: isLoading ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 250),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: isLoading ? 50 : 0, // Animate height to avoid jump
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Center(
+                      child: Text(
+                        'SEARCHING... ${_matchmakingSeconds}s',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: 2.0,
+                        ),
+                      )
+                          .animate(onPlay: (c) => c.repeat())
+                          .shimmer(duration: 2.seconds, color: Colors.white24),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: Colors.redAccent));
+    CustomSnackBar.show(context, message: msg, isError: true);
   }
 
   Color _getSlotColor(int index) {

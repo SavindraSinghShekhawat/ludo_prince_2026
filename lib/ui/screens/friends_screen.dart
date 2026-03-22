@@ -472,11 +472,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
           if (currentUser != null) {
             await profileService.sendFriendRequest(currentUser.uid, user.uid);
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Friend request sent to ${user.displayName}!'),
-                  backgroundColor: Colors.cyanAccent.withValues(alpha: 0.8),
-                ),
+              CustomSnackBar.show(
+                context,
+                message: 'Friend request sent to ${user.displayName}!',
+                isSuccess: true,
               );
             }
           }

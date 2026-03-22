@@ -18,7 +18,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Future<void> _handleSignIn(Future<dynamic> Function() signInMethod) async {
     setState(() => _isLoading = true);
     try {
-      await signInMethod();
+      final result = await signInMethod();
+      if (result == null) {
+        if (mounted) {
+          _showError('Sign-in cancelled',
+              debugDetails: 'User cancelled the sign-in flow');
+        }
+        return;
+      }
+
       if (mounted) {
         Navigator.pop(context);
       }
@@ -26,12 +34,35 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (e.code == 'credential-already-in-use') {
         _showSwitchAccountDialog(e.credential!);
       } else {
-        _showError(e.message ?? 'Authentication failed');
+        _showError(_getFriendlyErrorMessage(e),
+            debugDetails: 'Firebase Auth Error (${e.code}): ${e.message}');
       }
     } catch (e) {
-      _showError('An unexpected error occurred: $e');
+      _showError('An unexpected error occurred. Please try again.',
+          debugDetails: 'General Auth Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _getFriendlyErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'network-request-failed':
+        return 'Network error. Please check your connection.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'invalid-credential':
+        return 'Invalid credentials. Please try again.';
+      case 'operation-not-allowed':
+        return 'Sign-in method not enabled.';
+      case 'user-not-found':
+        return 'User not found.';
+      case 'wrong-password':
+        return 'Incorrect password.';
+      default:
+        return 'Authentication failed. Please try again.';
     }
   }
 
@@ -97,7 +128,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 .signInWithCredential(credential);
                             if (mounted) Navigator.pop(context);
                           } catch (e) {
-                            _showError('Failed to switch account: $e');
+                            _showError(
+                                'Failed to switch account. Please try again.',
+                                debugDetails: 'Switch Account Error: $e');
                           } finally {
                             if (mounted) setState(() => _isLoading = false);
                           }
@@ -115,7 +148,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     );
   }
 
-  void _showError(String message) {
+  void _showError(String message, {String? debugDetails}) {
+    if (debugDetails != null) {
+      debugPrint('AUTH_ERROR: $debugDetails');
+    }
     CustomSnackBar.show(context, message: message, isError: true);
   }
 
