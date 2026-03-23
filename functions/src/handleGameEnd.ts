@@ -39,9 +39,9 @@ export const handleGameEnd = onValueUpdated(
         userRef,
         {
           gamesPlayed: admin.firestore.FieldValue.increment(1),
-          gamesWon: isWinner
-            ? admin.firestore.FieldValue.increment(1)
-            : admin.firestore.FieldValue.increment(0),
+          gamesWon: isWinner ?
+            admin.firestore.FieldValue.increment(1) :
+            admin.firestore.FieldValue.increment(0),
           lastActive: admin.firestore.FieldValue.serverTimestamp(),
         },
         {merge: true}
