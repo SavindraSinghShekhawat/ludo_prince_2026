@@ -400,65 +400,76 @@ class _SnackBarContentState extends State<_SnackBarContent> {
             : widget.color ?? Colors.cyanAccent;
 
     return Positioned(
-      bottom: MediaQuery.of(context).padding.bottom + 42,
-      left: 20,
-      right: 20,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E2C).withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: snackBarColor.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: snackBarColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  widget.isError
-                      ? Icons.error_outline
-                      : widget.isSuccess
-                          ? Icons.check_circle_outline
-                          : widget.icon,
-                  color: snackBarColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+      bottom: 32,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        top: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E2C).withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: snackBarColor.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: snackBarColor.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          widget.isError
+                              ? Icons.error_outline
+                              : widget.isSuccess
+                                  ? Icons.check_circle_outline
+                                  : widget.icon,
+                          color: snackBarColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          widget.message,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate(target: _isVisible ? 1 : 0).fadeIn(duration: 300.ms).slideY(
+                      begin: 1,
+                      end: 0,
+                      duration: 400.ms,
+                      curve: Curves.easeOutBack,
+                    ),
               ),
-            ],
-          ),
-        ).animate(target: _isVisible ? 1 : 0).fadeIn(duration: 300.ms).slideY(
-              begin: 1,
-              end: 0,
-              duration: 400.ms,
-              curve: Curves.easeOutBack,
             ),
+          ),
+        ),
       ),
     );
   }
