@@ -1,4 +1,4 @@
-import {onValueWritten} from "firebase-functions/v2/database";
+import {onValueCreated} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 import {ServerValue} from "firebase-admin/database";
 import {PlayerMatchInfo} from "./models/Matchmaking";
@@ -9,7 +9,7 @@ import {GameDocument} from "./models/GameDocument";
  * Matchmaking Cloud Function
  * Triggered when a player joins a queue for a specific game mode.
  */
-export const handleMatchmaking = onValueWritten(
+export const handleMatchmaking = onValueCreated(
   {
     ref: "/matchmaking/{mode}/queue/{uid}",
     instance: "ludo-prince-cf74a-default-rtdb",
@@ -17,11 +17,6 @@ export const handleMatchmaking = onValueWritten(
   async (event) => {
     console.log(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);
     const mode = event.params.mode;
-
-    if (!event.data?.after.exists()) {
-      console.log("[handleMatchmaking] Player removed from queue. Skipping.");
-      return;
-    }
     // const uid = event.params.uid; // Triggered by this user
 
     const queueRef = admin.database().ref(`matchmaking/${mode}/queue`);

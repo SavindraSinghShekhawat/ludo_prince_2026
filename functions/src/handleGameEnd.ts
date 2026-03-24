@@ -1,5 +1,6 @@
 import {onValueUpdated} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {GameDocument} from "./models/GameDocument";
 
 export const handleGameEnd = onValueUpdated(
@@ -38,11 +39,11 @@ export const handleGameEnd = onValueUpdated(
       batch.set(
         userRef,
         {
-          gamesPlayed: admin.firestore.FieldValue.increment(1),
+          gamesPlayed: FieldValue.increment(1),
           gamesWon: isWinner ?
-            admin.firestore.FieldValue.increment(1) :
-            admin.firestore.FieldValue.increment(0),
-          lastActive: admin.firestore.FieldValue.serverTimestamp(),
+            FieldValue.increment(1) :
+            FieldValue.increment(0),
+          lastActive: FieldValue.serverTimestamp(),
         },
         {merge: true}
       );
