@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
 import '../widgets/shared_ui.dart';
+import '../widgets/custom_dialog_layout.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -69,80 +70,53 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void _showSwitchAccountDialog(AuthCredential credential) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        insetPadding: MediaQuery.of(context).orientation == Orientation.portrait
-            ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
-            : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).orientation == Orientation.landscape
-                    ? 500
-                    : double.infinity,
+      builder: (context) => CustomDialogLayout(
+        header: const Text(
+          'Account Already Linked',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
-          child: GlassContainer(
-            padding: const EdgeInsets.all(24),
-            color: const Color(0xFF1E1E2C).withValues(alpha: 0.9),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Account Already Linked',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'This account is already linked to another profile. Would you like to switch to that profile? (Current guest progress will not be merged)',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel',
-                            style: TextStyle(color: Colors.white38)),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurpleAccent,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          setState(() => _isLoading = true);
-                          try {
-                            await FirebaseAuth.instance
-                                .signInWithCredential(credential);
-                            if (mounted) Navigator.pop(context);
-                          } catch (e) {
-                            _showError(
-                                'Failed to switch account. Please try again.',
-                                debugDetails: 'Switch Account Error: $e');
-                          } finally {
-                            if (mounted) setState(() => _isLoading = false);
-                          }
-                        },
-                        child: const Text('Switch Account'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+        ),
+        body: const [
+          Text(
+            'This account is already linked to another profile. Would you like to switch to that profile? (Note: Your current guest progress will be lost!)',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+        ],
+        footer: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.white38)),
             ),
-          ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurpleAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                setState(() => _isLoading = true);
+                try {
+                  await FirebaseAuth.instance.signInWithCredential(credential);
+                  if (mounted) Navigator.pop(context);
+                } catch (e) {
+                  _showError('Failed to switch account. Please try again.',
+                      debugDetails: 'Switch Account Error: $e');
+                } finally {
+                  if (mounted) setState(() => _isLoading = false);
+                }
+              },
+              child: const Text('Switch Account'),
+            ),
+          ],
         ),
       ),
     );

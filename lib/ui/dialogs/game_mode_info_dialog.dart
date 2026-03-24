@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/shared_ui.dart';
+import '../widgets/custom_dialog_layout.dart';
 
 class GameModeInfoItem {
   final IconData icon;
@@ -24,67 +24,37 @@ class GameModeInfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      insetPadding: MediaQuery.of(context).orientation == Orientation.portrait
-          ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
-          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(24),
-        color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).orientation == Orientation.landscape
-                    ? 500
-                    : double.infinity,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Icon(headerIcon, color: const Color(0xFFE5E4E2), size: 28),
-                    const SizedBox(width: 12),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(color: Colors.white24, height: 32),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: items.map((item) => _buildRule(item)).toList(),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5E4E2),
-                    foregroundColor: const Color(0xFF1E1E2C),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Got it!',
-                    style: TextStyle(
-                      color: Color(0xFF1E1E2C),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+    return CustomDialogLayout(
+      header: Row(
+        children: [
+          Icon(headerIcon, color: const Color(0xFFE5E4E2), size: 28),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+        ],
+      ),
+      body: items.map((item) => _buildRule(item)).toList(),
+      footer: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFE5E4E2),
+          foregroundColor: const Color(0xFF1E1E2C),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text(
+          'Got it!',
+          style: TextStyle(
+            color: Color(0xFF1E1E2C),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

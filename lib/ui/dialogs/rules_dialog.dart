@@ -1,88 +1,55 @@
 import 'package:flutter/material.dart';
-import '../widgets/shared_ui.dart';
+import '../widgets/custom_dialog_layout.dart';
 
 class RulesDialog extends StatelessWidget {
   const RulesDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      insetPadding: MediaQuery.of(context).orientation == Orientation.portrait
-          ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
-          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(24),
-        color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).orientation == Orientation.landscape
-                    ? 500
-                    : double.infinity,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),
-                    SizedBox(width: 12),
-                    Text(
-                      'Game Rules',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(color: Colors.white24, height: 32),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildRule(Icons.looks_6, Colors.amberAccent, 'Roll a 6',
-                        'You must roll a 6 to move a token out of your base.'),
-                    _buildRule(Icons.replay, Colors.cyanAccent, 'Extra Turn',
-                        'Rolling a 6 gives you an additional turn.'),
-                    _buildRule(Icons.block, Colors.redAccent, 'Consecutive 6s',
-                        'Rolling three consecutive 6s skips your turn and passes it to the next player.'),
-                    _buildRule(Icons.stars, Colors.greenAccent, 'Safe Spots',
-                        'Tokens on marked safe spots (stars) cannot be captured.'),
-                    _buildRule(
-                        Icons.sports_kabaddi,
-                        Colors.orangeAccent,
-                        'Capture',
-                        'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.'),
-                    _buildRule(Icons.flag, const Color(0xFFE5E4E2), 'Winning',
-                        'The first player to move all 4 of their tokens to the home area at the center of the board wins.'),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5E4E2),
-                    foregroundColor: const Color(0xFF1E1E2C),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                    'Got it!',
-                    style: TextStyle(
-                      color: Color(0xFF1E1E2C),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+    return CustomDialogLayout(
+      header: const Row(
+        children: [
+          Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),
+          SizedBox(width: 12),
+          Text(
+            'Game Rules',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+        ],
+      ),
+      body: [
+        _buildRule(Icons.looks_6, Colors.amberAccent, 'Roll a 6',
+            'You must roll a 6 to move a token out of your base.'),
+        _buildRule(Icons.replay, Colors.cyanAccent, 'Extra Turn',
+            'Rolling a 6 gives you an additional turn.'),
+        _buildRule(Icons.block, Colors.redAccent, 'Consecutive 6s',
+            'Rolling three consecutive 6s skips your turn and passes it to the next player.'),
+        _buildRule(Icons.stars, Colors.greenAccent, 'Safe Spots',
+            'Tokens on marked safe spots (stars) cannot be captured.'),
+        _buildRule(Icons.sports_kabaddi, Colors.orangeAccent, 'Capture',
+            'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.'),
+        _buildRule(Icons.flag, const Color(0xFFE5E4E2), 'Winning',
+            'The first player to move all 4 of their tokens to the home area at the center of the board wins.'),
+      ],
+      footer: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFE5E4E2),
+          foregroundColor: const Color(0xFF1E1E2C),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text(
+          'Got it!',
+          style: TextStyle(
+            color: Color(0xFF1E1E2C),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

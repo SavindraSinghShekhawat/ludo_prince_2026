@@ -12,6 +12,7 @@ import '../widgets/board_widget.dart';
 import '../widgets/token_widget.dart';
 import '../widgets/dice_widget.dart';
 import '../widgets/shared_ui.dart';
+import '../widgets/custom_dialog_layout.dart';
 import 'home_screen.dart';
 import '../dialogs/rules_dialog.dart';
 import '../dialogs/settings_dialog.dart';
@@ -112,86 +113,59 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => Dialog(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              insetPadding: MediaQuery.of(context).orientation ==
-                      Orientation.portrait
-                  ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
-                  : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).orientation ==
-                          Orientation.landscape
-                      ? 500
-                      : double.infinity,
+            builder: (context) => CustomDialogLayout(
+              header: const Text(
+                'Exit Game?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-                child: GlassContainer(
-                  padding: const EdgeInsets.all(24),
-                  color: const Color(0xFF1E1E2C).withValues(alpha: 0.9),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text(
-                          'Exit Game?',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Are you sure you want to stop playing? Current progress will be lost.',
-                          style: TextStyle(color: Colors.white70, fontSize: 16),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(color: Colors.white54),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: () {
-                                _controller.quitGame();
-                                Navigator.of(context).pop();
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomeScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Colors.redAccent.withValues(alpha: 0.2),
-                                foregroundColor: Colors.redAccent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(
-                                      color: Colors.redAccent, width: 1),
-                                ),
-                              ),
-                              child: const Text(
-                                'Exit',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+              ),
+              body: const [
+                Text(
+                  'Are you sure you want to stop playing? Current progress will be lost.',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+              ],
+              footer: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white54),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      _controller.quitGame();
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => const HomeScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
+                      foregroundColor: Colors.redAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side:
+                            const BorderSide(color: Colors.redAccent, width: 1),
+                      ),
+                    ),
+                    child: const Text(
+                      'Exit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
