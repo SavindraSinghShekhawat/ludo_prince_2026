@@ -93,7 +93,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.white),
+            icon: const Icon(Icons.help_outline, color: Colors.white, size: 28),
             onPressed: () {
               showDialog(
                 context: context,

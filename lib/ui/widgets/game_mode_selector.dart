@@ -147,10 +147,17 @@ class GameModeSelector extends StatelessWidget {
                   ],
                 ),
                 Positioned(
-                  top: -8,
-                  right: -4,
-                  child: GestureDetector(
-                    onTap: () {
+                  top: -12,
+                  right: -10,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.help_outline,
+                      size: 22,
+                      color: isSelected
+                          ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
+                          : Colors.white38,
+                    ),
+                    onPressed: () {
                       showDialog(
                         context: context,
                         builder: (context) => GameModeInfoDialog(
@@ -160,13 +167,8 @@ class GameModeSelector extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Icon(
-                      Icons.help_outline,
-                      size: 18,
-                      color: isSelected
-                          ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
-                          : Colors.white38,
-                    ),
+                    tooltip: 'Help',
+                    padding: const EdgeInsets.all(12),
                   ),
                 ),
               ],

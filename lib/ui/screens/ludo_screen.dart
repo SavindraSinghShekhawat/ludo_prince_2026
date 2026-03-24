@@ -108,8 +108,8 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+      leading: BackButton(
+        color: Colors.white,
         onPressed: () {
           showDialog(
             context: context,
@@ -180,7 +180,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.help_outline, color: Colors.white),
+          icon: const Icon(Icons.help_outline, color: Colors.white, size: 28),
           onPressed: () {
             showDialog(
               context: context,

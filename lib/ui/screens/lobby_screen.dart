@@ -113,8 +113,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+        leading: BackButton(
+          color: Colors.white,
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
