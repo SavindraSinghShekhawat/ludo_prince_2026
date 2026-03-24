@@ -1,7 +1,17 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true,
+    "presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "stats": {
+      "onlineCount": {
+        ".read": true,
+        ".write": false 
+      }
+    },
     "ludogames": {
       ".indexOn": ["status"],
       ".read": "auth != null",

@@ -5,33 +5,43 @@ class PresenceService {
   final FirebaseService _firebaseService = FirebaseService();
 
   void setPresence() {
-    final user = _firebaseService.auth.currentUser;
-    if (user == null) return;
-
-    final presenceRef = _firebaseService.database.ref("presence/${user.uid}");
-
-    final connectedRef = _firebaseService.database.ref(".info/connected");
-    connectedRef.onValue.listen((event) {
-      if (event.snapshot.value == true) {
-        presenceRef.onDisconnect().set({
-          "online": false,
-          "lastSeen": ServerValue.timestamp,
-        }).then((_) {
-          presenceRef.set({
-            "online": true,
-            "lastSeen": ServerValue.timestamp,
-          });
-        });
+    _firebaseService.auth.authStateChanges().listen((user) {
+      if (user == null) {
+        print("PresenceService: No user signed in, skipping presence set.");
+        return;
       }
+
+      print("PresenceService: Setting presence for user ${user.uid}");
+      final presenceRef = _firebaseService.database.ref("presence/${user.uid}");
+      final connectedRef = _firebaseService.database.ref(".info/connected");
+
+      connectedRef.onValue.listen((event) {
+        final connected = event.snapshot.value == true;
+        print(
+            "PresenceService: Realtime Database connected status: $connected");
+
+        if (connected) {
+          presenceRef.onDisconnect().set({
+            "online": false,
+            "lastSeen": ServerValue.timestamp,
+          }).then((_) {
+            print("PresenceService: onDisconnect set for ${user.uid}");
+            presenceRef.set({
+              "online": true,
+              "lastSeen": ServerValue.timestamp,
+            });
+          });
+        }
+      });
     });
   }
 
-  Stream<bool> isUserOnline(String uid) {
+  Stream<int> getOnlineCount() {
     return _firebaseService.database
-        .ref("presence/$uid/online")
+        .ref("stats/onlineCount")
         .onValue
         .map((event) {
-      return event.snapshot.value as bool? ?? false;
+      return (event.snapshot.value as int?) ?? 0;
     });
   }
 }

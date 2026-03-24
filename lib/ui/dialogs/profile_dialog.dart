@@ -45,26 +45,38 @@ class ProfileDialog extends ConsumerWidget {
           final isAnonymous = user.isAnonymous;
           return [
             const SizedBox(height: 24),
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
-              backgroundImage: profile?.photoURL != null
-                  ? NetworkImage(profile!.photoURL!)
-                  : null,
-              child: profile?.photoURL == null
-                  ? const Icon(Icons.person, size: 40, color: Colors.white)
-                  : null,
+            GestureDetector(
+              onTap: () {
+                CustomSnackBar.show(context,
+                    message: "Profile picture updates are coming soon!");
+              },
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.white.withValues(alpha: 0.1),
+                backgroundImage: profile?.photoURL != null
+                    ? NetworkImage(profile!.photoURL!)
+                    : null,
+                child: profile?.photoURL == null
+                    ? const Icon(Icons.person, size: 40, color: Colors.white)
+                    : null,
+              ),
             ),
             const SizedBox(height: 16),
-            Text(
-              profile?.displayName ??
-                  (user.displayName != null && user.displayName!.isNotEmpty
-                      ? user.displayName!
-                      : 'Anonymous King'),
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
+            GestureDetector(
+              onTap: () {
+                CustomSnackBar.show(context,
+                    message: "Name updates are coming soon!");
+              },
+              child: Text(
+                profile?.displayName ??
+                    (user.displayName != null && user.displayName!.isNotEmpty
+                        ? user.displayName!
+                        : 'Anonymous King'),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              ),
             ),
             if (isAnonymous)
               Container(

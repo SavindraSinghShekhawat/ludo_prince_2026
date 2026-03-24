@@ -10,90 +10,242 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/shared_ui.dart';
 import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
+import '../widgets/logo_widget.dart';
+import '../../providers/presence_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.offset > 0 && !_isScrolled) {
+      setState(() => _isScrolled = true);
+    } else if (_scrollController.offset <= 0 && _isScrolled) {
+      setState(() => _isScrolled = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final onlineCountAsync = ref.watch(onlineCountProvider);
+    final onlineCount = onlineCountAsync.value ?? 0;
+
     return Scaffold(
       body: AnimatedBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context, ref),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      GlassCard(
-                        title: "PLAY ONLINE",
-                        subtitle: "Quick Match & Tournaments",
-                        icon: Icons.public,
-                        accentColor: Colors.deepPurpleAccent,
-                        isPrimary: true,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const LobbyScreen(isQuickMatch: true)),
+        showParticles: true,
+        child: Stack(
+          children: [
+            // 1. Scrollable Content Layer (Underneath)
+            Positioned.fill(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.only(
+                  top:
+                      350, // Adjusted to move "BATTLE ONLINE" up while keeping it below the imaginary line
+                  bottom: 40,
+                  left: 24,
+                  right: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Primary Action
+
+                    // Primary Action
+                    GlassCard(
+                      title: "BATTLE ONLINE",
+                      subtitle: "Quick Match & Tournaments",
+                      icon: Icons.public,
+                      accentColor: Colors.deepPurpleAccent,
+                      isPrimary: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const LobbyScreen(isQuickMatch: true)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Secondary Actions Grid
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GlassCard(
+                            title: "FRIENDS",
+                            subtitle: "Social & Rewards",
+                            icon: Icons.people,
+                            accentColor: Colors.cyanAccent,
+                            height: 120,
+                            isComingSoon: true,
+                            onTap: () {
+                              CustomSnackBar.show(
+                                context,
+                                message:
+                                    "Friends feature is coming soon! Link your account to stay updated.",
+                                color: Colors.cyanAccent,
+                                icon: Icons.people,
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      GlassCard(
-                        title: "PLAY WITH FRIENDS",
-                        subtitle: "Private Rooms & Friends",
-                        icon: Icons.people,
-                        accentColor: Colors.cyanAccent,
-                        isComingSoon: true,
-                        onTap: () {},
-                      ),
-                      const SizedBox(height: 24),
-                      GlassCard(
-                        title: "LOCAL & BOTS",
-                        subtitle: "Offline, Friends & Computer",
-                        icon: Icons.home,
-                        accentColor: AppColors.player1BlueUI,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const LocalSetupScreen()),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: GlassCard(
+                            title: "OFFLINE",
+                            subtitle: "Local & Bots",
+                            icon: Icons.videogame_asset,
+                            accentColor: AppColors.player1BlueUI,
+                            height: 120,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LocalSetupScreen()),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 48),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      ],
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Footer Navigation
+                    _buildFooter(context),
+                    const SizedBox(height: 16),
+                    _buildCommunityNote(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+
+            // 2. Fixed Sticky Header (Top Layer with EXTRA BLUR)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: _isScrolled ? 45 : 0,
+                    sigmaY: _isScrolled ? 45 : 0,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                      color: _isScrolled
+                          ? const Color(0xFF0B0B1A).withValues(alpha: 0.15)
+                          : Colors.transparent,
+                      border: _isScrolled
+                          ? Border(
+                              bottom: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                width: 1,
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextButton(
-                            onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const SettingsScreen())),
-                            child: const Text("Settings",
-                                style: TextStyle(color: Colors.white60)),
-                          ),
-                          const Text("|",
-                              style: TextStyle(color: Colors.white24)),
-                          TextButton(
-                            onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const AboutScreen())),
-                            child: const Text("About & Fairness",
-                                style: TextStyle(color: Colors.white60)),
-                          ),
+                          _buildHeader(context, ref),
+                          const SizedBox(height: 10),
+                          const LogoWidget(fontSize: 42),
+                          const SizedBox(height: 16),
+                          _buildOnlineStatusBar(onlineCount),
+                          const SizedBox(height: 24),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOnlineStatusBar(int count) {
+    // Show actual real numbers as requested
+    final displayCount = count.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF00FF88),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00FF88).withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.8, 0.8),
+                    end: const Offset(1.8, 1.8),
+                    duration: 1.2.seconds,
+                    curve: Curves.easeInOutSine,
+                  )
+                  .fadeOut(duration: 1.2.seconds),
             ],
           ),
-        ),
+          const SizedBox(width: 10),
+          Text(
+            "$displayCount EMPERORS ONLINE",
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -103,7 +255,7 @@ class HomeScreen extends ConsumerWidget {
     final profile = ref.watch(userProfileProvider).value;
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -135,52 +287,22 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShaderMask(
-                      blendMode: BlendMode.srcIn,
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [
-                          Color(0xFFE5E4E2), // Platinum base
-                          Color(0xFFFFFFFF), // White highlight
-                          Color(0xFFD9E0E7), // AppColors.starPlatinum
-                          Color(0xFFBCC6CC), // Silver/Metallic
-                          Color(0xFFE5E4E2), // Return to base
-                        ],
-                        stops: [0.0, 0.2, 0.5, 0.8, 1.0],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ).createShader(bounds),
-                      child: const Text("LUDO PRINCE",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 2.0)),
-                    ).animate(onPlay: (c) => c.repeat()).shimmer(
-                        duration: 3.seconds,
-                        color: Colors.white.withValues(alpha: 0.3)),
-                    Text(profile?.displayName ?? displayName,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ),
+                Text(profile?.displayName ?? displayName,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           ),
           Row(
             children: [
-              _buildHeaderIcon(context, Icons.settings, onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              }),
-              const SizedBox(width: 12),
               _buildHeaderIcon(context, Icons.notifications),
+              const SizedBox(width: 12),
+              _buildHeaderIcon(context, Icons.settings, onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
+              }),
             ],
           ),
         ],
@@ -199,6 +321,64 @@ class HomeScreen extends ConsumerWidget {
             color: Colors.white.withValues(alpha: 0.05)),
         child: Icon(icon, color: Colors.white70, size: 20),
       ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _footerLink("Settings", () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()));
+        }),
+        const _FooterDivider(),
+        _footerLink("About & Fairness", () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+        }),
+      ],
+    );
+  }
+
+  Widget _footerLink(String text, VoidCallback onTap) {
+    return TextButton(
+      onPressed: onTap,
+      child: Text(text,
+          style: const TextStyle(color: Colors.white60, fontSize: 13)),
+    );
+  }
+
+  Widget _buildCommunityNote() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      child: Column(
+        children: [
+          Divider(color: Colors.white.withValues(alpha: 0.05)),
+          const SizedBox(height: 16),
+          Text(
+            "Thanks for supporting us in the beginning! Players might be few now, but we'll get there together. 🚀",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterDivider extends StatelessWidget {
+  const _FooterDivider();
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8),
+      child: Text("|", style: TextStyle(color: Colors.white24)),
     );
   }
 }

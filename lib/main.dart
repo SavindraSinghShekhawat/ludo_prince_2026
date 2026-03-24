@@ -9,6 +9,7 @@ import 'ui/screens/home_screen.dart';
 import 'services/audio_service.dart';
 import 'services/presence_service.dart';
 import 'services/firebase_service.dart';
+import 'ui/widgets/shared_ui.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,6 +95,14 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
     return MaterialApp(
       title: 'Ludo Prince',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const CustomSnackBarHost(),
+          ],
+        );
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepPurple,

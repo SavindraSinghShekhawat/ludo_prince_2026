@@ -13,3 +13,4 @@ export {handleMoveRequest} from "./handleMoveRequest";
 export {handleRollRequest} from "./handleRollRequest";
 export {handleMatchmaking} from "./handleMatchmaking";
 export {handleGameEnd} from "./handleGameEnd";
+export {handlePresence} from "./handlePresence";

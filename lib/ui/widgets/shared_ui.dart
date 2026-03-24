@@ -1,17 +1,25 @@
-import 'dart:async';
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/snackbar_provider.dart';
 
 class AnimatedBackground extends StatelessWidget {
   final Widget child;
+  final bool showParticles;
 
-  const AnimatedBackground({super.key, required this.child});
+  const AnimatedBackground({
+    super.key,
+    required this.child,
+    this.showParticles = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // Base dark gradient (Deep void)
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -21,6 +29,34 @@ class AnimatedBackground extends StatelessWidget {
             ),
           ),
         ),
+
+        // Tabletop Texture Layer
+        Positioned.fill(
+          child: CustomPaint(
+            painter: TabletopTexturePainter(
+              opacity: 0.04,
+            ),
+          ),
+        ),
+
+        // Central Spotlight (Focus on the game board area)
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.2,
+                colors: [
+                  Colors.white.withValues(alpha: 0.08),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 1.0],
+              ),
+            ),
+          ),
+        ),
+
+        // Animated ambient soft glows (Corner accents)
         Positioned(
           top: -100,
           left: -50,
@@ -31,17 +67,18 @@ class AnimatedBackground extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  Colors.deepPurpleAccent.withValues(alpha: 0.3),
+                  Colors.deepPurpleAccent.withValues(alpha: 0.2),
                   Colors.transparent,
                 ],
               ),
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
               begin: const Offset(0, 0),
-              end: const Offset(40, 40),
-              duration: 6.seconds,
+              end: const Offset(30, 30),
+              duration: 10.seconds,
               curve: Curves.easeInOut),
         ),
+
         Positioned(
           bottom: -50,
           right: -100,
@@ -52,19 +89,157 @@ class AnimatedBackground extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  Colors.blueAccent.withValues(alpha: 0.2),
+                  Colors.blueAccent.withValues(alpha: 0.15),
                   Colors.transparent,
                 ],
               ),
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
               begin: const Offset(0, 0),
-              end: const Offset(-50, -30),
-              duration: 8.seconds,
+              end: const Offset(-40, -20),
+              duration: 12.seconds,
               curve: Curves.easeInOut),
         ),
+
         child,
       ],
+    );
+  }
+}
+
+class TabletopTexturePainter extends CustomPainter {
+  final double opacity;
+  TabletopTexturePainter({required this.opacity});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..strokeWidth = 1.0;
+
+    final random = math.Random(123); // Seeded for consistency
+
+    // Draw fine grain/noise
+    for (int i = 0; i < (size.width * size.height * 0.01).toInt(); i++) {
+      canvas.drawPoints(
+        PointMode.points,
+        [
+          Offset(random.nextDouble() * size.width,
+              random.nextDouble() * size.height)
+        ],
+        paint,
+      );
+    }
+
+    // Draw subtle "wood/felt" fibers
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: opacity * 0.5)
+      ..strokeWidth = 0.5;
+
+    for (int i = 0; i < 100; i++) {
+      double x = random.nextDouble() * size.width;
+      double y = random.nextDouble() * size.height;
+      double len = random.nextDouble() * 20 + 5;
+      double angle = random.nextDouble() * math.pi;
+
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + math.cos(angle) * len, y + math.sin(angle) * len),
+        linePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class GameButton extends StatefulWidget {
+  final String text;
+  final VoidCallback onTap;
+  final Color color;
+  final IconData? icon;
+  final bool isPrimary;
+
+  const GameButton({
+    super.key,
+    required this.text,
+    required this.onTap,
+    this.color = Colors.deepPurpleAccent,
+    this.icon,
+    this.isPrimary = false,
+  });
+
+  @override
+  State<GameButton> createState() => _GameButtonState();
+}
+
+class _GameButtonState extends State<GameButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: 100.ms,
+        transform: Matrix4.identity()..translate(0.0, _isPressed ? 4.0 : 0.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: widget.color,
+          boxShadow: [
+            if (!_isPressed)
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.4),
+                offset: const Offset(0, 6),
+                blurRadius: 0,
+              ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              offset: const Offset(0, 4),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.2),
+                Colors.transparent,
+              ],
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.icon != null) ...[
+                Icon(widget.icon, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+              ],
+              Text(
+                widget.text.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -77,6 +252,7 @@ class GlassCard extends StatefulWidget {
   final VoidCallback onTap;
   final bool isPrimary;
   final bool isComingSoon;
+  final double height;
 
   const GlassCard({
     super.key,
@@ -87,6 +263,7 @@ class GlassCard extends StatefulWidget {
     required this.onTap,
     this.isPrimary = false,
     this.isComingSoon = false,
+    this.height = 160,
   });
 
   @override
@@ -95,114 +272,125 @@ class GlassCard extends StatefulWidget {
 
 class _GlassCardState extends State<GlassCard> {
   bool _isPressed = false;
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    Widget card = GestureDetector(
-      onTapDown:
-          widget.isComingSoon ? null : (_) => setState(() => _isPressed = true),
-      onTapUp: widget.isComingSoon
-          ? null
-          : (_) {
-              setState(() => _isPressed = false);
-              widget.onTap();
-            },
-      onTapCancel:
-          widget.isComingSoon ? null : () => setState(() => _isPressed = false),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            height: 160,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                    color: widget.accentColor.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10)),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  right: -20,
-                  bottom: -20,
-                  child: Icon(widget.icon,
-                      size: 140,
-                      color: widget.accentColor.withValues(alpha: 0.12)),
+    Widget card = MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          widget.onTap();
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedContainer(
+          duration: 300.ms,
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001) // Perspective
+            ..rotateX(_isHovered ? -0.05 : 0.0)
+            ..rotateY(_isHovered ? 0.05 : 0.0)
+            ..scale(_isPressed ? 0.96 : (_isHovered ? 1.02 : 1.0)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                height: widget.height,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white.withValues(alpha: 0.05),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                        color: widget.accentColor.withValues(alpha: 0.15),
+                        blurRadius: _isHovered ? 30 : 20,
+                        offset: const Offset(0, 10)),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -20,
+                      bottom: -20,
+                      child: Icon(widget.icon,
+                          size: widget.height * 0.9,
+                          color: widget.accentColor.withValues(alpha: 0.12)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(widget.height * 0.15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(widget.icon,
-                              color: widget.accentColor, size: 40),
-                          if (widget.isComingSoon)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color:
-                                    widget.accentColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: widget.accentColor
-                                        .withValues(alpha: 0.4),
-                                    width: 1),
-                              ),
-                              child: Text(
-                                "COMING SOON",
-                                style: TextStyle(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Icon(widget.icon,
                                   color: widget.accentColor,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            )
-                                .animate(onPlay: (c) => c.repeat(reverse: true))
-                                .scale(
-                                    begin: const Offset(1, 1),
-                                    end: const Offset(1.05, 1.05),
-                                    duration: 1.5.seconds,
-                                    curve: Curves.easeInOut)
-                                .shimmer(
-                                    duration: 3.seconds,
-                                    color: Colors.white.withValues(alpha: 0.2)),
+                                  size: widget.height * 0.25),
+                              if (widget.isComingSoon)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: widget.accentColor
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: widget.accentColor
+                                            .withValues(alpha: 0.4),
+                                        width: 1),
+                                  ),
+                                  child: Text(
+                                    "COMING SOON",
+                                    style: TextStyle(
+                                      color: widget.accentColor,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                )
+                                    .animate(
+                                        onPlay: (c) => c.repeat(reverse: true))
+                                    .scale(
+                                        begin: const Offset(1, 1),
+                                        end: const Offset(1.05, 1.05),
+                                        duration: 1.5.seconds,
+                                        curve: Curves.easeInOut)
+                                    .shimmer(
+                                        duration: 3.seconds,
+                                        color: Colors.white
+                                            .withValues(alpha: 0.2)),
+                            ],
+                          ),
+                          SizedBox(height: widget.height * 0.1),
+                          Text(widget.title,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: widget.height * 0.13,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.0)),
+                          Text(widget.subtitle,
+                              style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: widget.height * 0.08)),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Text(widget.title,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.0)),
-                      Text(widget.subtitle,
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 14)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    )
-        .animate(target: _isPressed ? 1 : 0)
-        .scaleXY(end: 0.95, duration: 100.ms, curve: Curves.easeOut);
+    );
 
     // Add a more premium, color-integrated shimmer
     card = card
@@ -234,9 +422,9 @@ class _GlassCardState extends State<GlassCard> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.accentColor.withValues(alpha: 0.1 * value),
-                    blurRadius: 15 + (10 * value),
-                    spreadRadius: 2 * value,
+                    color: widget.accentColor.withValues(alpha: 0.15 * value),
+                    blurRadius: 15 + (15 * value),
+                    spreadRadius: 3 * value,
                   ),
                 ],
               ),
@@ -291,8 +479,6 @@ class GlassContainer extends StatelessWidget {
 }
 
 class CustomSnackBar {
-  static OverlayEntry? _currentEntry;
-
   static void show(
     BuildContext context, {
     required String message,
@@ -302,116 +488,117 @@ class CustomSnackBar {
     bool isSuccess = false,
     Duration? duration,
   }) {
-    // If there's an existing entry, remove it immediately to show the new one
-    // In a more advanced version, we could tell the old one to animate out first.
-    if (_currentEntry != null && _currentEntry!.mounted) {
-      _currentEntry!.remove();
+    try {
+      final container = ProviderScope.containerOf(context);
+      container.read(snackBarProvider.notifier).show(
+            message: message,
+            icon: icon,
+            color: color,
+            isError: isError,
+            isSuccess: isSuccess,
+            duration: duration,
+          );
+    } catch (e) {
+      // Fallback if ProviderScope is not reachable
+      debugPrint("SnackBar error: $e");
     }
-
-    // Calculate ideal duration if not provided
-    // Base 2s + 50ms per character, clamped between 3s and 7s
-    final calculatedDuration = duration ??
-        Duration(
-          milliseconds: (2000 + (message.length * 50)).clamp(3000, 7000),
-        );
-
-    final overlay = Overlay.of(context);
-    final entry = OverlayEntry(
-      builder: (context) => _SnackBarContent(
-        message: message,
-        icon: icon,
-        color: color,
-        isError: isError,
-        isSuccess: isSuccess,
-        duration: calculatedDuration,
-        onDismissed: () {
-          if (_currentEntry?.mounted ?? false) {
-            _currentEntry!.remove();
-            _currentEntry = null;
-          }
-        },
-      ),
-    );
-
-    _currentEntry = entry;
-    overlay.insert(entry);
   }
 }
 
-class _SnackBarContent extends StatefulWidget {
+class CustomSnackBarHost extends ConsumerWidget {
+  const CustomSnackBarHost({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(snackBarProvider);
+
+    return Positioned(
+      bottom: 0, // Lowered because we now use SafeArea and Padding inside
+      left: 0,
+      right: 0,
+      child: AnimatedSwitcher(
+        duration: 400.ms,
+        switchInCurve: Curves.easeOutBack,
+        switchOutCurve: Curves.easeIn,
+        layoutBuilder: (child, previousChildren) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              ...previousChildren,
+              if (child != null) child,
+            ],
+          );
+        },
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.5),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: state == null
+            ? const SizedBox.shrink()
+            : _SnackBarContent(
+                key: ValueKey(state.timestamp),
+                message: state.message,
+                icon: state.icon,
+                color: state.color,
+                isError: state.isError,
+                isSuccess: state.isSuccess,
+                onDismissed: () => ref.read(snackBarProvider.notifier).hide(),
+              ),
+      ),
+    );
+  }
+}
+
+class _SnackBarContent extends StatelessWidget {
   final String message;
   final IconData icon;
   final Color? color;
   final bool isError;
   final bool isSuccess;
-  final Duration duration;
   final VoidCallback onDismissed;
 
   const _SnackBarContent({
+    super.key,
     required this.message,
     this.icon = Icons.info_outline,
     this.color,
     this.isError = false,
     this.isSuccess = false,
-    required this.duration,
     required this.onDismissed,
   });
 
   @override
-  State<_SnackBarContent> createState() => _SnackBarContentState();
-}
-
-class _SnackBarContentState extends State<_SnackBarContent> {
-  bool _isVisible = false;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    // Start entrance animation
-    Future.microtask(() {
-      if (mounted) setState(() => _isVisible = true);
-    });
-
-    // Schedule exit animation and dismissal
-    _timer = Timer(widget.duration, () {
-      if (mounted) {
-        setState(() => _isVisible = false);
-        // Wait for exit animation to complete (400ms match slideY duration)
-        Future.delayed(400.ms, () {
-          if (mounted) widget.onDismissed();
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final snackBarColor = widget.isError
+    final snackBarColor = isError
         ? Colors.redAccent
-        : widget.isSuccess
+        : isSuccess
             ? const Color(0xFF00FFA3)
-            : widget.color ?? Colors.cyanAccent;
+            : color ?? Colors.cyanAccent;
 
-    return Positioned(
-      bottom: 32,
-      left: 0,
-      right: 0,
-      child: SafeArea(
-        top: false,
+    return SafeArea(
+      top: false,
+      child: Material(
+        color: Colors.transparent,
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: Material(
-                color: Colors.transparent,
+              child: Dismissible(
+                key: UniqueKey(),
+                direction: DismissDirection.horizontal,
+                dismissThresholds: const {
+                  DismissDirection.horizontal: 0.1,
+                },
+                onDismissed: (_) => onDismissed(),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -438,11 +625,11 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          widget.isError
+                          isError
                               ? Icons.error_outline
-                              : widget.isSuccess
+                              : isSuccess
                                   ? Icons.check_circle_outline
-                                  : widget.icon,
+                                  : icon,
                           color: snackBarColor,
                           size: 20,
                         ),
@@ -450,7 +637,7 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          widget.message,
+                          message,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -460,15 +647,7 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                       ),
                     ],
                   ),
-                )
-                    .animate(target: _isVisible ? 1 : 0)
-                    .fadeIn(duration: 300.ms)
-                    .slideY(
-                      begin: 1,
-                      end: 0,
-                      duration: 400.ms,
-                      curve: Curves.easeOutBack,
-                    ),
+                ),
               ),
             ),
           ),

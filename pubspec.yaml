@@ -94,6 +94,7 @@ flutter:
   assets:
     - assets/audio/
     - assets/icons/robot_2.svg
+    - assets/crown.png
 
   #   - images/a_dot_ham.jpeg
 
