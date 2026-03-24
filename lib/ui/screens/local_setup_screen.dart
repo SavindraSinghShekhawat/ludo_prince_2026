@@ -229,7 +229,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                         style: const TextStyle(
                                             color: Colors.white),
                                         decoration: InputDecoration(
-                                          labelText: 'Player ${slot.index + 1}',
+                                          labelText: 'Player Name',
                                           labelStyle:
                                               TextStyle(color: displayColor),
                                           enabledBorder: OutlineInputBorder(

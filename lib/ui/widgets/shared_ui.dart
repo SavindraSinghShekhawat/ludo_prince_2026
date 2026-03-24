@@ -460,7 +460,10 @@ class _SnackBarContentState extends State<_SnackBarContent> {
                       ),
                     ],
                   ),
-                ).animate(target: _isVisible ? 1 : 0).fadeIn(duration: 300.ms).slideY(
+                )
+                    .animate(target: _isVisible ? 1 : 0)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(
                       begin: 1,
                       end: 0,
                       duration: 400.ms,
