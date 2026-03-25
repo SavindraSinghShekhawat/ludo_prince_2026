@@ -48,6 +48,119 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final onlineCountAsync = ref.watch(onlineCountProvider);
     final onlineCount = onlineCountAsync.value ?? 0;
+    final orientation = MediaQuery.of(context).orientation;
+    final isLandscape = orientation == Orientation.landscape;
+
+    if (isLandscape) {
+      return Scaffold(
+        body: AnimatedBackground(
+          showParticles: true,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Top Area: Full-width Header
+                _buildHeader(context, ref),
+                Expanded(
+                  child: Row(
+                    children: [
+                      // Left Column: Logo and Status
+                      Expanded(
+                        flex: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 48),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const LogoWidget(fontSize: 48),
+                              const SizedBox(height: 20),
+                              _buildOnlineStatusBar(onlineCount),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Right Column: Cards
+                      Expanded(
+                        flex: 6,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              GlassCard(
+                                title: "BATTLE ONLINE",
+                                subtitle: "Quick Match & Tournaments",
+                                icon: Icons.public,
+                                accentColor: Colors.deepPurpleAccent,
+                                isPrimary: true,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const LobbyScreen(
+                                          isQuickMatch: true)),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: GlassCard(
+                                      title: "FRIENDS",
+                                      subtitle: "Social & Rewards",
+                                      icon: Icons.people,
+                                      accentColor: Colors.cyanAccent,
+                                      height: 120,
+                                      isComingSoon: true,
+                                      onTap: () {
+                                        CustomSnackBar.show(
+                                          context,
+                                          message:
+                                              "Friends feature is coming soon! Link your account to stay updated.",
+                                          color: Colors.cyanAccent,
+                                          icon: Icons.people,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: GlassCard(
+                                      title: "OFFLINE",
+                                      subtitle: "Local & Bots",
+                                      icon: Icons.videogame_asset,
+                                      accentColor: AppColors.player1BlueUI,
+                                      height: 120,
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const LocalSetupScreen()),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 48),
+                              _buildFooter(context),
+                              const SizedBox(height: 16),
+                              _buildCommunityNote(),
+                              const SizedBox(height: 48),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: AnimatedBackground(

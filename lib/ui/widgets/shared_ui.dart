@@ -63,45 +63,49 @@ class AnimatedBackground extends StatelessWidget {
         Positioned(
           top: -100,
           left: -50,
-          child: Container(
-            width: 300,
-            height: 300,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  Colors.deepPurpleAccent.withValues(alpha: 0.2),
-                  Colors.transparent,
-                ],
+          child: RepaintBoundary(
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.deepPurpleAccent.withValues(alpha: 0.2),
+                    Colors.transparent,
+                  ],
+                ),
               ),
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
-              begin: const Offset(0, 0),
-              end: const Offset(30, 30),
-              duration: 10.seconds,
-              curve: Curves.easeInOut),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
+                begin: const Offset(0, 0),
+                end: const Offset(30, 30),
+                duration: 10.seconds,
+                curve: Curves.easeInOut),
+          ),
         ),
 
         Positioned(
           bottom: -50,
           right: -100,
-          child: Container(
-            width: 400,
-            height: 400,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  Colors.blueAccent.withValues(alpha: 0.15),
-                  Colors.transparent,
-                ],
+          child: RepaintBoundary(
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.blueAccent.withValues(alpha: 0.15),
+                    Colors.transparent,
+                  ],
+                ),
               ),
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
-              begin: const Offset(0, 0),
-              end: const Offset(-40, -20),
-              duration: 12.seconds,
-              curve: Curves.easeInOut),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
+                begin: const Offset(0, 0),
+                end: const Offset(-40, -20),
+                duration: 12.seconds,
+                curve: Curves.easeInOut),
+          ),
         ),
 
         child,
@@ -290,6 +294,7 @@ class _GlassCardState extends State<GlassCard> {
         child: AnimatedContainer(
           duration: 300.ms,
           curve: Curves.easeOutCubic,
+          transformAlignment: Alignment.center,
           transform: Matrix4.identity()
             ..setEntry(3, 2, 0.001) // Perspective
             ..rotateX(_isHovered ? -0.05 : 0.0)

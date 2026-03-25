@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/controllers/ludo_controller.dart';
@@ -56,57 +57,26 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
   @override
   Widget build(BuildContext context) {
-    final asyncState = ref.watch(gameStreamProvider);
-
-    ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
-      next.whenData((state) {
-        if (state.isGameOver) {
-          final prevWasOver = previous?.value?.isGameOver ?? false;
-          if (!prevWasOver) {
-            // Skip dialog if I quit
-            final localSlot = ref.read(gameControllerProvider).localPlayerSlot;
-            if (localSlot != null) {
-              final me = state.players.firstWhere((p) => p.slot == localSlot,
-                  orElse: () => state.players.first);
-              if (me.status == PlayerStatus.left) return;
-            }
-
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showGameOverDialog(state);
-            });
-          }
-        }
-      });
-    });
-
-    return asyncState.when(
-      data: (gameState) => _buildGame(context, gameState),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(e.toString())),
-    );
-  }
-
-  Widget _buildGame(BuildContext context, GameState gameState) {
-    return AnimatedBackground(
-        child: Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: _buildAppBar(context),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isLandscape = constraints.maxWidth > constraints.maxHeight;
-            if (isLandscape) {
-              return _buildLandscapeLayout(gameState);
-            } else {
-              return _buildPortraitLayout(gameState);
-            }
-          },
+    return const AnimatedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: _GameAppBar(),
+        body: SafeArea(
+          child: _GameBody(),
         ),
       ),
-    ));
+    );
   }
+}
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
+  const _GameAppBar();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return AppBar(
       leading: BackButton(
         color: Colors.white,
@@ -141,7 +111,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () {
-                      _controller.quitGame();
+                      ref.read(gameControllerProvider).quitGame();
                       Navigator.of(context).pop();
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
@@ -205,129 +175,177 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       centerTitle: true,
     );
   }
+}
 
-  // ── Portrait Layout (unchanged from original) ──
-  Widget _buildPortraitLayout(GameState gameState) {
-    return Column(
-      children: [
-        _buildTopPanels(gameState),
-        _buildBoard(gameState),
-        _buildBottomPanels(gameState),
-        const SizedBox(height: 20),
-        _buildStatusMessage(gameState),
-      ],
+class _GameBody extends ConsumerWidget {
+  const _GameBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncState = ref.watch(gameStreamProvider);
+
+    ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
+      next.whenData((state) {
+        if (state.isGameOver) {
+          final prevWasOver = previous?.value?.isGameOver ?? false;
+          if (!prevWasOver) {
+            final localSlot = ref.read(gameControllerProvider).localPlayerSlot;
+            if (localSlot != null) {
+              final me = state.players.firstWhere((p) => p.slot == localSlot,
+                  orElse: () => state.players.first);
+              if (me.status == PlayerStatus.left) return;
+            }
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => GameOverDialog(state: state),
+              );
+            });
+          }
+        }
+      });
+    });
+
+    return asyncState.when(
+      data: (gameState) => LayoutBuilder(
+        builder: (context, constraints) {
+          final isLandscape = constraints.maxWidth > constraints.maxHeight;
+          if (isLandscape) {
+            return _LandscapeLayout(gameState: gameState);
+          } else {
+            return _PortraitLayout(gameState: gameState);
+          }
+        },
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text(e.toString())),
     );
   }
+}
 
-  // ── Landscape Layout ──
-  Widget _buildLandscapeLayout(GameState gameState) {
-    return Row(
-      children: [
-        // Left side: slot4 (top-left) and slot1 (bottom-left)
-        _buildLandscapeSidePanels(gameState, isLeft: true),
-        // Center: board + status message
-        Expanded(
-          child: Column(
-            children: [
-              _buildBoard(gameState),
-              _buildStatusMessage(gameState),
-            ],
+class _PortraitLayout extends StatelessWidget {
+  final GameState gameState;
+  const _PortraitLayout({required this.gameState});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Column(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: _TopPanels(gameState: gameState),
+              ),
+            ),
           ),
-        ),
-        // Right side: slot3 (top-right) and slot2 (bottom-right)
-        _buildLandscapeSidePanels(gameState, isLeft: false),
-      ],
-    );
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: _BoardArea(gameState: gameState),
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: _BottomPanels(gameState: gameState),
+              ),
+            ),
+          ),
+          _StatusMessage(message: gameState.message),
+          const SizedBox(height: 10),
+        ],
+      );
+    });
   }
+}
 
-  // ── Shared widgets ──
+class _LandscapeLayout extends StatelessWidget {
+  final GameState gameState;
+  const _LandscapeLayout({required this.gameState});
 
-  Widget _buildStatusMessage(GameState gameState) {
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final boardSize = constraints.maxHeight;
+
+      return Row(
+        children: [
+          Expanded(
+            child: _LandscapeSidePanels(gameState: gameState, isLeft: true),
+          ),
+          SizedBox(
+            width: boardSize,
+            height: boardSize,
+            child: _BoardArea(gameState: gameState),
+          ),
+          Expanded(
+            child: _LandscapeSidePanels(gameState: gameState, isLeft: false),
+          ),
+        ],
+      );
+    });
+  }
+}
+
+class _StatusMessage extends StatelessWidget {
+  final String message;
+  const _StatusMessage({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Text(
-        gameState.message,
+        message,
         style: const TextStyle(
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
         textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
+}
 
-  Widget _buildBoard(GameState gameState) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Center(
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: GlassContainer(
-              padding: EdgeInsets.zero,
-              borderRadius: 16,
-              color: AppColors.boardGlassBackground,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final boardSize = constraints.biggest.shortestSide;
-                  final cellSize = boardSize / 15;
+class _BoardArea extends StatelessWidget {
+  final GameState gameState;
+  const _BoardArea({required this.gameState});
 
-                  return GestureDetector(
-                    onTapUp: (details) {
-                      if (!gameState.isDiceRolled) return;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                color: AppColors.boardGlassBackground,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final boardSize = constraints.biggest.shortestSide;
+                    final cellSize = boardSize / 15;
 
-                      bool isMoveValid(Token t, GameState state) {
-                        if (t.state == TokenState.home) {
-                          return state.diceValue == 6;
-                        }
-                        if (t.state == TokenState.finished) return false;
-                        return t.position + state.diceValue <= 56;
-                      }
-
-                      double tapX = details.localPosition.dx / cellSize;
-                      double tapY = details.localPosition.dy / cellSize;
-
-                      Token? targetToken;
-                      for (var player in gameState.players) {
-                        if (player.slot != gameState.currentTurn) continue;
-                        if (player.type == PlayerType.localBot ||
-                            player.type == PlayerType.remoteBot) {
-                          break;
-                        }
-
-                        for (var token in player.tokens) {
-                          Offset gridPos = BoardPath.getTokenOffset(token);
-                          double gridX = gridPos.dx;
-                          double gridY = gridPos.dy;
-
-                          if (tapX >= gridX &&
-                              tapX < gridX + 1 &&
-                              tapY >= gridY &&
-                              tapY < gridY + 1) {
-                            if (isMoveValid(token, gameState)) {
-                              targetToken = token;
-                              break;
-                            }
-                          }
-                        }
-                        if (targetToken != null) break;
-                      }
-
-                      if (targetToken != null) {
-                        ref
-                            .read(gameControllerProvider)
-                            .sendMoveIntent(targetToken);
-                      }
-                    },
-                    child: Stack(
-                      children: [
-                        BoardWidget(gameMode: gameState.gameMode),
-                        ..._buildTokens(gameState, cellSize),
-                      ],
-                    ),
-                  );
-                },
+                    return _BoardInteractionLayer(
+                      gameState: gameState,
+                      cellSize: cellSize,
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -335,59 +353,230 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       ),
     );
   }
+}
 
-  void _showGameOverDialog(GameState state) {
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => GameOverDialog(state: state),
+class _BoardInteractionLayer extends ConsumerWidget {
+  final GameState gameState;
+  final double cellSize;
+  const _BoardInteractionLayer(
+      {required this.gameState, required this.cellSize});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTapUp: (details) {
+        if (!gameState.isDiceRolled) return;
+
+        bool isMoveValid(Token t, GameState state) {
+          if (t.state == TokenState.home) {
+            return state.diceValue == 6;
+          }
+          if (t.state == TokenState.finished) return false;
+          return t.position + state.diceValue <= 56;
+        }
+
+        double tapX = details.localPosition.dx / cellSize;
+        double tapY = details.localPosition.dy / cellSize;
+
+        Token? targetToken;
+        for (var player in gameState.players) {
+          if (player.slot != gameState.currentTurn) continue;
+          if (player.type == PlayerType.localBot ||
+              player.type == PlayerType.remoteBot) {
+            break;
+          }
+
+          for (var token in player.tokens) {
+            Offset gridPos = BoardPath.getTokenOffset(token);
+            double gridX = gridPos.dx;
+            double gridY = gridPos.dy;
+
+            if (tapX >= gridX &&
+                tapX < gridX + 1 &&
+                tapY >= gridY &&
+                tapY < gridY + 1) {
+              if (isMoveValid(token, gameState)) {
+                targetToken = token;
+                break;
+              }
+            }
+          }
+          if (targetToken != null) break;
+        }
+
+        if (targetToken != null) {
+          ref.read(gameControllerProvider).sendMoveIntent(targetToken);
+        }
+      },
+      child: Stack(
+        children: [
+          BoardWidget(gameMode: gameState.gameMode),
+          _TokenLayer(gameState: gameState, cellSize: cellSize),
+        ],
+      ),
     );
   }
+}
 
-  // ── Portrait panel rows (unchanged) ──
+class _TokenLayer extends StatelessWidget {
+  final GameState gameState;
+  final double cellSize;
+  const _TokenLayer({required this.gameState, required this.cellSize});
 
-  Widget _buildTopPanels(GameState state) {
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> tokenWidgets = [];
+    final Map<String, List<Token>> boardOverlaps = {};
+    final Map<String, List<Token>> homeOverlaps = {};
+
+    for (var player in gameState.players) {
+      for (var token in player.tokens) {
+        if (token.state == TokenState.board) {
+          int absPos =
+              BoardPath.getAbsolutePosition(token.slot, token.position);
+          String key = "abs_$absPos";
+          boardOverlaps.putIfAbsent(key, () => []).add(token);
+        } else if (token.state == TokenState.homeStretch ||
+            token.state == TokenState.finished) {
+          String key = "${token.slot.name}_${token.position}";
+          homeOverlaps.putIfAbsent(key, () => []).add(token);
+        }
+      }
+    }
+
+    for (var player in gameState.players) {
+      final isTurn = gameState.currentTurn == player.slot;
+      for (var token in player.tokens) {
+        bool isMovable = false;
+        if (isTurn && gameState.isDiceRolled) {
+          if (token.state == TokenState.home) {
+            isMovable = gameState.diceValue == 6;
+          } else if (token.state != TokenState.finished) {
+            isMovable = token.position + gameState.diceValue <= 56;
+          }
+        }
+
+        Offset overlapOffset = Offset.zero;
+        double scaleAdjustment = 1.0;
+
+        if (token.state != TokenState.home) {
+          List<Token>? overlapping;
+          if (token.state == TokenState.board) {
+            int absPos =
+                BoardPath.getAbsolutePosition(token.slot, token.position);
+            overlapping = boardOverlaps["abs_$absPos"];
+          } else {
+            overlapping = homeOverlaps["${token.slot.name}_${token.position}"];
+          }
+
+          if (overlapping != null && overlapping.length > 1) {
+            int index = overlapping
+                .indexWhere((t) => t.slot == token.slot && t.id == token.id);
+            double tokenSize = cellSize * 0.85;
+            double spread = tokenSize * 0.3;
+
+            if (overlapping.length == 2) {
+              overlapOffset =
+                  Offset((index == 0) ? -spread / 1.5 : spread / 1.5, 0);
+            } else if (overlapping.length == 3) {
+              if (index == 0) {
+                overlapOffset = Offset(0, -spread);
+              } else if (index == 1) {
+                overlapOffset = Offset(-spread, spread);
+              } else {
+                overlapOffset = Offset(spread, spread);
+              }
+            } else if (overlapping.length == 4) {
+              overlapOffset = Offset((index % 2 == 1) ? spread : -spread,
+                  (index % 4 >= 2) ? spread : -spread);
+            } else {
+              double multiSpread = spread * 0.8;
+              int cols =
+                  (overlapping.length > 4 && overlapping.length <= 6) ? 3 : 4;
+              int row = index ~/ cols;
+              int col = index % cols;
+              overlapOffset = Offset(
+                  (col - (cols - 1) / 2) * multiSpread,
+                  (row - (overlapping.length / cols).ceil() / 2 + 0.5) *
+                      multiSpread);
+            }
+            scaleAdjustment = (overlapping.length > 4) ? 0.6 : 0.8;
+          }
+        }
+
+        tokenWidgets.add(
+          TokenWidget(
+            key: ValueKey("token_${token.slot.name}_${token.id}"),
+            token: token,
+            cellSize: cellSize,
+            isMovable: isMovable,
+            overlapOffset: overlapOffset,
+            scaleAdjustment: scaleAdjustment,
+          ),
+        );
+      }
+    }
+    return Stack(children: tokenWidgets);
+  }
+}
+
+class _TopPanels extends StatelessWidget {
+  final GameState gameState;
+  const _TopPanels({required this.gameState});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot4))
-            _buildPlayerPanel(PlayerSlot.slot4, state)
+          if (gameState.players.any((p) => p.slot == PlayerSlot.slot4))
+            _PlayerPanelWrapper(slot: PlayerSlot.slot4)
           else
             const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.slot == PlayerSlot.slot3))
-            _buildPlayerPanel(PlayerSlot.slot3, state)
+          if (gameState.players.any((p) => p.slot == PlayerSlot.slot3))
+            _PlayerPanelWrapper(slot: PlayerSlot.slot3)
           else
             const Expanded(child: SizedBox()),
         ],
       ),
     );
   }
+}
 
-  Widget _buildBottomPanels(GameState state) {
+class _BottomPanels extends StatelessWidget {
+  final GameState gameState;
+  const _BottomPanels({required this.gameState});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (state.players.any((p) => p.slot == PlayerSlot.slot1))
-            _buildPlayerPanel(PlayerSlot.slot1, state)
+          if (gameState.players.any((p) => p.slot == PlayerSlot.slot1))
+            _PlayerPanelWrapper(slot: PlayerSlot.slot1)
           else
             const Expanded(child: SizedBox()),
-          if (state.players.any((p) => p.slot == PlayerSlot.slot2))
-            _buildPlayerPanel(PlayerSlot.slot2, state)
+          if (gameState.players.any((p) => p.slot == PlayerSlot.slot2))
+            _PlayerPanelWrapper(slot: PlayerSlot.slot2)
           else
             const Expanded(child: SizedBox()),
         ],
       ),
     );
   }
+}
 
-  // ── Landscape side panels ──
+class _LandscapeSidePanels extends StatelessWidget {
+  final GameState gameState;
+  final bool isLeft;
+  const _LandscapeSidePanels({required this.gameState, required this.isLeft});
 
-  Widget _buildLandscapeSidePanels(GameState state, {required bool isLeft}) {
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 140,
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -395,25 +584,25 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (isLeft) ...[
-            if (state.players.any((p) => p.slot == PlayerSlot.slot4))
-              _buildPlayerPanel(PlayerSlot.slot4, state,
-                  isLandscape: true, isLeft: true)
+            if (gameState.players.any((p) => p.slot == PlayerSlot.slot4))
+              _PlayerPanelWrapper(
+                  slot: PlayerSlot.slot4, isLandscape: true, isLeft: true)
             else
               const Expanded(child: SizedBox()),
-            if (state.players.any((p) => p.slot == PlayerSlot.slot1))
-              _buildPlayerPanel(PlayerSlot.slot1, state,
-                  isLandscape: true, isLeft: true)
+            if (gameState.players.any((p) => p.slot == PlayerSlot.slot1))
+              _PlayerPanelWrapper(
+                  slot: PlayerSlot.slot1, isLandscape: true, isLeft: true)
             else
               const Expanded(child: SizedBox()),
           ] else ...[
-            if (state.players.any((p) => p.slot == PlayerSlot.slot3))
-              _buildPlayerPanel(PlayerSlot.slot3, state,
-                  isLandscape: true, isLeft: false)
+            if (gameState.players.any((p) => p.slot == PlayerSlot.slot3))
+              _PlayerPanelWrapper(
+                  slot: PlayerSlot.slot3, isLandscape: true, isLeft: false)
             else
               const Expanded(child: SizedBox()),
-            if (state.players.any((p) => p.slot == PlayerSlot.slot2))
-              _buildPlayerPanel(PlayerSlot.slot2, state,
-                  isLandscape: true, isLeft: false)
+            if (gameState.players.any((p) => p.slot == PlayerSlot.slot2))
+              _PlayerPanelWrapper(
+                  slot: PlayerSlot.slot2, isLandscape: true, isLeft: false)
             else
               const Expanded(child: SizedBox()),
           ],
@@ -421,118 +610,56 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       ),
     );
   }
+}
 
-  // ── Player Panel ──
+class _PlayerPanelWrapper extends ConsumerWidget {
+  final PlayerSlot slot;
+  final bool isLandscape;
+  final bool isLeft;
 
-  Widget _buildRankBadge(int rank) {
-    Color badgeColor;
-    String rankText;
-    late IconData rankIcon;
+  const _PlayerPanelWrapper({
+    required this.slot,
+    this.isLandscape = false,
+    this.isLeft = true,
+  });
 
-    switch (rank) {
-      case 1:
-        // Platinum from GameOverDialog
-        badgeColor = const Color(0xFFE5E4E2);
-        rankText = '1st';
-        rankIcon = Icons.emoji_events;
-        break;
-      case 2:
-        // Silver from GameOverDialog
-        badgeColor = const Color(0xFFB0B4B8);
-        rankText = '2nd';
-        rankIcon = Icons.workspace_premium;
-        break;
-      case 3:
-        // Darker Silver from GameOverDialog
-        badgeColor = const Color(0xFF8A8D91);
-        rankText = '3rd';
-        rankIcon = Icons.workspace_premium;
-        break;
-      default:
-        badgeColor = Colors.redAccent.shade200;
-        rankText = '${rank}th';
-        rankIcon = Icons.sentiment_very_dissatisfied;
-    }
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gameState = ref.watch(gameStreamProvider).value;
+    if (gameState == null) return const SizedBox();
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: badgeColor.withValues(alpha: 0.15),
-            boxShadow: [
-              if (rank <= 3)
-                BoxShadow(
-                  color: badgeColor.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-            border: Border.all(
-                color: badgeColor.withValues(alpha: 0.8),
-                width: rank == 1 ? 2.5 : 1.5),
-          ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              rankIcon,
-              color: badgeColor,
-              size: rank == 1 ? 22 : 18,
-            ),
-            Text(
-              rankText,
-              style: TextStyle(
-                color: badgeColor,
-                fontWeight: FontWeight.w900,
-                fontSize: rank == 1 ? 14 : 12,
-                shadows: const [
-                  Shadow(
-                    color: Colors.black54,
-                    blurRadius: 2,
-                    offset: Offset(1, 1),
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    )
-        .animate(onPlay: (controller) => controller.repeat())
-        .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5))
-        .scale(
-          begin: const Offset(0.95, 0.95),
-          end: const Offset(1.05, 1.05),
-          duration: 1000.ms,
-          curve: Curves.easeInOutSine,
-        )
-        .then()
-        .scale(
-          begin: const Offset(1.05, 1.05),
-          end: const Offset(0.95, 0.95),
-          duration: 1000.ms,
-          curve: Curves.easeInOutSine,
-        );
+    // This watches everything, but we can't easily select sub-state from a stream easily without a specialized provider.
+    // However, since it's a separate widget, it only rebuilds this panel.
+    return _PlayerPanelContent(
+      slot: slot,
+      state: gameState,
+      isLandscape: isLandscape,
+      isLeft: isLeft,
+    );
   }
+}
 
-  Widget _buildPlayerPanel(PlayerSlot slot, GameState state,
-      {bool isLandscape = false, bool isLeft = true}) {
+class _PlayerPanelContent extends StatelessWidget {
+  final PlayerSlot slot;
+  final GameState state;
+  final bool isLandscape;
+  final bool isLeft;
+
+  const _PlayerPanelContent({
+    required this.slot,
+    required this.state,
+    required this.isLandscape,
+    required this.isLeft,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isTurn = slot == state.currentTurn;
-
     final Color displayColor = AppColors.getUiColorForSlot(slot);
-
     final player = state.players.firstWhere((p) => p.slot == slot);
     final playerName = player.name;
     final isBot = player.type == PlayerType.localBot ||
         player.type == PlayerType.remoteBot;
-
-    // Determine if panel should be right-aligned
     final bool isRightAligned = isLandscape
         ? !isLeft
         : (slot == PlayerSlot.slot2 || slot == PlayerSlot.slot3);
@@ -591,13 +718,12 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
     Widget diceBox;
     if (isWinner) {
-      diceBox = _buildRankBadge(winnerRank);
+      diceBox = _RankBadge(rank: winnerRank);
     } else if (isTurn) {
-      diceBox = SizedBox(
+      diceBox = const SizedBox(
           width: 50,
           height: 50,
-          child: Container(
-              padding: const EdgeInsets.all(2), child: const DiceWidget()));
+          child: Padding(padding: EdgeInsets.all(2), child: DiceWidget()));
     } else {
       diceBox = Container(
         width: 50,
@@ -688,100 +814,104 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       ),
     );
   }
+}
 
-  List<Widget> _buildTokens(GameState gameState, double cellSize) {
-    final List<Widget> tokenWidgets = [];
-    final Map<String, List<Token>> boardOverlaps = {};
-    final Map<String, List<Token>> homeOverlaps = {};
+class _RankBadge extends StatelessWidget {
+  final int rank;
+  const _RankBadge({required this.rank});
 
-    // Grouping tokens by position to calculate overlaps efficiently
-    for (var player in gameState.players) {
-      for (var token in player.tokens) {
-        if (token.state == TokenState.board) {
-          int absPos =
-              BoardPath.getAbsolutePosition(token.slot, token.position);
-          String key = "abs_$absPos";
-          boardOverlaps.putIfAbsent(key, () => []).add(token);
-        } else if (token.state == TokenState.homeStretch ||
-            token.state == TokenState.finished) {
-          String key = "${token.slot.name}_${token.position}";
-          homeOverlaps.putIfAbsent(key, () => []).add(token);
-        }
-      }
+  @override
+  Widget build(BuildContext context) {
+    Color badgeColor;
+    String rankText;
+    late IconData rankIcon;
+
+    switch (rank) {
+      case 1:
+        badgeColor = const Color(0xFFE5E4E2);
+        rankText = '1st';
+        rankIcon = Icons.emoji_events;
+        break;
+      case 2:
+        badgeColor = const Color(0xFFB0B4B8);
+        rankText = '2nd';
+        rankIcon = Icons.workspace_premium;
+        break;
+      case 3:
+        badgeColor = const Color(0xFF8A8D91);
+        rankText = '3rd';
+        rankIcon = Icons.workspace_premium;
+        break;
+      default:
+        badgeColor = Colors.redAccent.shade200;
+        rankText = '${rank}th';
+        rankIcon = Icons.sentiment_very_dissatisfied;
     }
 
-    for (var player in gameState.players) {
-      final isTurn = gameState.currentTurn == player.slot;
-      for (var token in player.tokens) {
-        bool isMovable = false;
-        if (isTurn && gameState.isDiceRolled) {
-          if (token.state == TokenState.home) {
-            isMovable = gameState.diceValue == 6;
-          } else if (token.state != TokenState.finished) {
-            isMovable = token.position + gameState.diceValue <= 56;
-          }
-        }
-
-        Offset overlapOffset = Offset.zero;
-        double scaleAdjustment = 1.0;
-
-        if (token.state != TokenState.home) {
-          List<Token>? overlapping;
-          if (token.state == TokenState.board) {
-            int absPos =
-                BoardPath.getAbsolutePosition(token.slot, token.position);
-            overlapping = boardOverlaps["abs_$absPos"];
-          } else {
-            overlapping = homeOverlaps["${token.slot.name}_${token.position}"];
-          }
-
-          if (overlapping != null && overlapping.length > 1) {
-            int index = overlapping
-                .indexWhere((t) => t.slot == token.slot && t.id == token.id);
-            double tokenSize = cellSize * 0.85;
-            double spread = tokenSize * 0.3;
-
-            if (overlapping.length == 2) {
-              overlapOffset =
-                  Offset((index == 0) ? -spread / 1.5 : spread / 1.5, 0);
-            } else if (overlapping.length == 3) {
-              if (index == 0) {
-                overlapOffset = Offset(0, -spread);
-              } else if (index == 1) {
-                overlapOffset = Offset(-spread, spread);
-              } else {
-                overlapOffset = Offset(spread, spread);
-              }
-            } else if (overlapping.length == 4) {
-              overlapOffset = Offset((index % 2 == 1) ? spread : -spread,
-                  (index % 4 >= 2) ? spread : -spread);
-            } else {
-              double multiSpread = spread * 0.8;
-              int cols =
-                  (overlapping.length > 4 && overlapping.length <= 6) ? 3 : 4;
-              int row = index ~/ cols;
-              int col = index % cols;
-              overlapOffset = Offset(
-                  (col - (cols - 1) / 2) * multiSpread,
-                  (row - (overlapping.length / cols).ceil() / 2 + 0.5) *
-                      multiSpread);
-            }
-            scaleAdjustment = (overlapping.length > 4) ? 0.6 : 0.8;
-          }
-        }
-
-        tokenWidgets.add(
-          TokenWidget(
-            key: ValueKey("token_${token.slot.name}_${token.id}"),
-            token: token,
-            cellSize: cellSize,
-            isMovable: isMovable,
-            overlapOffset: overlapOffset,
-            scaleAdjustment: scaleAdjustment,
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: badgeColor.withValues(alpha: 0.15),
+            boxShadow: [
+              if (rank <= 3)
+                BoxShadow(
+                  color: badgeColor.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+            border: Border.all(
+                color: badgeColor.withValues(alpha: 0.8),
+                width: rank == 1 ? 2.5 : 1.5),
           ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              rankIcon,
+              color: badgeColor,
+              size: rank == 1 ? 22 : 18,
+            ),
+            Text(
+              rankText,
+              style: TextStyle(
+                color: badgeColor,
+                fontWeight: FontWeight.w900,
+                fontSize: rank == 1 ? 14 : 12,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black54,
+                    blurRadius: 2,
+                    offset: Offset(1, 1),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    )
+        .animate(onPlay: (controller) => controller.repeat())
+        .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5))
+        .scale(
+          begin: const Offset(0.95, 0.95),
+          end: const Offset(1.05, 1.05),
+          duration: 1000.ms,
+          curve: Curves.easeInOutSine,
+        )
+        .then()
+        .scale(
+          begin: const Offset(1.05, 1.05),
+          end: const Offset(0.95, 0.95),
+          duration: 1000.ms,
+          curve: Curves.easeInOutSine,
         );
-      }
-    }
-    return tokenWidgets;
   }
 }

@@ -88,91 +88,92 @@ class GameModeSelector extends StatelessWidget {
                 onModeChanged(mode);
               }
             : null,
-        child: Opacity(
-          opacity: isEnabled ? 1.0 : 0.4,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFFE5E4E2)
-                  : const Color(0xFF2A2A3D),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.blueAccent.withValues(alpha: 0.5)
-                    : Colors.white10,
-                width: 2,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.blueAccent.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      )
-                    ]
-                  : [],
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          decoration: BoxDecoration(
+            color:
+                (isSelected ? const Color(0xFFE5E4E2) : const Color(0xFF2A2A3D))
+                    .withValues(alpha: isEnabled ? 1.0 : 0.4),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: (isSelected
+                      ? Colors.blueAccent.withValues(alpha: 0.5)
+                      : Colors.white10)
+                  .withValues(alpha: isEnabled ? 1.0 : 0.4),
+              width: 2,
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      color: isSelected ? const Color(0xFF1E1E2C) : color,
-                      size: 28,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: isSelected ? const Color(0xFF1E1E2C) : color,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isEnabled ? description : 'Locked',
-                      style: TextStyle(
-                        color: (isSelected ? const Color(0xFF1E1E2C) : color)
-                            .withValues(alpha: 0.7),
-                        fontSize: 10,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-                Positioned(
-                  top: -12,
-                  right: -10,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.help_outline,
-                      size: 22,
-                      color: isSelected
-                          ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
-                          : Colors.white38,
-                    ),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => GameModeInfoDialog(
-                          title: infoTitle,
-                          items: infoItems,
-                          headerIcon: icon,
-                        ),
-                      );
-                    },
-                    tooltip: 'Help',
-                    padding: const EdgeInsets.all(12),
+            boxShadow: isSelected && isEnabled
+                ? [
+                    BoxShadow(
+                      color: Colors.blueAccent.withValues(alpha: 0.2),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    )
+                  ]
+                : [],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                        .withValues(alpha: isEnabled ? 1.0 : 0.4),
+                    size: 28,
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                          .withValues(alpha: isEnabled ? 1.0 : 0.4),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isEnabled ? description : 'Locked',
+                    style: TextStyle(
+                      color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                          .withValues(alpha: isEnabled ? 0.7 : 0.28),
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              Positioned(
+                top: -12,
+                right: -10,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.help_outline,
+                    size: 22,
+                    color: (isSelected
+                            ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
+                            : Colors.white38)
+                        .withValues(alpha: isEnabled ? 1.0 : 0.4),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => GameModeInfoDialog(
+                        title: infoTitle,
+                        items: infoItems,
+                        headerIcon: icon,
+                      ),
+                    );
+                  },
+                  tooltip: 'Help',
+                  padding: const EdgeInsets.all(12),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
