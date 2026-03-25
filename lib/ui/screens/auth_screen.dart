@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../widgets/shared_ui.dart';
 import '../widgets/custom_dialog_layout.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../utils/app_logger.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -124,7 +125,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   void _showError(String message, {String? debugDetails}) {
     if (debugDetails != null) {
-      debugPrint('AUTH_ERROR: $debugDetails');
+      AppLogger.error('AUTH_ERROR: $debugDetails');
     }
     CustomSnackBar.show(context, message: message, isError: true);
   }

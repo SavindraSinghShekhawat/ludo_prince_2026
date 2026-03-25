@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
+import '../utils/app_logger.dart';
 import '../firebase_options.dart';
 import 'profile_service.dart';
 import '../models/user_profile.dart';
@@ -101,7 +102,7 @@ class FirebaseService {
       firestore.useFirestoreEmulator(host, 8080);
       functions.useFunctionsEmulator(host, 5001);
     } catch (e) {
-      debugPrint('Firebase Emulator already connected: $e');
+      AppLogger.error('Firebase Emulator already connected: $e');
     }
   }
 }

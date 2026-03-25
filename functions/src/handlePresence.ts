@@ -1,5 +1,6 @@
 import {onValueUpdated} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
+import {AppLogger} from "./utils/logger";
 
 export const handlePresence = onValueUpdated({
   ref: "/presence/{uid}",
@@ -22,12 +23,12 @@ export const handlePresence = onValueUpdated({
       await countRef.transaction((currentCount) => Math.max(0, (currentCount || 0) - 1));
     }
   } catch (error) {
-    console.error("Error updating online count:", error);
+    AppLogger.error("Error updating online count:", error);
   }
 
   // 2. If disconnected, handle potential turn skipping
   if (after?.online === false) {
-    console.log(`[handlePresence] User ${uid} went offline. Checking for active turns...`);
+    AppLogger.debug(`[handlePresence] User ${uid} went offline. Checking for active turns...`);
     // This is a bit expensive to query all ludogames,
     // but we can query ludogames where currentTurn logic might be needed.
     // In a real app, we'd have a mapping of UID to active games.

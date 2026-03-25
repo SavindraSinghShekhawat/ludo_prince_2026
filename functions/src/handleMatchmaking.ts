@@ -4,6 +4,7 @@ import {ServerValue} from "firebase-admin/database";
 import {PlayerMatchInfo} from "./models/Matchmaking";
 import {PlayerEntry} from "./models/Player";
 import {GameDocument} from "./models/GameDocument";
+import {AppLogger} from "./utils/logger";
 
 /**
  * Matchmaking Cloud Function
@@ -14,7 +15,7 @@ export const handleMatchmaking = onValueCreated(
     ref: "/matchmaking/{mode}/queue/{uid}",
   },
   async (event) => {
-    console.log(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);
+    AppLogger.debug(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);
     const mode = event.params.mode;
     // const uid = event.params.uid; // Triggered by this user
 
@@ -34,7 +35,7 @@ export const handleMatchmaking = onValueCreated(
       requiredPlayers = 4;
       break;
     default:
-      console.error(`Unknown game mode: ${mode}`);
+      AppLogger.error(`Unknown game mode: ${mode}`);
       return;
     }
 
@@ -157,9 +158,9 @@ export const handleMatchmaking = onValueCreated(
       // 5. Execute atomic update
       await admin.database().ref().update(updates);
 
-      console.log(`Match created: ${gameId} for mode ${mode} with players: ${playersInMatch.map((p) => p.uid).join(", ")}`);
+      AppLogger.debug(`Match created: ${gameId} for mode ${mode} with players: ${playersInMatch.map((p) => p.uid).join(", ")}`);
     } catch (error) {
-      console.error("Matchmaking error:", error);
+      AppLogger.error("Matchmaking error:", error);
       // Ensure lock is released even on error
       await lockRef.set(false);
     }

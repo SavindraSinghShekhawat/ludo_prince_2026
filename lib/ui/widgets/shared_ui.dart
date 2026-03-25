@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/snackbar_provider.dart';
+import '../../utils/app_logger.dart';
 
 class AnimatedBackground extends StatelessWidget {
   final Widget child;
@@ -500,7 +501,7 @@ class CustomSnackBar {
           );
     } catch (e) {
       // Fallback if ProviderScope is not reachable
-      debugPrint("SnackBar error: $e");
+      AppLogger.error("SnackBar error: $e");
     }
   }
 }

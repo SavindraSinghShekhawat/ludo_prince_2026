@@ -9,6 +9,7 @@ import '../services/firebase_service.dart';
 import 'ludo_controller.dart';
 import 'src/firebase_event_provider.dart';
 import 'src/game_event_provider.dart';
+import '../utils/app_logger.dart';
 
 class MultiplayerGameController extends LudoController {
   final String gameId;
@@ -102,7 +103,7 @@ class MultiplayerGameController extends LudoController {
     final currentUser = firebaseService.auth.currentUser;
     if (currentUser == null) return;
 
-    print(
+    AppLogger.debug(
         '[MultiplayerGameController] Sending timeout request to Firebase for game $gameId');
 
     // Only send if it's NOT our turn (let others claim the turn)

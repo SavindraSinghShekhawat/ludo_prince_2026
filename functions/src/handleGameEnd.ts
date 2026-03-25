@@ -2,6 +2,7 @@ import {onValueUpdated} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {GameDocument} from "./models/GameDocument";
+import {AppLogger} from "./utils/logger";
 
 export const handleGameEnd = onValueUpdated(
   {
@@ -17,11 +18,11 @@ export const handleGameEnd = onValueUpdated(
     const game = gameSnap.val() as GameDocument & { winners?: string[] } | null;
 
     if (!game || !game.players) {
-      console.log(`[handleGameEnd] Game not found or no players for gameId: ${gameId}`);
+      AppLogger.debug(`[handleGameEnd] Game not found or no players for gameId: ${gameId}`);
       return;
     }
 
-    console.log(`[handleGameEnd] Processing stats for game: ${gameId}`);
+    AppLogger.debug(`[handleGameEnd] Processing stats for game: ${gameId}`);
 
     const firestore = admin.firestore();
     const batch = firestore.batch();
@@ -49,6 +50,6 @@ export const handleGameEnd = onValueUpdated(
     }
 
     await batch.commit();
-    console.log(`[handleGameEnd] Stats updated successfully for ${playerUids.length} players in game: ${gameId}`);
+    AppLogger.info(`[handleGameEnd] Stats updated successfully for ${playerUids.length} players in game: ${gameId}`);
   }
 );

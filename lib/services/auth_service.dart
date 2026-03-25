@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:flutter/foundation.dart';
+import '../utils/app_logger.dart';
 import 'package:flutter/services.dart';
 
 class AuthService {
@@ -26,7 +26,7 @@ class AuthService {
       return await _linkOrSignIn(credential);
     } catch (e) {
       if (_isCancellation(e)) return null;
-      debugPrint('Error signing in with Google: $e');
+      AppLogger.error('Error signing in with Google: $e');
       rethrow;
     }
   }
@@ -48,7 +48,7 @@ class AuthService {
       return await _linkOrSignIn(credential);
     } catch (e) {
       if (_isCancellation(e)) return null;
-      debugPrint('Error signing in with Apple: $e');
+      AppLogger.error('Error signing in with Apple: $e');
       rethrow;
     }
   }

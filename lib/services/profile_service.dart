@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
+import '../utils/app_logger.dart';
 
 class ProfileService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,7 +13,7 @@ class ProfileService {
       }
       return null;
     } catch (e) {
-      print('Error fetching user profile: $e');
+      AppLogger.error('Error fetching user profile: $e');
       return null;
     }
   }
@@ -24,7 +25,7 @@ class ProfileService {
             SetOptions(merge: true),
           );
     } catch (e) {
-      print('Error updating user profile: $e');
+      AppLogger.error('Error updating user profile: $e');
     }
   }
 
@@ -43,7 +44,7 @@ class ProfileService {
           .map((doc) => UserProfile.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error searching users: $e');
+      AppLogger.error('Error searching users: $e');
       return [];
     }
   }
@@ -54,7 +55,7 @@ class ProfileService {
         'lastActive': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print('Error updating last active: $e');
+      AppLogger.error('Error updating last active: $e');
     }
   }
 

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/game_state.dart';
@@ -79,7 +79,7 @@ class MatchmakingService {
 
     final transactionResult = await gameRef.runTransaction((Object? gameData) {
       if (gameData == null) {
-        debugPrint("Retrying transaction: lobby not yet visible");
+        AppLogger.debug("Retrying transaction: lobby not yet visible");
         return Transaction.success(gameData);
       }
 
@@ -207,7 +207,7 @@ class MatchmakingService {
     try {
       await _db.ref().child('ludogames').child(gameId).remove();
     } catch (e) {
-      debugPrint("Error deleting lobby $gameId: $e");
+      AppLogger.error("Error deleting lobby $gameId: $e");
     }
   }
 

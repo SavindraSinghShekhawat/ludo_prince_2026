@@ -4,6 +4,7 @@ import {ServerValue} from "firebase-admin/database";
 import {GameDocument} from "./models/GameDocument";
 import {PlayerEntry} from "./models/Player";
 import {RollEvent, MoveEvent} from "./models/GameEvent";
+import {AppLogger} from "./utils/logger";
 
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min)) + min;
@@ -18,15 +19,15 @@ export const handleGameAction = onValueCreated(
     const uid = event.params.uid;
     const data = event.data.val();
 
-    console.log("[handleGameAction] ==================== START ====================");
-    console.log(`[handleGameAction] Triggered for gameId=${gameId}, uid=${uid}`);
+    AppLogger.debug("[handleGameAction] ==================== START ====================");
+    AppLogger.debug(`[handleGameAction] Triggered for gameId=${gameId}, uid=${uid}`);
     if (!data) {
-      console.log("[handleGameAction] No data found. Exiting.");
+      AppLogger.debug("[handleGameAction] No data found. Exiting.");
       return;
     }
 
     const type = data.type;
-    console.log(`[handleGameAction] Request type: ${type}`);
+    AppLogger.debug(`[handleGameAction] Request type: ${type}`);
 
     const gameRef = admin.database().ref(`ludogames/${gameId}`);
     const requestRef = admin.database().ref(`ludogames/${gameId}/actionRequests/${uid}`);
@@ -47,7 +48,7 @@ export const handleGameAction = onValueCreated(
         }
 
         if (!playerSlot) {
-          console.error(`UID ${uid} not found in game ${gameId}`);
+          AppLogger.error(`UID ${uid} not found in game ${gameId}`);
           return; // Abort transaction
         }
 
@@ -56,16 +57,16 @@ export const handleGameAction = onValueCreated(
         // Validation based on type
         if (type === "roll") {
           if (playerSlot !== currentTurn) {
-            console.log(`[handleGameAction] REJECT ROLL: ${playerSlot} tried to roll, but it is ${currentTurn}'s turn.`);
+            AppLogger.debug(`[handleGameAction] REJECT ROLL: ${playerSlot} tried to roll, but it is ${currentTurn}'s turn.`);
             return;
           }
           if (game.isDiceRolled) {
-            console.log("[handleGameAction] REJECT ROLL: Dice already rolled this turn.");
+            AppLogger.debug("[handleGameAction] REJECT ROLL: Dice already rolled this turn.");
             return;
           }
 
           const dice = randomInt(1, 7);
-          console.log(`[handleGameAction] ACCEPT ROLL: Generated dice ${dice} for ${playerSlot}`);
+          AppLogger.debug(`[handleGameAction] ACCEPT ROLL: Generated dice ${dice} for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");
@@ -83,15 +84,15 @@ export const handleGameAction = onValueCreated(
           return game;
         } else if (type === "move") {
           if (playerSlot !== currentTurn) {
-            console.log(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move, but it is ${currentTurn}'s turn.`);
+            AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move, but it is ${currentTurn}'s turn.`);
             return;
           }
           if (!game.isDiceRolled) {
-            console.log(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move without rolling.`);
+            AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move without rolling.`);
             return;
           }
 
-          console.log(`[handleGameAction] ACCEPT MOVE: Token ${data.tokenId} for ${playerSlot}`);
+          AppLogger.debug(`[handleGameAction] ACCEPT MOVE: Token ${data.tokenId} for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");
@@ -114,17 +115,17 @@ export const handleGameAction = onValueCreated(
           const turnTimeSeconds = (game.settings?.turnTimeSeconds || 10);
 
           if (now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
-            console.log(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
+            AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
             return; // Too early
           }
 
           const currentPlayer = players[currentTurn];
           if (!currentPlayer) {
-            console.log(`[handleGameAction] REJECT TIMEOUT: current player ${currentTurn} not found.`);
+            AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: current player ${currentTurn} not found.`);
             return;
           }
 
-          console.log(`[handleGameAction] ACCEPT TIMEOUT: Skipping turn for ${currentTurn}`);
+          AppLogger.debug(`[handleGameAction] ACCEPT TIMEOUT: Skipping turn for ${currentTurn}`);
 
           // Increment missed turns and check for kick
           currentPlayer.missedTurns = (currentPlayer.missedTurns || 0) + 1;
@@ -188,7 +189,7 @@ export const handleGameAction = onValueCreated(
       // Clear the request node
       await requestRef.remove();
     } catch (err) {
-      console.error("[handleGameAction] Error:", err);
+      AppLogger.error("[handleGameAction] Error:", err);
     }
   }
 );
