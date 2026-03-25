@@ -179,5 +179,5 @@ class DiceFacePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(DiceFacePainter oldDelegate) => oldDelegate.value != value;
 }

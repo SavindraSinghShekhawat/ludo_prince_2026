@@ -32,9 +32,11 @@ class AnimatedBackground extends StatelessWidget {
 
         // Tabletop Texture Layer
         Positioned.fill(
-          child: CustomPaint(
-            painter: TabletopTexturePainter(
-              opacity: 0.04,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: TabletopTexturePainter(
+                opacity: 0.04,
+              ),
             ),
           ),
         ),
@@ -120,16 +122,14 @@ class TabletopTexturePainter extends CustomPainter {
     final random = math.Random(123); // Seeded for consistency
 
     // Draw fine grain/noise
+    final List<Offset> points = [];
     for (int i = 0; i < (size.width * size.height * 0.01).toInt(); i++) {
-      canvas.drawPoints(
-        PointMode.points,
-        [
-          Offset(random.nextDouble() * size.width,
-              random.nextDouble() * size.height)
-        ],
-        paint,
+      points.add(
+        Offset(random.nextDouble() * size.width,
+            random.nextDouble() * size.height),
       );
     }
+    canvas.drawPoints(PointMode.points, points, paint);
 
     // Draw subtle "wood/felt" fibers
     final linePaint = Paint()

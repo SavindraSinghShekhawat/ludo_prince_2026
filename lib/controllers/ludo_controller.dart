@@ -70,6 +70,7 @@ class LudoController implements GameController {
   late final AudioControllerListener _audioListener;
   late final MoveExecutor _executor;
   final GameEventProvider eventProvider;
+  StreamSubscription<GameEvent>? _eventSubscription;
 
   @override
   final PlayerSlot? localPlayerSlot;
@@ -101,7 +102,7 @@ class LudoController implements GameController {
       isDisposed: () => _isDisposed,
     );
 
-    this.eventProvider.events.listen(handleGameEvent);
+    _eventSubscription = this.eventProvider.events.listen(handleGameEvent);
     Future.microtask(_checkBotTurn);
   }
 
@@ -302,6 +303,7 @@ class LudoController implements GameController {
 
     _isDisposed = true;
     _audioListener.stop();
+    _eventSubscription?.cancel();
     eventProvider.dispose();
     if (!_streamController.isClosed) {
       await _streamController.close();
