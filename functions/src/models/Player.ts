@@ -6,4 +6,5 @@ export interface PlayerEntry {
   status: string;
   missedTurns: number;
   team?: string;
+  tokens?: Record<string, unknown>;
 }

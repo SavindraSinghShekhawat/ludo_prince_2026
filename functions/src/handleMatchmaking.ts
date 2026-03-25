@@ -12,7 +12,6 @@ import {GameDocument} from "./models/GameDocument";
 export const handleMatchmaking = onValueCreated(
   {
     ref: "/matchmaking/{mode}/queue/{uid}",
-    instance: "ludo-prince-cf74a-default-rtdb",
   },
   async (event) => {
     console.log(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);
@@ -101,11 +100,12 @@ export const handleMatchmaking = onValueCreated(
         currentTurn: "slot1",
         turnNumber: 1,
         turnStartedAt: ServerValue.TIMESTAMP,
+        turnOrder: [], // Will be populated below
         eventCounter: 0,
         players: {},
         settings: {
-          turnTimeSeconds: 15,
-          maxMissedTurns: 3,
+          turnTimeSeconds: 10,
+          maxMissedTurns: 5,
         },
       };
 
@@ -136,6 +136,7 @@ export const handleMatchmaking = onValueCreated(
         }
 
         gameData.players[slot] = playerEntry;
+        (gameData.turnOrder as string[]).push(slot);
 
         // Matchmaking assignments
         updates[`matchmakingAssignments/${player.uid}`] = {

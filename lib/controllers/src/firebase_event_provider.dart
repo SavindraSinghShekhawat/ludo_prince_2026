@@ -44,9 +44,10 @@ class FirebaseEventProvider extends GameEventProvider {
         .ref()
         .child('ludogames')
         .child(gameId)
-        .child('rollRequests')
+        .child('actionRequests')
         .child(uid)
         .set({
+      'type': 'roll',
       'timestamp': ServerValue.timestamp,
     });
   }
@@ -59,9 +60,10 @@ class FirebaseEventProvider extends GameEventProvider {
         .ref()
         .child('ludogames')
         .child(gameId)
-        .child('moveRequests')
+        .child('actionRequests')
         .child(uid)
         .set({
+      'type': 'move',
       'tokenId': tokenId,
       'timestamp': ServerValue.timestamp,
     });

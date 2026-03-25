@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/game_state.dart';
+import '../models/player.dart';
 import '../models/token.dart';
 import '../engine/game_engine.dart';
 import '../engine/bot_ai.dart';
@@ -13,11 +14,8 @@ class MultiplayerGameController extends LudoController {
   final String gameId;
   final FirebaseDatabase _db = firebaseService.database;
   int _lastAppliedEventId = 0;
-
-  final List<int> _pendingMoves = [];
-  bool _optimisticTurnChangePending = false;
-
-  bool get hasPendingMoves => _pendingMoves.isNotEmpty;
+  Timer? _timeoutMonitor;
+  int? _turnStartedAt;
 
   MultiplayerGameController(
     Map<PlayerSlot, PlayerSetupConfig> config, {
@@ -35,6 +33,7 @@ class MultiplayerGameController extends LudoController {
     if (!gameEvent.snapshot.exists) return;
 
     final data = Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
+    _turnStartedAt = data['turnStartedAt'] as int?;
 
     final snapshot = data['stateSnapshot'];
     if (snapshot != null) {
@@ -83,6 +82,48 @@ class MultiplayerGameController extends LudoController {
     }
 
     if (!isDisposed) streamController.add(state);
+    _startTimeoutMonitor();
+  }
+
+  void _startTimeoutMonitor() {
+    _timeoutMonitor?.cancel();
+    _timeoutMonitor = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (isDisposed || state.isGameOver || _turnStartedAt == null) return;
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // We add a 2 second buffer to account for network latency and clock skew
+      if (now > _turnStartedAt! + 12000) {
+        _sendTimeoutRequest();
+      }
+    });
+  }
+
+  Future<void> _sendTimeoutRequest() async {
+    final currentUser = firebaseService.auth.currentUser;
+    if (currentUser == null) return;
+
+    print(
+        '[MultiplayerGameController] Sending timeout request to Firebase for game $gameId');
+
+    // Only send if it's NOT our turn (let others claim the turn)
+    // or if we've been offline and just came back.
+    // Actually, any active client can send it.
+    await _db
+        .ref()
+        .child('ludogames')
+        .child(gameId)
+        .child('actionRequests')
+        .child(currentUser.uid)
+        .set({
+      'type': 'timeout',
+      'requestedAt': ServerValue.timestamp,
+    });
+  }
+
+  @override
+  Future<void> dispose() async {
+    _timeoutMonitor?.cancel();
+    await super.dispose();
   }
 
   Future<void> _applyEventLocally(GameEvent event,
@@ -126,29 +167,15 @@ class MultiplayerGameController extends LudoController {
 
   @override
   Future<void> sendRollIntent() async {
-    if (hasPendingMoves) return;
     await super.sendRollIntent();
   }
 
   @override
   Future<void> sendMoveIntent(Token token) async {
-    if (hasPendingMoves) return;
     if (isDisposed || !isMyTurn || !state.isDiceRolled || isActionInProgress)
       return;
 
-    // We must call super first to send the request to the server
     await super.sendMoveIntent(token);
-
-    // Optimistically execute the move locally to hide latency (0ms UI feedback)
-    _pendingMoves.add(token.id);
-    final oldTurn = state.currentTurn;
-
-    await executeMove(token.id);
-
-    final newTurn = state.currentTurn;
-    if (oldTurn != newTurn) {
-      _optimisticTurnChangePending = true;
-    }
   }
 
   @override
@@ -160,48 +187,51 @@ class MultiplayerGameController extends LudoController {
     } else if (event is MoveEvent) {
       _lastAppliedEventId++;
     }
+
     final oldTurn = state.currentTurn;
 
-    bool skipSuper = false;
-    if (event is MoveEvent && !event.autoMove) {
-      if (_pendingMoves.isNotEmpty && _pendingMoves.first == event.tokenId) {
-        _pendingMoves.removeAt(0);
-        skipSuper = true; // We already optimistically executed this move
-      }
-    }
-
-    if (!skipSuper) {
+    if (event is SkipEvent) {
+      state = engine.skipTurn(state).state;
+    } else {
       await super.handleGameEvent(event);
     }
-    final newTurn = state.currentTurn;
-    bool shouldRestartTimer = false;
-    bool turnChangedLocally = false;
 
-    if (skipSuper) {
-      shouldRestartTimer = true;
-      if (_optimisticTurnChangePending) {
-        turnChangedLocally = true;
-        _optimisticTurnChangePending = false;
-      }
-    } else {
-      shouldRestartTimer =
-          oldTurn != newTurn || event is RollEvent || event is MoveEvent;
-      turnChangedLocally = oldTurn != newTurn;
-    }
+    final newTurn = state.currentTurn;
+    final shouldRestartTimer =
+        oldTurn != newTurn || event is RollEvent || event is MoveEvent;
+    final turnChangedLocally = oldTurn != newTurn;
+
+    _turnStartedAt = DateTime.now().millisecondsSinceEpoch;
 
     // Push new turn to Firebase so Cloud Function timer restarts
     if (shouldRestartTimer && !state.isGameOver) {
-      final updates = <String, dynamic>{
-        'currentTurn': newTurn.name,
-        'turnStartedAt': ServerValue.timestamp,
-      };
+      final isLocalTurnEnding = oldTurn == localPlayerSlot;
+      final isHost = localPlayerSlot == PlayerSlot.slot1;
 
-      if (turnChangedLocally) {
-        updates['turnNumber'] = ServerValue.increment(1);
+      // Determine if this client should be the one to update the DB
+      // We prioritize the player whose turn just ended, but fallback to host if they are absent
+      bool shouldIUpdate = isLocalTurnEnding;
+      if (!shouldIUpdate && isHost) {
+        final oldPlayer = state.players.firstWhere((p) => p.slot == oldTurn);
+        if (oldPlayer.status == PlayerStatus.left) {
+          shouldIUpdate = true;
+        }
       }
 
-      _db.ref().child('ludogames').child(gameId).update(updates);
-    } else if (state.isGameOver) {
+      if (shouldIUpdate) {
+        final updates = <String, dynamic>{
+          'currentTurn': newTurn.name,
+          'turnStartedAt': ServerValue.timestamp,
+        };
+
+        if (turnChangedLocally) {
+          updates['turnNumber'] = ServerValue.increment(1);
+          updates['isDiceRolled'] = false;
+        }
+
+        _db.ref().child('ludogames').child(gameId).update(updates);
+      }
+    } else if (state.isGameOver && localPlayerSlot == PlayerSlot.slot1) {
       final winnerUids = state.winners.map((slot) {
         return state.players.firstWhere((p) => p.slot == slot).uid;
       }).toList();

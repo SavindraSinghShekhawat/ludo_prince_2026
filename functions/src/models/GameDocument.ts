@@ -6,8 +6,13 @@ export interface GameDocument {
   gameMode: string;
   createdAt: object | number;
   currentTurn: string;
+  turnOrder: string[];
   turnNumber: number;
   turnStartedAt: object | number;
+  diceValue?: number;
+  isDiceRolled?: boolean;
+  consecutiveSixes?: number;
+  winners?: string[];
   eventCounter: number;
   players: Record<string, PlayerEntry>;
   events?: Record<string, GameEvent>;

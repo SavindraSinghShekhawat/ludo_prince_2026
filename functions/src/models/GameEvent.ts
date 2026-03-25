@@ -1,4 +1,4 @@
-export type GameEventType = "roll" | "move" | "quit";
+export type GameEventType = "roll" | "move" | "quit" | "skip";
 
 export interface GameEvent {
   type: GameEventType;

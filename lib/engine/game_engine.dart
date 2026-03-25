@@ -234,6 +234,10 @@ class GameEngine {
     return EngineResult(state.copyWith(players: players), events);
   }
 
+  EngineResult skipTurn(GameState state) {
+    return _nextTurn(state, "Turn skipped.");
+  }
+
   EngineResult _nextTurn(GameState state, String msg) {
     if (state.isGameOver) {
       return EngineResult(state.copyWith(message: "Game Over!"));

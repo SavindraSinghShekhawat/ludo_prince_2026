@@ -6,7 +6,6 @@ import {GameDocument} from "./models/GameDocument";
 export const handleGameEnd = onValueUpdated(
   {
     ref: "/ludogames/{gameId}/status",
-    instance: "ludo-prince-cf74a-default-rtdb",
   },
   async (event) => {
     const status = event.data?.after.val();

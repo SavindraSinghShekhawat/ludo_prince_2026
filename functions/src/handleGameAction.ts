@@ -1,0 +1,194 @@
+import {onValueCreated} from "firebase-functions/v2/database";
+import * as admin from "firebase-admin";
+import {ServerValue} from "firebase-admin/database";
+import {GameDocument} from "./models/GameDocument";
+import {PlayerEntry} from "./models/Player";
+import {RollEvent, MoveEvent} from "./models/GameEvent";
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+export const handleGameAction = onValueCreated(
+  {
+    ref: "/ludogames/{gameId}/actionRequests/{uid}",
+  },
+  async (event) => {
+    const gameId = event.params.gameId;
+    const uid = event.params.uid;
+    const data = event.data.val();
+
+    console.log("[handleGameAction] ==================== START ====================");
+    console.log(`[handleGameAction] Triggered for gameId=${gameId}, uid=${uid}`);
+    if (!data) {
+      console.log("[handleGameAction] No data found. Exiting.");
+      return;
+    }
+
+    const type = data.type;
+    console.log(`[handleGameAction] Request type: ${type}`);
+
+    const gameRef = admin.database().ref(`ludogames/${gameId}`);
+    const requestRef = admin.database().ref(`ludogames/${gameId}/actionRequests/${uid}`);
+
+    try {
+      await gameRef.transaction((game: GameDocument | null) => {
+        if (!game) return game; // Return null to trigger server-side fetch if un-cached
+        if (game.status !== "playing") return; // Abort if game is truly over
+
+        // 1. Identify player slot
+        const players = game.players || {};
+        let playerSlot: string | null = null;
+        for (const slot in players) {
+          if (players[slot].uid === uid) {
+            playerSlot = slot;
+            break;
+          }
+        }
+
+        if (!playerSlot) {
+          console.error(`UID ${uid} not found in game ${gameId}`);
+          return; // Abort transaction
+        }
+
+        const currentTurn = game.currentTurn;
+
+        // Validation based on type
+        if (type === "roll") {
+          if (playerSlot !== currentTurn) {
+            console.log(`[handleGameAction] REJECT ROLL: ${playerSlot} tried to roll, but it is ${currentTurn}'s turn.`);
+            return;
+          }
+          if (game.isDiceRolled) {
+            console.log("[handleGameAction] REJECT ROLL: Dice already rolled this turn.");
+            return;
+          }
+
+          const dice = randomInt(1, 7);
+          console.log(`[handleGameAction] ACCEPT ROLL: Generated dice ${dice} for ${playerSlot}`);
+
+          const eventCounter = (game.eventCounter || 0) + 1;
+          const eventId = String(eventCounter).padStart(5, "0");
+
+          if (!game.events) game.events = {};
+          game.events[eventId] = {
+            type: "roll",
+            playerSlot: currentTurn,
+            diceValue: dice,
+            turnNumber: game.turnNumber,
+            timestamp: ServerValue.TIMESTAMP,
+          } as RollEvent;
+          game.eventCounter = eventCounter;
+          game.isDiceRolled = true;
+          return game;
+        } else if (type === "move") {
+          if (playerSlot !== currentTurn) {
+            console.log(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move, but it is ${currentTurn}'s turn.`);
+            return;
+          }
+          if (!game.isDiceRolled) {
+            console.log(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move without rolling.`);
+            return;
+          }
+
+          console.log(`[handleGameAction] ACCEPT MOVE: Token ${data.tokenId} for ${playerSlot}`);
+
+          const eventCounter = (game.eventCounter || 0) + 1;
+          const eventId = String(eventCounter).padStart(5, "0");
+
+          if (!game.events) game.events = {};
+          game.events[eventId] = {
+            type: "move",
+            playerSlot: currentTurn,
+            tokenId: data.tokenId,
+            turnNumber: game.turnNumber,
+            timestamp: ServerValue.TIMESTAMP,
+          } as MoveEvent;
+          game.eventCounter = eventCounter;
+
+          game.isDiceRolled = false;
+          return game;
+        } else if (type === "timeout") {
+          const now = Date.now();
+          const turnStartedAt = (game.turnStartedAt as number) || 0;
+          const turnTimeSeconds = (game.settings?.turnTimeSeconds || 10);
+
+          if (now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
+            console.log(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
+            return; // Too early
+          }
+
+          const currentPlayer = players[currentTurn];
+          if (!currentPlayer) {
+            console.log(`[handleGameAction] REJECT TIMEOUT: current player ${currentTurn} not found.`);
+            return;
+          }
+
+          console.log(`[handleGameAction] ACCEPT TIMEOUT: Skipping turn for ${currentTurn}`);
+
+          // Increment missed turns and check for kick
+          currentPlayer.missedTurns = (currentPlayer.missedTurns || 0) + 1;
+          let playerKicked = false;
+          if (currentPlayer.missedTurns >= (game.settings?.maxMissedTurns || 5)) {
+            currentPlayer.status = "left";
+            playerKicked = true;
+          }
+
+          // Find next player
+          const turnOrder = game.turnOrder || ["slot1", "slot2", "slot3", "slot4"];
+          const winners = game.winners || [];
+          let idx = turnOrder.indexOf(currentTurn);
+          let nextTurn = currentTurn;
+
+          for (let i = 0; i < turnOrder.length; i++) {
+            idx = (idx + 1) % turnOrder.length;
+            const candidate = turnOrder[idx];
+            if (winners.includes(candidate)) continue;
+            if (!players[candidate] || players[candidate].status === "left") continue;
+            nextTurn = candidate;
+            break;
+          }
+
+          const eventTurnNumber = game.turnNumber;
+          game.currentTurn = nextTurn;
+          game.turnStartedAt = ServerValue.TIMESTAMP;
+          game.turnNumber = (game.turnNumber || 0) + 1;
+          game.isDiceRolled = false;
+
+          const eventCounter = (game.eventCounter || 0) + 1;
+          const eventId = String(eventCounter).padStart(5, "0");
+
+          if (!game.events) game.events = {};
+          game.events[eventId] = {
+            type: "skip",
+            playerSlot: currentTurn,
+            turnNumber: eventTurnNumber,
+            timestamp: ServerValue.TIMESTAMP,
+          };
+          game.eventCounter = eventCounter;
+
+          // Check forfeit winner
+          if (playerKicked) {
+            const activePlayers = Object.entries(players)
+              .filter(([slot, p]) => (p as PlayerEntry).status === "active" && !winners.includes(slot));
+            if (activePlayers.length <= 1) {
+              game.status = "finished";
+              const lastPlayer = activePlayers[0];
+              if (lastPlayer) {
+                game.winners = game.winners || [];
+                game.winners.push(lastPlayer[0]);
+              }
+            }
+          }
+          return game;
+        }
+
+        return; // Abort if unknown type
+      });
+      // Clear the request node
+      await requestRef.remove();
+    } catch (err) {
+      console.error("[handleGameAction] Error:", err);
+    }
+  }
+);

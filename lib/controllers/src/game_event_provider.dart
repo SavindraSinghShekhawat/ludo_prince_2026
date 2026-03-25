@@ -84,6 +84,11 @@ sealed class GameEvent {
         PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
         timestamp: timestamp,
       );
+    } else if (type == 'skip') {
+      return SkipEvent(
+        PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
+        timestamp: timestamp,
+      );
     }
     throw Exception('Unknown GameEvent type: $type');
   }
@@ -125,6 +130,19 @@ class QuitEvent extends GameEvent {
   @override
   Map<String, dynamic> toJson() => {
         'type': 'quit',
+        'playerSlot': playerSlot.name,
+        'timestamp': timestamp,
+      };
+}
+
+class SkipEvent extends GameEvent {
+  final PlayerSlot playerSlot;
+  SkipEvent(this.playerSlot, {required int timestamp})
+      : super(timestamp: timestamp);
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': 'skip',
         'playerSlot': playerSlot.name,
         'timestamp': timestamp,
       };

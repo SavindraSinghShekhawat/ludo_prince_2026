@@ -148,7 +148,7 @@ class LudoController implements GameController {
     } else {
       final bestToken = BotAI.getBestMove(currentPlayer, _state);
       if (bestToken != null) {
-        await executeMove(bestToken.id);
+        await sendMoveIntent(bestToken);
       }
     }
   }
@@ -253,8 +253,11 @@ class LudoController implements GameController {
     if (!_isDisposed) _streamController.add(_state);
 
     if (autoMoveId != null) {
+      final player =
+          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+      final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
       await Future.delayed(const Duration(milliseconds: 250));
-      await executeMove(autoMoveId);
+      await sendMoveIntent(token);
     } else {
       _checkBotTurn();
     }
