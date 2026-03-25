@@ -5,9 +5,11 @@ import {GameDocument} from "./models/GameDocument";
 import {PlayerEntry} from "./models/Player";
 import {RollEvent, MoveEvent} from "./models/GameEvent";
 import {AppLogger} from "./utils/logger";
+import * as crypto from "node:crypto";
 
 function randomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min)) + min;
+  // Use node:crypto.randomInt for cryptographically secure randomness
+  return crypto.randomInt(min, max);
 }
 
 export const handleGameAction = onValueCreated(
