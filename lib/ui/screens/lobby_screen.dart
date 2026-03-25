@@ -21,6 +21,7 @@ import '../widgets/shared_ui.dart';
 import '../dialogs/profile_dialog.dart';
 import '../dialogs/settings_dialog.dart';
 import '../../utils/colors.dart';
+import '../../utils/share_helper.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -335,9 +336,14 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1)),
                               const SizedBox(height: 4),
-                              const Text('Sharing coming soon...',
-                                  style: TextStyle(
-                                      color: Colors.white24, fontSize: 10)),
+                              const SizedBox(height: 12),
+                              GameButton(
+                                text: 'SHARE GAME ID',
+                                icon: Icons.share,
+                                color: Colors.cyanAccent.withValues(alpha: 0.3),
+                                onTap: () => ShareHelper.shareGameId(
+                                    context, _activeGameId!),
+                              ),
                             ],
                           ),
                         ),

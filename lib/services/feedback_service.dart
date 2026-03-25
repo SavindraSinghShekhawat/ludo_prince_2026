@@ -6,7 +6,8 @@ class FeedbackService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> submitFeedback(String message) async {
+  Future<void> submitFeedback(String message,
+      {Map<String, dynamic>? deviceMetadata}) async {
     final user = _auth.currentUser;
     final userId = user?.uid ?? 'anonymous';
 
@@ -26,6 +27,7 @@ class FeedbackService {
       'userId': userId,
       'userName': displayName,
       'message': message,
+      'deviceMetadata': deviceMetadata,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }

@@ -114,15 +114,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       accentColor: Colors.cyanAccent,
                                       height: 120,
                                       isComingSoon: true,
-                                      onTap: () {
-                                        CustomSnackBar.show(
-                                          context,
+                                      onTap: () => CustomSnackBar.show(context,
                                           message:
-                                              "Friends feature is coming soon! Link your account to stay updated.",
-                                          color: Colors.cyanAccent,
-                                          icon: Icons.people,
-                                        );
-                                      },
+                                              "Friends feature is coming soon!"),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -212,15 +206,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             accentColor: Colors.cyanAccent,
                             height: 120,
                             isComingSoon: true,
-                            onTap: () {
-                              CustomSnackBar.show(
-                                context,
-                                message:
-                                    "Friends feature is coming soon! Link your account to stay updated.",
-                                color: Colors.cyanAccent,
-                                icon: Icons.people,
-                              );
-                            },
+                            onTap: () => CustomSnackBar.show(context,
+                                message: "Friends feature is coming soon!"),
                           ),
                         ),
                         const SizedBox(width: 16),

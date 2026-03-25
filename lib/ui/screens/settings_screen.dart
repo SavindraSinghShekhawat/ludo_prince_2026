@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/package_info_provider.dart';
-import '../../services/feedback_service.dart';
 import 'dice_randomness_screen.dart';
 import '../widgets/shared_ui.dart';
 import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
+import '../../utils/share_helper.dart';
+import 'feedback_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -18,44 +19,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _feedbackController = TextEditingController();
-  bool _isFeedbackSubmitting = false;
-
-  @override
-  void dispose() {
-    _feedbackController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitFeedback() async {
-    final message = _feedbackController.text.trim();
-    if (message.isEmpty) return;
-
-    setState(() => _isFeedbackSubmitting = true);
-
-    try {
-      await ref.read(feedbackServiceProvider).submitFeedback(message);
-      if (mounted) {
-        _feedbackController.clear();
-        CustomSnackBar.show(
-          context,
-          message: 'Thank you for your feedback!',
-          isSuccess: true,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        CustomSnackBar.show(
-          context,
-          message: 'Failed to send feedback. Please try again.',
-          isError: true,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isFeedbackSubmitting = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final audio = ref.watch(audioProvider);
@@ -78,7 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Section
+              // Account Section
               _buildSectionHeader("Account"),
               const SizedBox(height: 16),
               InkWell(
@@ -129,8 +92,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Audio Section
-              _buildSectionHeader("Game Audio"),
+              // Preferences Section
+              _buildSectionHeader("Preferences"),
               const SizedBox(height: 16),
               _buildSettingToggle(
                 title: "Background Music",
@@ -160,87 +123,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onChanged: (_) => audio.toggleVibration(),
                 accentColor: const Color(0xFF00FFA3), // Emerald
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
-              // Feedback Section
-              _buildSectionHeader("Share Feedback"),
+              // Community & Support Section
+              _buildSectionHeader("Community & Support"),
               const SizedBox(height: 16),
-              GlassContainer(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _feedbackController,
-                      maxLines: 4,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: "What's on your mind?",
-                        hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.3)),
-                        filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.2),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _isFeedbackSubmitting ? null : _submitFeedback,
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                        backgroundColor: Colors.transparent,
-                      ),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFE5E4E2), // Platinum
-                              Color(0xFFB0B4B8), // Silver
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          alignment: Alignment.center,
-                          child: _isFeedbackSubmitting
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Color(0xFF1A1A2E)),
-                                )
-                              : const Text(
-                                  "SEND TO DEVELOPERS",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(
-                                        0xFF1A1A2E), // Dark text on light button
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
+              _buildSettingButton(
+                title: "Invite Friends",
+                subtitle: "Share Ludo Prince with your crew",
+                icon: Icons.share_outlined,
+                accentColor: Colors.pinkAccent,
+                onTap: () => ShareHelper.shareApp(context),
+              ),
+              const SizedBox(height: 12),
+              _buildSettingButton(
+                title: "Share Feedback",
+                subtitle: "Help us make Ludo Prince better",
+                icon: Icons.feedback_outlined,
+                accentColor: const Color(0xFFE5E4E2), // Platinum
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FeedbackScreen()),
                 ),
               ),
               const SizedBox(height: 32),
 
-              // Developer/Advanced Section
-              _buildSectionHeader("Advanced"),
+              // Advanced Section
+              _buildSectionHeader("Technical"),
               const SizedBox(height: 16),
               _buildSettingButton(
                 title: "Dice Fairness Check",
-                subtitle: "Run 100M simulations to verify RNG",
+                subtitle: "Verify RNG via simulations",
                 icon: Icons.analytics_outlined,
                 accentColor: AppColors.player1BlueUI,
                 onTap: () => Navigator.push(

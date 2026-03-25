@@ -342,11 +342,11 @@ class _GlassCardState extends State<GlassCard> {
                               if (widget.isComingSoon)
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                      horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
                                     color: widget.accentColor
                                         .withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                         color: widget.accentColor
                                             .withValues(alpha: 0.4),
@@ -356,7 +356,7 @@ class _GlassCardState extends State<GlassCard> {
                                     "COMING SOON",
                                     style: TextStyle(
                                       color: widget.accentColor,
-                                      fontSize: 8,
+                                      fontSize: 7,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1.0,
                                     ),
