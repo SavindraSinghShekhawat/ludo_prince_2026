@@ -70,10 +70,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
       }
     });
 
-    final asyncState = ref.watch(gameStreamProvider);
-    final gameState = asyncState.value;
-    if (gameState == null) return const SizedBox();
-    final displayValue = _isAnimating ? _animatingValue : gameState.diceValue;
+    final diceValue =
+        ref.watch(gameStreamProvider.select((s) => s.value?.diceValue ?? 0));
+    final displayValue = _isAnimating ? _animatingValue : diceValue;
 
     return GestureDetector(
       onTap: _rollDice,

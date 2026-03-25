@@ -341,7 +341,6 @@ class _BoardArea extends StatelessWidget {
                     final cellSize = boardSize / 15;
 
                     return _BoardInteractionLayer(
-                      gameState: gameState,
                       cellSize: cellSize,
                     );
                   },
@@ -356,16 +355,20 @@ class _BoardArea extends StatelessWidget {
 }
 
 class _BoardInteractionLayer extends ConsumerWidget {
-  final GameState gameState;
   final double cellSize;
-  const _BoardInteractionLayer(
-      {required this.gameState, required this.cellSize});
+  const _BoardInteractionLayer({required this.cellSize});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDiceRolled = ref.watch(
+        gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false));
+
     return GestureDetector(
       onTapUp: (details) {
-        if (!gameState.isDiceRolled) return;
+        if (!isDiceRolled) return;
+
+        final gameState = ref.read(gameStreamProvider).value;
+        if (gameState == null) return;
 
         bool isMoveValid(Token t, GameState state) {
           if (t.state == TokenState.home) {
@@ -410,26 +413,39 @@ class _BoardInteractionLayer extends ConsumerWidget {
       },
       child: Stack(
         children: [
-          BoardWidget(gameMode: gameState.gameMode),
-          _TokenLayer(gameState: gameState, cellSize: cellSize),
+          BoardWidget(
+            gameMode: ref.watch(gameStreamProvider
+                .select((s) => s.value?.gameMode ?? GameMode.classic)),
+          ),
+          _TokenLayer(cellSize: cellSize),
         ],
       ),
     );
   }
 }
 
-class _TokenLayer extends StatelessWidget {
-  final GameState gameState;
+class _TokenLayer extends ConsumerWidget {
   final double cellSize;
-  const _TokenLayer({required this.gameState, required this.cellSize});
+  const _TokenLayer({required this.cellSize});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final players =
+        ref.watch(gameStreamProvider.select((s) => s.value?.players));
+    final currentTurn =
+        ref.watch(gameStreamProvider.select((s) => s.value?.currentTurn));
+    final isDiceRolled = ref.watch(
+        gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false));
+    final diceValue =
+        ref.watch(gameStreamProvider.select((s) => s.value?.diceValue ?? 0));
+
+    if (players == null || currentTurn == null) return const SizedBox.shrink();
+
     final List<Widget> tokenWidgets = [];
     final Map<String, List<Token>> boardOverlaps = {};
     final Map<String, List<Token>> homeOverlaps = {};
 
-    for (var player in gameState.players) {
+    for (var player in players) {
       for (var token in player.tokens) {
         if (token.state == TokenState.board) {
           int absPos =
@@ -444,15 +460,15 @@ class _TokenLayer extends StatelessWidget {
       }
     }
 
-    for (var player in gameState.players) {
-      final isTurn = gameState.currentTurn == player.slot;
+    for (var player in players) {
+      final isTurn = currentTurn == player.slot;
       for (var token in player.tokens) {
         bool isMovable = false;
-        if (isTurn && gameState.isDiceRolled) {
+        if (isTurn && isDiceRolled) {
           if (token.state == TokenState.home) {
-            isMovable = gameState.diceValue == 6;
+            isMovable = diceValue == 6;
           } else if (token.state != TokenState.finished) {
-            isMovable = token.position + gameState.diceValue <= 56;
+            isMovable = token.position + diceValue <= 56;
           }
         }
 
@@ -625,14 +641,27 @@ class _PlayerPanelWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameState = ref.watch(gameStreamProvider).value;
-    if (gameState == null) return const SizedBox();
+    final currentTurn =
+        ref.watch(gameStreamProvider.select((s) => s.value?.currentTurn));
+    final player = ref.watch(gameStreamProvider
+        .select((s) => s.value?.players.firstWhere((p) => p.slot == slot)));
+    final winners =
+        ref.watch(gameStreamProvider.select((s) => s.value?.winners ?? []));
+    final isDiceRolled = ref.watch(
+        gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false));
 
-    // This watches everything, but we can't easily select sub-state from a stream easily without a specialized provider.
-    // However, since it's a separate widget, it only rebuilds this panel.
+    if (player == null || currentTurn == null) return const SizedBox();
+
+    final winnerRank = winners.indexOf(slot) + 1;
+    final isWinner = winnerRank > 0;
+
     return _PlayerPanelContent(
       slot: slot,
-      state: gameState,
+      player: player,
+      currentTurn: currentTurn,
+      isWinner: isWinner,
+      winnerRank: winnerRank,
+      isDiceRolled: isDiceRolled,
       isLandscape: isLandscape,
       isLeft: isLeft,
     );
@@ -641,22 +670,29 @@ class _PlayerPanelWrapper extends ConsumerWidget {
 
 class _PlayerPanelContent extends StatelessWidget {
   final PlayerSlot slot;
-  final GameState state;
+  final Player player;
+  final PlayerSlot currentTurn;
+  final bool isWinner;
+  final int winnerRank;
+  final bool isDiceRolled;
   final bool isLandscape;
   final bool isLeft;
 
   const _PlayerPanelContent({
     required this.slot,
-    required this.state,
+    required this.player,
+    required this.currentTurn,
+    required this.isWinner,
+    required this.winnerRank,
+    required this.isDiceRolled,
     required this.isLandscape,
     required this.isLeft,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isTurn = slot == state.currentTurn;
+    final isTurn = slot == currentTurn;
     final Color displayColor = AppColors.getUiColorForSlot(slot);
-    final player = state.players.firstWhere((p) => p.slot == slot);
     final playerName = player.name;
     final isBot = player.type == PlayerType.localBot ||
         player.type == PlayerType.remoteBot;
@@ -712,9 +748,6 @@ class _PlayerPanelContent extends StatelessWidget {
                 curve: Curves.easeInOut)
             .shimmer(duration: 2.seconds, color: Colors.white24)
         : avatarContent;
-
-    final int winnerRank = state.winners.indexOf(slot) + 1;
-    final bool isWinner = winnerRank > 0;
 
     Widget diceBox;
     if (isWinner) {

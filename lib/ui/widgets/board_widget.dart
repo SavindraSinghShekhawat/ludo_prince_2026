@@ -1,53 +1,8 @@
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../models/token.dart';
 import '../../models/game_state.dart';
 import '../../utils/colors.dart';
-
-class FrostNoisePainter extends CustomPainter {
-  final double opacity;
-  static final Map<String, Picture> _cache = {};
-
-  FrostNoisePainter({required this.opacity});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.width <= 0 || size.height <= 0) return;
-
-    final String cacheKey = "${size.width}x${size.height}_$opacity";
-
-    if (!_cache.containsKey(cacheKey)) {
-      final recorder = PictureRecorder();
-      final offscreenCanvas = Canvas(recorder);
-
-      final paint = Paint()
-        ..color = Colors.white.withValues(alpha: opacity)
-        ..strokeWidth = 1.0;
-
-      final random = math.Random(42);
-      final int pointCount = (size.width * size.height * 0.04).toInt();
-
-      for (int i = 0; i < pointCount; i++) {
-        offscreenCanvas.drawPoints(
-          PointMode.points,
-          [
-            Offset(random.nextDouble() * size.width,
-                random.nextDouble() * size.height)
-          ],
-          paint,
-        );
-      }
-      _cache[cacheKey] = recorder.endRecording();
-    }
-
-    final cachedPicture = _cache[cacheKey]!;
-    canvas.drawPicture(cachedPicture);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class BoardWidget extends StatelessWidget {
   final GameMode gameMode;
@@ -60,425 +15,397 @@ class BoardWidget extends StatelessWidget {
         final double boardSize = constraints.maxWidth < constraints.maxHeight
             ? constraints.maxWidth
             : constraints.maxHeight;
-        final double cellSize = boardSize / 15;
 
         return RepaintBoundary(
           child: SizedBox(
             width: boardSize,
             height: boardSize,
-            child: Stack(
-              children: [
-                // Draw Base Areas
-                // Standard layout: Slot1(top-left), Slot2(top-right), Slot3(bottom-right), Slot4(bottom-left)
-                _buildBaseArea(
-                    0, 0, AppColors.player4Red, cellSize, PlayerSlot.slot4,
-                    teamLabel: 'B',
-                    borderRadius: const BorderRadius.only(
-                        topLeft: Radius.zero,
-                        topRight: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16))),
-                _buildBaseArea(
-                    9, 0, AppColors.player3Green, cellSize, PlayerSlot.slot3,
-                    teamLabel: 'A',
-                    borderRadius: const BorderRadius.only(
-                        topRight: Radius.zero,
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16))),
-                _buildBaseArea(
-                    9, 9, AppColors.player2Yellow, cellSize, PlayerSlot.slot2,
-                    teamLabel: 'B',
-                    borderRadius: const BorderRadius.only(
-                        bottomRight: Radius.zero,
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                        bottomLeft: Radius.circular(16))),
-                _buildBaseArea(
-                    0, 9, AppColors.player1Blue, cellSize, PlayerSlot.slot1,
-                    teamLabel: 'A',
-                    borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.zero,
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                        bottomRight: Radius.circular(16))),
-
-                // Draw Center Home
-                Positioned(
-                  left: 6 * cellSize,
-                  top: 6 * cellSize,
-                  width: 3 * cellSize,
-                  height: 3 * cellSize,
-                  child: CustomPaint(
-                    painter: CenterHomePainter(),
-                  ),
-                ),
-
-                // Draw Paths (horizontal and vertical strips)
-                // Top path (vertical green strip)
-                for (int col = 6; col <= 8; col++)
-                  for (int row = 0; row < 6; row++)
-                    _buildCell(col, row, cellSize, _getCellColor(col, row)),
-
-                // Bottom path (vertical blue/yellow strip)
-                for (int col = 6; col <= 8; col++)
-                  for (int row = 9; row < 15; row++)
-                    _buildCell(col, row, cellSize, _getCellColor(col, row)),
-
-                // Left path (horizontal red/blue strip)
-                for (int row = 6; row <= 8; row++)
-                  for (int col = 0; col < 6; col++)
-                    _buildCell(col, row, cellSize, _getCellColor(col, row)),
-
-                // Right path (horizontal green/yellow strip)
-                for (int row = 6; row <= 8; row++)
-                  for (int col = 9; col < 15; col++)
-                    _buildCell(col, row, cellSize, _getCellColor(col, row)),
-              ],
+            child: CustomPaint(
+              painter: StaticBoardPainter(gameMode: gameMode),
             ),
           ),
         );
       },
     );
   }
-
-  Widget _buildBaseArea(
-      int col, int row, Color color, double cellSize, PlayerSlot pSlot,
-      {String? teamLabel, required BorderRadius borderRadius}) {
-    return Positioned(
-      left: col * cellSize,
-      top: row * cellSize,
-      width: 6 * cellSize,
-      height: 6 * cellSize,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withValues(alpha: AppColors.boardBaseAlpha),
-              color.withValues(alpha: AppColors.boardBaseAlpha * 0.4),
-            ],
-          ),
-          border: null,
-          borderRadius: borderRadius,
-        ),
-        child: Stack(
-          children: [
-            // Noise texture for frosting
-            Positioned.fill(
-              child: CustomPaint(
-                painter: FrostNoisePainter(opacity: 0.03),
-              ),
-            ),
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 4.2 * cellSize,
-                  height: 4.2 * cellSize,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        width: 0.8),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 1.575 * cellSize,
-              top: 1.575 * cellSize,
-              child: _buildEmptySpot(cellSize, color),
-            ),
-            Positioned(
-              left: 3.575 * cellSize,
-              top: 1.575 * cellSize,
-              child: _buildEmptySpot(cellSize, color),
-            ),
-            Positioned(
-              left: 1.575 * cellSize,
-              top: 3.575 * cellSize,
-              child: _buildEmptySpot(cellSize, color),
-            ),
-            Positioned(
-              left: 3.575 * cellSize,
-              top: 3.575 * cellSize,
-              child: _buildEmptySpot(cellSize, color),
-            ),
-            if (teamLabel != null && gameMode == GameMode.team)
-              Positioned(
-                top:
-                    (col == 0 && row == 9) || (col == 9 && row == 9) ? 0 : null,
-                bottom:
-                    (col == 0 && row == 0) || (col == 9 && row == 0) ? 0 : null,
-                left:
-                    (col == 9 && row == 0) || (col == 9 && row == 9) ? 0 : null,
-                right:
-                    (col == 0 && row == 0) || (col == 0 && row == 9) ? 0 : null,
-                width: cellSize,
-                height: cellSize,
-                child: Center(
-                  child: Container(
-                    width: cellSize * 0.8,
-                    height: cellSize * 0.8,
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        colors: [color, color.withValues(alpha: 0.8)],
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        teamLabel,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptySpot(double cellSize, Color color) {
-    return Container(
-      width: cellSize * 0.85,
-      height: cellSize * 0.85,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.15),
-        shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.05),
-            blurRadius: 1,
-            offset: const Offset(1, 1),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCell(int col, int row, double cellSize, Color color) {
-    bool isStar = false;
-    if ((col == 1 && row == 6) ||
-        (col == 6 && row == 2) ||
-        (col == 8 && row == 1) ||
-        (col == 12 && row == 6) ||
-        (col == 13 && row == 8) ||
-        (col == 8 && row == 12) ||
-        (col == 6 && row == 13) ||
-        (col == 2 && row == 8)) {
-      isStar = true;
-    }
-
-    final isDefault = color.alpha == 38;
-
-    return Positioned(
-      left: col * cellSize,
-      top: row * cellSize,
-      width: cellSize,
-      height: cellSize,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isStar && isDefault
-              ? AppColors.starCellBackground
-              : (isDefault
-                  ? Colors.transparent
-                  : color.withValues(alpha: AppColors.boardCellAlpha)),
-          border: Border.all(color: AppColors.boardGridColor, width: 0.5),
-        ),
-        child: Stack(
-          children: [
-            if (!isDefault)
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: FrostNoisePainter(opacity: 0.02),
-                ),
-              ),
-            if (isStar)
-              Center(
-                child: Icon(
-                  Icons.star_rounded,
-                  color: AppColors.starPlatinum,
-                  size: cellSize * 0.82,
-                  shadows: [
-                    Shadow(
-                      color: AppColors.starPlatinumGlow,
-                      blurRadius: 8,
-                    ),
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getCellColor(int col, int row) {
-    // Red home stretch
-    if (row == 7 && col >= 1 && col <= 5) {
-      return AppColors.player4Red
-          .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    }
-    // Green home stretch
-    if (col == 7 && row >= 1 && row <= 5) {
-      return AppColors.player3Green
-          .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    }
-    // Yellow home stretch
-    if (row == 7 && col >= 9 && col <= 13) {
-      return AppColors.player2Yellow
-          .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    }
-    // Blue home stretch
-    if (col == 7 && row >= 9 && row <= 13) {
-      return AppColors.player1Blue
-          .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    }
-
-    // Starting positions
-    if (col == 1 && row == 6)
-      return AppColors.player4Red
-          .withValues(alpha: AppColors.boardStartCellAlpha);
-    if (col == 8 && row == 1) {
-      return AppColors.player3Green
-          .withValues(alpha: AppColors.boardStartCellAlpha);
-    }
-    if (col == 13 && row == 8) {
-      return AppColors.player2Yellow
-          .withValues(alpha: AppColors.boardStartCellAlpha);
-    }
-    if (col == 6 && row == 13)
-      return AppColors.player1Blue
-          .withValues(alpha: AppColors.boardStartCellAlpha);
-
-    return Colors.white
-        .withValues(alpha: 0.15); // Frosted glass default path color
-  }
 }
 
-class CenterHomePainter extends CustomPainter {
-  static final Map<Size, Picture> _cache = {};
+class StaticBoardPainter extends CustomPainter {
+  final GameMode gameMode;
+  static final Map<String, Picture> _cache = {};
+
+  StaticBoardPainter({required this.gameMode});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
 
-    if (!_cache.containsKey(size)) {
+    final String cacheKey = "${size.width}x${size.height}_$gameMode";
+
+    if (!_cache.containsKey(cacheKey)) {
       final recorder = PictureRecorder();
       final offscreenCanvas = Canvas(recorder);
+      final double cellSize = size.width / 15;
 
-      final double w = size.width;
-      final double h = size.height;
-      final Offset center = Offset(w / 2, h / 2);
+      // 1. Draw Base Areas
+      _drawBaseArea(offscreenCanvas, 0, 0, AppColors.player4Red, cellSize,
+          borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16)));
+      _drawBaseArea(offscreenCanvas, 9, 0, AppColors.player3Green, cellSize,
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16)));
+      _drawBaseArea(offscreenCanvas, 9, 9, AppColors.player2Yellow, cellSize,
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16)));
+      _drawBaseArea(offscreenCanvas, 0, 9, AppColors.player1Blue, cellSize,
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+              bottomRight: Radius.circular(16)));
 
-      Paint getPaint(Color color) {
-        return Paint()
-          ..shader = RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.7),
-              color.withValues(alpha: 0.6),
-            ],
-          ).createShader(Rect.fromLTWH(0, 0, w, h))
-          ..style = PaintingStyle.fill;
+      // 2. Draw Center Home
+      _drawCenterHome(offscreenCanvas, size, cellSize);
+
+      // 3. Draw Path Cells
+      // Top path
+      for (int col = 6; col <= 8; col++) {
+        for (int row = 0; row < 6; row++) {
+          _drawCell(
+              offscreenCanvas, col, row, cellSize, _getCellColor(col, row));
+        }
       }
-
-      final redPaint = getPaint(AppColors.player4Red);
-      final greenPaint = getPaint(AppColors.player3Green);
-      final yellowPaint = getPaint(AppColors.player2Yellow);
-      final bluePaint = getPaint(AppColors.player1Blue);
-
-      void drawCrystalTriangle(Path path, Paint paint) {
-        offscreenCanvas.drawPath(path, paint);
-        final random = math.Random(42);
-        final sparklePaint = Paint()
-          ..color = Colors.white.withValues(alpha: 0.05);
-        for (int i = 0; i < 20; i++) {
-          offscreenCanvas.drawCircle(
-            Offset(random.nextDouble() * w, random.nextDouble() * h),
-            0.5,
-            sparklePaint,
-          );
+      // Bottom path
+      for (int col = 6; col <= 8; col++) {
+        for (int row = 9; row < 15; row++) {
+          _drawCell(
+              offscreenCanvas, col, row, cellSize, _getCellColor(col, row));
+        }
+      }
+      // Left path
+      for (int row = 6; row <= 8; row++) {
+        for (int col = 0; col < 6; col++) {
+          _drawCell(
+              offscreenCanvas, col, row, cellSize, _getCellColor(col, row));
+        }
+      }
+      // Right path
+      for (int row = 6; row <= 8; row++) {
+        for (int col = 9; col < 15; col++) {
+          _drawCell(
+              offscreenCanvas, col, row, cellSize, _getCellColor(col, row));
         }
       }
 
-      drawCrystalTriangle(
-          Path()
-            ..moveTo(0, 0)
-            ..lineTo(w, 0)
-            ..lineTo(center.dx, center.dy)
-            ..close(),
-          greenPaint);
-      drawCrystalTriangle(
-          Path()
-            ..moveTo(w, 0)
-            ..lineTo(w, h)
-            ..lineTo(center.dx, center.dy)
-            ..close(),
-          yellowPaint);
-      drawCrystalTriangle(
-          Path()
-            ..moveTo(0, h)
-            ..lineTo(w, h)
-            ..lineTo(center.dx, center.dy)
-            ..close(),
-          bluePaint);
-      drawCrystalTriangle(
-          Path()
-            ..moveTo(0, 0)
-            ..lineTo(0, h)
-            ..lineTo(center.dx, center.dy)
-            ..close(),
-          redPaint);
+      // 4. Draw Stars (Special cells)
+      _drawStars(offscreenCanvas, cellSize);
 
-      Paint linePaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.2)
-        ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke;
-
-      offscreenCanvas.drawLine(const Offset(0, 0), center, linePaint);
-      offscreenCanvas.drawLine(Offset(w, 0), center, linePaint);
-      offscreenCanvas.drawLine(Offset(0, h), center, linePaint);
-      offscreenCanvas.drawLine(Offset(w, h), center, linePaint);
-
-      offscreenCanvas.drawRect(
-        Rect.fromLTWH(0, 0, w, h),
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.1)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
-      );
-
-      _cache[size] = recorder.endRecording();
+      _cache[cacheKey] = recorder.endRecording();
     }
 
-    canvas.drawPicture(_cache[size]!);
+    canvas.drawPicture(_cache[cacheKey]!);
+  }
+
+  void _drawBaseArea(
+      Canvas canvas, int col, int row, Color color, double cellSize,
+      {required BorderRadius borderRadius}) {
+    final rect = Rect.fromLTWH(
+        col * cellSize, row * cellSize, 6 * cellSize, 6 * cellSize);
+    final RRect rrect = borderRadius.toRRect(rect);
+
+    // Gradient Background
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          color.withValues(alpha: AppColors.boardBaseAlpha),
+          color.withValues(alpha: AppColors.boardBaseAlpha * 0.4),
+        ],
+      ).createShader(rect)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRRect(rrect, paint);
+
+    // Noise frost
+    _drawNoise(canvas, rect, 0.03);
+
+    // Inner frosted square
+    final innerSize = 4.2 * cellSize;
+    final innerRect = Rect.fromCenter(
+        center: rect.center, width: innerSize, height: innerSize);
+    final innerRRect =
+        RRect.fromRectAndRadius(innerRect, const Radius.circular(12));
+
+    canvas.drawRRect(
+        innerRRect, Paint()..color = Colors.white.withValues(alpha: 0.03));
+    canvas.drawRRect(
+        innerRRect,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.15)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8);
+
+    // Empty spots
+    void drawSpot(double dx, double dy) {
+      final spotCenter =
+          Offset(rect.left + dx * cellSize, rect.top + dy * cellSize);
+      final spotRadius = cellSize * 0.85 / 2;
+
+      canvas.drawCircle(spotCenter, spotRadius,
+          Paint()..color = Colors.black.withValues(alpha: 0.15));
+      canvas.drawCircle(
+          spotCenter,
+          spotRadius,
+          Paint()
+            ..color = color.withValues(alpha: 0.4)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2);
+    }
+
+    drawSpot(2, 2);
+    drawSpot(4, 2);
+    drawSpot(2, 4);
+    drawSpot(4, 4);
+
+    // Team Labels (Optional: could keep as widgets if interaction is needed, but here we paint them)
+    if (gameMode == GameMode.team) {
+      final String teamLabel =
+          (col == 0 && row == 0) || (col == 9 && row == 9) ? 'B' : 'A';
+
+      double labelX, labelY;
+      if ((col == 0 && row == 9) || (col == 9 && row == 9))
+        labelY = rect.top + cellSize / 2;
+      else
+        labelY = rect.bottom - cellSize / 2;
+
+      if ((col == 9 && row == 0) || (col == 9 && row == 9))
+        labelX = rect.left + cellSize / 2;
+      else
+        labelX = rect.right - cellSize / 2;
+
+      final labelCenter = Offset(labelX, labelY);
+      final badgeRadius = cellSize * 0.8 / 2;
+
+      // Badge
+      canvas.drawCircle(
+          labelCenter,
+          badgeRadius,
+          Paint()
+            ..shader = RadialGradient(
+                    colors: [color, color.withValues(alpha: 0.8)])
+                .createShader(
+                    Rect.fromCircle(center: labelCenter, radius: badgeRadius)));
+      canvas.drawCircle(
+          labelCenter,
+          badgeRadius,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2);
+
+      // Text (Note: Painting text in CustomPainter is a bit verbose, we might skip or keep as widgets.
+      // But let's try painting it for efficiency)
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: teamLabel,
+          style: const TextStyle(
+              color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas,
+          labelCenter - Offset(textPainter.width / 2, textPainter.height / 2));
+    }
+  }
+
+  void _drawCell(
+      Canvas canvas, int col, int row, double cellSize, Color color) {
+    final rect =
+        Rect.fromLTWH(col * cellSize, row * cellSize, cellSize, cellSize);
+    final bool isDefault = color.alpha == 38 || color == Colors.transparent;
+
+    if (!isDefault) {
+      canvas.drawRect(rect,
+          Paint()..color = color.withValues(alpha: AppColors.boardCellAlpha));
+      _drawNoise(canvas, rect, 0.02);
+    }
+
+    canvas.drawRect(
+        rect,
+        Paint()
+          ..color = AppColors.boardGridColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.5);
+  }
+
+  void _drawStars(Canvas canvas, double cellSize) {
+    const starPositions = [
+      Offset(1, 6),
+      Offset(6, 2),
+      Offset(8, 1),
+      Offset(12, 6),
+      Offset(13, 8),
+      Offset(8, 12),
+      Offset(6, 13),
+      Offset(2, 8)
+    ];
+
+    for (var pos in starPositions) {
+      final rect = Rect.fromLTWH(
+          pos.dx * cellSize, pos.dy * cellSize, cellSize, cellSize);
+
+      // Star Background (if default cell)
+      // Note: _drawCell already handled the background color logic if we pass correct color.
+      // But we can specifically draw AppColors.starCellBackground here if needed.
+
+      // Drawing the star icon is tricky in CustomPainter. Let's use a TextPainter with a star character or IconData.
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: String.fromCharCode(Icons.star_rounded.codePoint),
+          style: TextStyle(
+            fontSize: cellSize,
+            fontFamily: Icons.star_rounded.fontFamily,
+            package: Icons.star_rounded.fontPackage,
+            color: AppColors.starPlatinum,
+            shadows: [
+              Shadow(color: AppColors.starPlatinumGlow, blurRadius: 8),
+              Shadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1)),
+            ],
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      textPainter.paint(canvas,
+          rect.center - Offset(textPainter.width / 2, textPainter.height / 2));
+    }
+  }
+
+  void _drawCenterHome(Canvas canvas, Size size, double cellSize) {
+    final double w = 3 * cellSize;
+    final double h = 3 * cellSize;
+    final double startX = 6 * cellSize;
+    final double startY = 6 * cellSize;
+    final Offset center = Offset(startX + w / 2, startY + h / 2);
+
+    Paint getPaint(Color color) {
+      return Paint()
+        ..shader = RadialGradient(
+          colors: [color.withValues(alpha: 0.7), color.withValues(alpha: 0.6)],
+        ).createShader(Rect.fromLTWH(startX, startY, w, h))
+        ..style = PaintingStyle.fill;
+    }
+
+    void drawCrystalTriangle(Path path, Paint paint) {
+      canvas.drawPath(path, paint);
+      final random = math.Random(42);
+      final sparklePaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.05);
+      for (int i = 0; i < 15; i++) {
+        canvas.drawCircle(
+            Offset(startX + random.nextDouble() * w,
+                startY + random.nextDouble() * h),
+            0.5,
+            sparklePaint);
+      }
+    }
+
+    drawCrystalTriangle(
+        Path()
+          ..moveTo(startX, startY)
+          ..lineTo(startX + w, startY)
+          ..lineTo(center.dx, center.dy)
+          ..close(),
+        getPaint(AppColors.player3Green));
+    drawCrystalTriangle(
+        Path()
+          ..moveTo(startX + w, startY)
+          ..lineTo(startX + w, startY + h)
+          ..lineTo(center.dx, center.dy)
+          ..close(),
+        getPaint(AppColors.player2Yellow));
+    drawCrystalTriangle(
+        Path()
+          ..moveTo(startX, startY + h)
+          ..lineTo(startX + w, startY + h)
+          ..lineTo(center.dx, center.dy)
+          ..close(),
+        getPaint(AppColors.player1Blue));
+    drawCrystalTriangle(
+        Path()
+          ..moveTo(startX, startY)
+          ..lineTo(startX, startY + h)
+          ..lineTo(center.dx, center.dy)
+          ..close(),
+        getPaint(AppColors.player4Red));
+
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.2)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(startX, startY), center, linePaint);
+    canvas.drawLine(Offset(startX + w, startY), center, linePaint);
+    canvas.drawLine(Offset(startX, startY + h), center, linePaint);
+    canvas.drawLine(Offset(startX + w, startY + h), center, linePaint);
+    canvas.drawRect(
+        Rect.fromLTWH(startX, startY, w, h), linePaint..strokeWidth = 1);
+  }
+
+  void _drawNoise(Canvas canvas, Rect rect, double opacity) {
+    final random = math.Random(42);
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..strokeWidth = 1.0;
+    final int pointCount = (rect.width * rect.height * 0.04).toInt();
+    for (int i = 0; i < pointCount; i++) {
+      canvas.drawPoints(
+          PointMode.points,
+          [
+            Offset(rect.left + random.nextDouble() * rect.width,
+                rect.top + random.nextDouble() * rect.height)
+          ],
+          paint);
+    }
+  }
+
+  Color _getCellColor(int col, int row) {
+    if (row == 7 && col >= 1 && col <= 5)
+      return AppColors.player4Red
+          .withValues(alpha: AppColors.boardHomeStretchAlpha);
+    if (col == 7 && row >= 1 && row <= 5)
+      return AppColors.player3Green
+          .withValues(alpha: AppColors.boardHomeStretchAlpha);
+    if (row == 7 && col >= 9 && col <= 13)
+      return AppColors.player2Yellow
+          .withValues(alpha: AppColors.boardHomeStretchAlpha);
+    if (col == 7 && row >= 9 && row <= 13)
+      return AppColors.player1Blue
+          .withValues(alpha: AppColors.boardHomeStretchAlpha);
+    if (col == 1 && row == 6)
+      return AppColors.player4Red
+          .withValues(alpha: AppColors.boardStartCellAlpha);
+    if (col == 8 && row == 1)
+      return AppColors.player3Green
+          .withValues(alpha: AppColors.boardStartCellAlpha);
+    if (col == 13 && row == 8)
+      return AppColors.player2Yellow
+          .withValues(alpha: AppColors.boardStartCellAlpha);
+    if (col == 6 && row == 13)
+      return AppColors.player1Blue
+          .withValues(alpha: AppColors.boardStartCellAlpha);
+    return Colors.white.withValues(alpha: 0.15);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant StaticBoardPainter oldDelegate) =>
+      oldDelegate.gameMode != gameMode;
 }
