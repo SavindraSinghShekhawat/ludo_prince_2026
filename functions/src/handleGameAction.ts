@@ -138,7 +138,7 @@ export const handleGameAction = onValueCreated(
           }
 
           // Find next player
-          const turnOrder = game.turnOrder || ["slot1", "slot2", "slot3", "slot4"];
+          const turnOrder = game.turnOrder || ["slot1", "slot4", "slot3", "slot2"];
           const winners = game.winners || [];
           let idx = turnOrder.indexOf(currentTurn);
           let nextTurn = currentTurn;

@@ -56,18 +56,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   }
 
   List<PlayerSlot> _getActiveSlots(int numPlayers) {
-    if (numPlayers == 2) {
-      return [PlayerSlot.slot1, PlayerSlot.slot3];
-    } else if (numPlayers == 3) {
-      return [PlayerSlot.slot1, PlayerSlot.slot3, PlayerSlot.slot4];
-    } else {
-      return [
-        PlayerSlot.slot1,
-        PlayerSlot.slot2,
-        PlayerSlot.slot3,
-        PlayerSlot.slot4
-      ];
-    }
+    return PlayerSlotExtension.getSlotsFor(numPlayers);
   }
 
   @override

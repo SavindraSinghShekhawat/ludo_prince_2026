@@ -115,12 +115,16 @@ export const handleMatchmaking = onValueCreated(
       playersInMatch.forEach((player, index) => {
         let slot = `slot${index + 1}`;
 
-        // Refine slot mapping according to user requirement
+        // Refine slot mapping to follow CLOCKWISE rotation
         if (mode === "classic_2p") {
           slot = index === 0 ? "slot1" : "slot3";
         } else if (mode === "classic_3p") {
-          const threePlayerSlots = ["slot1", "slot3", "slot4"];
+          const threePlayerSlots = ["slot1", "slot4", "slot3"];
           slot = threePlayerSlots[index];
+        } else {
+          // 4 players (classic_4p or team_2v2)
+          const fourPlayerSlots = ["slot1", "slot4", "slot3", "slot2"];
+          slot = fourPlayerSlots[index];
         }
 
         const playerEntry: PlayerEntry = {

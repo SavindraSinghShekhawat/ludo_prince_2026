@@ -5,13 +5,13 @@ extension PlayerSlotExtension on PlayerSlot {
     if (numPlayers == 2) {
       return [PlayerSlot.slot1, PlayerSlot.slot3];
     } else if (numPlayers == 3) {
-      return [PlayerSlot.slot1, PlayerSlot.slot3, PlayerSlot.slot4];
+      return [PlayerSlot.slot1, PlayerSlot.slot4, PlayerSlot.slot3];
     } else {
       return [
         PlayerSlot.slot1,
-        PlayerSlot.slot2,
+        PlayerSlot.slot4,
         PlayerSlot.slot3,
-        PlayerSlot.slot4
+        PlayerSlot.slot2
       ];
     }
   }
