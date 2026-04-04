@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
+import '../../utils/colors.dart';
 
 import '../../providers/auth_provider.dart';
 
@@ -109,11 +110,9 @@ class ProfileDialog extends ConsumerWidget {
             const SizedBox(height: 24),
             _buildActionButton(
               context,
-              isAnonymous ? 'FRIENDS' : 'FRIENDS',
-              isAnonymous ? Icons.lock_outline : Icons.people_outline,
-              isAnonymous
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.cyanAccent, // Greenish like the icons
+              'FRIENDS',
+              Icons.people,
+              AppColors.imperialJade, // Matching Friends card on Home Screen
               isAnonymous
                   ? () {
                       CustomSnackBar.show(
@@ -184,7 +183,7 @@ class ProfileDialog extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFE5E4E2), size: 18),
+          Icon(icon, color: AppColors.starPlatinum, size: 18),
           const SizedBox(width: 12),
           Text(label,
               style: const TextStyle(color: Colors.white70, fontSize: 13)),
@@ -213,8 +212,8 @@ class ProfileDialog extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isPlatinum ? null : color.withValues(alpha: 0.1),
             gradient: isPlatinum
-                ? const LinearGradient(
-                    colors: [Color(0xFFE5E4E2), Color(0xFFB0B4B8)],
+                ? LinearGradient(
+                    colors: [AppColors.starPlatinum, const Color(0xFFB0B4B8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -237,13 +236,13 @@ class ProfileDialog extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon,
-                  color: isPlatinum ? const Color(0xFF1A1A2E) : color,
+                  color: isPlatinum ? AppColors.systemBackground : color,
                   size: 20),
               const SizedBox(width: 12),
               Text(
                 label,
                 style: TextStyle(
-                  color: isPlatinum ? const Color(0xFF1A1A2E) : color,
+                  color: isPlatinum ? AppColors.systemBackground : color,
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                   letterSpacing: 1.5,

@@ -98,7 +98,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
     return AnimatedBackground(
         child: Scaffold(
       appBar: AppBar(
-        title: const Text('Dice Fairness Check'),
+        title: const Text('DICE FAIRNESS CHECK'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

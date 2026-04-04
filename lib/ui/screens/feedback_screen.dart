@@ -60,7 +60,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('Share Feedback',
+          title: const Text('SHARE FEEDBACK',
               style:
                   TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
           backgroundColor: Colors.transparent,

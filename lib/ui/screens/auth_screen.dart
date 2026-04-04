@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/auth_service.dart';
 import '../../utils/colors.dart';
+import '../../utils/app_logger.dart';
+import '../../utils/svg_assets.dart';
 import '../widgets/shared_ui.dart';
 import '../widgets/custom_dialog_layout.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../utils/app_logger.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -149,10 +151,68 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.account_circle_outlined,
-                          size: 100, color: Colors.white)
-                      .animate()
-                      .scale(duration: 600.ms, curve: Curves.easeOutBack),
+                  SizedBox(
+                    height: 120,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Backlight Glow
+                        Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                AppColors.starPlatinum.withValues(alpha: 0.3),
+                                AppColors.starPlatinum.withValues(alpha: 0.1),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .scale(
+                              begin: const Offset(0.8, 0.8),
+                              end: const Offset(1.3, 1.3),
+                              duration: 2.seconds,
+                              curve: Curves.easeInOutSine,
+                            )
+                            .blur(
+                                begin: const Offset(10, 10),
+                                end: const Offset(20, 20)),
+
+                        // The Crown itself
+                        Image.asset(
+                          'assets/crown.png',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.contain,
+                        )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .moveY(
+                              begin: 0,
+                              end: -10,
+                              duration: 2.5.seconds,
+                              curve: Curves.easeInOutSine,
+                            )
+                            .rotate(
+                              begin: -0.06,
+                              end: 0.06,
+                              duration: 3.seconds,
+                              curve: Curves.easeInOutSine,
+                            )
+                            .animate(onPlay: (c) => c.repeat())
+                            .shimmer(
+                              delay: 2.seconds,
+                              duration: 3.seconds,
+                              color:
+                                  AppColors.starPlatinum.withValues(alpha: 0.8),
+                            ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 32),
                   const Text(
                     'JOIN THE ROYAL COURT',
@@ -170,29 +230,44 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ).animate().fadeIn(delay: 400.ms),
                   const SizedBox(height: 48),
-                  if (_isLoading)
-                    const CircularProgressIndicator(color: Colors.white)
-                  else ...[
-                    _AuthButton(
-                      label: 'Continue with Google',
-                      icon: Icons.g_mobiledata,
-                      onPressed: () =>
-                          _handleSignIn(authService.signInWithGoogle),
-                      color: Colors.white,
-                      textColor: Colors.black87,
-                    ).animate().slideY(
-                        begin: 0.5, duration: 400.ms, curve: Curves.easeOut),
-                    const SizedBox(height: 16),
-                    _AuthButton(
-                      label: 'Continue with Apple',
-                      icon: Icons.apple,
-                      onPressed: () =>
-                          _handleSignIn(authService.signInWithApple),
-                      color: Colors.black,
-                      textColor: Colors.white,
-                    ).animate().slideY(
-                        begin: 0.5, duration: 500.ms, curve: Curves.easeOut),
-                  ],
+                  SizedBox(
+                    height: 128, // Height of 2 buttons (56x2) + spacing (16)
+                    child: Center(
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Column(
+                              children: [
+                                _AuthButton(
+                                  label: 'Continue with Google',
+                                  icon: SvgPicture.string(
+                                    SvgAssets.googleLogo,
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  onPressed: () => _handleSignIn(
+                                      authService.signInWithGoogle),
+                                  color: Colors.white,
+                                  textColor: Colors.black87,
+                                ).animate().slideY(
+                                    begin: 0.5,
+                                    duration: 400.ms,
+                                    curve: Curves.easeOut),
+                                const SizedBox(height: 16),
+                                _AuthButton(
+                                  label: 'Continue with Apple',
+                                  icon: const Icon(Icons.apple, size: 28),
+                                  onPressed: () => _handleSignIn(
+                                      authService.signInWithApple),
+                                  color: Colors.white,
+                                  textColor: Colors.black87,
+                                ).animate().slideY(
+                                    begin: 0.5,
+                                    duration: 500.ms,
+                                    curve: Curves.easeOut),
+                              ],
+                            ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -205,7 +280,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
 class _AuthButton extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final Widget icon;
   final VoidCallback onPressed;
   final Color color;
   final Color textColor;
@@ -232,7 +307,7 @@ class _AuthButton extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 2,
         ),
-        icon: Icon(icon, size: 28),
+        icon: icon,
         label: Text(
           label,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/package_info_provider.dart';
+import '../../utils/colors.dart';
 import '../widgets/shared_ui.dart';
 
 class AboutScreen extends ConsumerWidget {
@@ -13,7 +14,7 @@ class AboutScreen extends ConsumerWidget {
         child: Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('About & Fairness',
+        title: const Text('ABOUT & FAIRNESS',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -30,11 +31,11 @@ class AboutScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade400.withValues(alpha: 0.1),
+                    color: AppColors.starPlatinum.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.shield,
-                      size: 80, color: Colors.amber.shade400),
+                  child: const Icon(Icons.shield,
+                      size: 80, color: AppColors.starPlatinum),
                 ),
               ),
               const SizedBox(height: 30),
@@ -109,13 +110,12 @@ class AboutScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFE5E4E2).withValues(alpha: 0.15),
+            color: AppColors.starPlatinum.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-                color: const Color(0xFFE5E4E2).withValues(alpha: 0.4),
-                width: 1),
+                color: AppColors.starPlatinum.withValues(alpha: 0.4), width: 1),
           ),
-          child: Icon(icon, color: const Color(0xFFE5E4E2), size: 28),
+          child: Icon(icon, color: AppColors.starPlatinum, size: 28),
         ),
         const SizedBox(width: 16),
         Expanded(

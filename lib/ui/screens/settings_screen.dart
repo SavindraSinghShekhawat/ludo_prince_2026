@@ -28,7 +28,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('SETTINGS'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
