@@ -48,6 +48,28 @@ class AppColors {
   static const Color starCellBackground =
       Color(0x1F000000); // 12% Black for visibility
 
+  // System & Layout (Non-Board Colors)
+  static const Color systemBackground = Color(0xFF0B0B1A); // Deep Royal Void
+  static const Color systemSurface = Color(0xFF16162C); // Deep Charcoal Surface
+
+  // Imperial UI Palette (Interactive Elements)
+  static const Color primaryCyan = Color(0xFF00D1FF); // New Primary
+  static const Color primaryCyanGlow = Color(0xFF64FFDA); // Matching soft glow
+
+  static const Color midnightSapphire = Color(0xFF1E88E5); // Secondary
+  static const Color midnightSapphireGlow = Color(0xFF64B5F6);
+
+  static const Color imperialAmber = Color(0xFFFFB300); // Success/Gold
+  static const Color imperialAmberGlow = Color(0xFFFFD54F);
+
+  static const Color imperialJade = Color(0xFF00BFA5); // Info/Social
+  static const Color imperialJadeGlow = Color(0xFF64FFDA);
+
+  static const Color crimsonVelvet = Color(0xFFD32F2F); // Danger
+  static const Color crimsonVelvetGlow = Color(0xFFFF5252);
+
+  static const Color slateIndigo = Color(0xFF5C6BC0); // Muted secondary
+
   // Helper methods to get color by slot
   static Color getColorForSlot(PlayerSlot slot) {
     switch (slot) {

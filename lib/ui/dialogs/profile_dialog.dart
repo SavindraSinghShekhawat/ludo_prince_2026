@@ -94,7 +94,7 @@ class ProfileDialog extends ConsumerWidget {
                   style: TextStyle(
                       color: Colors.amber,
                       fontSize: 10,
-                      fontWeight: FontWeight.bold),
+                      fontWeight: FontWeight.w500),
                 ),
               ),
             const SizedBox(height: 32),
@@ -244,9 +244,9 @@ class ProfileDialog extends ConsumerWidget {
                 label,
                 style: TextStyle(
                   color: isPlatinum ? const Color(0xFF1A1A2E) : color,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w500,
                   fontSize: 14,
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],

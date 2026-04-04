@@ -32,8 +32,8 @@ class LogoWidget extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        Colors.amber.withValues(alpha: 0.4),
-                        Colors.amber.withValues(alpha: 0.1),
+                        const Color(0xFFE5E4E2).withValues(alpha: 0.3),
+                        const Color(0xFFBCC6CC).withValues(alpha: 0.1),
                         Colors.transparent,
                       ],
                     ),
@@ -111,7 +111,7 @@ class LogoWidget extends StatelessWidget {
                     .shimmer(
                       delay: 2.seconds,
                       duration: 3.seconds,
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: const Color(0xFFE5E4E2).withValues(alpha: 0.8),
                     ),
               ],
             ),
@@ -120,12 +120,12 @@ class LogoWidget extends StatelessWidget {
           blendMode: BlendMode.srcIn,
           shaderCallback: (bounds) => const LinearGradient(
             colors: [
-              Color(0xFFE5E4E2), // Platinum base
+              Color(0xFFE5E4E2), // Platinum Light
               Color(0xFFFFFFFF), // White highlight
-              Color(0xFFBCC6CC), // Silver/Metallic
-              Color(0xFFE5E4E2), // Return to base
+              Color(0xFFBCC6CC), // Platinum Dark
+              Color(0xFFE5E4E2), // Return to Light
             ],
-            stops: [0.0, 0.3, 0.7, 1.0],
+            stops: [0.0, 0.4, 0.8, 1.0],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ).createShader(bounds),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../controllers/ludo_controller.dart';
 import '../widgets/shared_ui.dart';
+import '../../utils/colors.dart';
 
 class DiceRandomnessScreen extends StatefulWidget {
   const DiceRandomnessScreen({super.key});
@@ -96,14 +97,8 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
   Widget build(BuildContext context) {
     return AnimatedBackground(
         child: Scaffold(
-      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Dice Fairness Check',
-            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Dice Fairness Check'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -134,10 +129,10 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withAlpha(40),
+                  color: AppColors.primaryCyan.withAlpha(40),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.casino, color: Colors.blueAccent),
+                child: const Icon(Icons.casino, color: AppColors.primaryCyan),
               ),
               const SizedBox(width: 16),
               const Expanded(
@@ -178,7 +173,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
                 value: value,
                 backgroundColor: Colors.white.withAlpha(10),
                 valueColor:
-                    const AlwaysStoppedAnimation<Color>(Color(0xFF00FFA3)),
+                    const AlwaysStoppedAnimation<Color>(AppColors.imperialJade),
                 minHeight: 8,
               ),
             ),
@@ -221,12 +216,12 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
 
   Widget _buildBar(int label, double heightFactor, int count) {
     final colors = [
-      const Color(0xFF00D1FF), // Azure
-      const Color(0xFFFFD700), // Gold
-      const Color(0xFF00FFA3), // Emerald
-      const Color(0xFFAF52FF), // Metallic Purple
-      const Color(0xFFFF52D9), // Platinum Rose
-      const Color(0xFFE5E4E2), // Platinum
+      AppColors.primaryCyan,
+      AppColors.midnightSapphire,
+      AppColors.imperialAmber,
+      AppColors.imperialJade,
+      AppColors.crimsonVelvet,
+      AppColors.starPlatinum,
     ];
 
     return Expanded(
@@ -345,58 +340,12 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
   Widget _buildControls() {
     return Column(
       children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 60),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isRunning ? _stopSimulation : _runSimulation,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                elevation: 8,
-                shadowColor: (_isRunning
-                        ? const Color(0xFFFF5252)
-                        : const Color(0xFFE5E4E2))
-                    .withAlpha(100),
-                backgroundColor: Colors.transparent,
-              ),
-              child: Ink(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: _isRunning
-                        ? [
-                            const Color(0xFFFF5252), // Red Accent
-                            const Color(0xFFD32F2F), // Darker Red
-                          ]
-                        : [
-                            const Color(0xFFE5E4E2), // Platinum
-                            const Color(0xFFB0B4B8), // Silver
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _isRunning ? "STOP SIMULATION" : "START TEST (100M ROLLS)",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: _isRunning
-                          ? Colors.white
-                          : const Color(
-                              0xFF1A1A2E), // Dark text on light button
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        SizedBox(
+          width: double.infinity,
+          child: GameButton(
+            text: _isRunning ? 'Stop Simulation' : 'Run Simulation',
+            isPrimary: true,
+            onTap: _isRunning ? _stopSimulation : _runSimulation,
           ),
         ),
         if (!_isRunning && _totalRolls >= _targetRolls) ...[

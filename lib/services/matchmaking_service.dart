@@ -29,10 +29,17 @@ class MatchmakingService {
     final playerName = user.displayName ??
         "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}";
 
+    String? joiningCode;
+    if (isPrivate) {
+      joiningCode = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+          .toString();
+    }
+
     try {
       await gameRef.set({
         'status': 'lobby',
         'isPrivate': isPrivate,
+        'joiningCode': joiningCode,
         'gameMode': gameMode.name,
         'createdAt': ServerValue.timestamp,
         'hostUid': user.uid,
@@ -61,6 +68,13 @@ class MatchmakingService {
           }
         }
       }).timeout(const Duration(seconds: 10));
+
+      if (isPrivate && joiningCode != null) {
+        await _db.ref().child('privateRoomCodes').child(joiningCode).set({
+          'gameId': gameId,
+          'createdAt': ServerValue.timestamp,
+        });
+      }
     } catch (e) {
       throw Exception("Failed to create game lobby.");
     }
@@ -79,22 +93,33 @@ class MatchmakingService {
 
     final transactionResult = await gameRef.runTransaction((Object? gameData) {
       if (gameData == null) {
-        AppLogger.debug("Retrying transaction: lobby not yet visible");
         return Transaction.success(gameData);
       }
 
       final game = Map<String, dynamic>.from(gameData as Map);
-
       final status = game['status'];
       final currentPlayers = (game['currentPlayers'] ?? 0) as num;
       final maxPlayers = (game['maxPlayers'] ?? 0) as num;
 
-      if (status != 'lobby') return Transaction.abort();
-      if (currentPlayers >= maxPlayers) return Transaction.abort();
+      if (status != 'lobby') {
+        return Transaction.abort(); // Cannot join a game in progress
+      }
 
       final players = Map<String, dynamic>.from(game['players'] ?? {});
-      final slots = PlayerSlotExtension.getSlotsFor(maxPlayers.toInt());
 
+      // Check if user is already in the game (idempotency)
+      for (final entry in players.entries) {
+        final pData = Map<String, dynamic>.from(entry.value as Map);
+        if (pData['uid'] == user.uid) {
+          return Transaction.success(gameData);
+        }
+      }
+
+      if (currentPlayers >= maxPlayers) {
+        return Transaction.abort(); // Lobby is full
+      }
+
+      final slots = PlayerSlotExtension.getSlotsFor(maxPlayers.toInt());
       String? availableSlot;
 
       for (final slotEnum in slots) {
@@ -125,15 +150,56 @@ class MatchmakingService {
     });
 
     if (!transactionResult.committed) {
-      throw Exception("Game is full, unavailable, or already started.");
+      throw Exception("Lobby is full or game has already started.");
+    }
+  }
+
+  Future<void> updateGameSettings(
+      String gameId, int maxPlayers, GameMode gameMode) async {
+    await _ensureAuthenticated();
+    final user = _auth.currentUser!;
+    final gameRef = _db.ref().child('ludogames').child(gameId);
+
+    final snapshot = await gameRef.get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      if (data['hostUid'] == user.uid) {
+        await gameRef.update({
+          'maxPlayers': maxPlayers,
+          'gameMode': gameMode.name,
+        });
+      } else {
+        throw Exception("Only the host can modify game settings.");
+      }
     }
   }
 
   Future<void> startGame(String gameId) async {
-    await _db.ref().child('ludogames').child(gameId).update({
+    final gameRef = _db.ref().child('ludogames').child(gameId);
+    final gameSnap = await gameRef.get();
+
+    if (gameSnap.exists) {
+      final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
+      final joiningCode = gameData['joiningCode'];
+      if (joiningCode != null) {
+        await _db.ref().child('privateRoomCodes').child(joiningCode).remove();
+      }
+    }
+
+    await gameRef.update({
       'status': 'playing',
       'turnStartedAt': ServerValue.timestamp,
     }).timeout(const Duration(seconds: 10));
+  }
+
+  Future<String?> getGameIdFromCode(String code) async {
+    final snapshot =
+        await _db.ref().child('privateRoomCodes').child(code).get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      return data['gameId'] as String?;
+    }
+    return null;
   }
 
   String _getModeQueueName(int maxPlayers, GameMode gameMode) {

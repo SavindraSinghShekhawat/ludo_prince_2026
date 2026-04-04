@@ -4,9 +4,16 @@ import 'package:flutter/material.dart';
 import '../../models/user_profile.dart';
 import '../../services/profile_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/shared_ui.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'auth_screen.dart';
+import 'lobby_screen.dart';
+import '../dialogs/join_by_code_dialog.dart';
+import '../widgets/shared_ui.dart';
+import '../../services/social_service.dart';
+import '../../services/matchmaking_service.dart';
+import '../../services/firebase_service.dart';
+import '../../models/game_state.dart' show GameMode;
+import '../../utils/colors.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -100,162 +107,153 @@ class _FriendsScreenState extends State<FriendsScreen> {
     return AnimatedBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: isGuest
-              ? _buildGuestRestriction()
-              : CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    _buildHeader(),
-                    _buildSearchBar(),
-                    if (_isSearching)
-                      const SliverToBoxAdapter(
-                        child: LinearProgressIndicator(
-                          backgroundColor: Colors.transparent,
-                          color: Colors.cyanAccent,
-                        ),
-                      ),
-                    _buildSectionHeader('YOUR FRIENDS', Icons.people_outline),
-                    _buildFriendsList(),
-                    if (_searchController.text.length >= 2) ...[
-                      _buildSectionHeader('GLOBAL SEARCH', Icons.public),
-                      _buildGlobalResults(),
-                    ],
-                    const SliverToBoxAdapter(child: SizedBox(height: 32)),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGuestRestriction() {
-    return Stack(
-      children: [
-        Positioned(
-          top: 16,
-          left: 16,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: GlassContainer(
-              padding: const EdgeInsets.all(32),
-              borderRadius: 30,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_person_outlined,
-                          color: Colors.cyanAccent, size: 80)
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .shimmer(duration: 2.seconds),
-                  const SizedBox(height: 24),
-                  const Text('LINK ACCOUNT',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0)),
-                  const SizedBox(height: 16),
-                  const Text(
-                      'Connect your account to unlock Friends, Chat, and Matchmaking with players worldwide!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 16)),
-                  const SizedBox(height: 32),
-                  _buildLargeButton('LINK NOW', Colors.cyanAccent, () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => const AuthScreen()));
-                  }),
-                ],
-              ),
+        appBar: AppBar(
+          title: const Text('FRIENDS'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications_none_outlined),
+              onPressed: () {},
             ),
-          ),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildLargeButton(String label, Color color, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
-            boxShadow: [
-              BoxShadow(
-                  color: color.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10)),
+        body: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildPrivateRoomActions(),
+              if (isGuest)
+                SliverToBoxAdapter(child: _buildGuestNudge())
+              else ...[
+                _buildSearchBar(),
+                if (_isSearching)
+                  const SliverToBoxAdapter(
+                    child: LinearProgressIndicator(
+                      backgroundColor: AppColors.primaryCyan,
+                      color: AppColors.imperialJade,
+                    ),
+                  ),
+                _buildSectionHeader('YOUR FRIENDS', Icons.people_outline),
+                _buildFriendsList(),
+                if (_searchController.text.length >= 2) ...[
+                  _buildSectionHeader('GLOBAL SEARCH', Icons.public),
+                  _buildGlobalResults(),
+                ],
+              ],
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
-          child: Center(
-            child: Text(label,
-                style: TextStyle(
-                    color: color,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5)),
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildPrivateRoomActions() {
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       sliver: SliverToBoxAdapter(
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70),
-              onPressed: () => Navigator.of(context).pop(),
+            Expanded(
+              child: _buildActionCard(
+                'CREATE ROOM',
+                Icons.add_circle_outline,
+                AppColors.imperialJade,
+                () => _handleCreateRoom(),
+              ),
             ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('FRIENDS',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2.0)),
-                Text('${_allFriends.length} connected players',
-                    style:
-                        const TextStyle(color: Colors.white54, fontSize: 14)),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                'JOIN ROOM',
+                Icons.vpn_key_outlined,
+                AppColors.imperialAmber,
+                () => _handleJoinRoom(),
+              ),
             ),
-            const Spacer(),
-            _buildSmallCircleButton(Icons.settings_outlined),
-            const SizedBox(width: 12),
-            _buildSmallCircleButton(Icons.notifications_none_outlined),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSmallCircleButton(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+  Widget _buildActionCard(
+      String title, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: GlassContainer(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Icon(icon, color: Colors.white70, size: 20),
+    );
+  }
+
+  void _handleCreateRoom() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LobbyScreen(
+          isQuickMatch: false,
+          isHost: true,
+        ),
+      ),
+    );
+  }
+
+  void _handleJoinRoom() {
+    // We will implement JoinByCodeDialog later
+    showDialog(
+      context: context,
+      builder: (context) => const JoinByCodeDialog(),
+    );
+  }
+
+  Widget _buildGuestNudge() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: GlassContainer(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const Icon(Icons.lock_person_outlined,
+                color: AppColors.imperialJade, size: 48),
+            const SizedBox(height: 16),
+            const Text('LINK ACCOUNT',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text(
+              'Link your account to add persistent friends and chat with them anytime!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            GameButton(
+              text: 'LINK NOW',
+              isSmall: true,
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const AuthScreen()));
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -273,7 +271,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             decoration: const InputDecoration(
               hintText: 'Search by Name or Ludo ID...',
               hintStyle: TextStyle(color: Colors.white38),
-              prefixIcon: Icon(Icons.search, color: Colors.cyanAccent),
+              prefixIcon: Icon(Icons.search, color: AppColors.imperialJade),
               suffixIcon: Icon(Icons.mic_none, color: Colors.white38),
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -374,36 +372,43 @@ class _FriendsScreenState extends State<FriendsScreen> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: Colors.cyanAccent.withValues(alpha: 0.1),
+                  backgroundColor:
+                      AppColors.imperialJade.withValues(alpha: 0.1),
                   backgroundImage: user.photoURL != null
                       ? NetworkImage(user.photoURL!)
                       : null,
                   child: user.photoURL == null
                       ? const Icon(Icons.person,
-                          color: Colors.cyanAccent, size: 30)
+                          color: AppColors.imperialJade, size: 30)
                       : null,
                 ),
-                if (isFriend) // Only show online status for friends (simulated)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: const Color(0xFF16162C), width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.greenAccent.withValues(alpha: 0.5),
-                            blurRadius: 4,
-                          ),
-                        ],
+                StreamBuilder<Map<String, dynamic>>(
+                  stream: socialService.watchUserStatus(user.uid),
+                  builder: (context, snapshot) {
+                    final status = snapshot.data?['status'] ?? 'offline';
+                    final isOnline = status == 'online';
+                    final isInLobby = status == 'inLobby';
+                    final isInGame = status == 'inGame';
+
+                    return Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: isOnline
+                              ? Colors.greenAccent
+                              : (isInLobby || isInGame)
+                                  ? Colors.orangeAccent
+                                  : Colors.grey,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 2),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                ),
               ],
             ),
             const SizedBox(width: 16),
@@ -419,7 +424,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.stars, color: Colors.amberAccent, size: 14),
+                      Icon(Icons.stars,
+                          color: AppColors.imperialAmber, size: 14),
                       const SizedBox(width: 4),
                       Text('Lv. ${10 + (user.gamesWon % 50)}',
                           style: const TextStyle(
@@ -436,9 +442,23 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             if (isFriend) ...[
-              _buildActionButton('CHALLENGE', Colors.cyanAccent),
+              _buildSmallPlatinumButton(
+                  'CHALLENGE', () => _handleChallenge(user)),
             ] else ...[
-              _buildAddButton(user),
+              _buildSmallPlatinumButton('ADD', () async {
+                final currentUser = FirebaseAuth.instance.currentUser;
+                if (currentUser != null) {
+                  await profileService.sendFriendRequest(
+                      currentUser.uid, user.uid);
+                  if (mounted) {
+                    CustomSnackBar.show(
+                      context,
+                      message: 'Friend request sent to ${user.displayName}!',
+                      isSuccess: true,
+                    );
+                  }
+                }
+              }),
             ],
           ],
         ),
@@ -446,59 +466,94 @@ class _FriendsScreenState extends State<FriendsScreen> {
     ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1, end: 0);
   }
 
-  Widget _buildActionButton(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(label,
-          style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5)),
-    );
+  Future<void> _handleChallenge(UserProfile target) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Show loading indicator
+    CustomSnackBar.show(context,
+        message: 'Creating private room...', icon: Icons.hourglass_empty);
+
+    try {
+      // 1. Create a private game
+      final gameId = await matchmakingService.createGame(
+        maxPlayers: 4,
+        isPrivate: true,
+        gameMode: GameMode.classic,
+      );
+
+      // 2. Look up the joining code
+      final gameSnap = await firebaseService.database
+          .ref()
+          .child('ludogames')
+          .child(gameId)
+          .get();
+
+      if (!gameSnap.exists) throw Exception("Failed to create game node");
+
+      final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
+      final joiningCode = gameData['joiningCode'] as String?;
+
+      if (joiningCode == null) throw Exception("No joining code generated");
+
+      // 3. Send the invite
+      await socialService.sendInvite(
+        targetUid: target.uid,
+        gameId: gameId,
+        joiningCode: joiningCode,
+      );
+
+      // 4. Update own presence
+      await socialService.updatePresence(UserStatus.inLobby, gameId: gameId);
+
+      if (!mounted) return;
+
+      // 5. Navigate to Lobby
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LobbyScreen(
+            initialGameId: gameId,
+            isHost: true,
+            isQuickMatch: false,
+          ),
+        ),
+      );
+
+      CustomSnackBar.show(context,
+          message: 'Challenge sent to ${target.displayName}!', isSuccess: true);
+    } catch (e) {
+      if (!mounted) return;
+      CustomSnackBar.show(context,
+          message: 'Error sending challenge: $e', isError: true);
+    }
   }
 
-  Widget _buildAddButton(UserProfile user) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          final currentUser = FirebaseAuth.instance.currentUser;
-          if (currentUser != null) {
-            await profileService.sendFriendRequest(currentUser.uid, user.uid);
-            if (mounted) {
-              CustomSnackBar.show(
-                context,
-                message: 'Friend request sent to ${user.displayName}!',
-                isSuccess: true,
-              );
-            }
-          }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.cyanAccent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add, color: Colors.cyanAccent, size: 16),
-              SizedBox(width: 4),
-              Text('ADD',
-                  style: TextStyle(
-                      color: Colors.cyanAccent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900)),
-            ],
+  Widget _buildSmallPlatinumButton(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.starPlatinum,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              offset: const Offset(0, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.systemBackground,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.0,
           ),
         ),
       ),

@@ -5,9 +5,11 @@ import 'settings_screen.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
 import 'lobby_screen.dart';
+import 'friends_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/shared_ui.dart';
+import '../widgets/invite_listener.dart';
 import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
 import '../widgets/logo_widget.dart';
@@ -55,236 +57,243 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return Scaffold(
         body: AnimatedBackground(
           showParticles: true,
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                // Top Area: Full-width Header
-                _buildHeader(context, ref),
-                Expanded(
-                  child: Row(
-                    children: [
-                      // Left Column: Logo and Status
-                      Expanded(
-                        flex: 4,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 48),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const LogoWidget(fontSize: 48),
-                              const SizedBox(height: 20),
-                              _buildOnlineStatusBar(onlineCount),
-                            ],
+          child: InviteListener(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  // Top Area: Full-width Header
+                  _buildHeader(context, ref),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // Left Column: Logo and Status
+                        Expanded(
+                          flex: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 48),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const LogoWidget(fontSize: 48),
+                                const SizedBox(height: 20),
+                                _buildOnlineStatusBar(onlineCount),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      // Right Column: Cards
-                      Expanded(
-                        flex: 6,
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              GlassCard(
-                                title: "BATTLE ONLINE",
-                                subtitle: "Quick Match & Tournaments",
-                                icon: Icons.public,
-                                accentColor: Colors.deepPurpleAccent,
-                                isPrimary: true,
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const LobbyScreen(
-                                          isQuickMatch: true)),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: GlassCard(
-                                      title: "FRIENDS",
-                                      subtitle: "Social & Rewards",
-                                      icon: Icons.people,
-                                      accentColor: Colors.cyanAccent,
-                                      height: 120,
-                                      isComingSoon: true,
-                                      onTap: () => CustomSnackBar.show(context,
-                                          message:
-                                              "Friends feature is coming soon!"),
-                                    ),
+                        // Right Column: Cards
+                        Expanded(
+                          flex: 6,
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                GlassCard(
+                                  title: "BATTLE ONLINE",
+                                  subtitle: "Matchmaking & Live Battles",
+                                  icon: Icons.public,
+                                  accentColor: AppColors.primaryCyan,
+                                  isPrimary: true,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => const LobbyScreen(
+                                            isQuickMatch: true)),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: GlassCard(
-                                      title: "OFFLINE",
-                                      subtitle: "Local & Bots",
-                                      icon: Icons.videogame_asset,
-                                      accentColor: AppColors.player1BlueUI,
-                                      height: 120,
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const LocalSetupScreen()),
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: GlassCard(
+                                        title: "FRIENDS",
+                                        subtitle: "Private Room Challenges",
+                                        icon: Icons.people,
+                                        accentColor: AppColors.imperialJade,
+                                        height: 120,
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const FriendsScreen()),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 48),
-                              _buildFooter(context),
-                              const SizedBox(height: 16),
-                              _buildCommunityNote(),
-                              const SizedBox(height: 48),
-                            ],
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: GlassCard(
+                                        title: "OFFLINE",
+                                        subtitle: "Local & AI Challenges",
+                                        icon: Icons.videogame_asset,
+                                        accentColor: AppColors.slateIndigo,
+                                        height: 120,
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LocalSetupScreen()),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 48),
+                                _buildFooter(context),
+                                const SizedBox(height: 16),
+                                _buildCommunityNote(),
+                                const SizedBox(height: 48),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       );
     }
 
+    // Portrait Layout
     return Scaffold(
       body: AnimatedBackground(
         showParticles: true,
-        child: Stack(
-          children: [
-            // 1. Scrollable Content Layer (Underneath)
-            Positioned.fill(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                clipBehavior: Clip.none,
-                padding: const EdgeInsets.only(
-                  top:
-                      350, // Adjusted to move "BATTLE ONLINE" up while keeping it below the imaginary line
-                  bottom: 40,
-                  left: 24,
-                  right: 24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Primary Action
-
-                    // Primary Action
-                    GlassCard(
-                      title: "BATTLE ONLINE",
-                      subtitle: "Quick Match & Tournaments",
-                      icon: Icons.public,
-                      accentColor: Colors.deepPurpleAccent,
-                      isPrimary: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                const LobbyScreen(isQuickMatch: true)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Secondary Actions Grid
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GlassCard(
-                            title: "FRIENDS",
-                            subtitle: "Social & Rewards",
-                            icon: Icons.people,
-                            accentColor: Colors.cyanAccent,
-                            height: 120,
-                            isComingSoon: true,
-                            onTap: () => CustomSnackBar.show(context,
-                                message: "Friends feature is coming soon!"),
-                          ),
+        child: InviteListener(
+          child: Stack(
+            children: [
+              // 1. Scrollable Content Layer (Underneath)
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  clipBehavior: Clip.none,
+                  padding: const EdgeInsets.only(
+                    top: 350,
+                    bottom: 40,
+                    left: 24,
+                    right: 24,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Primary Action
+                      GlassCard(
+                        title: "BATTLE ONLINE",
+                        subtitle: "Matchmaking & Live Battles",
+                        icon: Icons.public,
+                        accentColor: AppColors.primaryCyan,
+                        isPrimary: true,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  const LobbyScreen(isQuickMatch: true)),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: GlassCard(
-                            title: "OFFLINE",
-                            subtitle: "Local & Bots",
-                            icon: Icons.videogame_asset,
-                            accentColor: AppColors.player1BlueUI,
-                            height: 120,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const LocalSetupScreen()),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Secondary Actions Grid
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GlassCard(
+                              title: "FRIENDS",
+                              subtitle: "Private Room Challenges",
+                              icon: Icons.people,
+                              accentColor: AppColors.imperialJade,
+                              height: 120,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const FriendsScreen()),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: GlassCard(
+                              title: "OFFLINE",
+                              subtitle: "Local & AI Challenges",
+                              icon: Icons.videogame_asset,
+                              accentColor: AppColors.slateIndigo,
+                              height: 120,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const LocalSetupScreen()),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                    const SizedBox(height: 48),
+                      const SizedBox(height: 48),
 
-                    // Footer Navigation
-                    _buildFooter(context),
-                    const SizedBox(height: 16),
-                    _buildCommunityNote(),
-                    const SizedBox(height: 40),
-                  ],
+                      // Footer Navigation
+                      _buildFooter(context),
+                      const SizedBox(height: 16),
+                      _buildCommunityNote(),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // 2. Fixed Sticky Header (Top Layer with EXTRA BLUR)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: _isScrolled ? 45 : 0,
-                    sigmaY: _isScrolled ? 45 : 0,
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    decoration: BoxDecoration(
-                      color: _isScrolled
-                          ? const Color(0xFF0B0B1A).withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      border: _isScrolled
-                          ? Border(
-                              bottom: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                width: 1,
-                              ),
-                            )
-                          : null,
+              // 2. Fixed Sticky Header (Top Layer with EXTRA BLUR)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: _isScrolled ? 45 : 0,
+                      sigmaY: _isScrolled ? 45 : 0,
                     ),
-                    child: SafeArea(
-                      bottom: false,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildHeader(context, ref),
-                          const SizedBox(height: 10),
-                          const LogoWidget(fontSize: 42),
-                          const SizedBox(height: 16),
-                          _buildOnlineStatusBar(onlineCount),
-                          const SizedBox(height: 24),
-                        ],
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      decoration: BoxDecoration(
+                        color: _isScrolled
+                            ? const Color(0xFF0B0B1A).withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        border: _isScrolled
+                            ? Border(
+                                bottom: BorderSide(
+                                  color: AppColors.primaryCyan
+                                      .withValues(alpha: 0.1),
+                                  width: 1,
+                                ),
+                              )
+                            : null,
+                      ),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildHeader(context, ref),
+                            const SizedBox(height: 10),
+                            const LogoWidget(fontSize: 42),
+                            const SizedBox(height: 16),
+                            _buildOnlineStatusBar(onlineCount),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

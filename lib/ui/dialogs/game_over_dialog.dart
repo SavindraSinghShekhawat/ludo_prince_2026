@@ -349,7 +349,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
-                            fontWeight: FontWeight.bold)),
+                            fontWeight: FontWeight.w500)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.greenAccent.shade700,
                       elevation: 6,

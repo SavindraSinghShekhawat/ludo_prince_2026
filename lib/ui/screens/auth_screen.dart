@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
+import '../../utils/colors.dart';
 import '../widgets/shared_ui.dart';
 import '../widgets/custom_dialog_layout.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -97,7 +98,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             const SizedBox(width: 12),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent,
+                backgroundColor: AppColors.primaryCyan,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -136,10 +137,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: const Icon(Icons.close),
             onPressed: () => Navigator.pop(context),
           ),
         ),

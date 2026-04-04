@@ -35,4 +35,20 @@ class ShareHelper {
       sharePositionOrigin: sharePositionOrigin,
     );
   }
+
+  static Future<void> shareJoiningCode(
+      BuildContext context, String code) async {
+    final RenderBox? box = context.findRenderObject() as RenderBox?;
+    final Rect? sharePositionOrigin =
+        box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
+
+    final String message =
+        "The board is set, the dice are ready! 🎲 I'm waiting for you in the Ludo Prince lobby. JOINING CODE: $code\n\nEnter this code in 'Play with Friends' -> 'Join Room' to start the match! ✨⚔️🎲\n\nAndroid: $androidLink\niOS: $iosLink";
+
+    await Share.share(
+      message,
+      subject: 'Ludo Prince Game Invitation',
+      sharePositionOrigin: sharePositionOrigin,
+    );
+  }
 }

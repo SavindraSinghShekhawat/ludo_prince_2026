@@ -28,12 +28,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Settings',
-            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Settings'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -58,9 +53,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor:
-                            AppColors.player1BlueUI.withValues(alpha: 0.2),
+                            AppColors.primaryCyan.withValues(alpha: 0.2),
                         child: const Icon(Icons.person,
-                            color: AppColors.player1BlueUI),
+                            color: AppColors.primaryCyan),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -101,7 +96,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: audio.isBgmEnabled ? Icons.music_note : Icons.music_off,
                 value: audio.isBgmEnabled,
                 onChanged: (_) => audio.toggleBGM(),
-                accentColor: const Color(0xFF00D1FF), // Azure
+                accentColor: const Color(0xFFD47AFF), // High-Luminance Amethyst
               ),
               const SizedBox(height: 12),
               _buildSettingToggle(
@@ -110,7 +105,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: audio.isSfxEnabled ? Icons.volume_up : Icons.volume_off,
                 value: audio.isSfxEnabled,
                 onChanged: (_) => audio.toggleSFX(),
-                accentColor: const Color(0xFFFFB800), // Gold
+                accentColor: AppColors.primaryCyan, // Brand Cyan
               ),
               const SizedBox(height: 12),
               _buildSettingToggle(
@@ -121,7 +116,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : Icons.phonelink_ring,
                 value: audio.isVibrationEnabled,
                 onChanged: (_) => audio.toggleVibration(),
-                accentColor: const Color(0xFF00FFA3), // Emerald
+                accentColor: const Color(0xFF00FF88), // Spring Jade
               ),
               const SizedBox(height: 32),
 
@@ -132,7 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: "Invite Friends",
                 subtitle: "Share Ludo Prince with your crew",
                 icon: Icons.share_outlined,
-                accentColor: Colors.pinkAccent,
+                accentColor: AppColors.primaryCyan,
                 onTap: () => ShareHelper.shareApp(context),
               ),
               const SizedBox(height: 12),
@@ -140,7 +135,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: "Share Feedback",
                 subtitle: "Help us make Ludo Prince better",
                 icon: Icons.feedback_outlined,
-                accentColor: const Color(0xFFE5E4E2), // Platinum
+                accentColor: AppColors.imperialJade,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const FeedbackScreen()),
@@ -155,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: "Dice Fairness Check",
                 subtitle: "Verify RNG via simulations",
                 icon: Icons.analytics_outlined,
-                accentColor: AppColors.player1BlueUI,
+                accentColor: AppColors.midnightSapphire,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -207,39 +202,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required Color accentColor,
   }) {
     return GlassContainer(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      borderRadius: 20,
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+              color: value
+                  ? accentColor.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: accentColor, size: 22),
+            child: Icon(
+              icon,
+              color: accentColor,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold)),
-                Text(subtitle,
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 12)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
-          Switch.adaptive(
+          LudoToggle(
             value: value,
             onChanged: onChanged,
-            activeColor: accentColor,
-            activeTrackColor: accentColor.withValues(alpha: 0.3),
+            accentColor: accentColor,
           ),
         ],
       ),
@@ -257,31 +265,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: GlassContainer(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        borderRadius: 20,
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: accentColor, size: 22),
+              child: Icon(icon, color: accentColor, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                  Text(subtitle,
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 12)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -2,9 +2,11 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/snackbar_provider.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/colors.dart';
 
 class AnimatedBackground extends StatelessWidget {
   final Widget child;
@@ -18,100 +20,204 @@ class AnimatedBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Base dark gradient (Deep void)
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF0B0B1A), Color(0xFF16162C)],
-            ),
-          ),
-        ),
-
-        // Tabletop Texture Layer
-        Positioned.fill(
-          child: RepaintBoundary(
-            child: CustomPaint(
-              painter: TabletopTexturePainter(
-                opacity: 0.04,
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          // Base dark gradient (Deep void)
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF03030F), Color(0xFF0B0B1A)],
               ),
             ),
           ),
-        ),
 
-        // Central Spotlight (Focus on the game board area)
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.2,
-                colors: [
-                  Colors.white.withValues(alpha: 0.08),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 1.0],
-              ),
-            ),
-          ),
-        ),
-
-        // Animated ambient soft glows (Corner accents)
-        Positioned(
-          top: -100,
-          left: -50,
-          child: RepaintBoundary(
+          // Secondary depth gradient
+          Positioned.fill(
             child: Container(
-              width: 300,
-              height: 300,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
                 gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.5,
                   colors: [
-                    Colors.deepPurpleAccent.withValues(alpha: 0.2),
+                    AppColors.primaryCyan.withValues(alpha: 0.1),
                     Colors.transparent,
                   ],
                 ),
               ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
-                begin: const Offset(0, 0),
-                end: const Offset(30, 30),
-                duration: 10.seconds,
-                curve: Curves.easeInOut),
+            ),
           ),
-        ),
 
-        Positioned(
-          bottom: -50,
-          right: -100,
-          child: RepaintBoundary(
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.blueAccent.withValues(alpha: 0.15),
-                    Colors.transparent,
-                  ],
+          // Tabletop Texture Layer
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: TabletopTexturePainter(
+                  opacity: 0.05,
                 ),
               ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
-                begin: const Offset(0, 0),
-                end: const Offset(-40, -20),
-                duration: 12.seconds,
-                curve: Curves.easeInOut),
+            ),
           ),
-        ),
 
-        child,
-      ],
+          // Central Spotlight
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: 1.0,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 1.0],
+                ),
+              ),
+            ),
+          ),
+
+          // Animated ambient soft glows (Sapphire accent)
+          Positioned(
+            top: -150,
+            left: -100,
+            child: RepaintBoundary(
+              child: Container(
+                width: 500,
+                height: 500,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.midnightSapphire.withValues(alpha: 0.25),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
+                  begin: const Offset(0, 0),
+                  end: const Offset(50, 50),
+                  duration: 15.seconds,
+                  curve: Curves.easeInOut),
+            ),
+          ),
+
+          // Subtle Particle Layer
+          if (showParticles)
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: const ParticlesWidget(),
+              ),
+            ),
+
+          child,
+        ],
+      ),
     );
   }
+}
+
+class ParticlesWidget extends StatefulWidget {
+  const ParticlesWidget({super.key});
+
+  @override
+  State<ParticlesWidget> createState() => _ParticlesWidgetState();
+}
+
+class _ParticlesWidgetState extends State<ParticlesWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  final List<_Particle> _particles = [];
+  final math.Random _random = math.Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+
+    for (int i = 0; i < 20; i++) {
+      _particles.add(_Particle(_random));
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        for (var p in _particles) {
+          p.update();
+        }
+        return CustomPaint(
+          painter: ParticlesPainter(particles: _particles),
+        );
+      },
+    );
+  }
+}
+
+class _Particle {
+  late double x;
+  late double y;
+  late double vx;
+  late double vy;
+  late double size;
+  late double opacity;
+  final math.Random random;
+
+  _Particle(this.random) {
+    reset();
+  }
+
+  void reset() {
+    x = random.nextDouble() * 400; // Relative to screen
+    y = random.nextDouble() * 800;
+    vx = (random.nextDouble() - 0.5) * 0.2;
+    vy = (random.nextDouble() - 0.5) * 0.2;
+    size = random.nextDouble() * 2 + 1;
+    opacity = random.nextDouble() * 0.2 + 0.1;
+  }
+
+  void update() {
+    x += vx;
+    y += vy;
+    if (x < -50 || x > 450 || y < -50 || y > 850) {
+      reset();
+    }
+  }
+}
+
+class ParticlesPainter extends CustomPainter {
+  final List<_Particle> particles;
+  ParticlesPainter({required this.particles});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    for (var p in particles) {
+      // Scale x/y to actual size
+      final px = (p.x / 400) * size.width;
+      final py = (p.y / 800) * size.height;
+
+      paint.color = AppColors.starPlatinum.withValues(alpha: p.opacity);
+      canvas.drawCircle(Offset(px, py), p.size, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class TabletopTexturePainter extends CustomPainter {
@@ -165,14 +271,26 @@ class GameButton extends StatefulWidget {
   final Color color;
   final IconData? icon;
   final bool isPrimary;
+  final bool isSmall;
+  final bool isLoading;
+  final String? loadingText;
+  final double? fontSize;
+  final double? height;
+  final double? width;
 
   const GameButton({
     super.key,
     required this.text,
     required this.onTap,
-    this.color = Colors.deepPurpleAccent,
+    this.color = AppColors.starPlatinum,
     this.icon,
     this.isPrimary = false,
+    this.fontSize,
+    this.isSmall = false,
+    this.isLoading = false,
+    this.loadingText,
+    this.height,
+    this.width,
   });
 
   @override
@@ -184,64 +302,165 @@ class _GameButtonState extends State<GameButton> {
 
   @override
   Widget build(BuildContext context) {
+    final double buttonHeight = widget.height ?? (widget.isSmall ? 40 : 60);
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        widget.onTap();
+        if (!widget.isLoading) widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
-        duration: 100.ms,
-        transform: Matrix4.identity()..translate(0.0, _isPressed ? 4.0 : 0.0),
+        duration: 200.ms,
+        curve: Curves.easeOut,
+        height: buttonHeight,
+        width: widget.width,
+        constraints: BoxConstraints(minWidth: widget.isLoading ? 60 : 120),
+        transform: Matrix4.identity()
+          ..scale(_isPressed && !widget.isLoading ? 0.97 : 1.0),
+        transformAlignment: Alignment.center,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
           color: widget.color,
+          border: widget.isPrimary
+              ? Border.all(
+                  color: Colors.white.withValues(alpha: 0.3), width: 1.5)
+              : Border.all(
+                  color: Colors.black.withValues(alpha: 0.1), width: 1.0),
           boxShadow: [
-            if (!_isPressed)
-              BoxShadow(
-                color: widget.color.withValues(alpha: 0.4),
-                offset: const Offset(0, 6),
-                blurRadius: 0,
-              ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              offset: const Offset(0, 4),
-              blurRadius: 8,
+              color: widget.color.withValues(alpha: 0.3),
+              blurRadius: 12,
+              spreadRadius: 1,
             ),
+            if (widget.isLoading)
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.5),
+                blurRadius: 20,
+                spreadRadius: 3,
+              ),
           ],
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white.withValues(alpha: 0.2),
-                Colors.transparent,
-              ],
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.isLoading ? null : widget.onTap,
+            borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal:
+                      widget.isLoading ? 0 : (widget.isSmall ? 16 : 24)),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Text/Icon Layer
+                  AnimatedOpacity(
+                    opacity: widget.isLoading ? 0.0 : 1.0,
+                    duration: 250.ms,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (widget.icon != null) ...[
+                          Icon(widget.icon,
+                              color: widget.color == AppColors.starPlatinum
+                                  ? AppColors.systemBackground
+                                  : Colors.white,
+                              size: 20),
+                          const SizedBox(width: 12),
+                        ],
+                        Text(
+                          widget.text.toUpperCase(),
+                          style: GoogleFonts.outfit(
+                            color: widget.color == AppColors.starPlatinum
+                                ? AppColors.systemBackground
+                                : Colors.white,
+                            fontSize:
+                                widget.fontSize ?? (widget.isSmall ? 12 : 18),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
+                    ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
+                          duration: 4.seconds,
+                          color: Colors.white.withValues(alpha: 0.15),
+                        ),
+                  ),
+                  // Loading Layer
+                  if (widget.isLoading)
+                    LudoLoadingDots(size: widget.isSmall ? 24 : 35)
+                        .animate()
+                        .fadeIn(duration: 300.ms),
+                ],
+              ),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-              ],
-              Text(
-                widget.text.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                ),
+        ),
+      ),
+    );
+  }
+}
+
+class LudoToggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color accentColor;
+
+  const LudoToggle({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: 300.ms,
+        width: 48,
+        height: 26,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: value
+              ? accentColor.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.05),
+          border: Border.all(
+            color: value ? accentColor.withValues(alpha: 0.3) : Colors.white24,
+            width: 1.5,
+          ),
+          boxShadow: [
+            if (value)
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.1),
+                blurRadius: 8,
+                spreadRadius: 1,
               ),
-            ],
+          ],
+        ),
+        child: AnimatedAlign(
+          duration: 300.ms,
+          curve: Curves.easeOutBack,
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: value ? accentColor : Colors.white54,
+              boxShadow: [
+                if (value)
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.4),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -310,16 +529,44 @@ class _GlassCardState extends State<GlassCard> {
                   borderRadius: BorderRadius.circular(24),
                   color: Colors.white.withValues(alpha: 0.05),
                   border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1), width: 1.5),
+                      color: widget.accentColor
+                          .withValues(alpha: widget.isPrimary ? 0.18 : 0.06),
+                      width: 1.0),
                   boxShadow: [
                     BoxShadow(
-                        color: widget.accentColor.withValues(alpha: 0.15),
-                        blurRadius: _isHovered ? 30 : 20,
-                        offset: const Offset(0, 10)),
+                        color: widget.accentColor
+                            .withValues(alpha: _isHovered ? 0.15 : 0.08),
+                        blurRadius: _isHovered ? 50 : 25,
+                        spreadRadius: _isHovered ? 4 : 0,
+                        offset: const Offset(0, 15)),
+                    if (widget.isPrimary)
+                      BoxShadow(
+                        color: widget.accentColor.withValues(alpha: 0.05),
+                        blurRadius: 80,
+                        spreadRadius: 10,
+                      ),
                   ],
                 ),
                 child: Stack(
                   children: [
+                    // Specular Highlight (The 'Carved Glass' line)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.white.withValues(alpha: 0.3),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     Positioned(
                       right: -20,
                       bottom: -20,
@@ -371,7 +618,7 @@ class _GlassCardState extends State<GlassCard> {
                                         curve: Curves.easeInOut)
                                     .shimmer(
                                         duration: 3.seconds,
-                                        color: Colors.white
+                                        color: AppColors.imperialJade
                                             .withValues(alpha: 0.2)),
                             ],
                           ),
@@ -383,9 +630,12 @@ class _GlassCardState extends State<GlassCard> {
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.0)),
                           Text(widget.subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  fontSize: widget.height * 0.08)),
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: widget.height * 0.08,
+                                  fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),
@@ -398,39 +648,52 @@ class _GlassCardState extends State<GlassCard> {
       ),
     );
 
-    // Add a more premium, color-integrated shimmer
+    // Add a single, clean white shimmer for an elegant light-reflection effect
     card = card
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
-          duration: 2.5.seconds,
-          color: widget.accentColor.withValues(alpha: 0.15),
-        )
-        .shimmer(
           duration: 3.seconds,
           delay: 1.seconds,
-          color: Colors.white.withValues(alpha: 0.1),
+          color: Colors.white.withValues(alpha: 0.15),
+        )
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .custom(
+          duration: 4.seconds,
+          builder: (context, value, child) => Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.accentColor.withValues(alpha: 0.03 * value),
+                  blurRadius: 20 * value,
+                  spreadRadius: 1 * value,
+                ),
+              ],
+            ),
+            child: child,
+          ),
         );
 
     // Add a very subtle pulse for the primary card to make it feel alive
     if (widget.isPrimary) {
       card = card.animate(onPlay: (c) => c.repeat(reverse: true)).scale(
             begin: const Offset(1, 1),
-            end: const Offset(1.02, 1.02),
-            duration: 3.seconds,
+            end: const Offset(1.01, 1.01),
+            duration: 4.seconds,
             curve: Curves.easeInOut,
           );
 
       // Add a soft breathing glow
       card = card.animate(onPlay: (c) => c.repeat(reverse: true)).custom(
-            duration: 3.seconds,
+            duration: 4.seconds,
             builder: (context, value, child) => Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.accentColor.withValues(alpha: 0.15 * value),
-                    blurRadius: 15 + (15 * value),
-                    spreadRadius: 3 * value,
+                    color: widget.accentColor.withValues(alpha: 0.08 * value),
+                    blurRadius: 10 + (10 * value),
+                    spreadRadius: 1.5 * value,
                   ),
                 ],
               ),
@@ -448,6 +711,9 @@ class GlassContainer extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double borderRadius;
   final Color? color;
+  final bool showGlow;
+  final Color? glowColor;
+  final double blur;
 
   const GlassContainer({
     super.key,
@@ -455,29 +721,42 @@ class GlassContainer extends StatelessWidget {
     this.padding = const EdgeInsets.all(24.0),
     this.borderRadius = 24.0,
     this.color,
+    this.showGlow = false,
+    this.glowColor,
+    this.blur = 25.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(borderRadius),
-            color: color ?? Colors.white.withValues(alpha: 0.05),
-            border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5)),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: showGlow
+            ? [
+                BoxShadow(
+                  color: (glowColor ?? AppColors.primaryCyan)
+                      .withValues(alpha: 0.15),
+                  blurRadius: 40,
+                  spreadRadius: 5,
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              color: color ?? Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.12), // Whisper border
+                  width: 1.0),
+            ),
+            child: child,
           ),
-          child: child,
         ),
       ),
     );
@@ -646,8 +925,9 @@ class _SnackBarContent extends StatelessWidget {
                           message,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            letterSpacing: 2.0,
                           ),
                         ),
                       ),
@@ -685,8 +965,8 @@ class MatchmakingLoader extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: (color ?? Colors.deepPurpleAccent)
-                      .withValues(alpha: 0.15),
+                  color:
+                      (color ?? AppColors.primaryCyan).withValues(alpha: 0.15),
                   width: 1,
                 ),
               ),
@@ -731,7 +1011,7 @@ class MatchmakingLoader extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.fromBorderSide(BorderSide(
                 color:
-                    (color ?? Colors.deepPurpleAccent).withValues(alpha: 0.1),
+                    (color ?? AppColors.imperialAmber).withValues(alpha: 0.1),
                 width: 1,
               )),
             ),
@@ -744,12 +1024,12 @@ class MatchmakingLoader extends StatelessWidget {
           Container(
             width: size * 0.35,
             height: size * 0.35,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.starPlatinum,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.white54,
+                  color: AppColors.starPlatinumGlow,
                   blurRadius: 15,
                   spreadRadius: 2,
                 ),
@@ -758,7 +1038,7 @@ class MatchmakingLoader extends StatelessWidget {
             child: Icon(
               Icons.public,
               size: size * 0.22,
-              color: Colors.black,
+              color: Colors.black.withValues(alpha: 0.8),
             ),
           )
               .animate(onPlay: (c) => c.repeat(reverse: true))

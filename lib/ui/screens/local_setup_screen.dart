@@ -75,14 +75,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
         child: Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('OFFLINE',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('OFFLINE'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.white, size: 28),
+            icon: const Icon(Icons.help_outline),
             onPressed: () {
               showDialog(
                 context: context,
@@ -92,7 +88,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
             tooltip: 'Game Rules',
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               showDialog(
                 context: context,
@@ -319,65 +315,42 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFE5E4E2).withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      Map<PlayerSlot, PlayerSetupConfig> config = {};
-                      for (var slot in activeSlots) {
-                        final text = _controllers[slot]!.text.trim();
-                        final name = text.isEmpty
-                            ? "Player ${activeSlots.indexOf(slot) + 1}"
-                            : text;
-                        config[slot] = PlayerSetupConfig(
-                          name: name,
-                          type: (_isBotConfig[slot] ?? false)
-                              ? PlayerType.localBot
-                              : PlayerType.localHuman,
-                        );
-                      }
-
-                      await audioService.playStart();
-
-                      if (!context.mounted) return;
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (childContext) => ProviderScope(
-                            overrides: [
-                              gameControllerProvider.overrideWithValue(
-                                  LudoController(config,
-                                      initialState: _initialState,
-                                      gameMode: _gameMode)),
-                            ],
-                            child: const LudoScreen(),
-                          ),
-                        ),
+                child: GameButton(
+                  text: 'START GAME',
+                  isPrimary: true,
+                  fontSize: 18,
+                  onTap: () async {
+                    Map<PlayerSlot, PlayerSetupConfig> config = {};
+                    for (var slot in activeSlots) {
+                      final text = _controllers[slot]!.text.trim();
+                      final name = text.isEmpty
+                          ? "Player ${activeSlots.indexOf(slot) + 1}"
+                          : text;
+                      config[slot] = PlayerSetupConfig(
+                        name: name,
+                        type: (_isBotConfig[slot] ?? false)
+                            ? PlayerType.localBot
+                            : PlayerType.localHuman,
                       );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE5E4E2),
-                      foregroundColor: Colors.black,
-                      minimumSize: const Size.fromHeight(60),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                    }
+
+                    await audioService.playStart();
+
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (childContext) => ProviderScope(
+                          overrides: [
+                            gameControllerProvider.overrideWithValue(
+                                LudoController(config,
+                                    initialState: _initialState,
+                                    gameMode: _gameMode)),
+                          ],
+                          child: const LudoScreen(),
+                        ),
                       ),
-                      elevation: 0,
-                    ),
-                    child: const Text('START GAME',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            letterSpacing: 1.2)),
-                  ),
+                    );
+                  },
                 ),
               ),
             ],

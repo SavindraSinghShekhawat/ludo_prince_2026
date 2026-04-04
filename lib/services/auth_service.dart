@@ -78,6 +78,15 @@ class AuthService {
     await _auth.signOut();
   }
 
+  Future<UserCredential> signInAnonymously() async {
+    try {
+      return await _auth.signInAnonymously();
+    } catch (e) {
+      AppLogger.error('Error signing in anonymously: $e');
+      rethrow;
+    }
+  }
+
   bool _isCancellation(dynamic e) {
     final s = e.toString().toLowerCase();
     return s.contains('canceled') ||

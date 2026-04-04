@@ -10,6 +10,7 @@ import '../utils/app_logger.dart';
 import '../firebase_options.dart';
 import 'profile_service.dart';
 import '../models/user_profile.dart';
+import 'social_service.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -92,6 +93,8 @@ class FirebaseService {
         } else {
           await profileService.updateLastActive(user.uid);
         }
+        // Initialize Social Presence
+        await socialService.init();
       }
     });
   }

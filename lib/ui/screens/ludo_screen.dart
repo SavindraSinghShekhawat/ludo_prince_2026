@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/controllers/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
@@ -78,61 +79,75 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       leading: BackButton(
         color: Colors.white,
         onPressed: () {
           showDialog(
             context: context,
             builder: (context) => CustomDialogLayout(
-              header: const Text(
-                'Exit Game?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+              header: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.crimsonVelvet,
+                    size: 48,
+                  )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .shimmer(duration: 2.seconds, color: Colors.white24)
+                      .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.1, 1.1),
+                          duration: 1.seconds,
+                          curve: Curves.easeInOut),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'EXIT GAME?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.8,
+                    ),
+                  ),
+                ],
               ),
               body: const [
                 Text(
                   'Are you sure you want to stop playing? Current progress will be lost.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70, fontSize: 16),
                 ),
               ],
               footer: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.white54),
+                  Expanded(
+                    child: GameButton(
+                      text: 'STAY',
+                      height: 52,
+                      fontSize: 16,
+                      onTap: () => Navigator.of(context).pop(),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      ref.read(gameControllerProvider).quitGame();
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const HomeScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
-                      foregroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side:
-                            const BorderSide(color: Colors.redAccent, width: 1),
-                      ),
-                    ),
-                    child: const Text(
-                      'Exit',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Expanded(
+                    child: GameButton(
+                      text: 'EXIT',
+                      color: AppColors.crimsonVelvet,
+                      height: 52,
+                      fontSize: 16,
+                      onTap: () {
+                        ref.read(gameControllerProvider).quitGame();
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const HomeScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -141,11 +156,12 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
           );
         },
       ),
-      title: const Text(
-        'Ludo Prince',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
+      title: Text(
+        'LUDO PRINCE',
+        style: GoogleFonts.outfit(
+          fontWeight: FontWeight.w700,
           color: Colors.white,
+          letterSpacing: 1.8,
         ),
       ),
       actions: [
@@ -170,8 +186,6 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
           tooltip: 'Settings',
         ),
       ],
-      backgroundColor: Colors.transparent,
-      elevation: 0,
       centerTitle: true,
     );
   }

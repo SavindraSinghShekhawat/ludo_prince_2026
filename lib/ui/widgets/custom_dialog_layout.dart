@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'shared_ui.dart';
+import '../../utils/colors.dart';
 
 class CustomDialogLayout extends StatelessWidget {
   final Widget header;
@@ -27,7 +28,10 @@ class CustomDialogLayout extends StatelessWidget {
           : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: GlassContainer(
         padding: const EdgeInsets.all(24),
-        color: const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+        borderRadius: 20,
+        showGlow: true,
+        glowColor: AppColors.primaryCyan,
+        color: AppColors.systemBackground.withValues(alpha: 0.65),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth:
@@ -41,7 +45,19 @@ class CustomDialogLayout extends StatelessWidget {
             children: [
               header,
               if (showHeaderDivider)
-                const Divider(color: Colors.white24, height: 32)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 20),
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.0),
+                        Colors.white.withValues(alpha: 0.12),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                )
               else
                 const SizedBox(height: 16),
               Flexible(
