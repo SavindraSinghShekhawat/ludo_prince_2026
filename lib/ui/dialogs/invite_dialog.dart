@@ -45,6 +45,9 @@ class InviteDialog extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               fromName.toUpperCase(),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,

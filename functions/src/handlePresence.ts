@@ -7,14 +7,14 @@ export const handlePresence = onValueUpdated({
 }, async (event) => {
   const before = event.data.before.val();
   const after = event.data.after.val();
+  const uid = event.params.uid;
+
+  AppLogger.debug(`[handlePresence] Event received for UID: ${uid} | Online: ${before?.online} -> ${after?.online}`);
 
   // Only proceed if the 'online' status changed
   if (before?.online === after?.online) return;
 
-  const uid = event.params.uid;
-
   // 1. Update online count
-  // We only increment/decrement if the online status actually changed to true/false
   const countRef = admin.database().ref("stats/onlineCount");
   try {
     if (after?.online === true && before?.online !== true) {

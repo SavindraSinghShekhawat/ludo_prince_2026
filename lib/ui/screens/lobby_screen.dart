@@ -25,6 +25,7 @@ import '../../services/profile_service.dart';
 import '../../models/user_profile.dart';
 import '../../utils/colors.dart';
 import '../../utils/share_helper.dart';
+import '../../providers/auth_provider.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -65,8 +66,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   Future<void> _joinExistingGame() async {
     setState(() => _isLoading = true);
+    final playerName = ref.read(displayNameProvider);
     try {
-      await matchmakingService.joinGame(_activeGameId!);
+      await matchmakingService.joinGame(_activeGameId!, playerName: playerName);
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -83,11 +85,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   Future<void> _createPrivateRoom(int maxPlayers, GameMode gameMode) async {
     setState(() => _isLoading = true);
+    final playerName = ref.read(displayNameProvider);
     try {
       final gameId = await matchmakingService.createGame(
         maxPlayers: maxPlayers,
         isPrivate: true,
         gameMode: gameMode,
+        playerName: playerName,
       );
       if (mounted) {
         setState(() {
@@ -162,7 +166,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(_activeGameId == null
-              ? (widget.isQuickMatch ? 'BATTLE ONLINE' : 'PLAY WITH FRIENDS')
+              ? (widget.isQuickMatch ? 'BATTLE ONLINE' : 'CREATE ROOM')
               : 'GAME LOBBY'),
           leading: BackButton(
             onPressed: () {
@@ -271,6 +275,22 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Column(
                 children: [
+                  if (_isLoading) ...[
+                    Text(
+                      widget.isQuickMatch
+                          ? 'SEARCHING... ${_matchmakingSeconds}s'
+                          : 'CREATING...',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        letterSpacing: 2.0,
+                      ),
+                    )
+                        .animate(onPlay: (c) => c.repeat())
+                        .shimmer(duration: 2.seconds, color: Colors.white24),
+                    const SizedBox(height: 16),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: GameButton(
@@ -285,22 +305,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       },
                     ),
                   ),
-                  if (_isLoading) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      widget.isQuickMatch
-                          ? 'SEARCHING... ${_matchmakingSeconds}s'
-                          : 'CREATING...',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        letterSpacing: 2.0,
-                      ),
-                    )
-                        .animate(onPlay: (c) => c.repeat())
-                        .shimmer(duration: 2.seconds, color: Colors.white24),
-                  ],
                 ],
               ),
             ),
@@ -428,7 +432,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                               _activeGameId!,
                                               gameData['joiningCode']
                                                       ?.toString() ??
-                                                  ""),
+                                                  "",
+                                              playersMap),
                                         ),
                                       ),
                                   ],
@@ -458,8 +463,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                         const SizedBox(width: 24, height: 24),
                         Expanded(
                           flex: 4,
-                          child: _buildInviteSidebar(_activeGameId!,
-                              gameData['joiningCode']?.toString() ?? ""),
+                          child: _buildInviteSidebar(
+                              _activeGameId!,
+                              gameData['joiningCode']?.toString() ?? "",
+                              playersMap),
                         ),
                       ],
                     ],
@@ -564,19 +571,16 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     Color slotColor = _getSlotColor(slot.index);
     bool isEmpty = data == null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.systemSurface.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: isEmpty ? Colors.white12 : slotColor.withValues(alpha: 0.4),
-          width: 2,
-        ),
-      ),
+    return GlassContainer(
+      padding: EdgeInsets.zero,
+      borderRadius: 20,
+      glowColor: isEmpty ? Colors.transparent : slotColor,
+      showGlow: !isEmpty,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
+            // Background slot indicator
             if (!isEmpty)
               Positioned(
                 right: -10,
@@ -584,53 +588,123 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 child: Icon(Icons.person,
                     size: 60, color: slotColor.withValues(alpha: 0.05)),
               ),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: slotColor.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isEmpty ? Icons.add : Icons.person,
-                        color: isEmpty ? Colors.white12 : slotColor,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isEmpty
-                            ? 'VACANT SLOT'
-                            : data['name'].toString().toUpperCase(),
-                        style: TextStyle(
-                          color: isEmpty ? Colors.white24 : Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (!isEmpty && slot == PlayerSlot.slot1)
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
+
+            // Selection/Status glow
+            AnimatedContainer(
+              duration: 400.ms,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isEmpty
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : slotColor.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    isEmpty
+                        ? Colors.white.withValues(alpha: 0.02)
+                        : slotColor.withValues(alpha: 0.1),
+                    isEmpty
+                        ? Colors.transparent
+                        : slotColor.withValues(alpha: 0.02),
                   ],
+                ),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      // Avatar Area
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isEmpty
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : slotColor.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                          boxShadow: isEmpty
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: slotColor.withValues(alpha: 0.2),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                  )
+                                ],
+                        ),
+                        child: Icon(
+                          isEmpty ? Icons.add_circle_outline : Icons.person,
+                          color: isEmpty ? Colors.white24 : slotColor,
+                          size: 24,
+                        ),
+                      ).animate(target: isEmpty ? 0 : 1).shimmer(delay: 500.ms),
+
+                      const SizedBox(width: 16),
+
+                      // Name Area
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isEmpty
+                                  ? 'WAITING...'
+                                  : (data['name'] ?? 'PLAYER')
+                                      .toString()
+                                      .toUpperCase(),
+                              style: TextStyle(
+                                color: isEmpty ? Colors.white24 : Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (!isEmpty)
+                              Text(
+                                slot == PlayerSlot.slot1
+                                    ? 'GAME HOST'
+                                    : 'READY TO PLAY',
+                                style: TextStyle(
+                                  color: slot == PlayerSlot.slot1
+                                      ? Colors.amber.withValues(alpha: 0.8)
+                                      : slotColor.withValues(alpha: 0.8),
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ).animate().fadeIn(duration: 300.ms),
+                          ],
+                        ),
+                      ),
+
+                      if (!isEmpty && slot == PlayerSlot.slot1)
+                        const Icon(Icons.stars, color: Colors.amber, size: 20)
+                            .animate(onPlay: (c) => c.repeat())
+                            .shimmer(duration: 2.seconds),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
-    );
+    ).animate(target: isEmpty ? 0 : 1).scale(
+        begin: const Offset(0.95, 0.95),
+        end: const Offset(1, 1),
+        duration: 400.ms,
+        curve: Curves.easeOutBack);
   }
 
-  Widget _buildInviteSidebar(String gameId, String code) {
+  Widget _buildInviteSidebar(
+      String gameId, String code, Map<String, dynamic> joinedPlayers) {
     final currentUid = firebaseService.auth.currentUser?.uid;
     if (currentUid == null) return const SizedBox.shrink();
 
@@ -661,7 +735,12 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 if (!snapshot.hasData) {
                   return const Center(child: MatchmakingLoader(size: 20));
                 }
-                final friends = snapshot.data!;
+                final joinedUids = joinedPlayers.values
+                    .map((p) => (p as Map)['uid'] as String)
+                    .toSet();
+                final friends = snapshot.data!
+                    .where((f) => !joinedUids.contains(f.uid))
+                    .toList();
                 if (friends.isEmpty) {
                   return Center(
                     child: Text(
@@ -818,8 +897,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         }
       });
 
-      final assignmentStream =
-          await matchmakingService.joinQueue(maxPlayers, gameMode);
+      final playerName = ref.read(displayNameProvider);
+      final assignmentStream = await matchmakingService
+          .joinQueue(maxPlayers, gameMode, playerName: playerName);
       _matchmakingSubscription?.cancel();
       _matchmakingSubscription = assignmentStream.listen((gameId) {
         if (gameId != null && mounted) {

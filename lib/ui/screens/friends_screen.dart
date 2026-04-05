@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/user_profile.dart';
 import '../../services/profile_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,15 +15,18 @@ import '../../services/matchmaking_service.dart';
 import '../../services/firebase_service.dart';
 import '../../models/game_state.dart' show GameMode;
 import '../../utils/colors.dart';
+import '../../providers/notification_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../dialogs/notification_inbox_dialog.dart';
 
-class FriendsScreen extends StatefulWidget {
+class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
 
   @override
-  State<FriendsScreen> createState() => _FriendsScreenState();
+  ConsumerState<FriendsScreen> createState() => _FriendsScreenState();
 }
 
-class _FriendsScreenState extends State<FriendsScreen> {
+class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<UserProfile> _allFriends = [];
   List<UserProfile> _filteredFriends = [];
@@ -103,6 +107,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final isGuest = user == null || user.isAnonymous;
+    final unreadCount =
+        ref.watch(notificationProvider).inbox.where((n) => !n.isRead).length;
 
     return AnimatedBackground(
       child: Scaffold(
@@ -110,9 +116,42 @@ class _FriendsScreenState extends State<FriendsScreen> {
         appBar: AppBar(
           title: const Text('FRIENDS'),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_outlined),
-              onPressed: () {},
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_none_outlined),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const NotificationInboxDialog(),
+                    );
+                  },
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.crimsonVelvet,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 8,
+                        minHeight: 8,
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : unreadCount.toString(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 6,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -272,8 +311,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
               hintText: 'Search by Name or Ludo ID...',
               hintStyle: TextStyle(color: Colors.white38),
               prefixIcon: Icon(Icons.search, color: AppColors.imperialJade),
-              suffixIcon: Icon(Icons.mic_none, color: Colors.white38),
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
               contentPadding: EdgeInsets.symmetric(vertical: 12),
             ),
           ),
@@ -424,18 +465,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.stars,
+                      const Icon(Icons.emoji_events,
                           color: AppColors.imperialAmber, size: 14),
                       const SizedBox(width: 4),
-                      Text('Lv. ${10 + (user.gamesWon % 50)}',
+                      Text('${user.gamesWon} WINS',
                           style: const TextStyle(
-                              color: Colors.white54, fontSize: 12)),
-                      const SizedBox(width: 8),
-                      const Text('•', style: TextStyle(color: Colors.white24)),
-                      const SizedBox(width: 8),
-                      Text(isFriend ? 'Ready for Ludo!' : 'New Player',
-                          style: const TextStyle(
-                              color: Colors.white38, fontSize: 12)),
+                              color: Colors.white54,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5)),
                     ],
                   ),
                 ],
@@ -476,10 +514,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     try {
       // 1. Create a private game
+      final playerName = ref.read(displayNameProvider);
       final gameId = await matchmakingService.createGame(
-        maxPlayers: 4,
+        maxPlayers: 2,
         isPrivate: true,
         gameMode: GameMode.classic,
+        playerName: playerName,
       );
 
       // 2. Look up the joining code

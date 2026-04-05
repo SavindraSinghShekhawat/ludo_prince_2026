@@ -13,3 +13,4 @@ export {handleGameAction} from "./handleGameAction.js";
 export {handleMatchmaking} from "./handleMatchmaking.js";
 export {handleGameEnd} from "./handleGameEnd.js";
 export {handlePresence} from "./handlePresence.js";
+export {onFriendRequestUpdated} from "./handleSocial.js";

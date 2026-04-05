@@ -85,7 +85,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         body: const [
           Text(
-            'This account is already linked to another profile. Would you like to switch to that profile? (Note: Your current guest progress will be lost!)',
+            'This account is already linked to another profile. Switching will delete your current guest progress. Do you want to Switch Account?',
             style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
         ],
@@ -239,10 +239,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               children: [
                                 _AuthButton(
                                   label: 'Continue with Google',
-                                  icon: SvgPicture.string(
-                                    SvgAssets.googleLogo,
-                                    width: 24,
-                                    height: 24,
+                                  icon: Transform.translate(
+                                    offset: const Offset(0,
+                                        -1), // Slight upward shift for optical centering
+                                    child: SvgPicture.string(
+                                      SvgAssets.googleLogo,
+                                      width:
+                                          20, // Slightly smaller for better balance
+                                      height: 20,
+                                    ),
                                   ),
                                   onPressed: () => _handleSignIn(
                                       authService.signInWithGoogle),
@@ -255,7 +260,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 const SizedBox(height: 16),
                                 _AuthButton(
                                   label: 'Continue with Apple',
-                                  icon: const Icon(Icons.apple, size: 28),
+                                  icon: Transform.translate(
+                                    offset: const Offset(
+                                        0, -3), // Pushed up further for Apple
+                                    child: const Icon(Icons.apple, size: 24),
+                                  ),
                                   onPressed: () => _handleSignIn(
                                       authService.signInWithApple),
                                   color: Colors.white,
@@ -298,7 +307,7 @@ class _AuthButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 56,
-      child: ElevatedButton.icon(
+      child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
@@ -306,11 +315,23 @@ class _AuthButton extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 2,
+          padding: EdgeInsets.zero,
         ),
-        icon: icon,
-        label: Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1, // Ensure text doesn't have extra leading
+              ),
+            ),
+          ],
         ),
       ),
     );

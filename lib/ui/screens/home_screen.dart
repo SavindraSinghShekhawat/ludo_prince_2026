@@ -9,11 +9,12 @@ import 'friends_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/shared_ui.dart';
-import '../widgets/invite_listener.dart';
 import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
+import '../dialogs/notification_inbox_dialog.dart';
 import '../widgets/logo_widget.dart';
 import '../../providers/presence_provider.dart';
+import '../../providers/notification_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -57,105 +58,103 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return Scaffold(
         body: AnimatedBackground(
           showParticles: true,
-          child: InviteListener(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  // Top Area: Full-width Header
-                  _buildHeader(context, ref),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        // Left Column: Logo and Status
-                        Expanded(
-                          flex: 4,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 48),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const LogoWidget(fontSize: 48),
-                                const SizedBox(height: 20),
-                                _buildOnlineStatusBar(onlineCount),
-                              ],
-                            ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Top Area: Full-width Header
+                _buildHeader(context, ref),
+                Expanded(
+                  child: Row(
+                    children: [
+                      // Left Column: Logo and Status
+                      Expanded(
+                        flex: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 48),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const LogoWidget(fontSize: 48),
+                              const SizedBox(height: 20),
+                              _buildOnlineStatusBar(onlineCount),
+                            ],
                           ),
                         ),
-                        // Right Column: Cards
-                        Expanded(
-                          flex: 6,
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 40, vertical: 20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                GlassCard(
-                                  title: "BATTLE ONLINE",
-                                  subtitle: "Matchmaking & Live Battles",
-                                  icon: Icons.public,
-                                  accentColor: AppColors.primaryCyan,
-                                  isPrimary: true,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => const LobbyScreen(
-                                            isQuickMatch: true)),
+                      ),
+                      // Right Column: Cards
+                      Expanded(
+                        flex: 6,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              GlassCard(
+                                title: "BATTLE ONLINE",
+                                subtitle: "Matchmaking & Live Battles",
+                                icon: Icons.public,
+                                accentColor: AppColors.primaryCyan,
+                                isPrimary: true,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const LobbyScreen(
+                                          isQuickMatch: true)),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: GlassCard(
+                                      title: "FRIENDS",
+                                      subtitle: "Private Room Challenges",
+                                      icon: Icons.people,
+                                      accentColor: AppColors.imperialJade,
+                                      height: 120,
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const FriendsScreen()),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: GlassCard(
-                                        title: "FRIENDS",
-                                        subtitle: "Private Room Challenges",
-                                        icon: Icons.people,
-                                        accentColor: AppColors.imperialJade,
-                                        height: 120,
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const FriendsScreen()),
-                                        ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: GlassCard(
+                                      title: "OFFLINE",
+                                      subtitle: "Local & AI Challenges",
+                                      icon: Icons.videogame_asset,
+                                      accentColor: AppColors.slateIndigo,
+                                      height: 120,
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const LocalSetupScreen()),
                                       ),
                                     ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: GlassCard(
-                                        title: "OFFLINE",
-                                        subtitle: "Local & AI Challenges",
-                                        icon: Icons.videogame_asset,
-                                        accentColor: AppColors.slateIndigo,
-                                        height: 120,
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const LocalSetupScreen()),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 48),
-                                _buildFooter(context),
-                                const SizedBox(height: 16),
-                                _buildCommunityNote(),
-                                const SizedBox(height: 48),
-                              ],
-                            ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 48),
+                              _buildFooter(context),
+                              const SizedBox(height: 16),
+                              _buildCommunityNote(),
+                              const SizedBox(height: 48),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -166,134 +165,132 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       body: AnimatedBackground(
         showParticles: true,
-        child: InviteListener(
-          child: Stack(
-            children: [
-              // 1. Scrollable Content Layer (Underneath)
-              Positioned.fill(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  clipBehavior: Clip.none,
-                  padding: const EdgeInsets.only(
-                    top: 350,
-                    bottom: 40,
-                    left: 24,
-                    right: 24,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Primary Action
-                      GlassCard(
-                        title: "BATTLE ONLINE",
-                        subtitle: "Matchmaking & Live Battles",
-                        icon: Icons.public,
-                        accentColor: AppColors.primaryCyan,
-                        isPrimary: true,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const LobbyScreen(isQuickMatch: true)),
-                        ),
+        child: Stack(
+          children: [
+            // 1. Scrollable Content Layer (Underneath)
+            Positioned.fill(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.only(
+                  top: 350,
+                  bottom: 40,
+                  left: 24,
+                  right: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Primary Action
+                    GlassCard(
+                      title: "BATTLE ONLINE",
+                      subtitle: "Matchmaking & Live Battles",
+                      icon: Icons.public,
+                      accentColor: AppColors.primaryCyan,
+                      isPrimary: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const LobbyScreen(isQuickMatch: true)),
                       ),
-                      const SizedBox(height: 20),
+                    ),
+                    const SizedBox(height: 20),
 
-                      // Secondary Actions Grid
-                      Row(
+                    // Secondary Actions Grid
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GlassCard(
+                            title: "FRIENDS",
+                            subtitle: "Private Room Challenges",
+                            icon: Icons.people,
+                            accentColor: AppColors.imperialJade,
+                            height: 120,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const FriendsScreen()),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: GlassCard(
+                            title: "OFFLINE",
+                            subtitle: "Local & AI Challenges",
+                            icon: Icons.videogame_asset,
+                            accentColor: AppColors.slateIndigo,
+                            height: 120,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LocalSetupScreen()),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Footer Navigation
+                    _buildFooter(context),
+                    const SizedBox(height: 16),
+                    _buildCommunityNote(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+
+            // 2. Fixed Sticky Header (Top Layer with EXTRA BLUR)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: _isScrolled ? 45 : 0,
+                    sigmaY: _isScrolled ? 45 : 0,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                      color: _isScrolled
+                          ? const Color(0xFF0B0B1A).withValues(alpha: 0.15)
+                          : Colors.transparent,
+                      border: _isScrolled
+                          ? Border(
+                              bottom: BorderSide(
+                                color: AppColors.primaryCyan
+                                    .withValues(alpha: 0.1),
+                                width: 1,
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: GlassCard(
-                              title: "FRIENDS",
-                              subtitle: "Private Room Challenges",
-                              icon: Icons.people,
-                              accentColor: AppColors.imperialJade,
-                              height: 120,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const FriendsScreen()),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: GlassCard(
-                              title: "OFFLINE",
-                              subtitle: "Local & AI Challenges",
-                              icon: Icons.videogame_asset,
-                              accentColor: AppColors.slateIndigo,
-                              height: 120,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const LocalSetupScreen()),
-                              ),
-                            ),
-                          ),
+                          _buildHeader(context, ref),
+                          const SizedBox(height: 10),
+                          const LogoWidget(fontSize: 42),
+                          const SizedBox(height: 16),
+                          _buildOnlineStatusBar(onlineCount),
+                          const SizedBox(height: 24),
                         ],
                       ),
-
-                      const SizedBox(height: 48),
-
-                      // Footer Navigation
-                      _buildFooter(context),
-                      const SizedBox(height: 16),
-                      _buildCommunityNote(),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 2. Fixed Sticky Header (Top Layer with EXTRA BLUR)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: _isScrolled ? 45 : 0,
-                      sigmaY: _isScrolled ? 45 : 0,
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      decoration: BoxDecoration(
-                        color: _isScrolled
-                            ? const Color(0xFF0B0B1A).withValues(alpha: 0.15)
-                            : Colors.transparent,
-                        border: _isScrolled
-                            ? Border(
-                                bottom: BorderSide(
-                                  color: AppColors.primaryCyan
-                                      .withValues(alpha: 0.1),
-                                  width: 1,
-                                ),
-                              )
-                            : null,
-                      ),
-                      child: SafeArea(
-                        bottom: false,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildHeader(context, ref),
-                            const SizedBox(height: 10),
-                            const LogoWidget(fontSize: 42),
-                            const SizedBox(height: 16),
-                            _buildOnlineStatusBar(onlineCount),
-                            const SizedBox(height: 24),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -330,7 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00FF88).withValues(alpha: 0.3),
+                  color: const Color(0xFF00FF88).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
               )
@@ -362,6 +359,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
     final displayName = ref.watch(displayNameProvider);
     final profile = ref.watch(userProfileProvider).value;
+    final notificationState = ref.watch(notificationProvider);
+    final unreadCount = notificationState.inbox.where((n) => !n.isRead).length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
@@ -406,7 +405,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           Row(
             children: [
-              _buildHeaderIcon(context, Icons.notifications),
+              _buildNotificationIcon(context, unreadCount),
               const SizedBox(width: 12),
               _buildHeaderIcon(context, Icons.settings, onTap: () {
                 Navigator.push(context,
@@ -414,6 +413,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               }),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationIcon(BuildContext context, int count) {
+    final hasUnread = count > 0;
+
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => const NotificationInboxDialog(),
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: hasUnread
+                  ? AppColors.primaryCyan.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                color: hasUnread
+                    ? AppColors.primaryCyan.withValues(alpha: 0.2)
+                    : Colors.transparent,
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              hasUnread ? Icons.notifications_active : Icons.notifications,
+              color: hasUnread ? AppColors.primaryCyan : Colors.white70,
+              size: 20,
+            ),
+          )
+              .animate(
+                target: hasUnread ? 1 : 0,
+                onPlay: (c) => c.repeat(reverse: true),
+              )
+              .scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.1, 1.1),
+                duration: 1.5.seconds,
+                curve: Curves.easeInOut,
+              )
+              .shimmer(
+                duration: 3.seconds,
+                color: Colors.white24,
+              ),
+          if (hasUnread)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCyan,
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: AppColors.systemBackground, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.5),
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 16,
+                  minHeight: 16,
+                ),
+                child: Center(
+                  child: Text(
+                    count > 9 ? '9+' : '$count',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ).animate().scale(duration: 200.ms, curve: Curves.easeOutBack),
+            ),
         ],
       ),
     );

@@ -19,6 +19,7 @@ class MatchmakingService {
     required int maxPlayers,
     bool isPrivate = true,
     GameMode gameMode = GameMode.classic,
+    String? playerName,
   }) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
@@ -26,7 +27,8 @@ class MatchmakingService {
     final gameRef = _db.ref().child('ludogames').push();
     final gameId = gameRef.key!;
 
-    final playerName = user.displayName ??
+    final effectiveName = playerName ??
+        user.displayName ??
         "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}";
 
     String? joiningCode;
@@ -45,7 +47,7 @@ class MatchmakingService {
         'hostUid': user.uid,
         'maxPlayers': maxPlayers,
         'currentPlayers': 1,
-        'hostLastSeen': ServerValue.timestamp,
+        'hostLastActive': ServerValue.timestamp,
         'currentTurn': 'slot1',
         'turnNumber': 1,
         'turnStartedAt': ServerValue.timestamp,
@@ -59,11 +61,11 @@ class MatchmakingService {
         'players': {
           'slot1': {
             'uid': user.uid,
-            'name': playerName,
+            'name': effectiveName,
             'missedTurns': 0,
             'connected': true,
             'joinedAt': ServerValue.timestamp,
-            'lastSeen': ServerValue.timestamp,
+            'lastActive': ServerValue.timestamp,
             'status': 'active',
           }
         }
@@ -86,9 +88,13 @@ class MatchmakingService {
     return gameId;
   }
 
-  Future<void> joinGame(String gameId) async {
+  Future<void> joinGame(String gameId, {String? playerName}) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
+    final nameToUse = playerName ??
+        user.displayName ??
+        "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}";
+
     final gameRef = _db.ref().child('ludogames').child(gameId);
 
     final transactionResult = await gameRef.runTransaction((Object? gameData) {
@@ -134,12 +140,11 @@ class MatchmakingService {
 
       players[availableSlot] = {
         'uid': user.uid,
-        'name': user.displayName ??
-            "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}",
+        'name': nameToUse,
         'missedTurns': 0,
         'connected': true,
         'joinedAt': ServerValue.timestamp,
-        'lastSeen': ServerValue.timestamp,
+        'lastActive': ServerValue.timestamp,
         'status': 'active',
       };
 
@@ -209,7 +214,8 @@ class MatchmakingService {
     return 'classic_${maxPlayers}p';
   }
 
-  Future<Stream<String?>> joinQueue(int maxPlayers, GameMode gameMode) async {
+  Future<Stream<String?>> joinQueue(int maxPlayers, GameMode gameMode,
+      {String? playerName}) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
     final uid = user.uid;
@@ -227,12 +233,13 @@ class MatchmakingService {
     await assignmentRef.remove();
 
     // 2. Join the queue
-    final playerName = user.displayName ??
+    final effectiveName = playerName ??
+        user.displayName ??
         "Guest #${uid.substring(uid.length > 4 ? uid.length - 4 : 0).toUpperCase()}";
 
     await queueRef.set({
       'joinedAt': ServerValue.timestamp,
-      'name': playerName,
+      'name': effectiveName,
     });
 
     // 3. Setup disconnect handler to remove from queue if player goes offline
@@ -265,7 +272,7 @@ class MatchmakingService {
 
   Future<void> updateHostHeartbeat(String gameId) async {
     await _db.ref().child('ludogames').child(gameId).update({
-      'hostLastSeen': ServerValue.timestamp,
+      'hostLastActive': ServerValue.timestamp,
     });
   }
 

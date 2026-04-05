@@ -11,6 +11,8 @@ import 'src/firebase_event_provider.dart';
 import 'src/game_event_provider.dart';
 import '../utils/app_logger.dart';
 
+import '../services/social_service.dart';
+
 class MultiplayerGameController extends LudoController {
   final String gameId;
   final FirebaseDatabase _db = firebaseService.database;
@@ -27,6 +29,7 @@ class MultiplayerGameController extends LudoController {
             eventProvider: FirebaseEventProvider(gameId: gameId)) {
     // Mark the game as online immediately so GameOverDialog navigates correctly.
     state = state.copyWith(gameType: GameType.online);
+    socialService.updatePresence(UserStatus.inGame, gameId: gameId);
   }
 
   Future<void> initializeFromSnapshot() async {

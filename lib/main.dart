@@ -11,8 +11,11 @@ import 'services/audio_service.dart';
 import 'services/presence_service.dart';
 import 'services/firebase_service.dart';
 import 'services/social_service.dart';
+import 'services/profile_service.dart';
 import 'ui/widgets/shared_ui.dart';
-import 'ui/dialogs/invite_dialog.dart';
+import 'ui/widgets/top_notification_host.dart';
+import 'providers/notification_provider.dart';
+import 'models/ludo_notification.dart';
 import 'utils/colors.dart';
 
 void main() async {
@@ -79,53 +82,72 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    presenceService.setPresence();
 
     // Global listener for game invites
     _inviteSubscription = socialService.watchInvites().listen((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         final invites = Map<String, dynamic>.from(event.snapshot.value as Map);
-        // Get the latest pending invite
+        final container = ProviderScope.containerOf(context, listen: false);
+
         for (final entry in invites.entries) {
           final inviteId = entry.key;
           final data = Map<String, dynamic>.from(entry.value as Map);
 
           if (data['status'] == 'pending') {
-            _showInviteDialog(inviteId, data);
-            break; // Only show one at a time
+            container.read(notificationProvider.notifier).addNotification(
+                  LudoNotification(
+                    id: inviteId,
+                    type: NotificationType.gameInvite,
+                    title: 'GAME INVITATION',
+                    message:
+                        '${data['fromName'] ?? 'Someone'} invited you to play Ludo!',
+                    data: {
+                      'inviteId': inviteId,
+                      'fromName': data['fromName'] ?? 'Someone',
+                      'gameId': data['gameId'] ?? '',
+                      'joiningCode': data['joiningCode'] ?? '',
+                    },
+                    timestamp: DateTime.now(),
+                  ),
+                );
           }
         }
       }
     });
-  }
 
-  String? _showedInviteId;
-
-  void _showInviteDialog(String inviteId, Map<String, dynamic> data) {
-    if (_showedInviteId == inviteId) return;
-    _showedInviteId = inviteId;
-
-    final context = navigatorKey.currentContext;
-    if (context == null) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => InviteDialog(
-        inviteId: inviteId,
-        fromName: data['fromName'] ?? 'Someone',
-        gameId: data['gameId'] ?? '',
-        joiningCode: data['joiningCode'] ?? '',
-      ),
-    ).then((_) {
-      // Clear showed ID if it's no longer the active one
-      if (_showedInviteId == inviteId) _showedInviteId = null;
+    // Global listener for friend requests
+    _requestsSubscription =
+        socialService.auth.authStateChanges().listen((user) {
+      if (user != null) {
+        profileService.getIncomingFriendRequests(user.uid).listen((reqs) {
+          final container = ProviderScope.containerOf(context, listen: false);
+          for (final req in reqs) {
+            container.read(notificationProvider.notifier).addNotification(
+                  LudoNotification(
+                    id: req.id,
+                    type: NotificationType.friendRequest,
+                    title: 'FRIEND REQUEST',
+                    message:
+                        '${req.fromProfile?.displayName ?? 'Someone'} wants to be your friend',
+                    data: {'fromUid': req.fromUid},
+                    timestamp: req.timestamp,
+                  ),
+                );
+          }
+        });
+      }
     });
   }
+
+  StreamSubscription? _requestsSubscription;
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    presenceService.dispose();
     _inviteSubscription?.cancel();
+    _requestsSubscription?.cancel();
     super.dispose();
   }
 
@@ -151,6 +173,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
           children: [
             if (child != null) child,
             const CustomSnackBarHost(),
+            const TopNotificationHost(),
           ],
         );
       },

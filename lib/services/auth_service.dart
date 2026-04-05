@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../utils/app_logger.dart';
 import 'package:flutter/services.dart';
+import 'presence_service.dart';
+import 'social_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -62,9 +65,8 @@ class AuthService {
         return await user.linkWithCredential(credential);
       } on FirebaseAuthException catch (e) {
         if (e.code == 'credential-already-in-use') {
-          // If already in use, we sign in directly (Switch Account)
-          // This will be handled by the UI to confirm, but here we provide the method
-          return await _auth.signInWithCredential(credential);
+          // Rethrow to let UI handle the confirmation
+          rethrow;
         }
         rethrow;
       }
@@ -74,8 +76,28 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    try {
+      // Explicitly set offline status before signing out to update global count
+      final uid = _auth.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseDatabase.instance.ref('presence/$uid').update({
+          'online': false,
+          'lastActive': ServerValue.timestamp,
+        });
+      }
+
+      await _auth.signOut();
+
+      // Re-sign in anonymously as requested
+      await signInAnonymously();
+
+      // Re-init services to start listeners for the new anonymous user
+      presenceService.setPresence();
+      await socialService.init();
+    } catch (e) {
+      AppLogger.error('Error during sign out: $e');
+      rethrow;
+    }
   }
 
   Future<UserCredential> signInAnonymously() async {
