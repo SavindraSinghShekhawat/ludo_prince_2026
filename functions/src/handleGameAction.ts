@@ -114,7 +114,7 @@ export const handleGameAction = onValueCreated(
         } else if (type === "timeout") {
           const now = Date.now();
           const turnStartedAt = (game.turnStartedAt as number) || 0;
-          const turnTimeSeconds = (game.settings?.turnTimeSeconds || 10);
+          const turnTimeSeconds = (game.settings?.turnTimeSeconds || 15);
 
           if (now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
             AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
@@ -129,10 +129,10 @@ export const handleGameAction = onValueCreated(
 
           AppLogger.debug(`[handleGameAction] ACCEPT TIMEOUT: Skipping turn for ${currentTurn}`);
 
-          // Increment missed turns and check for kick
-          currentPlayer.missedTurns = (currentPlayer.missedTurns || 0) + 1;
+          // Increment skip count and check for kick
+          currentPlayer.skipCount = (currentPlayer.skipCount || 0) + 1;
           let playerKicked = false;
-          if (currentPlayer.missedTurns >= (game.settings?.maxMissedTurns || 5)) {
+          if (currentPlayer.skipCount >= (game.settings?.maxSkips || 5)) {
             currentPlayer.status = "left";
             playerKicked = true;
           }

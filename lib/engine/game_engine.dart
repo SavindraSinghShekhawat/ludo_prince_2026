@@ -44,12 +44,23 @@ class GameEngine {
 
     final player = _getPlayer(state, state.currentTurn);
 
+    // Reset skip count on successful roll
+    final updatedPlayers = state.players.map((p) {
+      if (p.slot == state.currentTurn) {
+        return p.copyWith(skipCount: 0);
+      }
+      return p;
+    }).toList();
+
     final validTokens =
         player.tokens.where((t) => isValidMove(t, diceValue)).toList();
 
     if (validTokens.isEmpty) {
       final skipResult = _nextTurn(
-        state.copyWith(consecutiveSixes: newConsecutive, diceValue: diceValue),
+        state.copyWith(
+            players: updatedPlayers,
+            consecutiveSixes: newConsecutive,
+            diceValue: diceValue),
         "No valid moves. Turn skipped.",
       );
       return EngineResult(
@@ -60,6 +71,7 @@ class GameEngine {
 
     return EngineResult(
       state.copyWith(
+        players: updatedPlayers,
         diceValue: diceValue,
         isDiceRolled: true,
         consecutiveSixes: newConsecutive,
@@ -80,6 +92,14 @@ class GameEngine {
       return EngineResult(state); // ❗ prevent illegal multiplayer move
     }
 
+    // Reset skip count on successful move
+    final updatedPlayers = state.players.map((p) {
+      if (p.slot == state.currentTurn) {
+        return p.copyWith(skipCount: 0);
+      }
+      return p;
+    }).toList();
+
     List<EngineEvent> events = [];
     bool isSix = state.diceValue == 6;
     bool isFinished = token.state == TokenState.finished;
@@ -88,6 +108,7 @@ class GameEngine {
     if (extraTurn) events.add(EngineEvent.extraTurn);
 
     GameState newState = state.copyWith(
+      players: updatedPlayers,
       isDiceRolled: false,
     );
 
@@ -235,7 +256,22 @@ class GameEngine {
   }
 
   EngineResult skipTurn(GameState state) {
-    return _nextTurn(state, "Turn skipped.");
+    final player = _getPlayer(state, state.currentTurn);
+    final newSkipCount = player.skipCount + 1;
+
+    if (newSkipCount >= 5) {
+      return quitPlayer(state, state.currentTurn);
+    }
+
+    final updatedPlayers = state.players.map((p) {
+      if (p.slot == state.currentTurn) {
+        return p.copyWith(skipCount: newSkipCount);
+      }
+      return p;
+    }).toList();
+
+    String msg = "${player.name} skipped turn ($newSkipCount/5)";
+    return _nextTurn(state.copyWith(players: updatedPlayers), msg);
   }
 
   EngineResult _nextTurn(GameState state, String msg) {

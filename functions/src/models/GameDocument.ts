@@ -18,6 +18,6 @@ export interface GameDocument {
   events?: Record<string, GameEvent>;
   settings: {
     turnTimeSeconds: number;
-    maxMissedTurns: number;
+    maxSkips: number;
   };
 }

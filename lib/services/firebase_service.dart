@@ -28,6 +28,10 @@ class FirebaseService {
   late final FirebaseDatabase database;
   late final FirebaseFunctions functions;
 
+  int _serverTimeOffset = 0;
+  int get serverTimeMillis =>
+      DateTime.now().millisecondsSinceEpoch + _serverTimeOffset;
+
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -72,6 +76,13 @@ class FirebaseService {
       await auth.signOut();
       await auth.signInAnonymously();
     }
+
+    // Connect to serverTimeOffset to synchronize clocks
+    database.ref('.info/serverTimeOffset').onValue.listen((event) {
+      _serverTimeOffset = (event.snapshot.value as num?)?.toInt() ?? 0;
+      AppLogger.debug(
+          '[FirebaseService] Server time offset updated: $_serverTimeOffset ms');
+    });
 
     _initialized = true;
 

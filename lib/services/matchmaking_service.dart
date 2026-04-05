@@ -53,8 +53,8 @@ class MatchmakingService {
         'turnStartedAt': ServerValue.timestamp,
         'eventCounter': 0,
         'settings': {
-          'turnTimeSeconds': 10,
-          'maxMissedTurns': 5,
+          'turnTimeSeconds': 15,
+          'maxSkips': 5,
         },
 
         // IMPORTANT: create players atomically with game
@@ -62,7 +62,7 @@ class MatchmakingService {
           'slot1': {
             'uid': user.uid,
             'name': effectiveName,
-            'missedTurns': 0,
+            'skipCount': 0,
             'connected': true,
             'joinedAt': ServerValue.timestamp,
             'lastActive': ServerValue.timestamp,

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/controllers/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
+import '../../services/firebase_service.dart';
 import 'package:ludo_prince/models/player.dart';
 import 'package:ludo_prince/ui/widgets/robot_icon.dart';
 import '../../utils/colors.dart';
@@ -203,12 +204,7 @@ class _GameBody extends ConsumerWidget {
         if (state.isGameOver) {
           final prevWasOver = previous?.value?.isGameOver ?? false;
           if (!prevWasOver) {
-            final localSlot = ref.read(gameControllerProvider).localPlayerSlot;
-            if (localSlot != null) {
-              final me = state.players.firstWhere((p) => p.slot == localSlot,
-                  orElse: () => state.players.first);
-              if (me.status == PlayerStatus.left) return;
-            }
+            // Show dialog for everyone, including those who left/forfeited
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
               showDialog(
@@ -669,6 +665,13 @@ class _PlayerPanelWrapper extends ConsumerWidget {
     final winnerRank = winners.indexOf(slot) + 1;
     final isWinner = winnerRank > 0;
 
+    final turnStartedAt =
+        ref.watch(gameStreamProvider.select((s) => s.value?.turnStartedAt));
+    final turnTimeSeconds = ref
+        .watch(gameStreamProvider.select((s) => s.value?.turnTimeSeconds ?? 8));
+    final turnActionCount = ref
+        .watch(gameStreamProvider.select((s) => s.value?.turnActionCount ?? 0));
+
     return _PlayerPanelContent(
       slot: slot,
       player: player,
@@ -678,20 +681,14 @@ class _PlayerPanelWrapper extends ConsumerWidget {
       isDiceRolled: isDiceRolled,
       isLandscape: isLandscape,
       isLeft: isLeft,
+      turnStartedAt: turnStartedAt,
+      turnTimeSeconds: turnTimeSeconds,
+      turnActionCount: turnActionCount,
     );
   }
 }
 
 class _PlayerPanelContent extends StatelessWidget {
-  final PlayerSlot slot;
-  final Player player;
-  final PlayerSlot currentTurn;
-  final bool isWinner;
-  final int winnerRank;
-  final bool isDiceRolled;
-  final bool isLandscape;
-  final bool isLeft;
-
   const _PlayerPanelContent({
     required this.slot,
     required this.player,
@@ -701,7 +698,22 @@ class _PlayerPanelContent extends StatelessWidget {
     required this.isDiceRolled,
     required this.isLandscape,
     required this.isLeft,
+    required this.turnStartedAt,
+    required this.turnTimeSeconds,
+    required this.turnActionCount,
   });
+
+  final PlayerSlot slot;
+  final Player player;
+  final PlayerSlot? currentTurn;
+  final bool isWinner;
+  final int winnerRank;
+  final bool isDiceRolled;
+  final bool isLandscape;
+  final bool isLeft;
+  final int? turnStartedAt;
+  final int turnTimeSeconds;
+  final int turnActionCount;
 
   @override
   Widget build(BuildContext context) {
@@ -720,9 +732,7 @@ class _PlayerPanelContent extends StatelessWidget {
       decoration: BoxDecoration(
         color: displayColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: isTurn ? Colors.white : Colors.white70,
-            width: isTurn ? 3 : 2),
+        border: isTurn ? null : Border.all(color: Colors.white70, width: 2),
         boxShadow: [
           if (isTurn)
             BoxShadow(
@@ -753,7 +763,12 @@ class _PlayerPanelContent extends StatelessWidget {
     );
 
     Widget avatarBox = isTurn
-        ? avatarContent
+        ? _TurnTimer(
+            key: ValueKey("${slot.name}_$turnActionCount"),
+            turnStartedAt: turnStartedAt,
+            turnTimeSeconds: turnTimeSeconds,
+            child: avatarContent,
+          )
             .animate(onPlay: (controller) => controller.repeat(reverse: true))
             .scaleXY(
                 begin: 1.0,
@@ -784,12 +799,24 @@ class _PlayerPanelContent extends StatelessWidget {
       );
     }
 
+    const spacing = SizedBox(width: 8);
+    final nameText = Text(
+      playerName,
+      textAlign: TextAlign.center,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: isTurn ? Colors.black87 : Colors.white70,
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
     Widget nameTag = Container(
       width: 70,
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       decoration: BoxDecoration(
         color: isTurn ? Colors.white : Colors.black45,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isTurn ? displayColor : Colors.white24,
           width: 1.5,
@@ -803,16 +830,15 @@ class _PlayerPanelContent extends StatelessWidget {
             ),
         ],
       ),
-      child: Text(
-        playerName,
-        textAlign: TextAlign.center,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: isTurn ? Colors.black87 : Colors.white70,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      child: nameText,
+    );
+
+    final skipIndicator = _SkipIndicator(skipCount: player.skipCount);
+    final nameAndDots = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: isRightAligned
+          ? [skipIndicator, spacing, nameTag]
+          : [nameTag, spacing, skipIndicator],
     );
 
     Widget panelContent = Container(
@@ -848,12 +874,13 @@ class _PlayerPanelContent extends StatelessWidget {
                 : CrossAxisAlignment.start,
             children: [
               panelContent,
+              const SizedBox(height: 10),
               Transform.translate(
                 offset: Offset(
                   isRightAligned ? -5 : 5,
                   -10,
                 ),
-                child: nameTag,
+                child: nameAndDots,
               ),
             ],
           ),
@@ -960,5 +987,268 @@ class _RankBadge extends StatelessWidget {
           duration: 1000.ms,
           curve: Curves.easeInOutSine,
         );
+  }
+}
+
+class _SkipIndicator extends StatelessWidget {
+  final int skipCount;
+
+  const _SkipIndicator({required this.skipCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(5, (index) {
+        final isSkipped = index < skipCount;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 1.5),
+          width: 5,
+          height: 5,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isSkipped ? AppColors.crimsonVelvet : AppColors.imperialJade,
+            boxShadow: [
+              BoxShadow(
+                color: (isSkipped
+                        ? AppColors.crimsonVelvet
+                        : AppColors.imperialJade)
+                    .withValues(alpha: 0.8),
+                blurRadius: 5,
+                spreadRadius: 1,
+              )
+            ],
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+              width: 0.4,
+            ),
+          ),
+        ).animate(target: isSkipped ? 1 : 0).shake(
+            duration: 400.ms,
+            hz: 4,
+            curve: Curves.easeInOut,
+            offset: const Offset(1.8, 0));
+      }),
+    );
+  }
+}
+
+class _TurnTimer extends StatefulWidget {
+  final int? turnStartedAt;
+  final int turnTimeSeconds;
+  final Widget child;
+
+  const _TurnTimer({
+    super.key,
+    required this.turnStartedAt,
+    required this.turnTimeSeconds,
+    required this.child,
+  });
+
+  @override
+  State<_TurnTimer> createState() => _TurnTimerState();
+}
+
+class _TurnTimerState extends State<_TurnTimer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: widget.turnTimeSeconds),
+    );
+    _updateTimer();
+  }
+
+  @override
+  void didUpdateWidget(_TurnTimer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.turnStartedAt != oldWidget.turnStartedAt) {
+      _controller.reset(); // Hard reset to ensure fresh animation
+      _updateTimer();
+    }
+  }
+
+  void _updateTimer() {
+    if (widget.turnStartedAt == null) {
+      _controller.stop();
+      return;
+    }
+
+    final now = firebaseService.serverTimeMillis;
+    final elapsed = now - widget.turnStartedAt!;
+    final totalMs = widget.turnTimeSeconds * 1000;
+
+    if (elapsed < totalMs) {
+      // Normal case: Start from the correct percentage based on actual elapsed time.
+      // This is better for synchronization than always starting at 0.0.
+      _controller.duration = Duration(milliseconds: totalMs);
+      _controller.value = (elapsed / totalMs).clamp(0.0, 1.0);
+      _controller.forward();
+    } else {
+      // Timed out or Lag case: Jump to red.
+      _controller.duration = Duration(milliseconds: totalMs);
+      _controller.value = 1.0;
+      _controller.stop(); // Don't need to forward if it's already at the end
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final progress = _controller.value;
+        final color = Color.lerp(
+          AppColors.imperialJade,
+          AppColors.crimsonVelvet,
+          (progress * 1.5).clamp(0.0, 1.0),
+        )!;
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            widget.child, // Avatar on bottom
+            // Actual Integrated Avatar Border Timer on TOP
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: CustomPaint(
+                painter: _BorderTimerPainter(
+                  progress: 1.0 - progress,
+                  color: color,
+                  strokeWidth: 1.5, // Thinner but more vibrant
+                  borderRadius: 12, // Matches the avatar radius exactly
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _BorderTimerPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double strokeWidth;
+  final double borderRadius;
+
+  _BorderTimerPainter({
+    required this.progress,
+    required this.color,
+    required this.strokeWidth,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final RRect rrect = RRect.fromLTRBR(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth / 2,
+      size.height - strokeWidth / 2,
+      Radius.circular(borderRadius),
+    );
+
+    final path = Path()..addRRect(rrect);
+
+    // 1. INSET TRACK (Dark recessed channel for contrast)
+    final insetPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth + 1.0;
+    canvas.drawRRect(rrect, insetPaint);
+
+    final trackPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    canvas.drawRRect(rrect, trackPaint);
+
+    if (progress <= 0) {
+      final failPaint = Paint()
+        ..color = AppColors.crimsonVelvet
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawRRect(rrect, failPaint);
+
+      // Intense red timeout glow
+      final failureGlow = Paint()
+        ..color = AppColors.crimsonVelvet.withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth * 3
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawPath(path, failureGlow);
+      return;
+    }
+
+    // 2. PROGRESS PATH
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final pathMetrics = path.computeMetrics().iterator;
+    if (pathMetrics.moveNext()) {
+      final metric = pathMetrics.current;
+      final length = metric.length;
+      final extractPath = metric.extractPath(0, length * progress);
+
+      // A. Main Glow (Atmospheric)
+      final atmosphericGlow = Paint()
+        ..color = color.withValues(alpha: 0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth * 5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      canvas.drawPath(extractPath, atmosphericGlow);
+
+      // B. Core Glow (Neon Intensity)
+      final coreGlow = Paint()
+        ..color = color.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth * 2.5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      canvas.drawPath(extractPath, coreGlow);
+
+      // C. The Actual Line
+      canvas.drawPath(extractPath, paint);
+
+      // D. LEADING SPARK (Bright tip)
+      if (progress > 0.01) {
+        final tipPoint =
+            metric.getTangentForOffset(length * progress)?.position;
+        if (tipPoint != null) {
+          final sparkPaint = Paint()
+            ..color = Colors.white
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+          canvas.drawCircle(tipPoint, strokeWidth * 1.5, sparkPaint);
+
+          final flarePaint = Paint()
+            ..color = color.withValues(alpha: 0.8)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+          canvas.drawCircle(tipPoint, strokeWidth * 3, flarePaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BorderTimerPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }

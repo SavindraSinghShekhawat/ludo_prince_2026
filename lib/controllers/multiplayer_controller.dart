@@ -43,8 +43,12 @@ class MultiplayerGameController extends LudoController {
     if (snapshot != null) {
       final gameStateJson = Map<String, dynamic>.from(snapshot['gameState']);
       _lastAppliedEventId = snapshot['lastEventId'] as int;
-      state =
-          GameState.fromJson(gameStateJson).copyWith(gameType: GameType.online);
+      final turnTime = (data['settings']?['turnTimeSeconds'] as int?) ?? 8;
+      state = GameState.fromJson(gameStateJson).copyWith(
+        gameType: GameType.online,
+        turnStartedAt: _turnStartedAt,
+        turnTimeSeconds: turnTime,
+      );
     } else {
       // If no snapshot, ensure state has correct mode from DB
       final dbMode = data['gameMode'];
@@ -94,9 +98,9 @@ class MultiplayerGameController extends LudoController {
     _timeoutMonitor = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (isDisposed || state.isGameOver || _turnStartedAt == null) return;
 
-      final now = DateTime.now().millisecondsSinceEpoch;
-      // We add a 2 second buffer to account for network latency and clock skew
-      if (now > _turnStartedAt! + 12000) {
+      final now = firebaseService.serverTimeMillis;
+      // We add a 2 second buffer to account for network latency and clock skew. Turn time is 15s.
+      if (now > _turnStartedAt! + 17000) {
         _sendTimeoutRequest();
       }
     });
@@ -196,6 +200,8 @@ class MultiplayerGameController extends LudoController {
 
     if (event is SkipEvent) {
       state = engine.skipTurn(state).state;
+      // Increment action count for SkipEvent since super.handleGameEvent isn't called
+      state = state.copyWith(turnActionCount: state.turnActionCount + 1);
     } else {
       await super.handleGameEvent(event);
     }
@@ -203,9 +209,17 @@ class MultiplayerGameController extends LudoController {
     final newTurn = state.currentTurn;
     final shouldRestartTimer =
         oldTurn != newTurn || event is RollEvent || event is MoveEvent;
+    // ignore: unused_local_variable
     final turnChangedLocally = oldTurn != newTurn;
 
-    _turnStartedAt = DateTime.now().millisecondsSinceEpoch;
+    final timestamp = firebaseService.serverTimeMillis;
+    _turnStartedAt = timestamp;
+    state = state.copyWith(
+      turnStartedAt: timestamp,
+    );
+
+    // CRITICAL: Always emit the final state after updating the timestamp
+    if (!isDisposed) streamController.add(state);
 
     // Push new turn to Firebase so Cloud Function timer restarts
     if (shouldRestartTimer && !state.isGameOver) {
@@ -226,6 +240,7 @@ class MultiplayerGameController extends LudoController {
         final updates = <String, dynamic>{
           'currentTurn': newTurn.name,
           'turnStartedAt': ServerValue.timestamp,
+          'turnActionCount': state.turnActionCount,
         };
 
         if (turnChangedLocally) {

@@ -4,7 +4,7 @@ export interface PlayerEntry {
   connected: boolean;
   joinedAt: object | number;
   status: string;
-  missedTurns: number;
+  skipCount: number;
   team?: string;
   tokens?: Record<string, unknown>;
 }

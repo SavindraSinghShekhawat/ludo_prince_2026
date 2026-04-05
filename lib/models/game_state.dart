@@ -37,6 +37,10 @@ class GameState {
   final List<PlayerSlot> winners;
   final GameType gameType;
 
+  final int? turnStartedAt;
+  final int turnTimeSeconds;
+  final int turnActionCount;
+
   bool get isGameOver {
     // Game is over when all players are added to the winners list
     return players.length > 1 && winners.length >= players.length;
@@ -57,6 +61,9 @@ class GameState {
     this.lastAction = GameAction.none,
     this.winners = const [],
     this.gameType = GameType.local,
+    this.turnStartedAt,
+    this.turnTimeSeconds = 15,
+    this.turnActionCount = 0,
   });
 
   GameState copyWith({
@@ -74,6 +81,9 @@ class GameState {
     GameAction? lastAction,
     List<PlayerSlot>? winners,
     GameType? gameType,
+    int? turnStartedAt,
+    int? turnTimeSeconds,
+    int? turnActionCount,
   }) {
     return GameState(
       gameId: gameId ?? this.gameId,
@@ -90,6 +100,9 @@ class GameState {
       lastAction: lastAction ?? this.lastAction,
       winners: winners ?? this.winners,
       gameType: gameType ?? this.gameType,
+      turnStartedAt: turnStartedAt ?? this.turnStartedAt,
+      turnTimeSeconds: turnTimeSeconds ?? this.turnTimeSeconds,
+      turnActionCount: turnActionCount ?? this.turnActionCount,
     );
   }
 
@@ -108,6 +121,9 @@ class GameState {
         "lastAction": lastAction.name,
         "winners": winners.map((e) => e.name).toList(),
         "gameType": gameType.name,
+        "turnStartedAt": turnStartedAt,
+        "turnTimeSeconds": turnTimeSeconds,
+        "turnActionCount": turnActionCount,
       };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
@@ -136,6 +152,13 @@ class GameState {
           [],
       gameType: GameType.values.firstWhere(
           (e) => e.name == (json["gameType"] ?? GameType.local.name)),
+      turnStartedAt: json["turnStartedAt"] != null
+          ? (json["turnStartedAt"] is int
+              ? json["turnStartedAt"]
+              : (json["turnStartedAt"] as num).toInt())
+          : null,
+      turnTimeSeconds: json["turnTimeSeconds"] ?? 8,
+      turnActionCount: json["turnActionCount"] ?? 0,
     );
   }
 }

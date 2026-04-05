@@ -105,8 +105,8 @@ export const handleMatchmaking = onValueCreated(
         eventCounter: 0,
         players: {},
         settings: {
-          turnTimeSeconds: 10,
-          maxMissedTurns: 5,
+          turnTimeSeconds: 15,
+          maxSkips: 5,
         },
       };
 
@@ -133,7 +133,7 @@ export const handleMatchmaking = onValueCreated(
           connected: true,
           joinedAt: ServerValue.TIMESTAMP,
           status: "active",
-          missedTurns: 0,
+          skipCount: 0,
         };
 
         if (mode === "team_2v2") {

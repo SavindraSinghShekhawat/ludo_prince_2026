@@ -5,6 +5,7 @@ import '../engine/bot_ai.dart';
 import '../engine/game_engine.dart';
 import '../models/game_state.dart';
 import '../models/player.dart';
+import '../services/firebase_service.dart';
 import '../models/token.dart';
 import '../utils/test_initialization.dart';
 import 'src/audio_listener.dart';
@@ -134,7 +135,7 @@ class LudoController implements GameController {
     if (currentPlayer.type != PlayerType.localBot) return;
 
     _isActionInProgress = true;
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 600));
     _isActionInProgress = false;
 
     if (_isDisposed ||
@@ -262,6 +263,8 @@ class LudoController implements GameController {
     _state = resultState.copyWith(
       isRolling: false,
       lastAction: GameAction.roll,
+      turnStartedAt: firebaseService.serverTimeMillis,
+      turnActionCount: _state.turnActionCount + 1,
     );
 
     if (!skipSounds && !_isDisposed) {
@@ -274,7 +277,7 @@ class LudoController implements GameController {
 
     if (isAutoAction) {
       // Pause so user can digest the roll before the auto-move/skip
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 400));
       if (_isDisposed) {
         _isActionInProgress = false;
         return;
@@ -300,7 +303,14 @@ class LudoController implements GameController {
     _isActionInProgress = true;
     await _executor.execute(_state, tokenId, _state.diceValue);
     _isActionInProgress = false;
-    if (!_isDisposed) _streamController.add(_state);
+    if (!_isDisposed) {
+      // Always set new timestamp for whoever's turn it is now (Bonus turn or next player)
+      _state = _state.copyWith(
+        turnStartedAt: firebaseService.serverTimeMillis,
+        turnActionCount: _state.turnActionCount + 1,
+      );
+      _streamController.add(_state);
+    }
     _checkBotTurn();
   }
 
@@ -364,6 +374,7 @@ class LudoController implements GameController {
       lastAction: GameAction.none,
       winners: const [],
       gameType: GameType.local,
+      turnStartedAt: firebaseService.serverTimeMillis,
     );
   }
 }
