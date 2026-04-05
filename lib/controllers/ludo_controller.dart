@@ -177,8 +177,9 @@ class LudoController implements GameController {
       return;
     }
 
-    _audioListener.playRollSound();
-    _state = _state.copyWith(isRolling: true);
+    // We removed _audioListener.playRollSound() from here because
+    // it's now handled by the AudioControllerListener observing the state change.
+    _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
     if (!_isDisposed) _streamController.add(_state);
 
     eventProvider.onRollRequested();
@@ -200,41 +201,49 @@ class LudoController implements GameController {
     if (_isDisposed || _state.isDiceRolled || _isActionInProgress) return;
     _isActionInProgress = true;
 
-    bool wasAlreadyRolling = _state.isRolling;
-
-    // Set diceValue IMMEDIATELY so UI can land on it correctly
-    if (!skipSounds && !_isDisposed && !wasAlreadyRolling) {
-      _audioListener.playRollSound();
-    }
-    _state = _state.copyWith(isRolling: true, diceValue: value);
+    // Initial "anticipation" phase for all players (Local, Remote, and Bot)
+    _state = _state.copyWith(
+      isRolling: true,
+      isWaitingForResult: true,
+    );
     if (!_isDisposed) _streamController.add(_state);
 
+    // Minimum "anticipation" duration to ensure the loop is heard/seen
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (_isDisposed) {
+      _isActionInProgress = false;
+      return;
+    }
+
+    // Transition from "waiting" to "showing result"
+    _state = _state.copyWith(
+      isRolling: true,
+      isWaitingForResult: false,
+      diceValue: value,
+    );
+    if (!_isDisposed) _streamController.add(_state);
+
+    // Fixed duration for the "landing" animation
     await Future.delayed(const Duration(milliseconds: 450));
     if (_isDisposed) {
       _isActionInProgress = false;
       return;
     }
 
-    _state = _state.copyWith(isRolling: false);
-
+    // Now calculate the engine result to determine if an auto-action is pending
     final result = _engine.rollDice(_state, value);
-    _state = result.state.copyWith(lastAction: GameAction.roll);
-
-    if (!skipSounds && !_isDisposed) {
-      _audioListener.handleEngineEvents(result.events);
-    }
-
-    if (!_isDisposed) _streamController.add(_state);
+    final resultState = result.state;
 
     int? autoMoveId;
+    bool isTurnSkipped = result.events.contains(EngineEvent.turnSkipped);
 
-    // Auto move if only 1 valid token or all valid token at same place
-    if (_state.isDiceRolled) {
-      final player =
-          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    // Auto move if only 1 valid token or all valid tokens at same place
+    if (resultState.isDiceRolled) {
+      final player = resultState.players
+          .firstWhere((p) => p.slot == resultState.currentTurn);
 
       final validTokens = player.tokens
-          .where((t) => _engine.isValidMove(t, _state.diceValue))
+          .where((t) => _engine.isValidMove(t, resultState.diceValue))
           .toList();
 
       if (validTokens.isNotEmpty) {
@@ -250,8 +259,29 @@ class LudoController implements GameController {
       }
     }
 
-    _isActionInProgress = false;
+    _state = resultState.copyWith(
+      isRolling: false,
+      lastAction: GameAction.roll,
+    );
+
+    if (!skipSounds && !_isDisposed) {
+      _audioListener.handleEngineEvents(result.events);
+    }
+
     if (!_isDisposed) _streamController.add(_state);
+
+    bool isAutoAction = autoMoveId != null || isTurnSkipped;
+
+    if (isAutoAction) {
+      // Pause so user can digest the roll before the auto-move/skip
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (_isDisposed) {
+        _isActionInProgress = false;
+        return;
+      }
+    }
+
+    _isActionInProgress = false;
 
     if (autoMoveId != null) {
       final player =

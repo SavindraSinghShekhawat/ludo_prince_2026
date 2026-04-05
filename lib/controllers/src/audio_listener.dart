@@ -8,6 +8,7 @@ import '../ludo_controller.dart';
 class AudioControllerListener {
   final GameController controller;
   StreamSubscription<GameState>? _subscription;
+  bool _wasWaitingForResult = false;
 
   AudioControllerListener(this.controller);
 
@@ -20,15 +21,14 @@ class AudioControllerListener {
   }
 
   void _handleStateUpdate(GameState state) {
-    // If the action hasn't changed, we might still want to play sounds
-    // for specific events if they are marked in the state, but usually
-    // EngineResult events are better.
-
-    // For now, we rely on the controller notifying us of specific events
-    // or we infer from state changes.
-
-    // NOTE: In a more robust system, the GameController could emit
-    // a separate stream of EngineEvents.
+    if (state.isWaitingForResult && !_wasWaitingForResult) {
+      audioService.startRollLoop();
+    } else if (!state.isWaitingForResult && _wasWaitingForResult) {
+      audioService.stopRollLoop();
+      // Play a one-shot landing sound if we just stopped waiting
+      audioService.playRoll();
+    }
+    _wasWaitingForResult = state.isWaitingForResult;
   }
 
   /// This can be called by the controller when specific engine events occur

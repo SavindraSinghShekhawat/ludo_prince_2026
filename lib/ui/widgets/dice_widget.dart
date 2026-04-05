@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 
 import '../../models/game_state.dart';
@@ -16,8 +15,11 @@ class DiceWidget extends ConsumerStatefulWidget {
 class _DiceWidgetState extends ConsumerState<DiceWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  int _animatingValue = 1;
+  late Animation<double> _shakeAnimation;
+  late Animation<double> _scaleAnimation;
+
   bool _isAnimating = false;
+  bool _isWaitingForResult = false;
 
   static final Random _rng = Random.secure();
 
@@ -26,13 +28,21 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     super.initState();
     _controller = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 450));
-    _controller.addListener(() {
-      if (_controller.isAnimating) {
-        setState(() {
-          _animatingValue = _rng.nextInt(6) + 1;
-        });
-      }
-    });
+
+    // Shake animation: jitter between -2 and 2 pixels
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 2.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 2.0, end: -2.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -2.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+
+    // Scale animation: pop up and down
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 1.0), weight: 1),
+    ]).animate(CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut)));
   }
 
   @override
@@ -55,67 +65,119 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
       final state = next.value;
-      if (state != null && state.isRolling && !_isAnimating) {
-        setState(() {
-          _isAnimating = true;
-        });
-        _controller.forward(from: 0).then((_) {
-          if (mounted) {
-            setState(() {
-              _isAnimating = false;
-            });
-            _controller.reset();
-          }
-        });
-      }
+      if (state == null) return;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        // Detect "Waiting for Result" state
+        if (state.isWaitingForResult && !_isWaitingForResult) {
+          setState(() {
+            _isWaitingForResult = true;
+            _isAnimating = true;
+          });
+          _controller.duration = const Duration(milliseconds: 100);
+          _controller.repeat();
+        }
+
+        // Detect Transition from "Waiting" to "Landing"
+        if (!state.isWaitingForResult && _isWaitingForResult) {
+          setState(() {
+            _isWaitingForResult = false;
+          });
+          _controller.duration = const Duration(milliseconds: 450);
+          _controller.forward(from: 0).then((_) {
+            if (mounted) {
+              setState(() {
+                _isAnimating = false;
+              });
+              _controller.reset();
+            }
+          });
+        }
+
+        // Fallback for non-multiplayer or sudden state changes
+        if (state.isRolling && !state.isWaitingForResult && !_isAnimating) {
+          setState(() {
+            _isAnimating = true;
+          });
+          _controller.forward(from: 0).then((_) {
+            if (mounted) {
+              setState(() {
+                _isAnimating = false;
+              });
+              _controller.reset();
+            }
+          });
+        }
+      });
     });
 
     final diceValue =
-        ref.watch(gameStreamProvider.select((s) => s.value?.diceValue ?? 0));
-    final displayValue = _isAnimating ? _animatingValue : diceValue;
+        ref.watch(gameStreamProvider.select((s) => s.value?.diceValue ?? 1));
 
     return GestureDetector(
       onTap: _rollDice,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFFFFFF), // White highlight
-              Color(0xFFE5E4E2), // Platinum base
-              Color(0xFFD0D3D6), // Slightly darker
-              Color(0xFFA0A5A9), // Deep shadow
-            ],
-            stops: [0.0, 0.4, 0.7, 1.0],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF7B8084), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 6,
-              offset: const Offset(0, 4),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          // If in the rapid loop, randomize value locally based on controller progress
+          // This avoids calling setState during build context while keeping the visuals alive
+          final int displayValue = (_isAnimating && _isWaitingForResult)
+              ? (_rng.nextInt(6) + 1)
+              : diceValue;
+
+          // Jitter offset
+          final double offset = _isAnimating ? _shakeAnimation.value : 0;
+          final double scale = _isAnimating ? _scaleAnimation.value : 1.0;
+
+          return Transform.translate(
+            offset: Offset(offset, -offset),
+            child: Transform.scale(
+              scale: scale,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFFFFFFF), // White highlight
+                      Color(0xFFE5E4E2), // Platinum base
+                      Color(0xFFD0D3D6), // Slightly darker
+                      Color(0xFFA0A5A9), // Deep shadow
+                    ],
+                    stops: [0.0, 0.4, 0.7, 1.0],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: const Color(0xFF7B8084), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      blurRadius: 4,
+                      offset: const Offset(-1, -1),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: CustomPaint(
+                      painter: DiceFacePainter(displayValue),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            BoxShadow(
-              color: Colors.white.withValues(alpha: 0.8),
-              blurRadius: 4,
-              offset: const Offset(-1, -1),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomPaint(
-            painter: DiceFacePainter(displayValue),
-          ),
-        ),
-      )
-          .animate(controller: _controller, autoPlay: false)
-          .shake(hz: 8, duration: 450.ms, curve: Curves.easeInOut)
-          .scaleXY(begin: 1.0, end: 1.2, duration: 225.ms)
-          .then()
-          .scaleXY(begin: 1.2, end: 1.0, duration: 225.ms),
+          );
+        },
+      ),
     );
   }
 }

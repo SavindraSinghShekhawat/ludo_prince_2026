@@ -30,6 +30,7 @@ class GameState {
   final int diceValue;
   final bool isDiceRolled;
   final bool isRolling;
+  final bool isWaitingForResult;
   final int consecutiveSixes;
   final String message;
   final GameAction lastAction;
@@ -50,6 +51,7 @@ class GameState {
     this.diceValue = 1,
     this.isDiceRolled = false,
     this.isRolling = false,
+    this.isWaitingForResult = false,
     this.consecutiveSixes = 0,
     this.message = "Game Started!",
     this.lastAction = GameAction.none,
@@ -66,6 +68,7 @@ class GameState {
     int? diceValue,
     bool? isDiceRolled,
     bool? isRolling,
+    bool? isWaitingForResult,
     int? consecutiveSixes,
     String? message,
     GameAction? lastAction,
@@ -81,6 +84,7 @@ class GameState {
       diceValue: diceValue ?? this.diceValue,
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
       isRolling: isRolling ?? this.isRolling,
+      isWaitingForResult: isWaitingForResult ?? this.isWaitingForResult,
       consecutiveSixes: consecutiveSixes ?? this.consecutiveSixes,
       message: message ?? this.message,
       lastAction: lastAction ?? this.lastAction,
@@ -98,6 +102,7 @@ class GameState {
         "diceValue": diceValue,
         "isDiceRolled": isDiceRolled,
         "isRolling": isRolling,
+        "isWaitingForResult": isWaitingForResult,
         "consecutiveSixes": consecutiveSixes,
         "message": message,
         "lastAction": lastAction.name,
@@ -120,6 +125,7 @@ class GameState {
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       isRolling: json["isRolling"] ?? false,
+      isWaitingForResult: json["isWaitingForResult"] ?? false,
       consecutiveSixes: json["consecutiveSixes"],
       message: json["message"],
       lastAction:

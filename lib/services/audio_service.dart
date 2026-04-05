@@ -13,6 +13,8 @@ class AudioService extends ChangeNotifier {
   bool _isBgmEnabled = true;
   bool _isSfxEnabled = true;
   bool _isVibrationEnabled = true;
+  AudioPlayer? _rollLoopPlayer;
+  bool _shouldBeLoopingRoll = false;
 
   bool get isBgmEnabled => _isBgmEnabled;
   bool get isSfxEnabled => _isSfxEnabled;
@@ -99,6 +101,21 @@ class AudioService extends ChangeNotifier {
     if (!_isSfxEnabled) return;
 
     FlameAudio.play('roll.wav', volume: 0.8);
+  }
+
+  Future<void> startRollLoop() async {
+    _shouldBeLoopingRoll = true;
+    await init();
+    if (!_isSfxEnabled || !_shouldBeLoopingRoll || _rollLoopPlayer != null) {
+      return;
+    }
+    _rollLoopPlayer = await FlameAudio.loop('roll_loop.wav', volume: 0.7);
+  }
+
+  void stopRollLoop() {
+    _shouldBeLoopingRoll = false;
+    _rollLoopPlayer?.stop();
+    _rollLoopPlayer = null;
   }
 
   Future<void> playSix() async {

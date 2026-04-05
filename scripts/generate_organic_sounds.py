@@ -63,6 +63,50 @@ def generate_dice_roll(sample_rate=44100):
         samples.append(val * 0.25)
     return samples
 
+def generate_dice_roll_loop(duration=1.0, sample_rate=44100):
+    # A continuous clattering of dice for looping (no start/end phase)
+    samples = [0] * int(sample_rate * duration)
+    num_samples = len(samples)
+    
+    # Denser hit pattern for a continuous "rattle"
+    # 30-40 overlapping hits spread across the duration
+    num_hits = 35
+    for i in range(num_hits):
+        # Evenly-ish spaced but with jitter
+        hit_start = (i / num_hits) * duration + random.uniform(-0.02, 0.02)
+        
+        # Sharpness of each hit (fast decay)
+        decay = 180 + random.uniform(-40, 40)
+        # Resonant frequencies of plastic dice
+        freq1 = 900 + random.uniform(-100, 100)
+        freq2 = 1400 + random.uniform(-150, 150)
+        
+        hit_duration = 0.15 # 150ms per hit
+        num_hit_samples = int(sample_rate * hit_duration)
+        
+        amp = 0.15 + random.uniform(-0.05, 0.05)
+        
+        for j in range(num_hit_samples):
+            t = j / sample_rate
+            env = math.exp(-t * decay)
+            
+            res = math.sin(2 * math.pi * freq1 * t) * math.exp(-t * 80)
+            res2 = math.sin(2 * math.pi * freq2 * t) * math.exp(-t * 110)
+            noise = random.uniform(-1, 1) * 0.4 * math.exp(-t * 260)
+            
+            val = (res * 0.5 + res2 * 0.3 + noise) * env * amp
+            
+            # Wrap around for perfect loopability
+            idx = (int(hit_start * sample_rate) + j) % num_samples
+            samples[idx] += val
+            
+    # Normalize slightly and bring volume down to 0.25
+    max_val = max(abs(s) for s in samples) if samples else 1.0
+    if max_val > 0:
+        samples = [(s / max_val) * 0.25 for s in samples]
+        
+    return samples
+
 def generate_bell(freq, duration, sample_rate=44100):
     samples = []
     num_samples = int(sample_rate * duration)
@@ -332,6 +376,7 @@ for i in range(1, 7):
     write_wav(os.path.join(out_dir, f'move_{i}.wav'), generate_move_swoosh(i))
 
 write_wav(os.path.join(out_dir, 'roll.wav'), generate_dice_roll())
+write_wav(os.path.join(out_dir, 'roll_loop.wav'), generate_dice_roll_loop())
 write_wav(os.path.join(out_dir, 'six.wav'), generate_six_chime())
 write_wav(os.path.join(out_dir, 'home.wav'), generate_home_chime())
 write_wav(os.path.join(out_dir, 'safe.wav'), generate_safe_ding())
