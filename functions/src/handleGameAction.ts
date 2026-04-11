@@ -8,8 +8,11 @@ import {AppLogger} from "./utils/logger";
 import * as crypto from "node:crypto";
 
 function randomInt(min: number, max: number) {
-  // Use node:crypto.randomInt for cryptographically secure randomness
-  return crypto.randomInt(min, max);
+  // Use node:crypto.randomInt for cryptographically secure randomness.
+  // This is the gold standard for secure randomness in Node.js.
+  const val = crypto.randomInt(min, max);
+  AppLogger.debug(`[DiceService] Generated random value: ${val} in range [${min}, ${max})`);
+  return val;
 }
 
 export const handleGameAction = onValueCreated(
@@ -67,8 +70,9 @@ export const handleGameAction = onValueCreated(
             return;
           }
 
-          const dice = randomInt(1, 7);
-          AppLogger.debug(`[handleGameAction] ACCEPT ROLL: Generated dice ${dice} for ${playerSlot}`);
+          const dice = game.prefetchedRoll || randomInt(1, 7);
+          AppLogger.info(`[handleGameAction] AUDIT_ROLL: Player ${playerSlot} rolled ${dice} in game ${gameId}`);
+          AppLogger.debug(`[handleGameAction] ACCEPT ROLL: Used dice ${dice} (pref: ${game.prefetchedRoll}) for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");
@@ -83,6 +87,7 @@ export const handleGameAction = onValueCreated(
           } as RollEvent;
           game.eventCounter = eventCounter;
           game.isDiceRolled = true;
+          delete game.prefetchedRoll;
           return game;
         } else if (type === "move") {
           if (playerSlot !== currentTurn) {
@@ -110,6 +115,7 @@ export const handleGameAction = onValueCreated(
           game.eventCounter = eventCounter;
 
           game.isDiceRolled = false;
+          game.prefetchedRoll = randomInt(1, 7);
           return game;
         } else if (type === "timeout") {
           const now = Date.now();
@@ -157,6 +163,7 @@ export const handleGameAction = onValueCreated(
           game.turnStartedAt = ServerValue.TIMESTAMP;
           game.turnNumber = (game.turnNumber || 0) + 1;
           game.isDiceRolled = false;
+          game.prefetchedRoll = randomInt(1, 7);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");

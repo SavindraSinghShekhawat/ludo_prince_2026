@@ -5,6 +5,7 @@ import {PlayerMatchInfo} from "./models/Matchmaking";
 import {PlayerEntry} from "./models/Player";
 import {GameDocument} from "./models/GameDocument";
 import {AppLogger} from "./utils/logger";
+import {randomInt} from "node:crypto";
 
 /**
  * Matchmaking Cloud Function
@@ -104,6 +105,8 @@ export const handleMatchmaking = onValueCreated(
         turnOrder: [], // Will be populated below
         eventCounter: 0,
         players: {},
+        isDiceRolled: false,
+        prefetchedRoll: randomInt(1, 7),
         settings: {
           turnTimeSeconds: 15,
           maxSkips: 5,

@@ -22,10 +22,7 @@ class AudioControllerListener {
 
   void _handleStateUpdate(GameState state) {
     if (state.isWaitingForResult && !_wasWaitingForResult) {
-      audioService.startRollLoop();
-    } else if (!state.isWaitingForResult && _wasWaitingForResult) {
-      audioService.stopRollLoop();
-      // Play a one-shot landing sound if we just stopped waiting
+      // Trigger the crisp roll sound immediately at the start of the animation
       audioService.playRoll();
     }
     _wasWaitingForResult = state.isWaitingForResult;

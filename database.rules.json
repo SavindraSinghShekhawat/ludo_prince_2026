@@ -15,7 +15,13 @@
     "ludogames": {
       ".indexOn": ["status"],
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".write": "auth != null",
+      "$gameId": {
+        "prefetchedRoll": {
+          ".read": "auth != null && data.parent().child('players').child(data.parent().child('currentTurn').val()).child('uid').val() === auth.uid",
+          ".write": false
+        }
+      }
     },
     "matchmaking": {
       "$mode": {

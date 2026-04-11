@@ -671,6 +671,8 @@ class _PlayerPanelWrapper extends ConsumerWidget {
         .watch(gameStreamProvider.select((s) => s.value?.turnTimeSeconds ?? 8));
     final turnActionCount = ref
         .watch(gameStreamProvider.select((s) => s.value?.turnActionCount ?? 0));
+    final gameType = ref.watch(
+        gameStreamProvider.select((s) => s.value?.gameType ?? GameType.local));
 
     return _PlayerPanelContent(
       slot: slot,
@@ -684,6 +686,7 @@ class _PlayerPanelWrapper extends ConsumerWidget {
       turnStartedAt: turnStartedAt,
       turnTimeSeconds: turnTimeSeconds,
       turnActionCount: turnActionCount,
+      gameType: gameType,
     );
   }
 }
@@ -701,6 +704,7 @@ class _PlayerPanelContent extends StatelessWidget {
     required this.turnStartedAt,
     required this.turnTimeSeconds,
     required this.turnActionCount,
+    required this.gameType,
   });
 
   final PlayerSlot slot;
@@ -714,6 +718,7 @@ class _PlayerPanelContent extends StatelessWidget {
   final int? turnStartedAt;
   final int turnTimeSeconds;
   final int turnActionCount;
+  final GameType gameType;
 
   @override
   Widget build(BuildContext context) {
@@ -732,7 +737,12 @@ class _PlayerPanelContent extends StatelessWidget {
       decoration: BoxDecoration(
         color: displayColor,
         borderRadius: BorderRadius.circular(12),
-        border: isTurn ? null : Border.all(color: Colors.white70, width: 2),
+        border: (isTurn && gameType == GameType.online)
+            ? null
+            : Border.all(
+                color: isTurn ? Colors.white : Colors.white70,
+                width: isTurn ? 3.0 : 2,
+              ),
         boxShadow: [
           if (isTurn)
             BoxShadow(
@@ -762,21 +772,22 @@ class _PlayerPanelContent extends StatelessWidget {
       ),
     );
 
-    Widget avatarBox = isTurn
+    Widget avatarBox = (isTurn && gameType == GameType.online)
         ? _TurnTimer(
             key: ValueKey("${slot.name}_$turnActionCount"),
             turnStartedAt: turnStartedAt,
             turnTimeSeconds: turnTimeSeconds,
             child: avatarContent,
           )
-            .animate(onPlay: (controller) => controller.repeat(reverse: true))
-            .scaleXY(
-                begin: 1.0,
-                end: 1.08,
-                duration: 800.ms,
-                curve: Curves.easeInOut)
-            .shimmer(duration: 2.seconds, color: Colors.white24)
         : avatarContent;
+
+    if (isTurn) {
+      avatarBox = avatarBox
+          .animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .scaleXY(
+              begin: 1.0, end: 1.08, duration: 800.ms, curve: Curves.easeInOut)
+          .shimmer(duration: 2.seconds, color: Colors.white24);
+    }
 
     Widget diceBox;
     if (isWinner) {
@@ -833,12 +844,23 @@ class _PlayerPanelContent extends StatelessWidget {
       child: nameText,
     );
 
-    final skipIndicator = _SkipIndicator(skipCount: player.skipCount);
+    final showSkipDots = gameType == GameType.online;
+    final skipIndicator = showSkipDots
+        ? _SkipIndicator(skipCount: player.skipCount)
+        : const SizedBox.shrink();
     final nameAndDots = Row(
       mainAxisSize: MainAxisSize.min,
       children: isRightAligned
-          ? [skipIndicator, spacing, nameTag]
-          : [nameTag, spacing, skipIndicator],
+          ? [
+              if (showSkipDots) skipIndicator,
+              if (showSkipDots) spacing,
+              nameTag
+            ]
+          : [
+              nameTag,
+              if (showSkipDots) spacing,
+              if (showSkipDots) skipIndicator
+            ],
     );
 
     Widget panelContent = Container(

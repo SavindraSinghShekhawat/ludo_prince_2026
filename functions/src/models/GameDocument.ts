@@ -11,6 +11,7 @@ export interface GameDocument {
   turnStartedAt: object | number;
   diceValue?: number;
   isDiceRolled?: boolean;
+  prefetchedRoll?: number;
   consecutiveSixes?: number;
   winners?: string[];
   eventCounter: number;

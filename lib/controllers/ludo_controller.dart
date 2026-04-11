@@ -164,7 +164,19 @@ class LudoController implements GameController {
   @override
   bool get isActionInProgress => _isActionInProgress;
 
-  static final Random _rng = Random.secure();
+  static Random? __rng;
+  static Random get _rng {
+    try {
+      return __rng ??= Random.secure();
+    } catch (e) {
+      // Fallback only if Random.secure() is unsupported on the platform.
+      // We use the current time and a few other entropy sources for the fallback seed.
+      print(
+          "WARNING: Random.secure() not supported. Using seeded Random as fallback.");
+      return __rng ??=
+          Random(DateTime.now().microsecondsSinceEpoch ^ 0xDEADBEEF);
+    }
+  }
 
   static int generateDiceValue() => _rng.nextInt(6) + 1;
 
@@ -178,12 +190,37 @@ class LudoController implements GameController {
       return;
     }
 
-    // We removed _audioListener.playRollSound() from here because
-    // it's now handled by the AudioControllerListener observing the state change.
-    _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
-    if (!_isDisposed) _streamController.add(_state);
+    final prefetched = _state.prefetchedRoll;
 
-    eventProvider.onRollRequested();
+    if (prefetched != null && state.gameType == GameType.online) {
+      // OPTIMISTIC PREFETCH FLOW
+      _state = _state.copyWith(
+        isRolling: true,
+        isWaitingForResult: true,
+        diceValue: prefetched,
+        prefetchedRoll: null, // Clear it locally so it cannot be reused
+      );
+      if (!_isDisposed) _streamController.add(_state);
+
+      // Start the intent request immediately
+      eventProvider.onRollRequested();
+
+      // Artificial "rolling" duration for visual feel
+      await Future.delayed(const Duration(milliseconds: 650));
+      if (_isDisposed) return;
+
+      // "Land" the dice locally
+      _state = _state.copyWith(isWaitingForResult: false);
+      if (!_isDisposed) _streamController.add(_state);
+
+      // The actual execution (engine logic) will happen when the RollEvent
+      // arrives from the server, making it authoritative.
+    } else {
+      // CLASSIC FLOW (Local, Bot, or fallback)
+      _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
+      if (!_isDisposed) _streamController.add(_state);
+      eventProvider.onRollRequested();
+    }
   }
 
   @override
@@ -203,33 +240,37 @@ class LudoController implements GameController {
     _isActionInProgress = true;
 
     // Initial "anticipation" phase for all players (Local, Remote, and Bot)
-    _state = _state.copyWith(
-      isRolling: true,
-      isWaitingForResult: true,
-    );
-    if (!_isDisposed) _streamController.add(_state);
+    // If the local player already optimistically landed, we skip the waiting phase
+    bool alreadyLanded = !_state.isWaitingForResult &&
+        _state.isRolling &&
+        _state.diceValue == value;
 
-    // Minimum "anticipation" duration to ensure the loop is heard/seen
-    await Future.delayed(const Duration(milliseconds: 300));
-    if (_isDisposed) {
-      _isActionInProgress = false;
-      return;
+    if (!alreadyLanded) {
+      _state = _state.copyWith(
+        isRolling: true,
+        isWaitingForResult: true,
+      );
+      if (!_isDisposed) _streamController.add(_state);
+
+      // Minimum "anticipation" duration to ensure the loop is heard/seen
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (_isDisposed) {
+        _isActionInProgress = false;
+        return;
+      }
+
+      // Transition from "waiting" to "showing result"
+      _state = _state.copyWith(
+        isRolling: true,
+        isWaitingForResult: false,
+        diceValue: value,
+      );
+      if (!_isDisposed) _streamController.add(_state);
+
+      // Fixed duration for the "landing" animation
+      await Future.delayed(const Duration(milliseconds: 450));
     }
-
-    // Transition from "waiting" to "showing result"
-    _state = _state.copyWith(
-      isRolling: true,
-      isWaitingForResult: false,
-      diceValue: value,
-    );
     if (!_isDisposed) _streamController.add(_state);
-
-    // Fixed duration for the "landing" animation
-    await Future.delayed(const Duration(milliseconds: 450));
-    if (_isDisposed) {
-      _isActionInProgress = false;
-      return;
-    }
 
     // Now calculate the engine result to determine if an auto-action is pending
     final result = _engine.rollDice(_state, value);

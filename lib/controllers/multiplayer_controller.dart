@@ -19,6 +19,7 @@ class MultiplayerGameController extends LudoController {
   int _lastAppliedEventId = 0;
   Timer? _timeoutMonitor;
   int? _turnStartedAt;
+  StreamSubscription? _prefRollSubscription;
 
   MultiplayerGameController(
     Map<PlayerSlot, PlayerSetupConfig> config, {
@@ -48,15 +49,21 @@ class MultiplayerGameController extends LudoController {
         gameType: GameType.online,
         turnStartedAt: _turnStartedAt,
         turnTimeSeconds: turnTime,
+        prefetchedRoll: data['prefetchedRoll'] as int?,
       );
     } else {
       // If no snapshot, ensure state has correct mode from DB
       final dbMode = data['gameMode'];
       if (dbMode != null) {
         final mode = GameMode.values.firstWhere((e) => e.name == dbMode);
-        state = state.copyWith(gameMode: mode);
+        state = state.copyWith(
+          gameMode: mode,
+          prefetchedRoll: data['prefetchedRoll'] as int?,
+        );
       }
     }
+
+    _startPrefRollListener();
 
     // Fetch missing events
     final lastIdPad = _lastAppliedEventId.toString().padLeft(5, '0');
@@ -91,6 +98,31 @@ class MultiplayerGameController extends LudoController {
 
     if (!isDisposed) streamController.add(state);
     _startTimeoutMonitor();
+  }
+
+  void _startPrefRollListener() {
+    _prefRollSubscription?.cancel();
+    _prefRollSubscription = _db
+        .ref()
+        .child('ludogames')
+        .child(gameId)
+        .child('prefetchedRoll')
+        .onValue
+        .listen((event) {
+      final val = event.snapshot.value as int?;
+      if (isDisposed) return;
+
+      // If we are currently rolling or already landed on this value optimistically,
+      // ignore the server update to prevent "ping-ponging" the old value back.
+      if (state.isRolling || state.isDiceRolled) {
+        if (state.diceValue == val) return;
+      }
+
+      if (val != state.prefetchedRoll) {
+        state = state.copyWith(prefetchedRoll: val);
+        streamController.add(state);
+      }
+    });
   }
 
   void _startTimeoutMonitor() {
@@ -131,6 +163,7 @@ class MultiplayerGameController extends LudoController {
   @override
   Future<void> dispose() async {
     _timeoutMonitor?.cancel();
+    _prefRollSubscription?.cancel();
     await super.dispose();
   }
 

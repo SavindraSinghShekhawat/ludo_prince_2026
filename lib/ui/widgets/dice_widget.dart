@@ -20,6 +20,8 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
 
   bool _isAnimating = false;
   bool _isWaitingForResult = false;
+  DateTime? _waitStartTime;
+  double _currentRotationSpeed = 100; // ms per shuffle
 
   static final Random _rng = Random.secure();
 
@@ -75,9 +77,13 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
           setState(() {
             _isWaitingForResult = true;
             _isAnimating = true;
+            _waitStartTime = DateTime.now();
+            _currentRotationSpeed = 100;
           });
-          _controller.duration = const Duration(milliseconds: 100);
+          _controller.duration =
+              Duration(milliseconds: _currentRotationSpeed.toInt());
           _controller.repeat();
+          _startSlowdownTimer();
         }
 
         // Detect Transition from "Waiting" to "Landing"
@@ -131,54 +137,93 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
           final double offset = _isAnimating ? _shakeAnimation.value : 0;
           final double scale = _isAnimating ? _scaleAnimation.value : 1.0;
 
-          return Transform.translate(
-            offset: Offset(offset, -offset),
-            child: Transform.scale(
-              scale: scale,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFFFFFF), // White highlight
-                      Color(0xFFE5E4E2), // Platinum base
-                      Color(0xFFD0D3D6), // Slightly darker
-                      Color(0xFFA0A5A9), // Deep shadow
-                    ],
-                    stops: [0.0, 0.4, 0.7, 1.0],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: const Color(0xFF7B8084), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 6,
-                      offset: const Offset(0, 4),
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Transform.translate(
+                offset: Offset(offset, -offset),
+                child: Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFFFFFFF), // White highlight
+                          Color(0xFFE5E4E2), // Platinum base
+                          Color(0xFFD0D3D6), // Slightly darker
+                          Color(0xFFA0A5A9), // Deep shadow
+                        ],
+                        stops: [0.0, 0.4, 0.7, 1.0],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: const Color(0xFF7B8084), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 4),
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          blurRadius: 4,
+                          offset: const Offset(-1, -1),
+                        ),
+                      ],
                     ),
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      blurRadius: 4,
-                      offset: const Offset(-1, -1),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: CustomPaint(
-                      painter: DiceFacePainter(displayValue),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: CustomPaint(
+                          painter: DiceFacePainter(displayValue),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+              if (_isWaitingForResult &&
+                  _waitStartTime != null &&
+                  DateTime.now().difference(_waitStartTime!).inMilliseconds >
+                      2500)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "Syncing...",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),
     );
+  }
+
+  void _startSlowdownTimer() async {
+    while (_isWaitingForResult && mounted) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!_isWaitingForResult || !mounted) break;
+
+      final elapsed = DateTime.now().difference(_waitStartTime!).inMilliseconds;
+      if (elapsed > 1500) {
+        setState(() {
+          // Gradually slow down from 100ms to 400ms per shuffle
+          _currentRotationSpeed = min(400, 100 + (elapsed - 1500) / 10);
+          _controller.duration =
+              Duration(milliseconds: _currentRotationSpeed.toInt());
+          if (!_controller.isAnimating) _controller.repeat();
+        });
+      }
+    }
   }
 }
 
