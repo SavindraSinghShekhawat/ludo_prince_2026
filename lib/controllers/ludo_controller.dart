@@ -65,6 +65,7 @@ class LudoController implements GameController {
 
   bool _isDisposed = false;
 
+  @override
   bool get isDisposed => _isDisposed;
 
   final InitialGameState initialState;

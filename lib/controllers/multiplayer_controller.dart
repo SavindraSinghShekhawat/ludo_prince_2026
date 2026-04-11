@@ -22,12 +22,10 @@ class MultiplayerGameController extends LudoController {
   StreamSubscription? _prefRollSubscription;
 
   MultiplayerGameController(
-    Map<PlayerSlot, PlayerSetupConfig> config, {
+    super.config, {
     required this.gameId,
-    required PlayerSlot localPlayerSlot,
-  }) : super(config,
-            localPlayerSlot: localPlayerSlot,
-            eventProvider: FirebaseEventProvider(gameId: gameId)) {
+    required PlayerSlot super.localPlayerSlot,
+  }) : super(eventProvider: FirebaseEventProvider(gameId: gameId)) {
     // Mark the game as online immediately so GameOverDialog navigates correctly.
     state = state.copyWith(gameType: GameType.online);
     socialService.updatePresence(UserStatus.inGame, gameId: gameId);
@@ -213,8 +211,9 @@ class MultiplayerGameController extends LudoController {
 
   @override
   Future<void> sendMoveIntent(Token token) async {
-    if (isDisposed || !isMyTurn || !state.isDiceRolled || isActionInProgress)
+    if (isDisposed || !isMyTurn || !state.isDiceRolled || isActionInProgress) {
       return;
+    }
 
     await super.sendMoveIntent(token);
   }

@@ -85,9 +85,9 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
       leading: BackButton(
         color: Colors.white,
         onPressed: () {
-          showDialog(
+          CustomDialogLayout.show(
             context: context,
-            builder: (context) => CustomDialogLayout(
+            child: CustomDialogLayout(
               header: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -169,9 +169,9 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.help_outline, color: Colors.white, size: 28),
           onPressed: () {
-            showDialog(
+            CustomDialogLayout.show(
               context: context,
-              builder: (context) => const RulesDialog(),
+              child: const RulesDialog(),
             );
           },
           tooltip: 'Game Rules',
@@ -179,9 +179,9 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.settings, color: Colors.white),
           onPressed: () {
-            showDialog(
+            CustomDialogLayout.show(
               context: context,
-              builder: (context) => const SettingsDialog(),
+              child: const SettingsDialog(),
             );
           },
           tooltip: 'Settings',
@@ -207,10 +207,10 @@ class _GameBody extends ConsumerWidget {
             // Show dialog for everyone, including those who left/forfeited
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              showDialog(
+              CustomDialogLayout.show(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => GameOverDialog(state: state),
+                child: GameOverDialog(state: state),
               );
             });
           }

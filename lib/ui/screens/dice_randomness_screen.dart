@@ -304,9 +304,9 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
     double totalDev = 0;
     if (_totalRolls > 1000) {
       final expected = _totalRolls / 6;
-      _distribution.values.forEach((v) {
+      for (var v in _distribution.values) {
         totalDev += (v - expected).abs() / expected;
-      });
+      }
     }
     final fairnessScore = (100 - (totalDev / 6 * 100)).clamp(0, 100);
 

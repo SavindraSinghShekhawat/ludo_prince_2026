@@ -96,8 +96,7 @@ sealed class GameEvent {
 
 class RollEvent extends GameEvent {
   final int diceValue;
-  RollEvent(this.diceValue, {required int timestamp})
-      : super(timestamp: timestamp);
+  RollEvent(this.diceValue, {required super.timestamp});
 
   @override
   Map<String, dynamic> toJson() => {
@@ -110,8 +109,7 @@ class RollEvent extends GameEvent {
 class MoveEvent extends GameEvent {
   final int tokenId;
   final bool autoMove;
-  MoveEvent(this.tokenId, {required int timestamp, this.autoMove = false})
-      : super(timestamp: timestamp);
+  MoveEvent(this.tokenId, {required super.timestamp, this.autoMove = false});
 
   @override
   Map<String, dynamic> toJson() => {
@@ -124,8 +122,7 @@ class MoveEvent extends GameEvent {
 
 class QuitEvent extends GameEvent {
   final PlayerSlot playerSlot;
-  QuitEvent(this.playerSlot, {required int timestamp})
-      : super(timestamp: timestamp);
+  QuitEvent(this.playerSlot, {required super.timestamp});
 
   @override
   Map<String, dynamic> toJson() => {
@@ -137,8 +134,7 @@ class QuitEvent extends GameEvent {
 
 class SkipEvent extends GameEvent {
   final PlayerSlot playerSlot;
-  SkipEvent(this.playerSlot, {required int timestamp})
-      : super(timestamp: timestamp);
+  SkipEvent(this.playerSlot, {required super.timestamp});
 
   @override
   Map<String, dynamic> toJson() => {

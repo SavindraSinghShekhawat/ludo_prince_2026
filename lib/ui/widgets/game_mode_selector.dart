@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/game_state.dart';
 import '../dialogs/game_mode_info_dialog.dart';
+import 'custom_dialog_layout.dart';
 
 class GameModeSelector extends StatelessWidget {
   final GameMode currentMode;
@@ -160,9 +161,9 @@ class GameModeSelector extends StatelessWidget {
                         .withValues(alpha: isEnabled ? 1.0 : 0.4),
                   ),
                   onPressed: () {
-                    showDialog(
+                    CustomDialogLayout.show(
                       context: context,
-                      builder: (context) => GameModeInfoDialog(
+                      child: GameModeInfoDialog(
                         title: infoTitle,
                         items: infoItems,
                         headerIcon: icon,

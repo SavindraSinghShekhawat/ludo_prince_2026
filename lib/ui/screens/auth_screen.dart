@@ -72,9 +72,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   void _showSwitchAccountDialog(AuthCredential credential) {
-    showDialog(
+    CustomDialogLayout.show(
       context: context,
-      builder: (context) => CustomDialogLayout(
+      child: CustomDialogLayout(
         header: const Text(
           'Account Already Linked',
           style: TextStyle(

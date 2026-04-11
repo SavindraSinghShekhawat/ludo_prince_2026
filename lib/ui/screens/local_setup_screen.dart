@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import 'package:ludo_prince/ui/widgets/robot_icon.dart';
 import 'package:ludo_prince/models/player.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
@@ -27,7 +28,7 @@ class LocalSetupScreen extends ConsumerStatefulWidget {
 class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   int _numPlayers = 2;
   final Map<PlayerSlot, TextEditingController> _controllers = {};
-  Map<PlayerSlot, bool> _isBotConfig = {};
+  final Map<PlayerSlot, bool> _isBotConfig = {};
   InitialGameState _initialState = InitialGameState.normal;
   GameMode _gameMode = GameMode.classic;
 
@@ -80,9 +81,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {
-              showDialog(
+              CustomDialogLayout.show(
                 context: context,
-                builder: (context) => const RulesDialog(),
+                child: const RulesDialog(),
               );
             },
             tooltip: 'Game Rules',
@@ -90,9 +91,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              showDialog(
+              CustomDialogLayout.show(
                 context: context,
-                builder: (context) => const SettingsDialog(),
+                child: const SettingsDialog(),
               );
             },
             tooltip: 'Settings',

@@ -303,6 +303,9 @@ class _GameButtonState extends State<GameButton> {
   @override
   Widget build(BuildContext context) {
     final double buttonHeight = widget.height ?? (widget.isSmall ? 40 : 60);
+    final bool isDarkText = widget.color.computeLuminance() > 0.5;
+    final Color contentColor =
+        isDarkText ? AppColors.systemBackground : Colors.white;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -363,19 +366,13 @@ class _GameButtonState extends State<GameButton> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (widget.icon != null) ...[
-                          Icon(widget.icon,
-                              color: widget.color == AppColors.starPlatinum
-                                  ? AppColors.systemBackground
-                                  : Colors.white,
-                              size: 20),
+                          Icon(widget.icon, color: contentColor, size: 20),
                           const SizedBox(width: 12),
                         ],
                         Text(
                           widget.text.toUpperCase(),
                           style: GoogleFonts.outfit(
-                            color: widget.color == AppColors.starPlatinum
-                                ? AppColors.systemBackground
-                                : Colors.white,
+                            color: contentColor,
                             fontSize:
                                 widget.fontSize ?? (widget.isSmall ? 12 : 18),
                             fontWeight: FontWeight.w500,
@@ -385,7 +382,9 @@ class _GameButtonState extends State<GameButton> {
                       ],
                     ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
                           duration: 4.seconds,
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: isDarkText
+                              ? Colors.black.withValues(alpha: 0.1)
+                              : Colors.white.withValues(alpha: 0.15),
                         ),
                   ),
                   // Loading Layer

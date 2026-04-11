@@ -179,15 +179,17 @@ class StaticBoardPainter extends CustomPainter {
           (col == 0 && row == 0) || (col == 9 && row == 9) ? 'B' : 'A';
 
       double labelX, labelY;
-      if ((col == 0 && row == 9) || (col == 9 && row == 9))
+      if ((col == 0 && row == 9) || (col == 9 && row == 9)) {
         labelY = rect.top + cellSize / 2;
-      else
+      } else {
         labelY = rect.bottom - cellSize / 2;
+      }
 
-      if ((col == 9 && row == 0) || (col == 9 && row == 9))
+      if ((col == 9 && row == 0) || (col == 9 && row == 9)) {
         labelX = rect.left + cellSize / 2;
-      else
+      } else {
         labelX = rect.right - cellSize / 2;
+      }
 
       final labelCenter = Offset(labelX, labelY);
       final badgeRadius = cellSize * 0.8 / 2;
@@ -378,30 +380,38 @@ class StaticBoardPainter extends CustomPainter {
   }
 
   Color _getCellColor(int col, int row) {
-    if (row == 7 && col >= 1 && col <= 5)
+    if (row == 7 && col >= 1 && col <= 5) {
       return AppColors.player4Red
           .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    if (col == 7 && row >= 1 && row <= 5)
+    }
+    if (col == 7 && row >= 1 && row <= 5) {
       return AppColors.player3Green
           .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    if (row == 7 && col >= 9 && col <= 13)
+    }
+    if (row == 7 && col >= 9 && col <= 13) {
       return AppColors.player2Yellow
           .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    if (col == 7 && row >= 9 && row <= 13)
+    }
+    if (col == 7 && row >= 9 && row <= 13) {
       return AppColors.player1Blue
           .withValues(alpha: AppColors.boardHomeStretchAlpha);
-    if (col == 1 && row == 6)
+    }
+    if (col == 1 && row == 6) {
       return AppColors.player4Red
           .withValues(alpha: AppColors.boardStartCellAlpha);
-    if (col == 8 && row == 1)
+    }
+    if (col == 8 && row == 1) {
       return AppColors.player3Green
           .withValues(alpha: AppColors.boardStartCellAlpha);
-    if (col == 13 && row == 8)
+    }
+    if (col == 13 && row == 8) {
       return AppColors.player2Yellow
           .withValues(alpha: AppColors.boardStartCellAlpha);
-    if (col == 6 && row == 13)
+    }
+    if (col == 6 && row == 13) {
       return AppColors.player1Blue
           .withValues(alpha: AppColors.boardStartCellAlpha);
+    }
     return Colors.white.withValues(alpha: 0.15);
   }
 

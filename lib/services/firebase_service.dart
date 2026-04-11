@@ -11,6 +11,7 @@ import '../firebase_options.dart';
 import 'profile_service.dart';
 import '../models/user_profile.dart';
 import 'social_service.dart';
+import 'remote_config_service.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -83,6 +84,9 @@ class FirebaseService {
       AppLogger.debug(
           '[FirebaseService] Server time offset updated: $_serverTimeOffset ms');
     });
+
+    // Initialize Remote Config
+    await remoteConfigService.initialize();
 
     _initialized = true;
 

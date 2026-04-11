@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import '../../providers/notification_provider.dart';
 import '../../models/ludo_notification.dart';
 import '../../utils/colors.dart';
 import '../dialogs/friend_requests_dialog.dart';
 import '../dialogs/invite_dialog.dart';
-import '../../main.dart'; // Import navigatorKey
+import '../../utils/app_keys.dart';
 
 class TopNotificationHost extends ConsumerWidget {
   const TopNotificationHost({super.key});
@@ -179,15 +180,15 @@ class TopNotificationToast extends ConsumerWidget {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {
-      showDialog(
+      CustomDialogLayout.show(
         context: navigatorKey.currentState!.context,
-        builder: (context) => const FriendRequestsDialog(),
+        child: const FriendRequestsDialog(),
       );
     } else if (n.type == NotificationType.gameInvite) {
-      showDialog(
+      CustomDialogLayout.show(
         context: navigatorKey.currentState!.context,
         barrierDismissible: false,
-        builder: (context) => InviteDialog(
+        child: InviteDialog(
           inviteId: n.id,
           fromName: n.data['fromName'] ?? 'Someone',
           gameId: n.data['gameId'] ?? '',

@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import '../../models/user_profile.dart';
 import '../../services/profile_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -122,9 +122,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 IconButton(
                   icon: const Icon(Icons.notifications_none_outlined),
                   onPressed: () {
-                    showDialog(
+                    CustomDialogLayout.show(
                       context: context,
-                      builder: (context) => const NotificationInboxDialog(),
+                      child: const NotificationInboxDialog(),
                     );
                   },
                 ),
@@ -254,9 +254,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   void _handleJoinRoom() {
     // We will implement JoinByCodeDialog later
-    showDialog(
+    CustomDialogLayout.show(
       context: context,
-      builder: (context) => const JoinByCodeDialog(),
+      child: const JoinByCodeDialog(),
     );
   }
 

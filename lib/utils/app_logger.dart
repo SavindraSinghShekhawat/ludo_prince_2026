@@ -10,6 +10,14 @@ class AppLogger {
     }
   }
 
+  /// Logs an info message if the app is in debug mode.
+  static void info(Object? message) {
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('INFO:  $message');
+    }
+  }
+
   /// Logs an error message if the app is in debug mode.
   static void error(Object? message, [Object? error, StackTrace? stackTrace]) {
     if (kDebugMode) {

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:ludo_prince/services/network_service.dart';
+import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import '../../services/firebase_service.dart';
 import '../../services/matchmaking_service.dart';
 import '../../services/audio_service.dart';
@@ -183,9 +184,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             IconButton(
               icon: const Icon(Icons.person_outline),
               onPressed: () {
-                showDialog(
+                CustomDialogLayout.show(
                   context: context,
-                  builder: (context) => const ProfileDialog(),
+                  child: const ProfileDialog(),
                 );
               },
               tooltip: 'Player Profile',
@@ -193,9 +194,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                showDialog(
+                CustomDialogLayout.show(
                   context: context,
-                  builder: (context) => const SettingsDialog(),
+                  child: const SettingsDialog(),
                 );
               },
               tooltip: 'Settings',

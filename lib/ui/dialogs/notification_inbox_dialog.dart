@@ -265,16 +265,15 @@ class NotificationInboxDialog extends ConsumerWidget {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {
-      showDialog(
+      CustomDialogLayout.show(
         context: context,
-        builder: (context) =>
-            const FriendRequestsDialog(), // Handled by service listener
+        child: const FriendRequestsDialog(), // Handled by service listener
       );
     } else if (n.type == NotificationType.gameInvite) {
-      showDialog(
+      CustomDialogLayout.show(
         context: context,
         barrierDismissible: false,
-        builder: (context) => InviteDialog(
+        child: InviteDialog(
           inviteId: n.id,
           fromName: n.data['fromName'] ?? 'Someone',
           gameId: n.data['gameId'] ?? '',

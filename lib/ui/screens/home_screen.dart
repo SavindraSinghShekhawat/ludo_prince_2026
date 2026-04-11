@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
 import 'local_setup_screen.dart';
@@ -369,9 +370,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           GestureDetector(
             onTap: () {
-              showDialog(
+              CustomDialogLayout.show(
                 context: context,
-                builder: (context) => const ProfileDialog(),
+                child: const ProfileDialog(),
               );
             },
             child: Row(
@@ -423,9 +424,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        showDialog(
+        CustomDialogLayout.show(
           context: context,
-          builder: (context) => const NotificationInboxDialog(),
+          child: const NotificationInboxDialog(),
         );
       },
       child: Stack(

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/package_info_provider.dart';
@@ -10,6 +11,8 @@ import '../../utils/colors.dart';
 import '../dialogs/profile_dialog.dart';
 import '../../utils/share_helper.dart';
 import 'feedback_screen.dart';
+import '../../services/remote_config_service.dart';
+import '../dialogs/update_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -19,6 +22,39 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _isCheckingUpdate = false;
+
+  Future<void> _handleUpdateCheck() async {
+    setState(() => _isCheckingUpdate = true);
+
+    try {
+      final status = await remoteConfigService.checkUpdate();
+
+      if (mounted) {
+        if (status == UpdateStatus.none) {
+          CustomSnackBar.show(context,
+              message: "You're already on the latest version!",
+              isSuccess: true);
+        } else {
+          UpdateDialog.show(
+            context,
+            isForce: status == UpdateStatus.force,
+            message: remoteConfigService.updateMessage,
+            currentVersion: remoteConfigService.currentVersion,
+            newVersion: remoteConfigService.latestVersion,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(context,
+            message: "Failed to check for updates: $e", isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isCheckingUpdate = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final audio = ref.watch(audioProvider);
@@ -41,9 +77,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 16),
               InkWell(
                 onTap: () {
-                  showDialog(
+                  CustomDialogLayout.show(
                     context: context,
-                    builder: (context) => const ProfileDialog(),
+                    child: const ProfileDialog(),
                   );
                 },
                 borderRadius: BorderRadius.circular(24),
@@ -157,6 +193,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       builder: (_) => const DiceRandomnessScreen()),
                 ),
               ),
+              const SizedBox(height: 12),
+              _buildSettingButton(
+                title: "Check for Update",
+                subtitle: _isCheckingUpdate
+                    ? "Searching for latest version..."
+                    : "Make sure you're on the best version",
+                icon: Icons.update_rounded,
+                accentColor: AppColors.primaryCyan,
+                isLoading: _isCheckingUpdate,
+                onTap: _isCheckingUpdate ? () {} : _handleUpdateCheck,
+              ),
               const SizedBox(height: 48),
 
               Center(
@@ -260,9 +307,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required IconData icon,
     required Color accentColor,
     required VoidCallback onTap,
+    bool isLoading = false,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       borderRadius: BorderRadius.circular(20),
       child: GlassContainer(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -275,7 +323,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 color: Colors.white.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: accentColor, size: 24),
+              child: isLoading
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: accentColor,
+                      ),
+                    )
+                  : Icon(icon, color: accentColor, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -301,7 +358,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white24),
+            if (!isLoading)
+              const Icon(Icons.chevron_right, color: Colors.white24),
           ],
         ),
       ),

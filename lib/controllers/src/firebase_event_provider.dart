@@ -24,8 +24,9 @@ class FirebaseEventProvider extends GameEventProvider {
         .onChildAdded
         .listen((event) {
       if (event.snapshot.exists) {
-        if (event.snapshot.key == startAfterId)
+        if (event.snapshot.key == startAfterId) {
           return; // skip the one we started after
+        }
 
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
         _controller.add(GameEvent.fromJson(data));

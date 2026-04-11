@@ -12,11 +12,14 @@ import 'services/presence_service.dart';
 import 'services/firebase_service.dart';
 import 'services/social_service.dart';
 import 'services/profile_service.dart';
+import 'services/remote_config_service.dart';
+import 'ui/dialogs/update_dialog.dart';
 import 'ui/widgets/shared_ui.dart';
 import 'ui/widgets/top_notification_host.dart';
 import 'providers/notification_provider.dart';
 import 'models/ludo_notification.dart';
 import 'utils/colors.dart';
+import 'utils/app_keys.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,8 +67,6 @@ void main() async {
   );
 }
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
 class LudoPrinceApp extends StatefulWidget {
   final bool hasSeenOnboarding;
   const LudoPrinceApp({super.key, required this.hasSeenOnboarding});
@@ -83,6 +84,19 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     presenceService.setPresence();
+
+    // Check for App Updates
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (remoteConfigService.updateStatus != UpdateStatus.none) {
+        UpdateDialog.show(
+          navigatorKey.currentContext!,
+          isForce: remoteConfigService.updateStatus == UpdateStatus.force,
+          message: remoteConfigService.updateMessage,
+          currentVersion: remoteConfigService.currentVersion,
+          newVersion: remoteConfigService.latestVersion,
+        );
+      }
+    });
 
     // Global listener for game invites
     _inviteSubscription = socialService.watchInvites().listen((event) {
@@ -226,12 +240,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
         ),
         dialogTheme: DialogThemeData(
           backgroundColor: AppColors.systemSurface,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
-            side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
           ),
           titleTextStyle: GoogleFonts.outfit(
             color: Colors.white,
