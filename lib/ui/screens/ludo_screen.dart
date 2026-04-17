@@ -197,7 +197,9 @@ class _GameBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState = ref.watch(gameStreamProvider);
+    final hasData = ref.watch(
+        gameStreamProvider.select((s) => s.hasValue && s.value != null));
+    final hasError = ref.watch(gameStreamProvider.select((s) => s.hasError));
 
     ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
       next.whenData((state) {
@@ -218,59 +220,63 @@ class _GameBody extends ConsumerWidget {
       });
     });
 
-    return asyncState.when(
-      data: (gameState) => LayoutBuilder(
-        builder: (context, constraints) {
-          final isLandscape = constraints.maxWidth > constraints.maxHeight;
-          if (isLandscape) {
-            return _LandscapeLayout(gameState: gameState);
-          } else {
-            return _PortraitLayout(gameState: gameState);
-          }
-        },
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(e.toString())),
+    if (hasError) {
+      final error = ref.watch(gameStreamProvider.select((s) => s.error));
+      return Center(child: Text(error.toString()));
+    }
+
+    if (!hasData) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape = constraints.maxWidth > constraints.maxHeight;
+        if (isLandscape) {
+          return const _LandscapeLayout();
+        } else {
+          return const _PortraitLayout();
+        }
+      },
     );
   }
 }
 
 class _PortraitLayout extends StatelessWidget {
-  final GameState gameState;
-  const _PortraitLayout({required this.gameState});
+  const _PortraitLayout();
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return Column(
-        children: [
+        children: const [
           Expanded(
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: _TopPanels(gameState: gameState),
+                padding: EdgeInsets.only(bottom: 12.0),
+                child: _TopPanels(),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: AspectRatio(
               aspectRatio: 1,
-              child: _BoardArea(gameState: gameState),
+              child: _BoardArea(),
             ),
           ),
           Expanded(
             child: Align(
               alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.only(top: 12.0),
-                child: _BottomPanels(gameState: gameState),
+                padding: EdgeInsets.only(top: 12.0),
+                child: _BottomPanels(),
               ),
             ),
           ),
-          _StatusMessage(message: gameState.message),
-          const SizedBox(height: 10),
+          _StatusMessage(),
+          SizedBox(height: 10),
         ],
       );
     });
@@ -278,8 +284,7 @@ class _PortraitLayout extends StatelessWidget {
 }
 
 class _LandscapeLayout extends StatelessWidget {
-  final GameState gameState;
-  const _LandscapeLayout({required this.gameState});
+  const _LandscapeLayout();
 
   @override
   Widget build(BuildContext context) {
@@ -288,16 +293,16 @@ class _LandscapeLayout extends StatelessWidget {
 
       return Row(
         children: [
-          Expanded(
-            child: _LandscapeSidePanels(gameState: gameState, isLeft: true),
+          const Expanded(
+            child: _LandscapeSidePanels(isLeft: true),
           ),
           SizedBox(
             width: boardSize,
             height: boardSize,
-            child: _BoardArea(gameState: gameState),
+            child: const _BoardArea(),
           ),
-          Expanded(
-            child: _LandscapeSidePanels(gameState: gameState, isLeft: false),
+          const Expanded(
+            child: _LandscapeSidePanels(isLeft: false),
           ),
         ],
       );
@@ -305,12 +310,14 @@ class _LandscapeLayout extends StatelessWidget {
   }
 }
 
-class _StatusMessage extends StatelessWidget {
-  final String message;
-  const _StatusMessage({required this.message});
+class _StatusMessage extends ConsumerWidget {
+  const _StatusMessage();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final message = ref.watch(
+        gameStreamProvider.select((s) => s.value?.message ?? ""));
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Text(
@@ -329,8 +336,7 @@ class _StatusMessage extends StatelessWidget {
 }
 
 class _BoardArea extends StatelessWidget {
-  final GameState gameState;
-  const _BoardArea({required this.gameState});
+  const _BoardArea();
 
   @override
   Widget build(BuildContext context) {
@@ -370,15 +376,10 @@ class _BoardInteractionLayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDiceRolled = ref.watch(
-        gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false));
-
     return GestureDetector(
       onTapUp: (details) {
-        if (!isDiceRolled) return;
-
         final gameState = ref.read(gameStreamProvider).value;
-        if (gameState == null) return;
+        if (gameState == null || !gameState.isDiceRolled) return;
 
         bool isMoveValid(Token t, GameState state) {
           if (t.state == TokenState.home) {
@@ -546,23 +547,27 @@ class _TokenLayer extends ConsumerWidget {
   }
 }
 
-class _TopPanels extends StatelessWidget {
-  final GameState gameState;
-  const _TopPanels({required this.gameState});
+class _TopPanels extends ConsumerWidget {
+  const _TopPanels();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasSlot4 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false));
+    final hasSlot3 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false));
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (gameState.players.any((p) => p.slot == PlayerSlot.slot4))
-            _PlayerPanelWrapper(slot: PlayerSlot.slot4)
+          if (hasSlot4)
+            const _PlayerPanelWrapper(slot: PlayerSlot.slot4)
           else
             const Expanded(child: SizedBox()),
-          if (gameState.players.any((p) => p.slot == PlayerSlot.slot3))
-            _PlayerPanelWrapper(slot: PlayerSlot.slot3)
+          if (hasSlot3)
+            const _PlayerPanelWrapper(slot: PlayerSlot.slot3)
           else
             const Expanded(child: SizedBox()),
         ],
@@ -571,23 +576,27 @@ class _TopPanels extends StatelessWidget {
   }
 }
 
-class _BottomPanels extends StatelessWidget {
-  final GameState gameState;
-  const _BottomPanels({required this.gameState});
+class _BottomPanels extends ConsumerWidget {
+  const _BottomPanels();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasSlot1 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false));
+    final hasSlot2 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false));
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (gameState.players.any((p) => p.slot == PlayerSlot.slot1))
-            _PlayerPanelWrapper(slot: PlayerSlot.slot1)
+          if (hasSlot1)
+            const _PlayerPanelWrapper(slot: PlayerSlot.slot1)
           else
             const Expanded(child: SizedBox()),
-          if (gameState.players.any((p) => p.slot == PlayerSlot.slot2))
-            _PlayerPanelWrapper(slot: PlayerSlot.slot2)
+          if (hasSlot2)
+            const _PlayerPanelWrapper(slot: PlayerSlot.slot2)
           else
             const Expanded(child: SizedBox()),
         ],
@@ -596,13 +605,21 @@ class _BottomPanels extends StatelessWidget {
   }
 }
 
-class _LandscapeSidePanels extends StatelessWidget {
-  final GameState gameState;
+class _LandscapeSidePanels extends ConsumerWidget {
   final bool isLeft;
-  const _LandscapeSidePanels({required this.gameState, required this.isLeft});
+  const _LandscapeSidePanels({required this.isLeft});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasSlot4 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false));
+    final hasSlot1 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false));
+    final hasSlot3 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false));
+    final hasSlot2 = ref.watch(gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false));
+
     return Container(
       width: 140,
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -610,24 +627,24 @@ class _LandscapeSidePanels extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (isLeft) ...[
-            if (gameState.players.any((p) => p.slot == PlayerSlot.slot4))
-              _PlayerPanelWrapper(
+            if (hasSlot4)
+              const _PlayerPanelWrapper(
                   slot: PlayerSlot.slot4, isLandscape: true, isLeft: true)
             else
               const Expanded(child: SizedBox()),
-            if (gameState.players.any((p) => p.slot == PlayerSlot.slot1))
-              _PlayerPanelWrapper(
+            if (hasSlot1)
+              const _PlayerPanelWrapper(
                   slot: PlayerSlot.slot1, isLandscape: true, isLeft: true)
             else
               const Expanded(child: SizedBox()),
           ] else ...[
-            if (gameState.players.any((p) => p.slot == PlayerSlot.slot3))
-              _PlayerPanelWrapper(
+            if (hasSlot3)
+              const _PlayerPanelWrapper(
                   slot: PlayerSlot.slot3, isLandscape: true, isLeft: false)
             else
               const Expanded(child: SizedBox()),
-            if (gameState.players.any((p) => p.slot == PlayerSlot.slot2))
-              _PlayerPanelWrapper(
+            if (hasSlot2)
+              const _PlayerPanelWrapper(
                   slot: PlayerSlot.slot2, isLandscape: true, isLeft: false)
             else
               const Expanded(child: SizedBox()),
