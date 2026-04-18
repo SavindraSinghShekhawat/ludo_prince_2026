@@ -32,10 +32,10 @@ class Token {
     this.position = -1,
   });
 
-  Token copyWith({TokenState? state, int? position}) {
+  Token copyWith({PlayerSlot? slot, TokenState? state, int? position}) {
     return Token(
       id: id,
-      slot: slot,
+      slot: slot ?? this.slot,
       state: state ?? this.state,
       position: position ?? this.position,
     );

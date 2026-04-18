@@ -394,8 +394,11 @@ class _BoardInteractionLayer extends ConsumerWidget {
             break;
           }
 
+          final visualSlot = gameState.getVisualSlot(player.slot);
+
           for (var token in player.tokens) {
-            Offset gridPos = BoardPath.getTokenOffset(token);
+            final visualToken = token.copyWith(slot: visualSlot);
+            Offset gridPos = BoardPath.getTokenOffset(visualToken);
             double gridX = gridPos.dx;
             double gridY = gridPos.dy;
 
@@ -438,45 +441,42 @@ class _TokenLayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final players = ref.watch(
-      gameStreamProvider.select((s) => s.value?.players),
-    );
-    final currentTurn = ref.watch(
-      gameStreamProvider.select((s) => s.value?.currentTurn),
-    );
-    final isDiceRolled = ref.watch(
-      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
-    );
-    final diceValue = ref.watch(
-      gameStreamProvider.select((s) => s.value?.diceValue ?? 0),
-    );
+    final gameState = ref.watch(gameStreamProvider).value;
+    if (gameState == null) return const SizedBox.shrink();
 
-    if (players == null || currentTurn == null) return const SizedBox.shrink();
+    final players = gameState.players;
+    final currentTurn = gameState.currentTurn;
+    final isDiceRolled = gameState.isDiceRolled;
+    final diceValue = gameState.diceValue;
 
     final List<Widget> tokenWidgets = [];
     final Map<String, List<Token>> boardOverlaps = {};
     final Map<String, List<Token>> homeOverlaps = {};
 
     for (var player in players) {
+      final visualSlot = gameState.getVisualSlot(player.slot);
       for (var token in player.tokens) {
-        if (token.state == TokenState.board) {
+        final visualToken = token.copyWith(slot: visualSlot);
+        if (visualToken.state == TokenState.board) {
           int absPos = BoardPath.getAbsolutePosition(
-            token.slot,
-            token.position,
+            visualToken.slot,
+            visualToken.position,
           );
           String key = "abs_$absPos";
-          boardOverlaps.putIfAbsent(key, () => []).add(token);
-        } else if (token.state == TokenState.homeStretch ||
-            token.state == TokenState.finished) {
-          String key = "${token.slot.name}_${token.position}";
-          homeOverlaps.putIfAbsent(key, () => []).add(token);
+          boardOverlaps.putIfAbsent(key, () => []).add(visualToken);
+        } else if (visualToken.state == TokenState.homeStretch ||
+            visualToken.state == TokenState.finished) {
+          String key = "${visualToken.slot.name}_${visualToken.position}";
+          homeOverlaps.putIfAbsent(key, () => []).add(visualToken);
         }
       }
     }
 
     for (var player in players) {
       final isTurn = currentTurn == player.slot;
+      final visualSlot = gameState.getVisualSlot(player.slot);
       for (var token in player.tokens) {
+        final visualToken = token.copyWith(slot: visualSlot);
         bool isMovable = false;
         if (isTurn && isDiceRolled) {
           if (token.state == TokenState.home) {
@@ -489,21 +489,22 @@ class _TokenLayer extends ConsumerWidget {
         Offset overlapOffset = Offset.zero;
         double scaleAdjustment = 1.0;
 
-        if (token.state != TokenState.home) {
+        if (visualToken.state != TokenState.home) {
           List<Token>? overlapping;
-          if (token.state == TokenState.board) {
+          if (visualToken.state == TokenState.board) {
             int absPos = BoardPath.getAbsolutePosition(
-              token.slot,
-              token.position,
+              visualToken.slot,
+              visualToken.position,
             );
             overlapping = boardOverlaps["abs_$absPos"];
           } else {
-            overlapping = homeOverlaps["${token.slot.name}_${token.position}"];
+            overlapping = homeOverlaps[
+                "${visualToken.slot.name}_${visualToken.position}"];
           }
 
           if (overlapping != null && overlapping.length > 1) {
             int index = overlapping.indexWhere(
-              (t) => t.slot == token.slot && t.id == token.id,
+              (t) => t.slot == visualToken.slot && t.id == visualToken.id,
             );
             double tokenSize = cellSize * 0.85;
             double spread = tokenSize * 0.3;
@@ -545,7 +546,7 @@ class _TokenLayer extends ConsumerWidget {
         tokenWidgets.add(
           TokenWidget(
             key: ValueKey("token_${token.slot.name}_${token.id}"),
-            token: token,
+            token: visualToken,
             cellSize: cellSize,
             isMovable: isMovable,
             overlapOffset: overlapOffset,
@@ -565,12 +566,18 @@ class _TopPanels extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasSlot4 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot4) ??
+            false,
       ),
     );
     final hasSlot3 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot3) ??
+            false,
       ),
     );
 
@@ -600,12 +607,18 @@ class _BottomPanels extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasSlot1 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot1) ??
+            false,
       ),
     );
     final hasSlot2 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot2) ??
+            false,
       ),
     );
 
@@ -636,22 +649,34 @@ class _LandscapeSidePanels extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasSlot4 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot4) ??
+            false,
       ),
     );
     final hasSlot1 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot1) ??
+            false,
       ),
     );
     final hasSlot3 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot3) ??
+            false,
       ),
     );
     final hasSlot2 = ref.watch(
       gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false,
+        (s) =>
+            s.value?.players.any(
+                (p) => s.value!.getVisualSlot(p.slot) == PlayerSlot.slot2) ??
+            false,
       ),
     );
 
@@ -715,43 +740,32 @@ class _PlayerPanelWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTurn = ref.watch(
-      gameStreamProvider.select((s) => s.value?.currentTurn),
-    );
-    final player = ref.watch(
-      gameStreamProvider.select(
-        (s) => s.value?.players.firstWhere((p) => p.slot == slot),
-      ),
-    );
-    final winners = ref.watch(
-      gameStreamProvider.select((s) => s.value?.winners ?? []),
-    );
-    final isDiceRolled = ref.watch(
-      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
-    );
+    final gameState = ref.watch(gameStreamProvider).value;
+    if (gameState == null) return const SizedBox();
 
-    if (player == null || currentTurn == null) return const SizedBox();
+    final currentTurn = gameState.currentTurn;
+    final player = gameState.players
+        .where((p) => gameState.getVisualSlot(p.slot) == slot)
+        .firstOrNull;
+    final winners = gameState.winners;
+    final isDiceRolled = gameState.isDiceRolled;
 
-    final winnerRank = winners.indexOf(slot) + 1;
+    if (player == null) return const SizedBox();
+
+    final winnerRank = winners.indexOf(player.slot) + 1;
     final isWinner = winnerRank > 0;
 
-    final turnStartedAt = ref.watch(
-      gameStreamProvider.select((s) => s.value?.turnStartedAt),
-    );
-    final turnTimeSeconds = ref.watch(
-      gameStreamProvider.select((s) => s.value?.turnTimeSeconds ?? 8),
-    );
-    final turnActionCount = ref.watch(
-      gameStreamProvider.select((s) => s.value?.turnActionCount ?? 0),
-    );
-    final gameType = ref.watch(
-      gameStreamProvider.select((s) => s.value?.gameType ?? GameType.local),
-    );
+    final turnStartedAt = gameState.turnStartedAt;
+    final turnTimeSeconds = gameState.turnTimeSeconds;
+    final turnActionCount = gameState.turnActionCount;
+    final gameType = gameState.gameType;
+
+    final visualCurrentTurn = gameState.getVisualSlot(currentTurn);
 
     return _PlayerPanelContent(
       slot: slot,
       player: player,
-      currentTurn: currentTurn,
+      currentTurn: visualCurrentTurn,
       isWinner: isWinner,
       winnerRank: winnerRank,
       isDiceRolled: isDiceRolled,

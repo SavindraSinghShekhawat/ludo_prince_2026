@@ -158,3 +158,35 @@ class GameState {
     );
   }
 }
+
+extension GameStateVisual on GameState {
+  PlayerSlot get localPlayerSlot {
+    final localPlayer = players.firstWhere(
+      (p) => p.type == PlayerType.localHuman,
+      orElse: () => players.first,
+    );
+    return localPlayer.slot;
+  }
+
+  PlayerSlot getVisualSlot(PlayerSlot logicalSlot) {
+    if (gameType != GameType.online) return logicalSlot;
+
+    final local = localPlayerSlot;
+    if (local == PlayerSlot.slot1) return logicalSlot;
+
+    const List<PlayerSlot> seq = [
+      PlayerSlot.slot1, // Blue
+      PlayerSlot.slot4, // Red
+      PlayerSlot.slot3, // Green
+      PlayerSlot.slot2, // Yellow
+    ];
+
+    int localIdx = seq.indexOf(local);
+    int logicalIdx = seq.indexOf(logicalSlot);
+
+    int visualIdx = (logicalIdx - localIdx) % 4;
+    if (visualIdx < 0) visualIdx += 4;
+
+    return seq[visualIdx];
+  }
+}

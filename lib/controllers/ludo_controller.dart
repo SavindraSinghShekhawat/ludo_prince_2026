@@ -136,7 +136,7 @@ class LudoController implements GameController {
     if (currentPlayer.type != PlayerType.localBot) return;
 
     _isActionInProgress = true;
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 200));
     _isActionInProgress = false;
 
     if (_isDisposed ||
@@ -321,7 +321,7 @@ class LudoController implements GameController {
 
     if (isAutoAction) {
       // Pause so user can digest the roll before the auto-move/skip
-      await Future.delayed(const Duration(milliseconds: 400));
+      await Future.delayed(const Duration(milliseconds: 150));
       if (_isDisposed) {
         _isActionInProgress = false;
         return;
@@ -335,7 +335,7 @@ class LudoController implements GameController {
         (p) => p.slot == _state.currentTurn,
       );
       final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
-      await Future.delayed(const Duration(milliseconds: 250));
+      await Future.delayed(const Duration(milliseconds: 50));
       await sendMoveIntent(token);
     } else {
       _checkBotTurn();
