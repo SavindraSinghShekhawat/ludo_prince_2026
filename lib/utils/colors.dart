@@ -21,12 +21,15 @@ class AppColors {
   static const Color player4RedUI = Color(0xFFBA2B2B); // Red 400
 
   // Board Glassmorphism
-  static const Color boardGlassBackground =
-      Color(0xD9F3F3F3); // 85% White (Balance between whitish and visible)
-  static const Color boardGlassBorder =
-      Color(0x33000000); // Subtle dark border for definition
-  static const Color boardGridColor =
-      Color(0x1F000000); // Light grey grid for visibility (12% black)
+  static const Color boardGlassBackground = Color(
+    0xD9F3F3F3,
+  ); // 85% White (Balance between whitish and visible)
+  static const Color boardGlassBorder = Color(
+    0x33000000,
+  ); // Subtle dark border for definition
+  static const Color boardGridColor = Color(
+    0x1F000000,
+  ); // Light grey grid for visibility (12% black)
   static const double boardGlassBlur = 12.0;
 
   // Board Opacities (Refined for a lighter look with visible grid)
@@ -43,10 +46,12 @@ class AppColors {
 
   // Star Styling
   static const Color starPlatinum = Color(0xFFD9E0E7); // Icy Royale Platinum
-  static const Color starPlatinumGlow =
-      Color(0x4D000000); // Subtle White Frost Glow
-  static const Color starCellBackground =
-      Color(0x1F000000); // 12% Black for visibility
+  static const Color starPlatinumGlow = Color(
+    0x4D000000,
+  ); // Subtle White Frost Glow
+  static const Color starCellBackground = Color(
+    0x1F000000,
+  ); // 12% Black for visibility
 
   // System & Layout (Non-Board Colors)
   static const Color systemBackground = Color(0xFF0B0B1A); // Deep Royal Void

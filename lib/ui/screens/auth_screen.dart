@@ -26,8 +26,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final result = await signInMethod();
       if (result == null) {
         if (mounted) {
-          _showError('Sign-in cancelled',
-              debugDetails: 'User cancelled the sign-in flow');
+          _showError(
+            'Sign-in cancelled',
+            debugDetails: 'User cancelled the sign-in flow',
+          );
         }
         return;
       }
@@ -39,12 +41,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (e.code == 'credential-already-in-use') {
         _showSwitchAccountDialog(e.credential!);
       } else {
-        _showError(_getFriendlyErrorMessage(e),
-            debugDetails: 'Firebase Auth Error (${e.code}): ${e.message}');
+        _showError(
+          _getFriendlyErrorMessage(e),
+          debugDetails: 'Firebase Auth Error (${e.code}): ${e.message}',
+        );
       }
     } catch (e) {
-      _showError('An unexpected error occurred. Please try again.',
-          debugDetails: 'General Auth Error: $e');
+      _showError(
+        'An unexpected error occurred. Please try again.',
+        debugDetails: 'General Auth Error: $e',
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -94,8 +100,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           children: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white38)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white38),
+              ),
             ),
             const SizedBox(width: 12),
             ElevatedButton(
@@ -103,7 +111,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 backgroundColor: AppColors.primaryCyan,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () async {
                 Navigator.pop(context);
@@ -112,8 +121,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   await FirebaseAuth.instance.signInWithCredential(credential);
                   if (mounted) Navigator.pop(context);
                 } catch (e) {
-                  _showError('Failed to switch account. Please try again.',
-                      debugDetails: 'Switch Account Error: $e');
+                  _showError(
+                    'Failed to switch account. Please try again.',
+                    debugDetails: 'Switch Account Error: $e',
+                  );
                 } finally {
                   if (mounted) setState(() => _isLoading = false);
                 }
@@ -159,19 +170,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       children: [
                         // Backlight Glow
                         Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                AppColors.starPlatinum.withValues(alpha: 0.3),
-                                AppColors.starPlatinum.withValues(alpha: 0.1),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        )
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    AppColors.starPlatinum.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    AppColors.starPlatinum.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            )
                             .animate(onPlay: (c) => c.repeat(reverse: true))
                             .scale(
                               begin: const Offset(0.8, 0.8),
@@ -180,16 +195,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               curve: Curves.easeInOutSine,
                             )
                             .blur(
-                                begin: const Offset(10, 10),
-                                end: const Offset(20, 20)),
+                              begin: const Offset(10, 10),
+                              end: const Offset(20, 20),
+                            ),
 
                         // The Crown itself
                         Image.asset(
-                          'assets/crown.png',
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.contain,
-                        )
+                              'assets/crown.png',
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.contain,
+                            )
                             .animate(onPlay: (c) => c.repeat(reverse: true))
                             .moveY(
                               begin: 0,
@@ -207,8 +223,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             .shimmer(
                               delay: 2.seconds,
                               duration: 3.seconds,
-                              color:
-                                  AppColors.starPlatinum.withValues(alpha: 0.8),
+                              color: AppColors.starPlatinum.withValues(
+                                alpha: 0.8,
+                              ),
                             ),
                       ],
                     ),
@@ -240,8 +257,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 _AuthButton(
                                   label: 'Continue with Google',
                                   icon: Transform.translate(
-                                    offset: const Offset(0,
-                                        -1), // Slight upward shift for optical centering
+                                    offset: const Offset(
+                                      0,
+                                      -1,
+                                    ), // Slight upward shift for optical centering
                                     child: SvgPicture.string(
                                       SvgAssets.googleLogo,
                                       width:
@@ -250,29 +269,35 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     ),
                                   ),
                                   onPressed: () => _handleSignIn(
-                                      authService.signInWithGoogle),
+                                    authService.signInWithGoogle,
+                                  ),
                                   color: Colors.white,
                                   textColor: Colors.black87,
                                 ).animate().slideY(
-                                    begin: 0.5,
-                                    duration: 400.ms,
-                                    curve: Curves.easeOut),
+                                  begin: 0.5,
+                                  duration: 400.ms,
+                                  curve: Curves.easeOut,
+                                ),
                                 const SizedBox(height: 16),
                                 _AuthButton(
                                   label: 'Continue with Apple',
                                   icon: Transform.translate(
                                     offset: const Offset(
-                                        0, -3), // Pushed up further for Apple
+                                      0,
+                                      -3,
+                                    ), // Pushed up further for Apple
                                     child: const Icon(Icons.apple, size: 24),
                                   ),
                                   onPressed: () => _handleSignIn(
-                                      authService.signInWithApple),
+                                    authService.signInWithApple,
+                                  ),
                                   color: Colors.white,
                                   textColor: Colors.black87,
                                 ).animate().slideY(
-                                    begin: 0.5,
-                                    duration: 500.ms,
-                                    curve: Curves.easeOut),
+                                  begin: 0.5,
+                                  duration: 500.ms,
+                                  curve: Curves.easeOut,
+                                ),
                               ],
                             ),
                     ),
@@ -312,8 +337,9 @@ class _AuthButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: textColor,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 2,
           padding: EdgeInsets.zero,
         ),

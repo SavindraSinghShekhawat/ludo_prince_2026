@@ -24,9 +24,7 @@ import 'utils/app_keys.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
-  );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -61,9 +59,7 @@ void main() async {
 
   presenceService.setPresence();
   runApp(
-    ProviderScope(
-      child: LudoPrinceApp(hasSeenOnboarding: hasSeenOnboarding),
-    ),
+    ProviderScope(child: LudoPrinceApp(hasSeenOnboarding: hasSeenOnboarding)),
   );
 }
 
@@ -109,7 +105,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
           final data = Map<String, dynamic>.from(entry.value as Map);
 
           if (data['status'] == 'pending') {
-            container.read(notificationProvider.notifier).addNotification(
+            container
+                .read(notificationProvider.notifier)
+                .addNotification(
                   LudoNotification(
                     id: inviteId,
                     type: NotificationType.gameInvite,
@@ -131,13 +129,16 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
     });
 
     // Global listener for friend requests
-    _requestsSubscription =
-        socialService.auth.authStateChanges().listen((user) {
+    _requestsSubscription = socialService.auth.authStateChanges().listen((
+      user,
+    ) {
       if (user != null) {
         profileService.getIncomingFriendRequests(user.uid).listen((reqs) {
           final container = ProviderScope.containerOf(context, listen: false);
           for (final req in reqs) {
-            container.read(notificationProvider.notifier).addNotification(
+            container
+                .read(notificationProvider.notifier)
+                .addNotification(
                   LudoNotification(
                     id: req.id,
                     type: NotificationType.friendRequest,
@@ -202,14 +203,14 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
           secondary: AppColors.midnightSapphire,
         ),
         scaffoldBackgroundColor: AppColors.systemBackground,
-        textTheme:
-            GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
-          titleLarge: GoogleFonts.outfit(
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-            letterSpacing: 1.2,
-          ),
-        ),
+        textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme)
+            .copyWith(
+              titleLarge: GoogleFonts.outfit(
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                letterSpacing: 1.2,
+              ),
+            ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -268,8 +269,9 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-                color: AppColors.primaryCyan.withValues(alpha: 0.6),
-                width: 1.5),
+              color: AppColors.primaryCyan.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
           ),
           labelStyle: const TextStyle(color: Colors.white70),
           hintStyle: const TextStyle(color: Colors.white38),

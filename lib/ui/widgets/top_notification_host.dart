@@ -34,10 +34,7 @@ class TopNotificationHost extends ConsumerWidget {
             ).animate(animation),
             child: ScaleTransition(
               scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
+              child: FadeTransition(opacity: animation, child: child),
             ),
           );
         },
@@ -81,8 +78,9 @@ class TopNotificationToast extends ConsumerWidget {
               color: const Color(0xFF1E1E2C).withValues(alpha: 0.98),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color:
-                    _getNotificationColor(notification).withValues(alpha: 0.3),
+                color: _getNotificationColor(
+                  notification,
+                ).withValues(alpha: 0.3),
                 width: 1.5,
               ),
               boxShadow: [
@@ -127,8 +125,11 @@ class TopNotificationToast extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios,
-                    color: Colors.white24, size: 14),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white24,
+                  size: 14,
+                ),
               ],
             ),
           ),
@@ -145,11 +146,7 @@ class TopNotificationToast extends ConsumerWidget {
         color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        _getNotificationIcon(notification),
-        color: color,
-        size: 20,
-      ),
+      child: Icon(_getNotificationIcon(notification), color: color, size: 20),
     );
   }
 
@@ -176,7 +173,10 @@ class TopNotificationToast extends ConsumerWidget {
   }
 
   static void _handleNotificationClick(
-      BuildContext context, WidgetRef ref, LudoNotification n) async {
+    BuildContext context,
+    WidgetRef ref,
+    LudoNotification n,
+  ) async {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {

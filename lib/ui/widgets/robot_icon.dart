@@ -5,11 +5,7 @@ class RobotIcon extends StatelessWidget {
   final double size;
   final Color color;
 
-  const RobotIcon({
-    super.key,
-    this.size = 24,
-    this.color = Colors.black,
-  });
+  const RobotIcon({super.key, this.size = 24, this.color = Colors.black});
 
   @override
   Widget build(BuildContext context) {

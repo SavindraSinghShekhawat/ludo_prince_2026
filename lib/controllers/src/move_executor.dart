@@ -31,10 +31,7 @@ class MoveExecutor {
       if (token.state == TokenState.home && steps == 6) {
         onMoveStart(1);
 
-        Token updated = token.copyWith(
-          state: TokenState.board,
-          position: 0,
-        );
+        Token updated = token.copyWith(state: TokenState.board, position: 0);
 
         final result = engine.applyStep(currentState, updated);
         currentState = result.state;
@@ -90,9 +87,15 @@ class MoveExecutor {
   }
 
   void _finalizeAfterMove(
-      GameState state, int tokenId, List<EngineEvent> events) {
-    final result = engine.moveToken(state, tokenId,
-        captured: events.contains(EngineEvent.capture));
+    GameState state,
+    int tokenId,
+    List<EngineEvent> events,
+  ) {
+    final result = engine.moveToken(
+      state,
+      tokenId,
+      captured: events.contains(EngineEvent.capture),
+    );
     GameState finalState = result.state;
 
     GameAction action = GameAction.move;
@@ -100,8 +103,9 @@ class MoveExecutor {
     if (events.contains(EngineEvent.capture)) {
       action = GameAction.capture;
     } else {
-      final currentPlayer = finalState.players
-          .firstWhere((p) => p.slot == finalState.currentTurn);
+      final currentPlayer = finalState.players.firstWhere(
+        (p) => p.slot == finalState.currentTurn,
+      );
       final token = currentPlayer.tokens.firstWhere((t) => t.id == tokenId);
 
       if (token.state == TokenState.finished) {

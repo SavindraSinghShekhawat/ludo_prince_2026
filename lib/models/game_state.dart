@@ -1,25 +1,11 @@
 import 'player.dart';
 import 'token.dart';
 
-enum GameAction {
-  none,
-  roll,
-  move,
-  capture,
-  finish,
-  skip,
-  quit,
-}
+enum GameAction { none, roll, move, capture, finish, skip, quit }
 
-enum GameMode {
-  classic,
-  team,
-}
+enum GameMode { classic, team }
 
-enum GameType {
-  local,
-  online,
-}
+enum GameType { local, online }
 
 class GameState {
   final String gameId;
@@ -111,57 +97,63 @@ class GameState {
   }
 
   Map<String, dynamic> toJson() => {
-        "gameId": gameId,
-        "players": players.map((p) => p.toJson()).toList(),
-        "turnOrder": turnOrder.map((e) => e.name).toList(),
-        "currentTurn": currentTurn.name,
-        "gameMode": gameMode.name,
-        "diceValue": diceValue,
-        "isDiceRolled": isDiceRolled,
-        "isRolling": isRolling,
-        "isWaitingForResult": isWaitingForResult,
-        "consecutiveSixes": consecutiveSixes,
-        "message": message,
-        "lastAction": lastAction.name,
-        "winners": winners.map((e) => e.name).toList(),
-        "gameType": gameType.name,
-        "prefetchedRoll": prefetchedRoll,
-        "turnStartedAt": turnStartedAt,
-        "turnTimeSeconds": turnTimeSeconds,
-        "turnActionCount": turnActionCount,
-      };
+    "gameId": gameId,
+    "players": players.map((p) => p.toJson()).toList(),
+    "turnOrder": turnOrder.map((e) => e.name).toList(),
+    "currentTurn": currentTurn.name,
+    "gameMode": gameMode.name,
+    "diceValue": diceValue,
+    "isDiceRolled": isDiceRolled,
+    "isRolling": isRolling,
+    "isWaitingForResult": isWaitingForResult,
+    "consecutiveSixes": consecutiveSixes,
+    "message": message,
+    "lastAction": lastAction.name,
+    "winners": winners.map((e) => e.name).toList(),
+    "gameType": gameType.name,
+    "prefetchedRoll": prefetchedRoll,
+    "turnStartedAt": turnStartedAt,
+    "turnTimeSeconds": turnTimeSeconds,
+    "turnActionCount": turnActionCount,
+  };
 
   factory GameState.fromJson(Map<String, dynamic> json) {
     return GameState(
       gameId: json["gameId"],
-      players:
-          (json["players"] as List).map((e) => Player.fromJson(e)).toList(),
+      players: (json["players"] as List)
+          .map((e) => Player.fromJson(e))
+          .toList(),
       turnOrder: (json["turnOrder"] as List)
           .map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
           .toList(),
-      currentTurn:
-          PlayerSlot.values.firstWhere((e) => e.name == json["currentTurn"]),
+      currentTurn: PlayerSlot.values.firstWhere(
+        (e) => e.name == json["currentTurn"],
+      ),
       gameMode: GameMode.values.firstWhere(
-          (e) => e.name == (json["gameMode"] ?? GameMode.classic.name)),
+        (e) => e.name == (json["gameMode"] ?? GameMode.classic.name),
+      ),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       isRolling: json["isRolling"] ?? false,
       isWaitingForResult: json["isWaitingForResult"] ?? false,
       consecutiveSixes: json["consecutiveSixes"],
       message: json["message"],
-      lastAction:
-          GameAction.values.firstWhere((e) => e.name == json["lastAction"]),
-      winners: (json["winners"] as List?)
+      lastAction: GameAction.values.firstWhere(
+        (e) => e.name == json["lastAction"],
+      ),
+      winners:
+          (json["winners"] as List?)
               ?.map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
               .toList() ??
           [],
       gameType: GameType.values.firstWhere(
-          (e) => e.name == (json["gameType"] ?? GameType.local.name)),
+        (e) => e.name == (json["gameType"] ?? GameType.local.name),
+      ),
       prefetchedRoll: json["prefetchedRoll"],
       turnStartedAt: json["turnStartedAt"] != null
           ? (json["turnStartedAt"] is int
-              ? json["turnStartedAt"]
-              : (json["turnStartedAt"] as num).toInt())
+                ? json["turnStartedAt"]
+                : (json["turnStartedAt"] as num).toInt())
           : null,
       turnTimeSeconds: json["turnTimeSeconds"] ?? 8,
       turnActionCount: json["turnActionCount"] ?? 0,

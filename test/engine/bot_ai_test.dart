@@ -19,25 +19,29 @@ void main() {
         name: "Bot",
         tokens: [
           Token(
-              id: 0,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 10),
+            id: 0,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 10,
+          ),
           Token(
-              id: 1,
-              slot: PlayerSlot.slot4,
-              state: TokenState.home,
-              position: -1),
+            id: 1,
+            slot: PlayerSlot.slot4,
+            state: TokenState.home,
+            position: -1,
+          ),
           Token(
-              id: 2,
-              slot: PlayerSlot.slot4,
-              state: TokenState.home,
-              position: -1),
+            id: 2,
+            slot: PlayerSlot.slot4,
+            state: TokenState.home,
+            position: -1,
+          ),
           Token(
-              id: 3,
-              slot: PlayerSlot.slot4,
-              state: TokenState.home,
-              position: -1),
+            id: 3,
+            slot: PlayerSlot.slot4,
+            state: TokenState.home,
+            position: -1,
+          ),
         ],
       );
 
@@ -46,25 +50,29 @@ void main() {
       final playerWithBuddy = player.copyWith(
         tokens: [
           Token(
-              id: 0,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 10),
+            id: 0,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 10,
+          ),
           Token(
-              id: 1,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 16),
+            id: 1,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 16,
+          ),
           Token(
-              id: 2,
-              slot: PlayerSlot.slot4,
-              state: TokenState.home,
-              position: -1),
+            id: 2,
+            slot: PlayerSlot.slot4,
+            state: TokenState.home,
+            position: -1,
+          ),
           Token(
-              id: 3,
-              slot: PlayerSlot.slot4,
-              state: TokenState.home,
-              position: -1),
+            id: 3,
+            slot: PlayerSlot.slot4,
+            state: TokenState.home,
+            position: -1,
+          ),
         ],
       );
 
@@ -98,9 +106,12 @@ void main() {
       // Token 0 moving to 16 gets +900 (block).
       // This is exactly the problem! 900 > 600.
 
-      expect(bestToken?.id, isNot(0),
-          reason:
-              "AI should not prefer forming an unsafe block over taking out a new piece");
+      expect(
+        bestToken?.id,
+        isNot(0),
+        reason:
+            "AI should not prefer forming an unsafe block over taking out a new piece",
+      );
     });
 
     test('AI prefers forming a block on a safe spot over an unsafe spot', () {
@@ -113,25 +124,29 @@ void main() {
         name: "Bot",
         tokens: [
           Token(
-              id: 0,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 2), // Move to 8 (Dice 6)
+            id: 0,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 2,
+          ), // Move to 8 (Dice 6)
           Token(
-              id: 1,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 8),
+            id: 1,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 8,
+          ),
           Token(
-              id: 2,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 10), // Move to 16 (Dice 6)
+            id: 2,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 10,
+          ), // Move to 16 (Dice 6)
           Token(
-              id: 3,
-              slot: PlayerSlot.slot4,
-              state: TokenState.board,
-              position: 16),
+            id: 3,
+            slot: PlayerSlot.slot4,
+            state: TokenState.board,
+            position: 16,
+          ),
         ],
       );
 
@@ -150,8 +165,11 @@ void main() {
 
       final bestToken = BotAI.getBestMove(player, state);
 
-      expect(bestToken?.id, 0,
-          reason: "AI should prefer forming a block on a safe spot");
+      expect(
+        bestToken?.id,
+        0,
+        reason: "AI should prefer forming a block on a safe spot",
+      );
     });
   });
 }

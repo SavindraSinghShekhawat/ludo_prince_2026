@@ -29,15 +29,18 @@ class AudioControllerListener {
   }
 
   /// This can be called by the controller when specific engine events occur
-  Future<void> handleEngineEvents(List<EngineEvent> events,
-      {int? diceValue}) async {
+  Future<void> handleEngineEvents(
+    List<EngineEvent> events, {
+    int? diceValue,
+  }) async {
     if (controller.isDisposed) return;
 
     // Safety: don't play sounds if the current player has already left
     // or game is over, unless it's a specific game-over sound.
     final state = controller.state;
-    final currentPlayer =
-        state.players.where((p) => p.slot == state.currentTurn).firstOrNull;
+    final currentPlayer = state.players
+        .where((p) => p.slot == state.currentTurn)
+        .firstOrNull;
 
     if (currentPlayer?.status == PlayerStatus.left &&
         !events.contains(EngineEvent.quit)) {

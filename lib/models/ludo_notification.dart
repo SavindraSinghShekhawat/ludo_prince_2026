@@ -19,9 +19,7 @@ class LudoNotification {
     this.isRead = false,
   });
 
-  LudoNotification copyWith({
-    bool? isRead,
-  }) {
+  LudoNotification copyWith({bool? isRead}) {
     return LudoNotification(
       id: id,
       type: type,

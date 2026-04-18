@@ -12,14 +12,7 @@ class DiceRandomnessScreen extends StatefulWidget {
 }
 
 class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
-  final Map<int, int> _distribution = {
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0,
-    5: 0,
-    6: 0,
-  };
+  final Map<int, int> _distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
 
   int _totalRolls = 0;
   bool _isRunning = false;
@@ -96,27 +89,26 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBackground(
-        child: Scaffold(
-      appBar: AppBar(
-        title: const Text('DICE FAIRNESS CHECK'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              _buildInfoCard(),
-              const SizedBox(height: 32),
-              _buildChart(),
-              const SizedBox(height: 32),
-              _buildStats(),
-              const SizedBox(height: 48),
-              _buildControls(),
-            ],
+      child: Scaffold(
+        appBar: AppBar(title: const Text('DICE FAIRNESS CHECK')),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                _buildInfoCard(),
+                const SizedBox(height: 32),
+                _buildChart(),
+                const SizedBox(height: 32),
+                _buildStats(),
+                const SizedBox(height: 48),
+                _buildControls(),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildInfoCard() {
@@ -149,10 +141,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
                     ),
                     Text(
                       "Verifying 100,000,000 rolls",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -172,8 +161,9 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
               builder: (context, value, _) => LinearProgressIndicator(
                 value: value,
                 backgroundColor: Colors.white.withAlpha(10),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.imperialJade),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.imperialJade,
+                ),
                 minHeight: 8,
               ),
             ),
@@ -234,10 +224,10 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
               count >= 1000000
                   ? "${(count / 1000000).toStringAsFixed(1)}M"
                   : count >= 1000
-                      ? "${(count / 1000).toStringAsFixed(1)}k"
-                      : count > 0
-                          ? "$count"
-                          : "",
+                  ? "${(count / 1000).toStringAsFixed(1)}k"
+                  : count > 0
+                  ? "$count"
+                  : "",
               style: const TextStyle(
                 color: Colors.white38,
                 fontSize: 10,
@@ -250,30 +240,32 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
             child: FractionallySizedBox(
               heightFactor: heightFactor.clamp(0.01, 1.0),
               alignment: Alignment.bottomCenter,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      colors[label - 1].withAlpha(50),
-                      colors[label - 1],
-                    ],
-                  ),
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(8)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors[label - 1].withAlpha(80),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-              )
-                  .animate(target: heightFactor > 0 ? 1 : 0)
-                  .shimmer(duration: 2.seconds),
+              child:
+                  Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              colors[label - 1].withAlpha(50),
+                              colors[label - 1],
+                            ],
+                          ),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(8),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors[label - 1].withAlpha(80),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      )
+                      .animate(target: heightFactor > 0 ? 1 : 0)
+                      .shimmer(duration: 2.seconds),
             ),
           ),
           const SizedBox(height: 8),
@@ -317,8 +309,9 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
         children: [
           Icon(
             Icons.balance,
-            color:
-                fairnessScore > 99.5 ? Colors.greenAccent : Colors.orangeAccent,
+            color: fairnessScore > 99.5
+                ? Colors.greenAccent
+                : Colors.orangeAccent,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -353,7 +346,9 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
           const Text(
             "Verdict: Dice is mathematically fair.",
             style: TextStyle(
-                color: Colors.greenAccent, fontWeight: FontWeight.bold),
+              color: Colors.greenAccent,
+              fontWeight: FontWeight.bold,
+            ),
           ).animate().scale(),
         ],
       ],

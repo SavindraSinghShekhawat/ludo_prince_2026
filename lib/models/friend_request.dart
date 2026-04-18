@@ -18,8 +18,10 @@ class FriendRequest {
     this.fromProfile,
   });
 
-  factory FriendRequest.fromFirestore(DocumentSnapshot doc,
-      {UserProfile? fromProfile}) {
+  factory FriendRequest.fromFirestore(
+    DocumentSnapshot doc, {
+    UserProfile? fromProfile,
+  }) {
     final data = doc.data() as Map<String, dynamic>;
     return FriendRequest(
       id: doc.id,

@@ -6,10 +6,7 @@ class NotificationState {
   final List<LudoNotification> inbox;
   final LudoNotification? activeToast;
 
-  NotificationState({
-    this.inbox = const [],
-    this.activeToast,
-  });
+  NotificationState({this.inbox = const [], this.activeToast});
 
   NotificationState copyWith({
     List<LudoNotification>? inbox,
@@ -76,5 +73,5 @@ class NotificationNotifier extends Notifier<NotificationState> {
 
 final notificationProvider =
     NotifierProvider<NotificationNotifier, NotificationState>(() {
-  return NotificationNotifier();
-});
+      return NotificationNotifier();
+    });

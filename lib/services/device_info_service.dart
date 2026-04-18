@@ -75,8 +75,9 @@ class DeviceInfoService {
 
 final deviceInfoServiceProvider = Provider((ref) => DeviceInfoService());
 
-final deviceMetadataProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final deviceMetadataProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   return ref.watch(deviceInfoServiceProvider).getDeviceInfo();
 });
 

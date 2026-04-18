@@ -75,8 +75,9 @@ class MultiplayerGameController extends LudoController {
         .once();
 
     if (eventsQuery.snapshot.exists) {
-      final eventsData =
-          Map<dynamic, dynamic>.from(eventsQuery.snapshot.value as Map);
+      final eventsData = Map<dynamic, dynamic>.from(
+        eventsQuery.snapshot.value as Map,
+      );
       final sortedKeys = eventsData.keys.cast<String>().toList()..sort();
 
       for (var key in sortedKeys) {
@@ -107,20 +108,20 @@ class MultiplayerGameController extends LudoController {
         .child('prefetchedRoll')
         .onValue
         .listen((event) {
-      final val = event.snapshot.value as int?;
-      if (isDisposed) return;
+          final val = event.snapshot.value as int?;
+          if (isDisposed) return;
 
-      // If we are currently rolling or already landed on this value optimistically,
-      // ignore the server update to prevent "ping-ponging" the old value back.
-      if (state.isRolling || state.isDiceRolled) {
-        if (state.diceValue == val) return;
-      }
+          // If we are currently rolling or already landed on this value optimistically,
+          // ignore the server update to prevent "ping-ponging" the old value back.
+          if (state.isRolling || state.isDiceRolled) {
+            if (state.diceValue == val) return;
+          }
 
-      if (val != state.prefetchedRoll) {
-        state = state.copyWith(prefetchedRoll: val);
-        streamController.add(state);
-      }
-    });
+          if (val != state.prefetchedRoll) {
+            state = state.copyWith(prefetchedRoll: val);
+            streamController.add(state);
+          }
+        });
   }
 
   void _startTimeoutMonitor() {
@@ -141,7 +142,8 @@ class MultiplayerGameController extends LudoController {
     if (currentUser == null) return;
 
     AppLogger.debug(
-        '[MultiplayerGameController] Sending timeout request to Firebase for game $gameId');
+      '[MultiplayerGameController] Sending timeout request to Firebase for game $gameId',
+    );
 
     // Only send if it's NOT our turn (let others claim the turn)
     // or if we've been offline and just came back.
@@ -152,10 +154,7 @@ class MultiplayerGameController extends LudoController {
         .child(gameId)
         .child('actionRequests')
         .child(currentUser.uid)
-        .set({
-      'type': 'timeout',
-      'requestedAt': ServerValue.timestamp,
-    });
+        .set({'type': 'timeout', 'requestedAt': ServerValue.timestamp});
   }
 
   @override
@@ -165,14 +164,17 @@ class MultiplayerGameController extends LudoController {
     await super.dispose();
   }
 
-  Future<void> _applyEventLocally(GameEvent event,
-      {bool isInitialSync = false}) async {
+  Future<void> _applyEventLocally(
+    GameEvent event, {
+    bool isInitialSync = false,
+  }) async {
     if (event is RollEvent) {
       await executeRoll(event.diceValue, skipSounds: isInitialSync);
     } else if (event is MoveEvent) {
       if (event.autoMove) {
-        final currentPlayer =
-            state.players.firstWhere((p) => p.slot == state.currentTurn);
+        final currentPlayer = state.players.firstWhere(
+          (p) => p.slot == state.currentTurn,
+        );
         final bestToken = BotAI.getBestMove(currentPlayer, state);
         if (bestToken != null) {
           await executeMove(bestToken.id);
@@ -200,7 +202,7 @@ class MultiplayerGameController extends LudoController {
       'stateSnapshot': {
         'gameState': state.toJson(),
         'lastEventId': _lastAppliedEventId,
-      }
+      },
     });
   }
 
@@ -231,9 +233,13 @@ class MultiplayerGameController extends LudoController {
     final oldTurn = state.currentTurn;
 
     if (event is SkipEvent) {
-      state = engine.skipTurn(state).state;
-      // Increment action count for SkipEvent since super.handleGameEvent isn't called
-      state = state.copyWith(turnActionCount: state.turnActionCount + 1);
+      if (event.playerSlot == state.currentTurn) {
+        state = engine.skipTurn(state).state;
+        // Increment action count for SkipEvent since super.handleGameEvent isn't called
+        state = state.copyWith(turnActionCount: state.turnActionCount + 1);
+      } else {
+        AppLogger.debug('Ignoring stale SkipEvent for ${event.playerSlot}');
+      }
     } else {
       await super.handleGameEvent(event);
     }
@@ -246,9 +252,7 @@ class MultiplayerGameController extends LudoController {
 
     final timestamp = firebaseService.serverTimeMillis;
     _turnStartedAt = timestamp;
-    state = state.copyWith(
-      turnStartedAt: timestamp,
-    );
+    state = state.copyWith(turnStartedAt: timestamp);
 
     // CRITICAL: Always emit the final state after updating the timestamp
     if (!isDisposed) streamController.add(state);

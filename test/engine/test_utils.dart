@@ -24,7 +24,11 @@ GameState baseState() {
 }
 
 GameState stateWithTokenAt(
-    PlayerSlot slot, int tokenId, TokenState tokenState, int position) {
+  PlayerSlot slot,
+  int tokenId,
+  TokenState tokenState,
+  int position,
+) {
   final state = baseState();
   return state.copyWith(
     players: state.players.map((p) {

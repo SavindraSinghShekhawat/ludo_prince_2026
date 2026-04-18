@@ -21,8 +21,8 @@ class Player {
     this.status = PlayerStatus.active,
     this.skipCount = 0,
     required this.tokens,
-  }) : uid = uid ??
-            "local_${slot.name}_${DateTime.now().microsecondsSinceEpoch}";
+  }) : uid =
+           uid ?? "local_${slot.name}_${DateTime.now().microsecondsSinceEpoch}";
 
   Player copyWith({
     String? uid,
@@ -44,14 +44,14 @@ class Player {
   }
 
   Map<String, dynamic> toJson() => {
-        "slot": slot.name,
-        "uid": uid,
-        "name": name,
-        "type": type.name,
-        "status": status.name,
-        "skipCount": skipCount,
-        "tokens": tokens.map((t) => t.toJson()).toList(),
-      };
+    "slot": slot.name,
+    "uid": uid,
+    "name": name,
+    "type": type.name,
+    "status": status.name,
+    "skipCount": skipCount,
+    "tokens": tokens.map((t) => t.toJson()).toList(),
+  };
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(

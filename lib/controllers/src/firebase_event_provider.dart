@@ -15,23 +15,26 @@ class FirebaseEventProvider extends GameEventProvider {
   void startListening(String startAfterId) {
     if (_subscription != null) return;
 
-    final eventsRef =
-        _db.ref().child('ludogames').child(gameId).child('events');
+    final eventsRef = _db
+        .ref()
+        .child('ludogames')
+        .child(gameId)
+        .child('events');
 
     _subscription = eventsRef
         .orderByKey()
         .startAt(startAfterId)
         .onChildAdded
         .listen((event) {
-      if (event.snapshot.exists) {
-        if (event.snapshot.key == startAfterId) {
-          return; // skip the one we started after
-        }
+          if (event.snapshot.exists) {
+            if (event.snapshot.key == startAfterId) {
+              return; // skip the one we started after
+            }
 
-        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        _controller.add(GameEvent.fromJson(data));
-      }
-    });
+            final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+            _controller.add(GameEvent.fromJson(data));
+          }
+        });
   }
 
   @override
@@ -47,10 +50,7 @@ class FirebaseEventProvider extends GameEventProvider {
         .child(gameId)
         .child('actionRequests')
         .child(uid)
-        .set({
-      'type': 'roll',
-      'timestamp': ServerValue.timestamp,
-    });
+        .set({'type': 'roll', 'timestamp': ServerValue.timestamp});
   }
 
   @override
@@ -64,10 +64,10 @@ class FirebaseEventProvider extends GameEventProvider {
         .child('actionRequests')
         .child(uid)
         .set({
-      'type': 'move',
-      'tokenId': tokenId,
-      'timestamp': ServerValue.timestamp,
-    });
+          'type': 'move',
+          'tokenId': tokenId,
+          'timestamp': ServerValue.timestamp,
+        });
   }
 
   @override

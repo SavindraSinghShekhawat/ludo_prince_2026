@@ -41,42 +41,49 @@ void main() {
       final result = engine.moveToken(state, 3).state;
 
       expect(result.winners, [PlayerSlot.slot1, PlayerSlot.slot4]);
-      expect(result.isGameOver,
-          true); // In 2-player game, one winner means game over
+      expect(
+        result.isGameOver,
+        true,
+      ); // In 2-player game, one winner means game over
     });
 
-    test("Game ends when only one player hasn't finished (in 2 player game)",
-        () {
-      // Slot 1 finishes
-      var state = baseState();
-      state = state.copyWith(
-        players: state.players.map((p) {
-          if (p.slot != PlayerSlot.slot1) return p;
-          return p.copyWith(
-            tokens: [
-              p.tokens[0].copyWith(state: TokenState.finished, position: 56),
-              p.tokens[1].copyWith(state: TokenState.finished, position: 56),
-              p.tokens[2].copyWith(state: TokenState.finished, position: 56),
-              p.tokens[3].copyWith(state: TokenState.homeStretch, position: 55),
-            ],
-          );
-        }).toList(),
-        diceValue: 1,
-        isDiceRolled: true,
-      );
+    test(
+      "Game ends when only one player hasn't finished (in 2 player game)",
+      () {
+        // Slot 1 finishes
+        var state = baseState();
+        state = state.copyWith(
+          players: state.players.map((p) {
+            if (p.slot != PlayerSlot.slot1) return p;
+            return p.copyWith(
+              tokens: [
+                p.tokens[0].copyWith(state: TokenState.finished, position: 56),
+                p.tokens[1].copyWith(state: TokenState.finished, position: 56),
+                p.tokens[2].copyWith(state: TokenState.finished, position: 56),
+                p.tokens[3].copyWith(
+                  state: TokenState.homeStretch,
+                  position: 55,
+                ),
+              ],
+            );
+          }).toList(),
+          diceValue: 1,
+          isDiceRolled: true,
+        );
 
-      // Finish the last token
-      final token = state.players[0].tokens[3];
-      final finishedToken = engine.advanceOneStep(token);
-      state = engine.applyStep(state, finishedToken).state;
+        // Finish the last token
+        final token = state.players[0].tokens[3];
+        final finishedToken = engine.advanceOneStep(token);
+        state = engine.applyStep(state, finishedToken).state;
 
-      final result = engine.moveToken(state, 3).state;
+        final result = engine.moveToken(state, 3).state;
 
-      expect(result.winners.length, 2);
-      expect(result.winners, [PlayerSlot.slot1, PlayerSlot.slot4]);
-      expect(result.isGameOver, true);
-      expect(result.message, "Game Over!");
-    });
+        expect(result.winners.length, 2);
+        expect(result.winners, [PlayerSlot.slot1, PlayerSlot.slot4]);
+        expect(result.isGameOver, true);
+        expect(result.message, "Game Over!");
+      },
+    );
 
     test("Turn system skips winners", () {
       // 3 players game (Hypothetical, our baseState has 2 but let's see)
@@ -86,25 +93,34 @@ void main() {
         gameId: "test",
         players: [
           Player(
-              slot: PlayerSlot.slot1,
-              name: "B",
-              tokens: List.generate(
-                  4,
-                  (i) => Token(
-                      id: i,
-                      slot: PlayerSlot.slot1,
-                      state: TokenState.finished,
-                      position: 56))),
+            slot: PlayerSlot.slot1,
+            name: "B",
+            tokens: List.generate(
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot1,
+                state: TokenState.finished,
+                position: 56,
+              ),
+            ),
+          ),
           Player(
-              slot: PlayerSlot.slot4,
-              name: "R",
-              tokens: List.generate(
-                  4, (i) => Token(id: i, slot: PlayerSlot.slot4))),
+            slot: PlayerSlot.slot4,
+            name: "R",
+            tokens: List.generate(
+              4,
+              (i) => Token(id: i, slot: PlayerSlot.slot4),
+            ),
+          ),
           Player(
-              slot: PlayerSlot.slot3,
-              name: "G",
-              tokens: List.generate(
-                  4, (i) => Token(id: i, slot: PlayerSlot.slot3))),
+            slot: PlayerSlot.slot3,
+            name: "G",
+            tokens: List.generate(
+              4,
+              (i) => Token(id: i, slot: PlayerSlot.slot3),
+            ),
+          ),
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4, PlayerSlot.slot3],
         currentTurn: PlayerSlot.slot3, // Green's turn
@@ -124,51 +140,63 @@ void main() {
         gameId: "4p-skipping",
         players: [
           Player(
-              slot: PlayerSlot.slot1,
-              name: "B",
-              tokens: List.generate(
-                  4,
-                  (i) => Token(
-                      id: i,
-                      slot: PlayerSlot.slot1,
-                      state: TokenState.finished,
-                      position: 56))),
+            slot: PlayerSlot.slot1,
+            name: "B",
+            tokens: List.generate(
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot1,
+                state: TokenState.finished,
+                position: 56,
+              ),
+            ),
+          ),
           Player(
-              slot: PlayerSlot.slot4,
-              name: "R",
-              tokens: List.generate(
-                  4,
-                  (i) => Token(
-                      id: i,
-                      slot: PlayerSlot.slot4,
-                      state: TokenState.board,
-                      position: 1))),
+            slot: PlayerSlot.slot4,
+            name: "R",
+            tokens: List.generate(
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot4,
+                state: TokenState.board,
+                position: 1,
+              ),
+            ),
+          ),
           Player(
-              slot: PlayerSlot.slot3,
-              name: "G",
-              tokens: List.generate(
-                  4,
-                  (i) => Token(
-                      id: i,
-                      slot: PlayerSlot.slot3,
-                      state: TokenState.finished,
-                      position: 56))),
+            slot: PlayerSlot.slot3,
+            name: "G",
+            tokens: List.generate(
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot3,
+                state: TokenState.finished,
+                position: 56,
+              ),
+            ),
+          ),
           Player(
-              slot: PlayerSlot.slot2,
-              name: "Y",
-              tokens: List.generate(
-                  4,
-                  (i) => Token(
-                      id: i,
-                      slot: PlayerSlot.slot2,
-                      state: TokenState.board,
-                      position: 1))),
+            slot: PlayerSlot.slot2,
+            name: "Y",
+            tokens: List.generate(
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot2,
+                state: TokenState.board,
+                position: 1,
+              ),
+            ),
+          ),
         ],
         turnOrder: [
           PlayerSlot.slot1,
           PlayerSlot.slot4,
           PlayerSlot.slot3,
-          PlayerSlot.slot2
+          PlayerSlot.slot2,
         ],
         currentTurn: PlayerSlot.slot4, // Red's turn
         winners: [PlayerSlot.slot1, PlayerSlot.slot3], // Blue and Green won
@@ -184,8 +212,12 @@ void main() {
     });
 
     test("Extra turn on finishing a token", () {
-      var state =
-          stateWithTokenAt(PlayerSlot.slot1, 0, TokenState.homeStretch, 55);
+      var state = stateWithTokenAt(
+        PlayerSlot.slot1,
+        0,
+        TokenState.homeStretch,
+        55,
+      );
       state = state.copyWith(diceValue: 1, isDiceRolled: true);
 
       // We need to simulate the finish happening.
@@ -198,8 +230,11 @@ void main() {
 
       final result = engine.moveToken(state, 0);
 
-      expect(result.state.currentTurn, PlayerSlot.slot1,
-          reason: "Should get extra turn");
+      expect(
+        result.state.currentTurn,
+        PlayerSlot.slot1,
+        reason: "Should get extra turn",
+      );
       expect(result.events.contains(EngineEvent.extraTurn), true);
     });
   });

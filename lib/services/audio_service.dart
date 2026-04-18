@@ -75,10 +75,7 @@ class AudioService extends ChangeNotifier {
     await init();
     if (!_isBgmEnabled) return;
 
-    FlameAudio.bgm.play(
-      'bgm.wav',
-      volume: 0.55,
-    );
+    FlameAudio.bgm.play('bgm.wav', volume: 0.55);
   }
 
   Future<void> stopBGM() async {

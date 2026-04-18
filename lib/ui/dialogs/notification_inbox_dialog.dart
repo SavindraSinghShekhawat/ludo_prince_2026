@@ -21,14 +21,18 @@ class NotificationInboxDialog extends ConsumerWidget {
     return CustomDialogLayout(
       header: Row(
         children: [
-          const Icon(Icons.notifications_active_outlined,
-                  color: AppColors.primaryCyan, size: 28)
+          const Icon(
+                Icons.notifications_active_outlined,
+                color: AppColors.primaryCyan,
+                size: 28,
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .scale(
-                  begin: const Offset(1, 1),
-                  end: const Offset(1.1, 1.1),
-                  duration: 2.seconds,
-                  curve: Curves.easeInOut)
+                begin: const Offset(1, 1),
+                end: const Offset(1.1, 1.1),
+                duration: 2.seconds,
+                curve: Curves.easeInOut,
+              )
               .shimmer(duration: 3.seconds, color: Colors.white24),
           const SizedBox(width: 16),
           Text(
@@ -55,7 +59,7 @@ class NotificationInboxDialog extends ConsumerWidget {
               onPressed: inbox.isEmpty
                   ? null
                   : () =>
-                      ref.read(notificationProvider.notifier).markAllAsRead(),
+                        ref.read(notificationProvider.notifier).markAllAsRead(),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 minimumSize: Size.zero,
@@ -79,15 +83,19 @@ class NotificationInboxDialog extends ConsumerWidget {
             child: Center(
               child: Column(
                 children: [
-                  Icon(Icons.notifications_off_outlined,
-                      color: Colors.white.withValues(alpha: 0.1), size: 48),
+                  Icon(
+                    Icons.notifications_off_outlined,
+                    color: Colors.white.withValues(alpha: 0.1),
+                    size: 48,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Your inbox is empty',
                     style: GoogleFonts.outfit(
-                        color: Colors.white24,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500),
+                      color: Colors.white24,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -117,7 +125,10 @@ class NotificationInboxDialog extends ConsumerWidget {
   }
 
   Widget _buildNotificationItem(
-      BuildContext context, WidgetRef ref, LudoNotification n) {
+    BuildContext context,
+    WidgetRef ref,
+    LudoNotification n,
+  ) {
     final color = _getNotificationColor(n);
     final timeStr = DateFormat('h:mm a').format(n.timestamp);
 
@@ -156,14 +167,17 @@ class NotificationInboxDialog extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
-                border:
-                    Border.all(color: color.withValues(alpha: 0.1), width: 1),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.1),
+                  width: 1,
+                ),
               ),
               child: Icon(_getNotificationIcon(n), color: color, size: 22)
                   .animate(onPlay: (c) => c.repeat())
                   .shimmer(
-                      duration: 3.seconds,
-                      color: Colors.white.withValues(alpha: 0.3)),
+                    duration: 3.seconds,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -181,8 +195,9 @@ class NotificationInboxDialog extends ConsumerWidget {
                           style: GoogleFonts.outfit(
                             color: n.isRead ? Colors.white70 : Colors.white,
                             fontSize: 14,
-                            fontWeight:
-                                n.isRead ? FontWeight.w500 : FontWeight.w700,
+                            fontWeight: n.isRead
+                                ? FontWeight.w500
+                                : FontWeight.w700,
                           ),
                         ),
                       ),
@@ -190,9 +205,10 @@ class NotificationInboxDialog extends ConsumerWidget {
                       Text(
                         timeStr,
                         style: GoogleFonts.outfit(
-                            color: Colors.white24,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500),
+                          color: Colors.white24,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -213,25 +229,28 @@ class NotificationInboxDialog extends ConsumerWidget {
             ),
             if (!n.isRead)
               Container(
-                margin: const EdgeInsets.only(left: 12),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryCyan,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryCyan.withValues(alpha: 0.5),
-                      blurRadius: 4,
-                      spreadRadius: 1,
+                    margin: const EdgeInsets.only(left: 12),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCyan,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.5),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(
-                  duration: 1.seconds,
-                  begin: 0.4,
-                  end: 1.0,
-                  curve: Curves.easeInOut),
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .fade(
+                    duration: 1.seconds,
+                    begin: 0.4,
+                    end: 1.0,
+                    curve: Curves.easeInOut,
+                  ),
           ],
         ),
       ),
@@ -261,7 +280,10 @@ class NotificationInboxDialog extends ConsumerWidget {
   }
 
   void _handleNotificationClick(
-      BuildContext context, WidgetRef ref, LudoNotification n) {
+    BuildContext context,
+    WidgetRef ref,
+    LudoNotification n,
+  ) {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {

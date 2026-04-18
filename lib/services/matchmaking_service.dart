@@ -27,7 +27,8 @@ class MatchmakingService {
     final gameRef = _db.ref().child('ludogames').push();
     final gameId = gameRef.key!;
 
-    final effectiveName = playerName ??
+    final effectiveName =
+        playerName ??
         user.displayName ??
         "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}";
 
@@ -38,38 +39,37 @@ class MatchmakingService {
     }
 
     try {
-      await gameRef.set({
-        'status': 'lobby',
-        'isPrivate': isPrivate,
-        'joiningCode': joiningCode,
-        'gameMode': gameMode.name,
-        'createdAt': ServerValue.timestamp,
-        'hostUid': user.uid,
-        'maxPlayers': maxPlayers,
-        'currentPlayers': 1,
-        'hostLastActive': ServerValue.timestamp,
-        'currentTurn': 'slot1',
-        'turnNumber': 1,
-        'turnStartedAt': ServerValue.timestamp,
-        'eventCounter': 0,
-        'settings': {
-          'turnTimeSeconds': 15,
-          'maxSkips': 5,
-        },
+      await gameRef
+          .set({
+            'status': 'lobby',
+            'isPrivate': isPrivate,
+            'joiningCode': joiningCode,
+            'gameMode': gameMode.name,
+            'createdAt': ServerValue.timestamp,
+            'hostUid': user.uid,
+            'maxPlayers': maxPlayers,
+            'currentPlayers': 1,
+            'hostLastActive': ServerValue.timestamp,
+            'currentTurn': 'slot1',
+            'turnNumber': 1,
+            'turnStartedAt': ServerValue.timestamp,
+            'eventCounter': 0,
+            'settings': {'turnTimeSeconds': 15, 'maxSkips': 5},
 
-        // IMPORTANT: create players atomically with game
-        'players': {
-          'slot1': {
-            'uid': user.uid,
-            'name': effectiveName,
-            'skipCount': 0,
-            'connected': true,
-            'joinedAt': ServerValue.timestamp,
-            'lastActive': ServerValue.timestamp,
-            'status': 'active',
-          }
-        }
-      }).timeout(const Duration(seconds: 10));
+            // IMPORTANT: create players atomically with game
+            'players': {
+              'slot1': {
+                'uid': user.uid,
+                'name': effectiveName,
+                'skipCount': 0,
+                'connected': true,
+                'joinedAt': ServerValue.timestamp,
+                'lastActive': ServerValue.timestamp,
+                'status': 'active',
+              },
+            },
+          })
+          .timeout(const Duration(seconds: 10));
 
       if (isPrivate && joiningCode != null) {
         await _db.ref().child('privateRoomCodes').child(joiningCode).set({
@@ -91,7 +91,8 @@ class MatchmakingService {
   Future<void> joinGame(String gameId, {String? playerName}) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
-    final nameToUse = playerName ??
+    final nameToUse =
+        playerName ??
         user.displayName ??
         "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}";
 
@@ -160,7 +161,10 @@ class MatchmakingService {
   }
 
   Future<void> updateGameSettings(
-      String gameId, int maxPlayers, GameMode gameMode) async {
+    String gameId,
+    int maxPlayers,
+    GameMode gameMode,
+  ) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
     final gameRef = _db.ref().child('ludogames').child(gameId);
@@ -191,15 +195,17 @@ class MatchmakingService {
       }
     }
 
-    await gameRef.update({
-      'status': 'playing',
-      'turnStartedAt': ServerValue.timestamp,
-    }).timeout(const Duration(seconds: 10));
+    await gameRef
+        .update({'status': 'playing', 'turnStartedAt': ServerValue.timestamp})
+        .timeout(const Duration(seconds: 10));
   }
 
   Future<String?> getGameIdFromCode(String code) async {
-    final snapshot =
-        await _db.ref().child('privateRoomCodes').child(code).get();
+    final snapshot = await _db
+        .ref()
+        .child('privateRoomCodes')
+        .child(code)
+        .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       return data['gameId'] as String?;
@@ -214,8 +220,11 @@ class MatchmakingService {
     return 'classic_${maxPlayers}p';
   }
 
-  Future<Stream<String?>> joinQueue(int maxPlayers, GameMode gameMode,
-      {String? playerName}) async {
+  Future<Stream<String?>> joinQueue(
+    int maxPlayers,
+    GameMode gameMode, {
+    String? playerName,
+  }) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
     final uid = user.uid;
@@ -233,7 +242,8 @@ class MatchmakingService {
     await assignmentRef.remove();
 
     // 2. Join the queue
-    final effectiveName = playerName ??
+    final effectiveName =
+        playerName ??
         user.displayName ??
         "Guest #${uid.substring(uid.length > 4 ? uid.length - 4 : 0).toUpperCase()}";
 

@@ -22,34 +22,39 @@ class PresenceService {
 
       if (user == null) {
         AppLogger.debug(
-            "PresenceService: No user signed in, skipping presence set.");
+          "PresenceService: No user signed in, skipping presence set.",
+        );
         return;
       }
 
       AppLogger.debug(
-          "PresenceService: Setting presence for ${user.isAnonymous ? 'GUEST' : 'USER'} ${user.uid}");
+        "PresenceService: Setting presence for ${user.isAnonymous ? 'GUEST' : 'USER'} ${user.uid}",
+      );
       final presenceRef = _firebaseService.database.ref("presence/${user.uid}");
       final connectedRef = _firebaseService.database.ref(".info/connected");
 
       _connectedSubscription = connectedRef.onValue.listen((event) {
         final connected = event.snapshot.value == true;
         AppLogger.debug(
-            "PresenceService: Realtime Database status onValue: connected=$connected");
+          "PresenceService: Realtime Database status onValue: connected=$connected",
+        );
 
         if (connected) {
           AppLogger.debug(
-              "PresenceService: User ${user.uid} is connected to RTDB. Setting up onDisconnect.");
-          presenceRef.onDisconnect().update({
-            "online": false,
-            "lastActive": ServerValue.timestamp,
-          }).then((_) {
-            AppLogger.debug(
-                "PresenceService: onDisconnect set for ${user.uid}");
-            presenceRef.update({
-              "online": true,
-              "lastActive": ServerValue.timestamp,
-            });
-          });
+            "PresenceService: User ${user.uid} is connected to RTDB. Setting up onDisconnect.",
+          );
+          presenceRef
+              .onDisconnect()
+              .update({"online": false, "lastActive": ServerValue.timestamp})
+              .then((_) {
+                AppLogger.debug(
+                  "PresenceService: onDisconnect set for ${user.uid}",
+                );
+                presenceRef.update({
+                  "online": true,
+                  "lastActive": ServerValue.timestamp,
+                });
+              });
         }
       });
     });
@@ -67,10 +72,9 @@ class PresenceService {
     return _firebaseService.auth.authStateChanges().asyncExpand((user) {
       if (user == null) return Stream.value(0);
 
-      return _firebaseService.database
-          .ref("stats/onlineCount")
-          .onValue
-          .map((event) {
+      return _firebaseService.database.ref("stats/onlineCount").onValue.map((
+        event,
+      ) {
         return (event.snapshot.value as num?)?.toInt() ?? 0;
       });
     });

@@ -21,19 +21,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "title": "WELCOME TO LUDO PRINCE",
       "description":
           "A beautifully crafted, modern take on the classic Ludo board game. Play with friends in vibrant digital arenas.",
-      "icon": "casino"
+      "icon": "casino",
     },
     {
       "title": "100% FAIR & CERTIFIED RNG",
       "description":
           "Tired of rigged dice? Ludo Prince uses true Random Number Generation. No algorithms to favor losing players. Pure luck and strategy.",
-      "icon": "gavel"
+      "icon": "gavel",
     },
     {
       "title": "FOREVER FREE FROM CLUTTER",
       "description":
           "No coins, no manipulative micro-transactions, and no hidden biases. Play pure Ludo the way it was meant to be played.",
-      "icon": "workspace_premium"
+      "icon": "workspace_premium",
     },
   ];
 
@@ -115,7 +115,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const SizedBox(height: 40),
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 40.0, vertical: 20.0),
+                  horizontal: 40.0,
+                  vertical: 20.0,
+                ),
                 child: GameButton(
                   text: _currentPage == _onboardingData.length - 1
                       ? "START PLAYING"
@@ -130,7 +132,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const HomeScreen()),
+                            builder: (context) => const HomeScreen(),
+                          ),
                         );
                       }
                     } else {

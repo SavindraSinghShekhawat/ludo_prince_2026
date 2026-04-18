@@ -23,26 +23,23 @@ class LocalEventProvider extends GameEventProvider {
   void onRollRequested() {
     // Generate dice value here to ensure it's the source of truth
     final diceValue = LudoController.generateDiceValue();
-    _controller.add(RollEvent(
-      diceValue,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-    ));
+    _controller.add(
+      RollEvent(diceValue, timestamp: DateTime.now().millisecondsSinceEpoch),
+    );
   }
 
   @override
   void onMoveRequested(int tokenId) {
-    _controller.add(MoveEvent(
-      tokenId,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-    ));
+    _controller.add(
+      MoveEvent(tokenId, timestamp: DateTime.now().millisecondsSinceEpoch),
+    );
   }
 
   @override
   void onQuitRequested(PlayerSlot slot) {
-    _controller.add(QuitEvent(
-      slot,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-    ));
+    _controller.add(
+      QuitEvent(slot, timestamp: DateTime.now().millisecondsSinceEpoch),
+    );
   }
 
   @override
@@ -69,10 +66,7 @@ sealed class GameEvent {
     }
 
     if (type == 'roll') {
-      return RollEvent(
-        json['diceValue'] as int,
-        timestamp: timestamp,
-      );
+      return RollEvent(json['diceValue'] as int, timestamp: timestamp);
     } else if (type == 'move') {
       return MoveEvent(
         json['tokenId'] as int,
@@ -100,10 +94,10 @@ class RollEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'roll',
-        'diceValue': diceValue,
-        'timestamp': timestamp,
-      };
+    'type': 'roll',
+    'diceValue': diceValue,
+    'timestamp': timestamp,
+  };
 }
 
 class MoveEvent extends GameEvent {
@@ -113,11 +107,11 @@ class MoveEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'move',
-        'tokenId': tokenId,
-        'timestamp': timestamp,
-        'autoMove': autoMove,
-      };
+    'type': 'move',
+    'tokenId': tokenId,
+    'timestamp': timestamp,
+    'autoMove': autoMove,
+  };
 }
 
 class QuitEvent extends GameEvent {
@@ -126,10 +120,10 @@ class QuitEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'quit',
-        'playerSlot': playerSlot.name,
-        'timestamp': timestamp,
-      };
+    'type': 'quit',
+    'playerSlot': playerSlot.name,
+    'timestamp': timestamp,
+  };
 }
 
 class SkipEvent extends GameEvent {
@@ -138,8 +132,8 @@ class SkipEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'skip',
-        'playerSlot': playerSlot.name,
-        'timestamp': timestamp,
-      };
+    'type': 'skip',
+    'playerSlot': playerSlot.name,
+    'timestamp': timestamp,
+  };
 }

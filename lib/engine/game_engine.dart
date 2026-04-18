@@ -36,10 +36,11 @@ class GameEngine {
         state.copyWith(consecutiveSixes: 0, diceValue: diceValue),
         "Rolled three 6s! Turn skipped.",
       );
-      return EngineResult(
-        skipResult.state,
-        [...events, EngineEvent.turnSkipped, ...skipResult.events],
-      );
+      return EngineResult(skipResult.state, [
+        ...events,
+        EngineEvent.turnSkipped,
+        ...skipResult.events,
+      ]);
     }
 
     final player = _getPlayer(state, state.currentTurn);
@@ -52,21 +53,24 @@ class GameEngine {
       return p;
     }).toList();
 
-    final validTokens =
-        player.tokens.where((t) => isValidMove(t, diceValue)).toList();
+    final validTokens = player.tokens
+        .where((t) => isValidMove(t, diceValue))
+        .toList();
 
     if (validTokens.isEmpty) {
       final skipResult = _nextTurn(
         state.copyWith(
-            players: updatedPlayers,
-            consecutiveSixes: newConsecutive,
-            diceValue: diceValue),
+          players: updatedPlayers,
+          consecutiveSixes: newConsecutive,
+          diceValue: diceValue,
+        ),
         "No valid moves. Turn skipped.",
       );
-      return EngineResult(
-        skipResult.state,
-        [...events, EngineEvent.turnSkipped, ...skipResult.events],
-      );
+      return EngineResult(skipResult.state, [
+        ...events,
+        EngineEvent.turnSkipped,
+        ...skipResult.events,
+      ]);
     }
 
     return EngineResult(
@@ -81,8 +85,11 @@ class GameEngine {
     );
   }
 
-  EngineResult moveToken(GameState state, int tokenId,
-      {bool captured = false}) {
+  EngineResult moveToken(
+    GameState state,
+    int tokenId, {
+    bool captured = false,
+  }) {
     if (!state.isDiceRolled) return EngineResult(state);
 
     final player = _getPlayer(state, state.currentTurn);
@@ -120,14 +127,22 @@ class GameEngine {
         PlayerSlot teammate = _getTeammate(player.slot);
         if (!newWinners.contains(player.slot)) newWinners.add(player.slot);
         if (!newWinners.contains(teammate)) newWinners.add(teammate);
+
+        // Add opposing team to trigger isGameOver immediately
+        for (var p in newState.players) {
+          if (!newWinners.contains(p.slot)) {
+            newWinners.add(p.slot);
+          }
+        }
       } else {
         newWinners.add(player.slot);
       }
 
       if (newWinners.length == newState.players.length - 1 &&
           newState.gameMode == GameMode.classic) {
-        final lastPlayer =
-            newState.players.firstWhere((p) => !newWinners.contains(p.slot));
+        final lastPlayer = newState.players.firstWhere(
+          (p) => !newWinners.contains(p.slot),
+        );
         newWinners.add(lastPlayer.slot);
       }
       newState = newState.copyWith(winners: newWinners);
@@ -135,20 +150,12 @@ class GameEngine {
 
     if (extraTurn && !hasWon) {
       return EngineResult(
-        newState.copyWith(
-          message: "${player.name} gets an extra turn!",
-        ),
+        newState.copyWith(message: "${player.name} gets an extra turn!"),
         events,
       );
     } else {
-      final nextResult = _nextTurn(
-        newState,
-        "${player.name}'s turn ended.",
-      );
-      return EngineResult(
-        nextResult.state,
-        [...events, ...nextResult.events],
-      );
+      final nextResult = _nextTurn(newState, "${player.name}'s turn ended.");
+      return EngineResult(nextResult.state, [...events, ...nextResult.events]);
     }
   }
 
@@ -167,20 +174,14 @@ class GameEngine {
 
     if (token.state == TokenState.board) {
       if (newPos > 50) {
-        return token.copyWith(
-          state: TokenState.homeStretch,
-          position: newPos,
-        );
+        return token.copyWith(state: TokenState.homeStretch, position: newPos);
       }
       return token.copyWith(position: newPos);
     }
 
     if (token.state == TokenState.homeStretch) {
       if (newPos == 56) {
-        return token.copyWith(
-          state: TokenState.finished,
-          position: newPos,
-        );
+        return token.copyWith(state: TokenState.finished, position: newPos);
       }
       return token.copyWith(position: newPos);
     }
@@ -197,9 +198,10 @@ class GameEngine {
     List<EngineEvent> events = [];
 
     // Check if token exited base (was home, now board at position 0)
-    final oldToken = _getPlayer(state, updatedToken.slot)
-        .tokens
-        .firstWhere((t) => t.id == updatedToken.id);
+    final oldToken = _getPlayer(
+      state,
+      updatedToken.slot,
+    ).tokens.firstWhere((t) => t.id == updatedToken.id);
     if (oldToken.state == TokenState.home &&
         updatedToken.state == TokenState.board) {
       events.add(EngineEvent.tokenExitedBase);
@@ -217,14 +219,17 @@ class GameEngine {
         updatedToken.state == TokenState.board &&
         !BoardPath.isSafeSpot(updatedToken.position)) {
       int absPos = BoardPath.getAbsolutePosition(
-          updatedToken.slot, updatedToken.position);
+        updatedToken.slot,
+        updatedToken.position,
+      );
 
       players = players.map((p) {
         if (p.slot == updatedToken.slot) return p;
 
         // Team Mode capture prevention
         if (state.gameMode == GameMode.team) {
-          bool isTeammate = (updatedToken.slot == PlayerSlot.slot1 &&
+          bool isTeammate =
+              (updatedToken.slot == PlayerSlot.slot1 &&
                   p.slot == PlayerSlot.slot3) ||
               (updatedToken.slot == PlayerSlot.slot3 &&
                   p.slot == PlayerSlot.slot1) ||
@@ -293,6 +298,9 @@ class GameEngine {
       final p = _getPlayer(state, nextSlot);
       if (p.tokens.every((t) => t.state == TokenState.finished)) continue;
 
+      // Skip left players
+      if (p.status == PlayerStatus.left) continue;
+
       break;
     }
 
@@ -327,9 +335,11 @@ class GameEngine {
 
     // Check if game should end because only one team/player remains
     final activePlayers = newState.players
-        .where((p) =>
-            p.status == PlayerStatus.active &&
-            !newState.winners.contains(p.slot))
+        .where(
+          (p) =>
+              p.status == PlayerStatus.active &&
+              !newState.winners.contains(p.slot),
+        )
         .toList();
 
     if (activePlayers.length == 1 && newState.gameMode == GameMode.classic) {
@@ -345,11 +355,14 @@ class GameEngine {
       }
 
       newState = newState.copyWith(
-          winners: newWinners, message: "${winner.name} wins by forfeit!");
+        winners: newWinners,
+        message: "${winner.name} wins by forfeit!",
+      );
     } else if (newState.gameMode == GameMode.team) {
       // Rule: If any player leaves, their team loses and the other team wins.
-      final quitterTeam =
-          (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3) ? "A" : "B";
+      final quitterTeam = (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3)
+          ? "A"
+          : "B";
       final winningTeam = quitterTeam == "A" ? "B" : "A";
 
       final teamASlots = [PlayerSlot.slot1, PlayerSlot.slot3];
@@ -400,10 +413,10 @@ class GameEngine {
     return (slot == PlayerSlot.slot1)
         ? PlayerSlot.slot3
         : (slot == PlayerSlot.slot3)
-            ? PlayerSlot.slot1
-            : (slot == PlayerSlot.slot2)
-                ? PlayerSlot.slot4
-                : PlayerSlot.slot2;
+        ? PlayerSlot.slot1
+        : (slot == PlayerSlot.slot2)
+        ? PlayerSlot.slot4
+        : PlayerSlot.slot2;
   }
 
   Player _getPlayer(GameState state, PlayerSlot slot) {

@@ -18,10 +18,7 @@ import '../widgets/custom_dialog_layout.dart';
 class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
 
-  const GameOverDialog({
-    super.key,
-    required this.state,
-  });
+  const GameOverDialog({super.key, required this.state});
 
   @override
   ConsumerState<GameOverDialog> createState() => _GameOverDialogState();
@@ -49,8 +46,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
   @override
   void initState() {
     super.initState();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 5),
+    );
     _confettiController.play();
     audioService.playVictory();
   }
@@ -64,9 +62,12 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
   @override
   Widget build(BuildContext context) {
     final bool hasBots = widget.state.players.any(
-        (p) => p.type == PlayerType.localBot || p.type == PlayerType.remoteBot);
-    final bool hasHumans = widget.state.players.any((p) =>
-        p.type == PlayerType.localHuman || p.type == PlayerType.remoteHuman);
+      (p) => p.type == PlayerType.localBot || p.type == PlayerType.remoteBot,
+    );
+    final bool hasHumans = widget.state.players.any(
+      (p) =>
+          p.type == PlayerType.localHuman || p.type == PlayerType.remoteHuman,
+    );
 
     final List<PlayerSlot> humanWinners = widget.state.winners.where((slot) {
       final p = widget.state.players.firstWhere((p) => p.slot == slot);
@@ -129,24 +130,22 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
             header: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  headerIcon,
-                  color: headerColor,
-                  size: 80,
-                )
+                Icon(headerIcon, color: headerColor, size: 80)
                     .animate(onPlay: (controller) => controller.repeat())
                     .shimmer(duration: 2000.ms)
                     .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1.05, 1.05),
-                        duration: 1500.ms,
-                        curve: Curves.easeInOutSine)
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1.05, 1.05),
+                      duration: 1500.ms,
+                      curve: Curves.easeInOutSine,
+                    )
                     .then()
                     .scale(
-                        begin: const Offset(1.05, 1.05),
-                        end: const Offset(0.8, 0.8),
-                        duration: 1500.ms,
-                        curve: Curves.easeInOutSine),
+                      begin: const Offset(1.05, 1.05),
+                      end: const Offset(0.8, 0.8),
+                      duration: 1500.ms,
+                      curve: Curves.easeInOutSine,
+                    ),
                 const SizedBox(height: 16),
                 ShaderMask(
                   shaderCallback: (bounds) => LinearGradient(
@@ -155,7 +154,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                             Color(0xFFE5E4E2),
                             Color(0xFFFFFFFF),
                             Color(0xFFA0A0A0),
-                            Color(0xFFE5E4E2)
+                            Color(0xFFE5E4E2),
                           ]
                         : [headerColor.withValues(alpha: 0.6), headerColor],
                     stops: const [0.0, 0.4, 0.6, 1.0],
@@ -187,8 +186,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
             ),
             body: List.generate(widget.state.winners.length, (index) {
               final playerSlot = widget.state.winners[index];
-              final player =
-                  widget.state.players.firstWhere((p) => p.slot == playerSlot);
+              final player = widget.state.players.firstWhere(
+                (p) => p.slot == playerSlot,
+              );
               final place = index + 1;
               final isLast = place == widget.state.winners.length;
 
@@ -217,73 +217,81 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
               }
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: place == 1
-                      ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: placeColor.withValues(alpha: 0.3),
-                      width: place == 1 ? 2.5 : 1.5),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      alignment: Alignment.center,
-                      child: Text(
-                        placeText,
-                        style: TextStyle(
-                          fontSize: place == 1 ? 24 : 18,
-                          fontWeight: FontWeight.w900,
-                          color: placeColor,
-                        ),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: place == 1
+                          ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: placeColor.withValues(alpha: 0.3),
+                        width: place == 1 ? 2.5 : 1.5,
                       ),
                     ),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getPlayerColor(playerSlot),
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getPlayerColor(playerSlot)
-                                .withValues(alpha: 0.8),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          alignment: Alignment.center,
+                          child: Text(
+                            placeText,
+                            style: TextStyle(
+                              fontSize: place == 1 ? 24 : 18,
+                              fontWeight: FontWeight.w900,
+                              color: placeColor,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 20,
+                          height: 20,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _getPlayerColor(playerSlot),
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _getPlayerColor(
+                                  playerSlot,
+                                ).withValues(alpha: 0.8),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            player.name,
+                            style: TextStyle(
+                              fontSize: place == 1 ? 20 : 18,
+                              fontWeight: place == 1
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (placeIcon != null) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                                placeIcon,
+                                color: placeColor,
+                                size: place == 1 ? 28 : 24,
+                              )
+                              .animate(target: place == 1 ? 1 : 0)
+                              .scale(duration: 800.ms, curve: Curves.elasticOut)
+                              .shimmer(duration: 1500.ms, delay: 800.ms),
                         ],
-                      ),
+                      ],
                     ),
-                    Expanded(
-                      child: Text(
-                        player.name,
-                        style: TextStyle(
-                          fontSize: place == 1 ? 20 : 18,
-                          fontWeight:
-                              place == 1 ? FontWeight.w800 : FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (placeIcon != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(placeIcon,
-                              color: placeColor, size: place == 1 ? 28 : 24)
-                          .animate(target: place == 1 ? 1 : 0)
-                          .scale(duration: 800.ms, curve: Curves.elasticOut)
-                          .shimmer(duration: 1500.ms, delay: 800.ms),
-                    ]
-                  ],
-                ),
-              )
+                  )
                   .animate(delay: (200 * index).ms)
                   .fadeIn(duration: 500.ms)
                   .slideX(begin: 0.5);
@@ -304,7 +312,8 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                     elevation: 6,
                     padding: const EdgeInsets.all(18),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Icon(Icons.home_filled, size: 28),
                 ).animate().fadeIn(delay: 1000.ms).moveY(begin: 20),
@@ -333,8 +342,9 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                           MaterialPageRoute(
                             builder: (context) => ProviderScope(
                               overrides: [
-                                gameControllerProvider
-                                    .overrideWithValue(LudoController(config)),
+                                gameControllerProvider.overrideWithValue(
+                                  LudoController(config),
+                                ),
                               ],
                               child: const LudoScreen(),
                             ),
@@ -343,19 +353,26 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                         );
                       }
                     },
-                    icon: const Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 28),
-                    label: const Text('New Game',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500)),
+                    icon: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    label: const Text(
+                      'New Game',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.greenAccent.shade700,
                       elevation: 6,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ).animate().fadeIn(delay: 1200.ms).moveY(begin: 20),
                 ),
@@ -381,7 +398,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
                   Colors.pink,
                   Colors.orange,
                   Colors.purple,
-                  Colors.amber
+                  Colors.amber,
                 ],
               ),
             ),

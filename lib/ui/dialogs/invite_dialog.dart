@@ -28,8 +28,11 @@ class InviteDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.videogame_asset_outlined,
-                    color: Colors.cyanAccent, size: 60)
+            const Icon(
+                  Icons.videogame_asset_outlined,
+                  color: Colors.cyanAccent,
+                  size: 60,
+                )
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .shimmer(duration: 2.seconds),
             const SizedBox(height: 24),
@@ -68,8 +71,10 @@ class InviteDialog extends StatelessWidget {
                       socialService.respondToInvite(inviteId, false);
                       Navigator.pop(context);
                     },
-                    child: const Text('DECLINE',
-                        style: TextStyle(color: Colors.white38)),
+                    child: const Text(
+                      'DECLINE',
+                      style: TextStyle(color: Colors.white38),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -97,11 +102,14 @@ class InviteDialog extends StatelessWidget {
                       backgroundColor: Colors.cyanAccent,
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('JOIN NOW',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'JOIN NOW',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

@@ -31,8 +31,11 @@ class FriendRequestsDialog extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.people_outline,
-                    color: AppColors.primaryCyan, size: 28),
+                const Icon(
+                  Icons.people_outline,
+                  color: AppColors.primaryCyan,
+                  size: 28,
+                ),
                 const SizedBox(width: 16),
                 const Text(
                   'FRIEND REQUESTS',
@@ -79,13 +82,19 @@ class FriendRequestsDialog extends ConsumerWidget {
                 );
               },
               loading: () => const Center(
-                  child: Padding(
-                padding: EdgeInsets.all(40.0),
-                child: CircularProgressIndicator(color: AppColors.primaryCyan),
-              )),
+                child: Padding(
+                  padding: EdgeInsets.all(40.0),
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryCyan,
+                  ),
+                ),
+              ),
               error: (e, _) => Center(
-                  child: Text('Error: $e',
-                      style: const TextStyle(color: Colors.white))),
+                child: Text(
+                  'Error: $e',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
             ),
           ],
         ),
@@ -94,7 +103,10 @@ class FriendRequestsDialog extends ConsumerWidget {
   }
 
   Widget _buildRequestItem(
-      BuildContext context, WidgetRef ref, FriendRequest request) {
+    BuildContext context,
+    WidgetRef ref,
+    FriendRequest request,
+  ) {
     final profile = request.fromProfile;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -145,8 +157,11 @@ class FriendRequestsDialog extends ConsumerWidget {
             onTap: () async {
               await profileService.acceptFriendRequest(request);
               if (context.mounted) {
-                CustomSnackBar.show(context,
-                    message: 'Friend request accepted!', isSuccess: true);
+                CustomSnackBar.show(
+                  context,
+                  message: 'Friend request accepted!',
+                  isSuccess: true,
+                );
               }
             },
           ),

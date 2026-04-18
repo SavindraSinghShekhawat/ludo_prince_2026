@@ -30,10 +30,18 @@ class GameModeSelector extends StatelessWidget {
             isEnabled: true,
             infoTitle: 'Classic Mode',
             infoItems: [
-              GameModeInfoItem(Icons.person, Colors.blueAccent, 'Solo Play',
-                  'Standard Ludo. Every player for themselves.'),
-              GameModeInfoItem(Icons.flag, Colors.greenAccent, 'Winning',
-                  'First to get all tokens home wins!'),
+              GameModeInfoItem(
+                Icons.person,
+                Colors.blueAccent,
+                'Solo Play',
+                'Standard Ludo. Every player for themselves.',
+              ),
+              GameModeInfoItem(
+                Icons.flag,
+                Colors.greenAccent,
+                'Winning',
+                'First to get all tokens home wins!',
+              ),
             ],
           ),
         ),
@@ -48,19 +56,36 @@ class GameModeSelector extends StatelessWidget {
             isEnabled: isTeamModeEnabled,
             infoTitle: 'Team Mode (2vs2)',
             infoItems: [
-              GameModeInfoItem(Icons.group, Colors.orangeAccent, 'Partnership',
-                  'Team up with the player opposite to you.'),
-              GameModeInfoItem(Icons.shield, Colors.blueAccent, 'No Capture',
-                  "Partners don't capture each other!"),
               GameModeInfoItem(
-                  Icons.hourglass_empty,
-                  Colors.redAccent,
-                  'Wait Rule',
-                  'If you finish early, you wait for your partner (no helping with rolls).'),
-              GameModeInfoItem(Icons.exit_to_app, Colors.deepOrangeAccent,
-                  'Abandonment', 'If a teammate leaves, the whole team loses!'),
-              GameModeInfoItem(Icons.stars, Colors.amberAccent, 'Victory',
-                  'Your team wins when both are home.'),
+                Icons.group,
+                Colors.orangeAccent,
+                'Partnership',
+                'Team up with the player opposite to you.',
+              ),
+              GameModeInfoItem(
+                Icons.shield,
+                Colors.blueAccent,
+                'No Capture',
+                "Partners don't capture each other!",
+              ),
+              GameModeInfoItem(
+                Icons.hourglass_empty,
+                Colors.redAccent,
+                'Wait Rule',
+                'If you finish early, you wait for your partner (no helping with rolls).',
+              ),
+              GameModeInfoItem(
+                Icons.exit_to_app,
+                Colors.deepOrangeAccent,
+                'Abandonment',
+                'If a teammate leaves, the whole team loses!',
+              ),
+              GameModeInfoItem(
+                Icons.stars,
+                Colors.amberAccent,
+                'Victory',
+                'Your team wins when both are home.',
+              ),
             ],
           ),
         ),
@@ -97,10 +122,11 @@ class GameModeSelector extends StatelessWidget {
                     .withValues(alpha: isEnabled ? 1.0 : 0.4),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: (isSelected
-                      ? Colors.blueAccent.withValues(alpha: 0.5)
-                      : Colors.white10)
-                  .withValues(alpha: isEnabled ? 1.0 : 0.4),
+              color:
+                  (isSelected
+                          ? Colors.blueAccent.withValues(alpha: 0.5)
+                          : Colors.white10)
+                      .withValues(alpha: isEnabled ? 1.0 : 0.4),
               width: 2,
             ),
             boxShadow: isSelected && isEnabled
@@ -109,7 +135,7 @@ class GameModeSelector extends StatelessWidget {
                       color: Colors.blueAccent.withValues(alpha: 0.2),
                       blurRadius: 10,
                       spreadRadius: 2,
-                    )
+                    ),
                   ]
                 : [],
           ),
@@ -155,10 +181,11 @@ class GameModeSelector extends StatelessWidget {
                   icon: Icon(
                     Icons.help_outline,
                     size: 22,
-                    color: (isSelected
-                            ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
-                            : Colors.white38)
-                        .withValues(alpha: isEnabled ? 1.0 : 0.4),
+                    color:
+                        (isSelected
+                                ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
+                                : Colors.white38)
+                            .withValues(alpha: isEnabled ? 1.0 : 0.4),
                   ),
                   onPressed: () {
                     CustomDialogLayout.show(

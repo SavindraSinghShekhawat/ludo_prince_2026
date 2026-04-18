@@ -38,8 +38,11 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
   Future<void> _handleSave(UserProfile? currentProfile) async {
     final newName = _nameController.text.trim();
     if (newName.isEmpty) {
-      CustomSnackBar.show(context,
-          message: 'Name cannot be empty!', isError: true);
+      CustomSnackBar.show(
+        context,
+        message: 'Name cannot be empty!',
+        isError: true,
+      );
       return;
     }
 
@@ -51,16 +54,18 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         await user.updateDisplayName(newName);
 
         // 2. Update Firestore profile
-        final updatedProfile = (currentProfile ??
-                UserProfile(uid: user.uid, createdAt: DateTime.now()))
-            .copyWith(
-          displayName: newName,
-        );
+        final updatedProfile =
+            (currentProfile ??
+                    UserProfile(uid: user.uid, createdAt: DateTime.now()))
+                .copyWith(displayName: newName);
         await profileService.createOrUpdateProfile(updatedProfile);
 
         if (mounted) {
-          CustomSnackBar.show(context,
-              message: 'Profile updated successfully!', isSuccess: true);
+          CustomSnackBar.show(
+            context,
+            message: 'Profile updated successfully!',
+            isSuccess: true,
+          );
           setState(() {
             _isEditing = false;
             _isSaving = false;
@@ -69,8 +74,11 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.show(context,
-            message: 'Failed to update profile: $e', isError: true);
+        CustomSnackBar.show(
+          context,
+          message: 'Failed to update profile: $e',
+          isError: true,
+        );
         setState(() => _isSaving = false);
       }
     }
@@ -105,7 +113,8 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
       body: userProfileAsync.when(
         data: (profile) {
           final isAnonymous = user.isAnonymous;
-          final displayName = profile?.displayName ??
+          final displayName =
+              profile?.displayName ??
               (user.displayName != null && user.displayName!.isNotEmpty
                   ? user.displayName!
                   : 'Anonymous King');
@@ -119,8 +128,10 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
             Center(
               child: GestureDetector(
                 onTap: () {
-                  CustomSnackBar.show(context,
-                      message: "Profile picture updates are coming soon!");
+                  CustomSnackBar.show(
+                    context,
+                    message: "Profile picture updates are coming soon!",
+                  );
                 },
                 child: CircleAvatar(
                   radius: 40,
@@ -145,19 +156,24 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                       controller: _nameController,
                       autofocus: true,
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Enter name...',
                         hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.3)),
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
                         enabledBorder: const UnderlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppColors.primaryCyan)),
+                          borderSide: BorderSide(color: AppColors.primaryCyan),
+                        ),
                         focusedBorder: const UnderlineInputBorder(
-                            borderSide: BorderSide(
-                                color: AppColors.primaryCyan, width: 2)),
+                          borderSide: BorderSide(
+                            color: AppColors.primaryCyan,
+                            width: 2,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -167,16 +183,25 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.primaryCyan))
+                            strokeWidth: 2,
+                            color: AppColors.primaryCyan,
+                          ),
+                        )
                       : IconButton(
                           onPressed: () => _handleSave(profile),
-                          icon: const Icon(Icons.check_circle,
-                              color: AppColors.imperialJade, size: 28),
+                          icon: const Icon(
+                            Icons.check_circle,
+                            color: AppColors.imperialJade,
+                            size: 28,
+                          ),
                         ),
                   IconButton(
                     onPressed: () => setState(() => _isEditing = false),
-                    icon: const Icon(Icons.cancel,
-                        color: AppColors.crimsonVelvet, size: 28),
+                    icon: const Icon(
+                      Icons.cancel,
+                      color: AppColors.crimsonVelvet,
+                      size: 28,
+                    ),
                   ),
                 ],
               )
@@ -187,15 +212,19 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                   Text(
                     displayName,
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => setState(() => _isEditing = true),
-                    icon: const Icon(Icons.edit,
-                        color: AppColors.primaryCyan, size: 18),
+                    icon: const Icon(
+                      Icons.edit,
+                      color: AppColors.primaryCyan,
+                      size: 18,
+                    ),
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
                   ),
@@ -206,32 +235,45 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
               Center(
                 child: Container(
                   margin: const EdgeInsets.only(top: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: const Text(
                     'GUEST ACCOUNT',
                     style: TextStyle(
-                        color: Colors.amber,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500),
+                      color: Colors.amber,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
             const SizedBox(height: 32),
             _buildStatRow(
-                Icons.emoji_events, 'Games Won', '${profile?.gamesWon ?? 0}'),
-            const SizedBox(height: 12),
-            _buildStatRow(Icons.videogame_asset, 'Games Played',
-                '${profile?.gamesPlayed ?? 0}'),
+              Icons.emoji_events,
+              'Games Won',
+              '${profile?.gamesWon ?? 0}',
+            ),
             const SizedBox(height: 12),
             _buildStatRow(
-                Icons.people, 'Friends', '${profile?.friendsCount ?? 0}'),
+              Icons.videogame_asset,
+              'Games Played',
+              '${profile?.gamesPlayed ?? 0}',
+            ),
+            const SizedBox(height: 12),
+            _buildStatRow(
+              Icons.people,
+              'Friends',
+              '${profile?.friendsCount ?? 0}',
+            ),
             const SizedBox(height: 24),
             _buildActionButton(
               context,
@@ -249,9 +291,11 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                   : () {
                       Navigator.pop(context);
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const FriendsScreen()));
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FriendsScreen(),
+                        ),
+                      );
                     },
             ),
             const SizedBox(height: 12),
@@ -263,8 +307,10 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                 const Color(0xFFE5E4E2),
                 () {
                   Navigator.pop(context);
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const AuthScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AuthScreen()),
+                  );
                 },
                 isPlatinum: true,
               )
@@ -282,9 +328,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
           ];
         },
         loading: () => [
-          const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
         ],
         error: (err, stack) => [
           const Center(
@@ -310,22 +354,32 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         children: [
           Icon(icon, color: AppColors.starPlatinum, size: 18),
           const SizedBox(width: 12),
-          Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
           const Spacer(),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(BuildContext context, String label, IconData icon,
-      Color color, VoidCallback onPressed,
-      {bool isPlatinum = false}) {
+  Widget _buildActionButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed, {
+    bool isPlatinum = false,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -345,8 +399,8 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                 : null,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color:
-                    isPlatinum ? Colors.white54 : color.withValues(alpha: 0.3)),
+              color: isPlatinum ? Colors.white54 : color.withValues(alpha: 0.3),
+            ),
             boxShadow: [
               BoxShadow(
                 color: isPlatinum
@@ -360,9 +414,11 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  color: isPlatinum ? AppColors.systemBackground : color,
-                  size: 20),
+              Icon(
+                icon,
+                color: isPlatinum ? AppColors.systemBackground : color,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Text(
                 label,

@@ -23,7 +23,7 @@ void main() {
       final state = GameState(
         gameId: "test",
         players: [
-          Player(slot: PlayerSlot.slot4, name: "Red", tokens: [token])
+          Player(slot: PlayerSlot.slot4, name: "Red", tokens: [token]),
         ],
         turnOrder: [PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot4,
@@ -46,7 +46,7 @@ void main() {
       final state = GameState(
         gameId: "test",
         players: [
-          Player(slot: PlayerSlot.slot4, name: "Red", tokens: [token])
+          Player(slot: PlayerSlot.slot4, name: "Red", tokens: [token]),
         ],
         turnOrder: [PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot4,
@@ -70,7 +70,7 @@ void main() {
       final state = GameState(
         gameId: "test",
         players: [
-          Player(slot: PlayerSlot.slot4, name: "Red", tokens: [token])
+          Player(slot: PlayerSlot.slot4, name: "Red", tokens: [token]),
         ],
         turnOrder: [PlayerSlot.slot4],
         currentTurn: PlayerSlot.slot4,

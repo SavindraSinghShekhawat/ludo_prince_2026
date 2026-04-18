@@ -36,14 +36,12 @@ class CustomDialogLayout extends StatelessWidget {
       transitionBuilder: (context, anim1, anim2, transformChild) {
         return ScaleTransition(
           scale: anim1.drive(
-            Tween<double>(begin: 0.85, end: 1.0).chain(
-              CurveTween(curve: Curves.easeOutBack),
-            ),
+            Tween<double>(
+              begin: 0.85,
+              end: 1.0,
+            ).chain(CurveTween(curve: Curves.easeOutBack)),
           ),
-          child: FadeTransition(
-            opacity: anim1,
-            child: transformChild,
-          ),
+          child: FadeTransition(opacity: anim1, child: transformChild),
         );
       },
     );
@@ -72,8 +70,8 @@ class CustomDialogLayout extends StatelessWidget {
           constraints: BoxConstraints(
             maxWidth:
                 MediaQuery.of(context).orientation == Orientation.landscape
-                    ? 500
-                    : double.infinity,
+                ? 500
+                : double.infinity,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

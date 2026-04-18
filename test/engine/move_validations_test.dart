@@ -47,8 +47,10 @@ void main() {
 
       final result = engine.moveToken(state, 0).state;
 
-      expect(identical(result, state),
-          true); // Should return unchanged state instance
+      expect(
+        identical(result, state),
+        true,
+      ); // Should return unchanged state instance
     });
 
     test("Board to homeStretch transition", () {

@@ -82,7 +82,8 @@ class FirebaseService {
     database.ref('.info/serverTimeOffset').onValue.listen((event) {
       _serverTimeOffset = (event.snapshot.value as num?)?.toInt() ?? 0;
       AppLogger.debug(
-          '[FirebaseService] Server time offset updated: $_serverTimeOffset ms');
+        '[FirebaseService] Server time offset updated: $_serverTimeOffset ms',
+      );
     });
 
     // Initialize Remote Config

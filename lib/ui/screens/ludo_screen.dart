@@ -63,9 +63,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: _GameAppBar(),
-        body: SafeArea(
-          child: _GameBody(),
-        ),
+        body: SafeArea(child: _GameBody()),
       ),
     );
   }
@@ -92,17 +90,18 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.warning_amber_rounded,
-                    color: AppColors.crimsonVelvet,
-                    size: 48,
-                  )
+                        Icons.warning_amber_rounded,
+                        color: AppColors.crimsonVelvet,
+                        size: 48,
+                      )
                       .animate(onPlay: (c) => c.repeat(reverse: true))
                       .shimmer(duration: 2.seconds, color: Colors.white24)
                       .scale(
-                          begin: const Offset(1, 1),
-                          end: const Offset(1.1, 1.1),
-                          duration: 1.seconds,
-                          curve: Curves.easeInOut),
+                        begin: const Offset(1, 1),
+                        end: const Offset(1.1, 1.1),
+                        duration: 1.seconds,
+                        curve: Curves.easeInOut,
+                      ),
                   const SizedBox(height: 16),
                   const Text(
                     'EXIT GAME?',
@@ -143,9 +142,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ref.read(gameControllerProvider).quitGame();
                         Navigator.of(context).pop();
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const HomeScreen(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const HomeScreen()),
                           (route) => false,
                         );
                       },
@@ -198,7 +195,8 @@ class _GameBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasData = ref.watch(
-        gameStreamProvider.select((s) => s.hasValue && s.value != null));
+      gameStreamProvider.select((s) => s.hasValue && s.value != null),
+    );
     final hasError = ref.watch(gameStreamProvider.select((s) => s.hasError));
 
     ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
@@ -247,39 +245,38 @@ class _PortraitLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return Column(
-        children: const [
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 12.0),
-                child: _TopPanels(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: const [
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 12.0),
+                  child: _TopPanels(),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.0),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: _BoardArea(),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.0),
+              child: AspectRatio(aspectRatio: 1, child: _BoardArea()),
             ),
-          ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: EdgeInsets.only(top: 12.0),
-                child: _BottomPanels(),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 12.0),
+                  child: _BottomPanels(),
+                ),
               ),
             ),
-          ),
-          _StatusMessage(),
-          SizedBox(height: 10),
-        ],
-      );
-    });
+            _StatusMessage(),
+            SizedBox(height: 10),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -288,25 +285,23 @@ class _LandscapeLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final boardSize = constraints.maxHeight;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boardSize = constraints.maxHeight;
 
-      return Row(
-        children: [
-          const Expanded(
-            child: _LandscapeSidePanels(isLeft: true),
-          ),
-          SizedBox(
-            width: boardSize,
-            height: boardSize,
-            child: const _BoardArea(),
-          ),
-          const Expanded(
-            child: _LandscapeSidePanels(isLeft: false),
-          ),
-        ],
-      );
-    });
+        return Row(
+          children: [
+            const Expanded(child: _LandscapeSidePanels(isLeft: true)),
+            SizedBox(
+              width: boardSize,
+              height: boardSize,
+              child: const _BoardArea(),
+            ),
+            const Expanded(child: _LandscapeSidePanels(isLeft: false)),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -316,7 +311,8 @@ class _StatusMessage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final message = ref.watch(
-        gameStreamProvider.select((s) => s.value?.message ?? ""));
+      gameStreamProvider.select((s) => s.value?.message ?? ""),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -356,9 +352,7 @@ class _BoardArea extends StatelessWidget {
                     final boardSize = constraints.biggest.shortestSide;
                     final cellSize = boardSize / 15;
 
-                    return _BoardInteractionLayer(
-                      cellSize: cellSize,
-                    );
+                    return _BoardInteractionLayer(cellSize: cellSize);
                   },
                 ),
               ),
@@ -425,8 +419,11 @@ class _BoardInteractionLayer extends ConsumerWidget {
       child: Stack(
         children: [
           BoardWidget(
-            gameMode: ref.watch(gameStreamProvider
-                .select((s) => s.value?.gameMode ?? GameMode.classic)),
+            gameMode: ref.watch(
+              gameStreamProvider.select(
+                (s) => s.value?.gameMode ?? GameMode.classic,
+              ),
+            ),
           ),
           _TokenLayer(cellSize: cellSize),
         ],
@@ -441,14 +438,18 @@ class _TokenLayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final players =
-        ref.watch(gameStreamProvider.select((s) => s.value?.players));
-    final currentTurn =
-        ref.watch(gameStreamProvider.select((s) => s.value?.currentTurn));
+    final players = ref.watch(
+      gameStreamProvider.select((s) => s.value?.players),
+    );
+    final currentTurn = ref.watch(
+      gameStreamProvider.select((s) => s.value?.currentTurn),
+    );
     final isDiceRolled = ref.watch(
-        gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false));
-    final diceValue =
-        ref.watch(gameStreamProvider.select((s) => s.value?.diceValue ?? 0));
+      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
+    );
+    final diceValue = ref.watch(
+      gameStreamProvider.select((s) => s.value?.diceValue ?? 0),
+    );
 
     if (players == null || currentTurn == null) return const SizedBox.shrink();
 
@@ -459,8 +460,10 @@ class _TokenLayer extends ConsumerWidget {
     for (var player in players) {
       for (var token in player.tokens) {
         if (token.state == TokenState.board) {
-          int absPos =
-              BoardPath.getAbsolutePosition(token.slot, token.position);
+          int absPos = BoardPath.getAbsolutePosition(
+            token.slot,
+            token.position,
+          );
           String key = "abs_$absPos";
           boardOverlaps.putIfAbsent(key, () => []).add(token);
         } else if (token.state == TokenState.homeStretch ||
@@ -489,22 +492,27 @@ class _TokenLayer extends ConsumerWidget {
         if (token.state != TokenState.home) {
           List<Token>? overlapping;
           if (token.state == TokenState.board) {
-            int absPos =
-                BoardPath.getAbsolutePosition(token.slot, token.position);
+            int absPos = BoardPath.getAbsolutePosition(
+              token.slot,
+              token.position,
+            );
             overlapping = boardOverlaps["abs_$absPos"];
           } else {
             overlapping = homeOverlaps["${token.slot.name}_${token.position}"];
           }
 
           if (overlapping != null && overlapping.length > 1) {
-            int index = overlapping
-                .indexWhere((t) => t.slot == token.slot && t.id == token.id);
+            int index = overlapping.indexWhere(
+              (t) => t.slot == token.slot && t.id == token.id,
+            );
             double tokenSize = cellSize * 0.85;
             double spread = tokenSize * 0.3;
 
             if (overlapping.length == 2) {
-              overlapOffset =
-                  Offset((index == 0) ? -spread / 1.5 : spread / 1.5, 0);
+              overlapOffset = Offset(
+                (index == 0) ? -spread / 1.5 : spread / 1.5,
+                0,
+              );
             } else if (overlapping.length == 3) {
               if (index == 0) {
                 overlapOffset = Offset(0, -spread);
@@ -514,18 +522,22 @@ class _TokenLayer extends ConsumerWidget {
                 overlapOffset = Offset(spread, spread);
               }
             } else if (overlapping.length == 4) {
-              overlapOffset = Offset((index % 2 == 1) ? spread : -spread,
-                  (index % 4 >= 2) ? spread : -spread);
+              overlapOffset = Offset(
+                (index % 2 == 1) ? spread : -spread,
+                (index % 4 >= 2) ? spread : -spread,
+              );
             } else {
               double multiSpread = spread * 0.8;
-              int cols =
-                  (overlapping.length > 4 && overlapping.length <= 6) ? 3 : 4;
+              int cols = (overlapping.length > 4 && overlapping.length <= 6)
+                  ? 3
+                  : 4;
               int row = index ~/ cols;
               int col = index % cols;
               overlapOffset = Offset(
-                  (col - (cols - 1) / 2) * multiSpread,
-                  (row - (overlapping.length / cols).ceil() / 2 + 0.5) *
-                      multiSpread);
+                (col - (cols - 1) / 2) * multiSpread,
+                (row - (overlapping.length / cols).ceil() / 2 + 0.5) *
+                    multiSpread,
+              );
             }
             scaleAdjustment = (overlapping.length > 4) ? 0.6 : 0.8;
           }
@@ -552,10 +564,16 @@ class _TopPanels extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hasSlot4 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false));
-    final hasSlot3 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false));
+    final hasSlot4 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false,
+      ),
+    );
+    final hasSlot3 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false,
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -581,10 +599,16 @@ class _BottomPanels extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hasSlot1 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false));
-    final hasSlot2 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false));
+    final hasSlot1 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false,
+      ),
+    );
+    final hasSlot2 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false,
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -611,14 +635,26 @@ class _LandscapeSidePanels extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hasSlot4 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false));
-    final hasSlot1 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false));
-    final hasSlot3 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false));
-    final hasSlot2 = ref.watch(gameStreamProvider.select(
-        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false));
+    final hasSlot4 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot4) ?? false,
+      ),
+    );
+    final hasSlot1 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot1) ?? false,
+      ),
+    );
+    final hasSlot3 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot3) ?? false,
+      ),
+    );
+    final hasSlot2 = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.any((p) => p.slot == PlayerSlot.slot2) ?? false,
+      ),
+    );
 
     return Container(
       width: 140,
@@ -629,23 +665,35 @@ class _LandscapeSidePanels extends ConsumerWidget {
           if (isLeft) ...[
             if (hasSlot4)
               const _PlayerPanelWrapper(
-                  slot: PlayerSlot.slot4, isLandscape: true, isLeft: true)
+                slot: PlayerSlot.slot4,
+                isLandscape: true,
+                isLeft: true,
+              )
             else
               const Expanded(child: SizedBox()),
             if (hasSlot1)
               const _PlayerPanelWrapper(
-                  slot: PlayerSlot.slot1, isLandscape: true, isLeft: true)
+                slot: PlayerSlot.slot1,
+                isLandscape: true,
+                isLeft: true,
+              )
             else
               const Expanded(child: SizedBox()),
           ] else ...[
             if (hasSlot3)
               const _PlayerPanelWrapper(
-                  slot: PlayerSlot.slot3, isLandscape: true, isLeft: false)
+                slot: PlayerSlot.slot3,
+                isLandscape: true,
+                isLeft: false,
+              )
             else
               const Expanded(child: SizedBox()),
             if (hasSlot2)
               const _PlayerPanelWrapper(
-                  slot: PlayerSlot.slot2, isLandscape: true, isLeft: false)
+                slot: PlayerSlot.slot2,
+                isLandscape: true,
+                isLeft: false,
+              )
             else
               const Expanded(child: SizedBox()),
           ],
@@ -668,28 +716,38 @@ class _PlayerPanelWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTurn =
-        ref.watch(gameStreamProvider.select((s) => s.value?.currentTurn));
-    final player = ref.watch(gameStreamProvider
-        .select((s) => s.value?.players.firstWhere((p) => p.slot == slot)));
-    final winners =
-        ref.watch(gameStreamProvider.select((s) => s.value?.winners ?? []));
+    final currentTurn = ref.watch(
+      gameStreamProvider.select((s) => s.value?.currentTurn),
+    );
+    final player = ref.watch(
+      gameStreamProvider.select(
+        (s) => s.value?.players.firstWhere((p) => p.slot == slot),
+      ),
+    );
+    final winners = ref.watch(
+      gameStreamProvider.select((s) => s.value?.winners ?? []),
+    );
     final isDiceRolled = ref.watch(
-        gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false));
+      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
+    );
 
     if (player == null || currentTurn == null) return const SizedBox();
 
     final winnerRank = winners.indexOf(slot) + 1;
     final isWinner = winnerRank > 0;
 
-    final turnStartedAt =
-        ref.watch(gameStreamProvider.select((s) => s.value?.turnStartedAt));
-    final turnTimeSeconds = ref
-        .watch(gameStreamProvider.select((s) => s.value?.turnTimeSeconds ?? 8));
-    final turnActionCount = ref
-        .watch(gameStreamProvider.select((s) => s.value?.turnActionCount ?? 0));
+    final turnStartedAt = ref.watch(
+      gameStreamProvider.select((s) => s.value?.turnStartedAt),
+    );
+    final turnTimeSeconds = ref.watch(
+      gameStreamProvider.select((s) => s.value?.turnTimeSeconds ?? 8),
+    );
+    final turnActionCount = ref.watch(
+      gameStreamProvider.select((s) => s.value?.turnActionCount ?? 0),
+    );
     final gameType = ref.watch(
-        gameStreamProvider.select((s) => s.value?.gameType ?? GameType.local));
+      gameStreamProvider.select((s) => s.value?.gameType ?? GameType.local),
+    );
 
     return _PlayerPanelContent(
       slot: slot,
@@ -742,7 +800,8 @@ class _PlayerPanelContent extends StatelessWidget {
     final isTurn = slot == currentTurn;
     final Color displayColor = AppColors.getUiColorForSlot(slot);
     final playerName = player.name;
-    final isBot = player.type == PlayerType.localBot ||
+    final isBot =
+        player.type == PlayerType.localBot ||
         player.type == PlayerType.remoteBot;
     final bool isRightAligned = isLandscape
         ? !isLeft
@@ -777,10 +836,7 @@ class _PlayerPanelContent extends StatelessWidget {
       ),
       child: Center(
         child: isBot
-            ? RobotIcon(
-                size: 36,
-                color: isTurn ? Colors.white : Colors.white70,
-              )
+            ? RobotIcon(size: 36, color: isTurn ? Colors.white : Colors.white70)
             : Icon(
                 Icons.person,
                 color: isTurn ? Colors.white : Colors.white70,
@@ -802,7 +858,11 @@ class _PlayerPanelContent extends StatelessWidget {
       avatarBox = avatarBox
           .animate(onPlay: (controller) => controller.repeat(reverse: true))
           .scaleXY(
-              begin: 1.0, end: 1.08, duration: 800.ms, curve: Curves.easeInOut)
+            begin: 1.0,
+            end: 1.08,
+            duration: 800.ms,
+            curve: Curves.easeInOut,
+          )
           .shimmer(duration: 2.seconds, color: Colors.white24);
     }
 
@@ -811,9 +871,10 @@ class _PlayerPanelContent extends StatelessWidget {
       diceBox = _RankBadge(rank: winnerRank);
     } else if (isTurn) {
       diceBox = const SizedBox(
-          width: 50,
-          height: 50,
-          child: Padding(padding: EdgeInsets.all(2), child: DiceWidget()));
+        width: 50,
+        height: 50,
+        child: Padding(padding: EdgeInsets.all(2), child: DiceWidget()),
+      );
     } else {
       diceBox = Container(
         width: 50,
@@ -871,20 +932,21 @@ class _PlayerPanelContent extends StatelessWidget {
           ? [
               if (showSkipDots) skipIndicator,
               if (showSkipDots) spacing,
-              nameTag
+              nameTag,
             ]
           : [
               nameTag,
               if (showSkipDots) spacing,
-              if (showSkipDots) skipIndicator
+              if (showSkipDots) skipIndicator,
             ],
     );
 
     Widget panelContent = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color:
-            isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+        color: isTurn
+            ? Colors.white.withValues(alpha: 0.15)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isTurn ? Colors.white : Colors.white24,
@@ -902,8 +964,9 @@ class _PlayerPanelContent extends StatelessWidget {
 
     return Expanded(
       child: Align(
-        alignment:
-            isRightAligned ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: isRightAligned
+            ? Alignment.centerRight
+            : Alignment.centerLeft,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(
@@ -915,10 +978,7 @@ class _PlayerPanelContent extends StatelessWidget {
               panelContent,
               const SizedBox(height: 10),
               Transform.translate(
-                offset: Offset(
-                  isRightAligned ? -5 : 5,
-                  -10,
-                ),
+                offset: Offset(isRightAligned ? -5 : 5, -10),
                 child: nameAndDots,
               ),
             ],
@@ -962,55 +1022,52 @@ class _RankBadge extends StatelessWidget {
     }
 
     return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: badgeColor.withValues(alpha: 0.15),
-            boxShadow: [
-              if (rank <= 3)
-                BoxShadow(
-                  color: badgeColor.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-            border: Border.all(
-                color: badgeColor.withValues(alpha: 0.8),
-                width: rank == 1 ? 2.5 : 1.5),
-          ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
+          alignment: Alignment.center,
           children: [
-            Icon(
-              rankIcon,
-              color: badgeColor,
-              size: rank == 1 ? 22 : 18,
-            ),
-            Text(
-              rankText,
-              style: TextStyle(
-                color: badgeColor,
-                fontWeight: FontWeight.w900,
-                fontSize: rank == 1 ? 14 : 12,
-                shadows: const [
-                  Shadow(
-                    color: Colors.black54,
-                    blurRadius: 2,
-                    offset: Offset(1, 1),
-                  )
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: badgeColor.withValues(alpha: 0.15),
+                boxShadow: [
+                  if (rank <= 3)
+                    BoxShadow(
+                      color: badgeColor.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 2),
+                    ),
                 ],
+                border: Border.all(
+                  color: badgeColor.withValues(alpha: 0.8),
+                  width: rank == 1 ? 2.5 : 1.5,
+                ),
               ),
             ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(rankIcon, color: badgeColor, size: rank == 1 ? 22 : 18),
+                Text(
+                  rankText,
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: rank == 1 ? 14 : 12,
+                    shadows: const [
+                      Shadow(
+                        color: Colors.black54,
+                        blurRadius: 2,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
-        ),
-      ],
-    )
+        )
         .animate(onPlay: (controller) => controller.repeat())
         .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5))
         .scale(
@@ -1042,32 +1099,38 @@ class _SkipIndicator extends StatelessWidget {
       children: List.generate(5, (index) {
         final isSkipped = index < skipCount;
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 1.5),
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isSkipped ? AppColors.crimsonVelvet : AppColors.imperialJade,
-            boxShadow: [
-              BoxShadow(
-                color: (isSkipped
-                        ? AppColors.crimsonVelvet
-                        : AppColors.imperialJade)
-                    .withValues(alpha: 0.8),
-                blurRadius: 5,
-                spreadRadius: 1,
-              )
-            ],
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.25),
-              width: 0.4,
-            ),
-          ),
-        ).animate(target: isSkipped ? 1 : 0).shake(
-            duration: 400.ms,
-            hz: 4,
-            curve: Curves.easeInOut,
-            offset: const Offset(1.8, 0));
+              margin: const EdgeInsets.symmetric(horizontal: 1.5),
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSkipped
+                    ? AppColors.crimsonVelvet
+                    : AppColors.imperialJade,
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        (isSkipped
+                                ? AppColors.crimsonVelvet
+                                : AppColors.imperialJade)
+                            .withValues(alpha: 0.8),
+                    blurRadius: 5,
+                    spreadRadius: 1,
+                  ),
+                ],
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 0.4,
+                ),
+              ),
+            )
+            .animate(target: isSkipped ? 1 : 0)
+            .shake(
+              duration: 400.ms,
+              hz: 4,
+              curve: Curves.easeInOut,
+              offset: const Offset(1.8, 0),
+            );
       }),
     );
   }
@@ -1269,8 +1332,9 @@ class _BorderTimerPainter extends CustomPainter {
 
       // D. LEADING SPARK (Bright tip)
       if (progress > 0.01) {
-        final tipPoint =
-            metric.getTangentForOffset(length * progress)?.position;
+        final tipPoint = metric
+            .getTangentForOffset(length * progress)
+            ?.position;
         if (tipPoint != null) {
           final sparkPaint = Paint()
             ..color = Colors.white

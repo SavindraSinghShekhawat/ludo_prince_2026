@@ -11,7 +11,7 @@ extension PlayerSlotExtension on PlayerSlot {
         PlayerSlot.slot1,
         PlayerSlot.slot4,
         PlayerSlot.slot3,
-        PlayerSlot.slot2
+        PlayerSlot.slot2,
       ];
     }
   }
@@ -32,10 +32,7 @@ class Token {
     this.position = -1,
   });
 
-  Token copyWith({
-    TokenState? state,
-    int? position,
-  }) {
+  Token copyWith({TokenState? state, int? position}) {
     return Token(
       id: id,
       slot: slot,
@@ -45,11 +42,11 @@ class Token {
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "slot": slot.name,
-        "state": state.name,
-        "position": position,
-      };
+    "id": id,
+    "slot": slot.name,
+    "state": state.name,
+    "position": position,
+  };
 
   factory Token.fromJson(Map<String, dynamic> json) {
     return Token(

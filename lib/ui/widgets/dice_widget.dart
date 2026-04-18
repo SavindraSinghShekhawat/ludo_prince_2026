@@ -29,7 +29,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 450));
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
 
     // Shake animation: jitter between -2 and 2 pixels
     _shakeAnimation = TweenSequence<double>([
@@ -39,12 +41,16 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     ]).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
 
     // Scale animation: pop up and down
-    _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 1.25, end: 1.0), weight: 1),
-    ]).animate(CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut)));
+    _scaleAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: 1.25, end: 1.0), weight: 1),
+        ]).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+          ),
+        );
   }
 
   @override
@@ -80,8 +86,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
             _waitStartTime = DateTime.now();
             _currentRotationSpeed = 100;
           });
-          _controller.duration =
-              Duration(milliseconds: _currentRotationSpeed.toInt());
+          _controller.duration = Duration(
+            milliseconds: _currentRotationSpeed.toInt(),
+          );
           _controller.repeat();
           _startSlowdownTimer();
         }
@@ -119,8 +126,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
       });
     });
 
-    final diceValue =
-        ref.watch(gameStreamProvider.select((s) => s.value?.diceValue ?? 1));
+    final diceValue = ref.watch(
+      gameStreamProvider.select((s) => s.value?.diceValue ?? 1),
+    );
 
     return GestureDetector(
       onTap: _rollDice,
@@ -159,7 +167,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: const Color(0xFF7B8084), width: 1.5),
+                        color: const Color(0xFF7B8084),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.4),
@@ -218,8 +228,9 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
         setState(() {
           // Gradually slow down from 100ms to 400ms per shuffle
           _currentRotationSpeed = min(400, 100 + (elapsed - 1500) / 10);
-          _controller.duration =
-              Duration(milliseconds: _currentRotationSpeed.toInt());
+          _controller.duration = Duration(
+            milliseconds: _currentRotationSpeed.toInt(),
+          );
           if (!_controller.isAnimating) _controller.repeat();
         });
       }

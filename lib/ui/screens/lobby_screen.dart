@@ -33,11 +33,12 @@ class LobbyScreen extends ConsumerStatefulWidget {
   final bool isHost;
   final bool isQuickMatch;
 
-  const LobbyScreen(
-      {super.key,
-      this.initialGameId,
-      this.isHost = false,
-      this.isQuickMatch = true});
+  const LobbyScreen({
+    super.key,
+    this.initialGameId,
+    this.isHost = false,
+    this.isQuickMatch = true,
+  });
 
   @override
   ConsumerState<LobbyScreen> createState() => _LobbyScreenState();
@@ -141,8 +142,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             .once();
 
         if (gameEvent.snapshot.exists) {
-          final gameData =
-              Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
+          final gameData = Map<String, dynamic>.from(
+            gameEvent.snapshot.value as Map,
+          );
           final currentUid = firebaseService.auth.currentUser?.uid;
           if (gameData['hostUid'] == currentUid) {
             await matchmakingService.deleteLobby(_activeGameId!);
@@ -166,9 +168,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text(_activeGameId == null
-              ? (widget.isQuickMatch ? 'BATTLE ONLINE' : 'CREATE ROOM')
-              : 'GAME LOBBY'),
+          title: Text(
+            _activeGameId == null
+                ? (widget.isQuickMatch ? 'BATTLE ONLINE' : 'CREATE ROOM')
+                : 'GAME LOBBY',
+          ),
           leading: BackButton(
             onPressed: () {
               if (Navigator.canPop(context)) {
@@ -229,10 +233,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       const Text(
                         'SELECT NUMBER OF PLAYERS',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5),
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -251,10 +256,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       const Text(
                         'SELECT GAME MODE',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5),
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -278,16 +284,16 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 children: [
                   if (_isLoading) ...[
                     Text(
-                      widget.isQuickMatch
-                          ? 'SEARCHING... ${_matchmakingSeconds}s'
-                          : 'CREATING...',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        letterSpacing: 2.0,
-                      ),
-                    )
+                          widget.isQuickMatch
+                              ? 'SEARCHING... ${_matchmakingSeconds}s'
+                              : 'CREATING...',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            letterSpacing: 2.0,
+                          ),
+                        )
                         .animate(onPlay: (c) => c.repeat())
                         .shimmer(duration: 2.seconds, color: Colors.white24),
                     const SizedBox(height: 16),
@@ -325,12 +331,16 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             return const Center(child: MatchmakingLoader(size: 60));
           }
           return const Center(
-              child: Text("Game not found",
-                  style: TextStyle(color: Colors.white)));
+            child: Text(
+              "Game not found",
+              style: TextStyle(color: Colors.white),
+            ),
+          );
         }
 
-        final gameData =
-            Map<String, dynamic>.from(gameSnapshot.data!.snapshot.value as Map);
+        final gameData = Map<String, dynamic>.from(
+          gameSnapshot.data!.snapshot.value as Map,
+        );
         final status = gameData['status'];
 
         if (status == 'playing') {
@@ -338,8 +348,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           _timeoutTimer?.cancel();
           _redirectToGame();
           return const Center(
-              child: Text("Starting game...",
-                  style: TextStyle(color: Colors.white)));
+            child: Text(
+              "Starting game...",
+              style: TextStyle(color: Colors.white),
+            ),
+          );
         }
 
         return StreamBuilder<DatabaseEvent>(
@@ -351,7 +364,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             }
 
             final playersMap = Map<String, dynamic>.from(
-                playersSnapshot.data!.snapshot.value as Map);
+              playersSnapshot.data!.snapshot.value as Map,
+            );
             final players = playersMap.entries.toList();
 
             final isPrivate = gameData['isPrivate'] ?? true;
@@ -384,7 +398,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 12.0),
+                    horizontal: 24.0,
+                    vertical: 12.0,
+                  ),
                   child: Flex(
                     direction: isLandscape ? Axis.horizontal : Axis.vertical,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -404,37 +420,46 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                   children: [
                                     if (isPrivate) ...[
                                       _buildPrivateRoomHeader(
-                                          gameData, _activeGameId!),
+                                        gameData,
+                                        _activeGameId!,
+                                      ),
                                     ] else ...[
                                       _buildQuickMatchHeader(),
                                     ],
                                     const SizedBox(height: 24),
                                     Text(
-                                        isPrivate ? 'PLAYERS' : 'FOUND PLAYERS',
-                                        style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 1.5)),
+                                      isPrivate ? 'PLAYERS' : 'FOUND PLAYERS',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
                                     const SizedBox(height: 12),
                                     // Grid shrinks to fit content inside ScrollView
                                     _buildPlayerGrid(
-                                        players, maxRequired, _gameMode),
+                                      players,
+                                      maxRequired,
+                                      _gameMode,
+                                    ),
 
                                     if (isActuallyHost &&
                                         isPrivate &&
                                         !isLandscape)
                                       Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 24.0),
+                                        padding: const EdgeInsets.only(
+                                          top: 24.0,
+                                        ),
                                         child: SizedBox(
                                           height: 300,
                                           child: _buildInviteSidebar(
-                                              _activeGameId!,
-                                              gameData['joiningCode']
-                                                      ?.toString() ??
-                                                  "",
-                                              playersMap),
+                                            _activeGameId!,
+                                            gameData['joiningCode']
+                                                    ?.toString() ??
+                                                "",
+                                            playersMap,
+                                          ),
                                         ),
                                       ),
                                   ],
@@ -449,8 +474,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                   child: GameButton(
                                     text: 'START BATTLE',
                                     onTap: currentPlayers >= 2
-                                        ? () => matchmakingService
-                                            .startGame(_activeGameId!)
+                                        ? () => matchmakingService.startGame(
+                                            _activeGameId!,
+                                          )
                                         : () {}, // Handle disabled state via UI or logic
                                   ),
                                 ),
@@ -465,9 +491,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                         Expanded(
                           flex: 4,
                           child: _buildInviteSidebar(
-                              _activeGameId!,
-                              gameData['joiningCode']?.toString() ?? "",
-                              playersMap),
+                            _activeGameId!,
+                            gameData['joiningCode']?.toString() ?? "",
+                            playersMap,
+                          ),
                         ),
                       ],
                     ],
@@ -491,19 +518,25 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('ROOM JOINING CODE',
-                    style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w900)),
+                const Text(
+                  'ROOM JOINING CODE',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                SelectableText(code,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 4)),
+                SelectableText(
+                  code,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -540,7 +573,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Widget _buildPlayerGrid(
-      List<MapEntry<String, dynamic>> players, int maxPlayers, GameMode mode) {
+    List<MapEntry<String, dynamic>> players,
+    int maxPlayers,
+    GameMode mode,
+  ) {
     final slots = PlayerSlotExtension.getSlotsFor(maxPlayers);
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
@@ -573,139 +609,160 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     bool isEmpty = data == null;
 
     return GlassContainer(
-      padding: EdgeInsets.zero,
-      borderRadius: 20,
-      glowColor: isEmpty ? Colors.transparent : slotColor,
-      showGlow: !isEmpty,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Background slot indicator
-            if (!isEmpty)
-              Positioned(
-                right: -10,
-                bottom: -10,
-                child: Icon(Icons.person,
-                    size: 60, color: slotColor.withValues(alpha: 0.05)),
-              ),
+          padding: EdgeInsets.zero,
+          borderRadius: 20,
+          glowColor: isEmpty ? Colors.transparent : slotColor,
+          showGlow: !isEmpty,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                // Background slot indicator
+                if (!isEmpty)
+                  Positioned(
+                    right: -10,
+                    bottom: -10,
+                    child: Icon(
+                      Icons.person,
+                      size: 60,
+                      color: slotColor.withValues(alpha: 0.05),
+                    ),
+                  ),
 
-            // Selection/Status glow
-            AnimatedContainer(
-              duration: 400.ms,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isEmpty
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : slotColor.withValues(alpha: 0.3),
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    isEmpty
-                        ? Colors.white.withValues(alpha: 0.02)
-                        : slotColor.withValues(alpha: 0.1),
-                    isEmpty
-                        ? Colors.transparent
-                        : slotColor.withValues(alpha: 0.02),
-                  ],
-                ),
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      // Avatar Area
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isEmpty
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : slotColor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                          boxShadow: isEmpty
-                              ? []
-                              : [
-                                  BoxShadow(
-                                    color: slotColor.withValues(alpha: 0.2),
-                                    blurRadius: 10,
-                                    spreadRadius: 1,
-                                  )
-                                ],
-                        ),
-                        child: Icon(
-                          isEmpty ? Icons.add_circle_outline : Icons.person,
-                          color: isEmpty ? Colors.white24 : slotColor,
-                          size: 24,
-                        ),
-                      ).animate(target: isEmpty ? 0 : 1).shimmer(delay: 500.ms),
-
-                      const SizedBox(width: 16),
-
-                      // Name Area
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isEmpty
-                                  ? 'WAITING...'
-                                  : (data['name'] ?? 'PLAYER')
-                                      .toString()
-                                      .toUpperCase(),
-                              style: TextStyle(
-                                color: isEmpty ? Colors.white24 : Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (!isEmpty)
-                              Text(
-                                slot == PlayerSlot.slot1
-                                    ? 'GAME HOST'
-                                    : 'READY TO PLAY',
-                                style: TextStyle(
-                                  color: slot == PlayerSlot.slot1
-                                      ? Colors.amber.withValues(alpha: 0.8)
-                                      : slotColor.withValues(alpha: 0.8),
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.0,
+                // Selection/Status glow
+                AnimatedContainer(
+                  duration: 400.ms,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isEmpty
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : slotColor.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        isEmpty
+                            ? Colors.white.withValues(alpha: 0.02)
+                            : slotColor.withValues(alpha: 0.1),
+                        isEmpty
+                            ? Colors.transparent
+                            : slotColor.withValues(alpha: 0.02),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          // Avatar Area
+                          Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: isEmpty
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : slotColor.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                  boxShadow: isEmpty
+                                      ? []
+                                      : [
+                                          BoxShadow(
+                                            color: slotColor.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            blurRadius: 10,
+                                            spreadRadius: 1,
+                                          ),
+                                        ],
                                 ),
-                              ).animate().fadeIn(duration: 300.ms),
-                          ],
-                        ),
-                      ),
+                                child: Icon(
+                                  isEmpty
+                                      ? Icons.add_circle_outline
+                                      : Icons.person,
+                                  color: isEmpty ? Colors.white24 : slotColor,
+                                  size: 24,
+                                ),
+                              )
+                              .animate(target: isEmpty ? 0 : 1)
+                              .shimmer(delay: 500.ms),
 
-                      if (!isEmpty && slot == PlayerSlot.slot1)
-                        const Icon(Icons.stars, color: Colors.amber, size: 20)
-                            .animate(onPlay: (c) => c.repeat())
-                            .shimmer(duration: 2.seconds),
-                    ],
+                          const SizedBox(width: 16),
+
+                          // Name Area
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isEmpty
+                                      ? 'WAITING...'
+                                      : (data['name'] ?? 'PLAYER')
+                                            .toString()
+                                            .toUpperCase(),
+                                  style: TextStyle(
+                                    color: isEmpty
+                                        ? Colors.white24
+                                        : Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (!isEmpty)
+                                  Text(
+                                    slot == PlayerSlot.slot1
+                                        ? 'GAME HOST'
+                                        : 'READY TO PLAY',
+                                    style: TextStyle(
+                                      color: slot == PlayerSlot.slot1
+                                          ? Colors.amber.withValues(alpha: 0.8)
+                                          : slotColor.withValues(alpha: 0.8),
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ).animate().fadeIn(duration: 300.ms),
+                              ],
+                            ),
+                          ),
+
+                          if (!isEmpty && slot == PlayerSlot.slot1)
+                            const Icon(
+                                  Icons.stars,
+                                  color: Colors.amber,
+                                  size: 20,
+                                )
+                                .animate(onPlay: (c) => c.repeat())
+                                .shimmer(duration: 2.seconds),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ).animate(target: isEmpty ? 0 : 1).scale(
-        begin: const Offset(0.95, 0.95),
-        end: const Offset(1, 1),
-        duration: 400.ms,
-        curve: Curves.easeOutBack);
+          ),
+        )
+        .animate(target: isEmpty ? 0 : 1)
+        .scale(
+          begin: const Offset(0.95, 0.95),
+          end: const Offset(1, 1),
+          duration: 400.ms,
+          curve: Curves.easeOutBack,
+        );
   }
 
   Widget _buildInviteSidebar(
-      String gameId, String code, Map<String, dynamic> joinedPlayers) {
+    String gameId,
+    String code,
+    Map<String, dynamic> joinedPlayers,
+  ) {
     final currentUid = firebaseService.auth.currentUser?.uid;
     if (currentUid == null) return const SizedBox.shrink();
 
@@ -721,10 +778,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               Text(
                 'INVITE',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5),
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
               ),
             ],
           ),
@@ -747,8 +805,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                     child: Text(
                       'No friends found.',
                       style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          fontSize: 11),
+                        color: Colors.white.withValues(alpha: 0.2),
+                        fontSize: 11,
+                      ),
                     ),
                   );
                 }
@@ -782,8 +841,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                         ? NetworkImage(friend.photoURL!)
                                         : null,
                                     child: friend.photoURL == null
-                                        ? const Icon(Icons.person,
-                                            size: 16, color: Colors.white54)
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 16,
+                                            color: Colors.white54,
+                                          )
                                         : null,
                                   ),
                                   if (isOnline)
@@ -797,7 +859,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                           color: AppColors.midnightSapphire,
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                              color: Colors.black, width: 1.5),
+                                            color: Colors.black,
+                                            width: 1.5,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -808,20 +872,23 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                 child: Text(
                                   friend.displayName ?? 'Unknown Emperor',
                                   style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold),
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               IconButton(
                                 constraints: const BoxConstraints(),
                                 padding: EdgeInsets.zero,
-                                icon: Icon(Icons.add_circle,
-                                    color: isOnline
-                                        ? AppColors.imperialJade
-                                        : Colors.white10,
-                                    size: 20),
+                                icon: Icon(
+                                  Icons.add_circle,
+                                  color: isOnline
+                                      ? AppColors.imperialJade
+                                      : Colors.white10,
+                                  size: 20,
+                                ),
                                 onPressed: isOnline
                                     ? () {
                                         socialService.sendInvite(
@@ -829,8 +896,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                           gameId: gameId,
                                           joiningCode: code,
                                         );
-                                        CustomSnackBar.show(context,
-                                            message: 'Invite sent!');
+                                        CustomSnackBar.show(
+                                          context,
+                                          message: 'Invite sent!',
+                                        );
                                       }
                                     : null,
                               ),
@@ -899,8 +968,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       });
 
       final playerName = ref.read(displayNameProvider);
-      final assignmentStream = await matchmakingService
-          .joinQueue(maxPlayers, gameMode, playerName: playerName);
+      final assignmentStream = await matchmakingService.joinQueue(
+        maxPlayers,
+        gameMode,
+        playerName: playerName,
+      );
       _matchmakingSubscription?.cancel();
       _matchmakingSubscription = assignmentStream.listen((gameId) {
         if (gameId != null && mounted) {
@@ -935,8 +1007,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       Map<PlayerSlot, PlayerSetupConfig> config = {};
 
       if (playersEvent.snapshot.exists) {
-        final playersData =
-            Map<String, dynamic>.from(playersEvent.snapshot.value as Map);
+        final playersData = Map<String, dynamic>.from(
+          playersEvent.snapshot.value as Map,
+        );
         for (var entry in playersData.entries) {
           final slotStr = entry.key;
           final slot = PlayerSlot.values.firstWhere((e) => e.name == slotStr);
@@ -944,12 +1017,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           if (data['uid'] == currentUserUid) localSlot = slot;
           // All remote players and bots are treated as remoteHuman by local UI, server handles bot turns
           config[slot] = PlayerSetupConfig(
-              name: data['name'], type: PlayerType.remoteHuman);
+            name: data['name'],
+            type: PlayerType.remoteHuman,
+          );
         }
       }
 
-      final controller = MultiplayerGameController(config,
-          gameId: _activeGameId!, localPlayerSlot: localSlot);
+      final controller = MultiplayerGameController(
+        config,
+        gameId: _activeGameId!,
+        localPlayerSlot: localSlot,
+      );
       await controller.initializeFromSnapshot();
 
       if (!mounted) return;

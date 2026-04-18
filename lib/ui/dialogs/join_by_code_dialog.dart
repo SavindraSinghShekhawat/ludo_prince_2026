@@ -14,8 +14,10 @@ class JoinByCodeDialog extends StatefulWidget {
 }
 
 class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (index) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   bool _isLoading = false;
   String? _error;
@@ -136,7 +138,8 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
                     decoration: InputDecoration(
                       enabledBorder: UnderlineInputBorder(
                         borderSide: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.3)),
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
                       ),
                       focusedBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.amberAccent),
@@ -163,8 +166,10 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('CANCEL',
-                          style: TextStyle(color: Colors.white54)),
+                      child: const Text(
+                        'CANCEL',
+                        style: TextStyle(color: Colors.white54),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -179,8 +184,10 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('JOIN',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'JOIN',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],

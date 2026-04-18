@@ -74,11 +74,7 @@ void main() {
       bool captured = false;
       final blueToken = state.players[0].tokens[0];
 
-      final result = engine.applyStep(
-        state,
-        blueToken,
-        allowCapture: true,
-      );
+      final result = engine.applyStep(state, blueToken, allowCapture: true);
       captured = result.events.contains(EngineEvent.capture);
 
       expect(captured, false);
@@ -200,8 +196,12 @@ void main() {
       // Red doesn't have an absolute position that overlaps with Blue's home stretch,
       // but let's verify the logic in applyStep specifically.
 
-      var state =
-          stateWithTokenAt(PlayerSlot.slot1, 0, TokenState.homeStretch, 52);
+      var state = stateWithTokenAt(
+        PlayerSlot.slot1,
+        0,
+        TokenState.homeStretch,
+        52,
+      );
 
       // Even if another token somehow shared the same "absolute position" (which is impossible for Home Stretch)
       // applyStep checks TokenState.board
@@ -235,40 +235,60 @@ void main() {
       final collidingState = GameState(
         gameId: "collision",
         players: [
-          Player(slot: PlayerSlot.slot1, name: "B", tokens: [
-            Token(
+          Player(
+            slot: PlayerSlot.slot1,
+            name: "B",
+            tokens: [
+              Token(
                 id: 0,
                 slot: PlayerSlot.slot1,
                 state: TokenState.board,
-                position: 1)
-          ]),
-          Player(slot: PlayerSlot.slot4, name: "R", tokens: [
-            Token(
+                position: 1,
+              ),
+            ],
+          ),
+          Player(
+            slot: PlayerSlot.slot4,
+            name: "R",
+            tokens: [
+              Token(
                 id: 1,
                 slot: PlayerSlot.slot4,
                 state: TokenState.board,
-                position: 40)
-          ]),
-          Player(slot: PlayerSlot.slot3, name: "G", tokens: [
-            Token(
+                position: 40,
+              ),
+            ],
+          ),
+          Player(
+            slot: PlayerSlot.slot3,
+            name: "G",
+            tokens: [
+              Token(
                 id: 2,
                 slot: PlayerSlot.slot3,
                 state: TokenState.board,
-                position: 27)
-          ]),
-          Player(slot: PlayerSlot.slot2, name: "Y", tokens: [
-            Token(
+                position: 27,
+              ),
+            ],
+          ),
+          Player(
+            slot: PlayerSlot.slot2,
+            name: "Y",
+            tokens: [
+              Token(
                 id: 3,
                 slot: PlayerSlot.slot2,
                 state: TokenState.board,
-                position: 14)
-          ]),
+                position: 14,
+              ),
+            ],
+          ),
         ],
         turnOrder: [
           PlayerSlot.slot1,
           PlayerSlot.slot4,
           PlayerSlot.slot3,
-          PlayerSlot.slot2
+          PlayerSlot.slot2,
         ],
         currentTurn: PlayerSlot.slot1,
         winners: const [],
@@ -299,8 +319,12 @@ void main() {
         // Setup Blue (slot 1) already on that absolute spot
         int absPos = BoardPath.getAbsolutePosition(PlayerSlot.slot1, spot);
 
-        var state =
-            stateWithTokenAt(PlayerSlot.slot1, 0, TokenState.board, spot);
+        var state = stateWithTokenAt(
+          PlayerSlot.slot1,
+          0,
+          TokenState.board,
+          spot,
+        );
 
         // Find another player (e.g. Red) and put them on the SAME absolute position
         // Red (Slot 4) start is 0.
@@ -331,9 +355,12 @@ void main() {
         );
         captured = engineResult.events.contains(EngineEvent.capture);
 
-        expect(captured, false,
-            reason:
-                "Capture should not happen on safe spot relative $spot (Absolute $absPos)");
+        expect(
+          captured,
+          false,
+          reason:
+              "Capture should not happen on safe spot relative $spot (Absolute $absPos)",
+        );
       }
     });
   });

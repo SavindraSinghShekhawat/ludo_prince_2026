@@ -55,9 +55,7 @@ class AnimatedBackground extends StatelessWidget {
           Positioned.fill(
             child: RepaintBoundary(
               child: CustomPaint(
-                painter: TabletopTexturePainter(
-                  opacity: 0.05,
-                ),
+                painter: TabletopTexturePainter(opacity: 0.05),
               ),
             ),
           ),
@@ -84,32 +82,36 @@ class AnimatedBackground extends StatelessWidget {
             top: -150,
             left: -100,
             child: RepaintBoundary(
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.midnightSapphire.withValues(alpha: 0.25),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
-                  begin: const Offset(0, 0),
-                  end: const Offset(50, 50),
-                  duration: 15.seconds,
-                  curve: Curves.easeInOut),
+              child:
+                  Container(
+                        width: 500,
+                        height: 500,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.midnightSapphire.withValues(
+                                alpha: 0.25,
+                              ),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .move(
+                        begin: const Offset(0, 0),
+                        end: const Offset(50, 50),
+                        duration: 15.seconds,
+                        curve: Curves.easeInOut,
+                      ),
             ),
           ),
 
           // Subtle Particle Layer
           if (showParticles)
             Positioned.fill(
-              child: RepaintBoundary(
-                child: const ParticlesWidget(),
-              ),
+              child: RepaintBoundary(child: const ParticlesWidget()),
             ),
 
           child,
@@ -159,9 +161,7 @@ class _ParticlesWidgetState extends State<ParticlesWidget>
         for (var p in _particles) {
           p.update();
         }
-        return CustomPaint(
-          painter: ParticlesPainter(particles: _particles),
-        );
+        return CustomPaint(painter: ParticlesPainter(particles: _particles));
       },
     );
   }
@@ -236,8 +236,10 @@ class TabletopTexturePainter extends CustomPainter {
     final List<Offset> points = [];
     for (int i = 0; i < (size.width * size.height * 0.01).toInt(); i++) {
       points.add(
-        Offset(random.nextDouble() * size.width,
-            random.nextDouble() * size.height),
+        Offset(
+          random.nextDouble() * size.width,
+          random.nextDouble() * size.height,
+        ),
       );
     }
     canvas.drawPoints(PointMode.points, points, paint);
@@ -304,8 +306,9 @@ class _GameButtonState extends State<GameButton> {
   Widget build(BuildContext context) {
     final double buttonHeight = widget.height ?? (widget.isSmall ? 40 : 60);
     final bool isDarkText = widget.color.computeLuminance() > 0.5;
-    final Color contentColor =
-        isDarkText ? AppColors.systemBackground : Colors.white;
+    final Color contentColor = isDarkText
+        ? AppColors.systemBackground
+        : Colors.white;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -328,9 +331,13 @@ class _GameButtonState extends State<GameButton> {
           color: widget.color,
           border: widget.isPrimary
               ? Border.all(
-                  color: Colors.white.withValues(alpha: 0.3), width: 1.5)
+                  color: Colors.white.withValues(alpha: 0.3),
+                  width: 1.5,
+                )
               : Border.all(
-                  color: Colors.black.withValues(alpha: 0.1), width: 1.0),
+                  color: Colors.black.withValues(alpha: 0.1),
+                  width: 1.0,
+                ),
           boxShadow: [
             BoxShadow(
               color: widget.color.withValues(alpha: 0.3),
@@ -352,8 +359,8 @@ class _GameButtonState extends State<GameButton> {
             borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
             child: Padding(
               padding: EdgeInsets.symmetric(
-                  horizontal:
-                      widget.isLoading ? 0 : (widget.isSmall ? 16 : 24)),
+                horizontal: widget.isLoading ? 0 : (widget.isSmall ? 16 : 24),
+              ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -361,37 +368,45 @@ class _GameButtonState extends State<GameButton> {
                   AnimatedOpacity(
                     opacity: widget.isLoading ? 0.0 : 1.0,
                     duration: 250.ms,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (widget.icon != null) ...[
-                          Icon(widget.icon, color: contentColor, size: 20),
-                          const SizedBox(width: 12),
-                        ],
-                        Text(
-                          widget.text.toUpperCase(),
-                          style: GoogleFonts.outfit(
-                            color: contentColor,
-                            fontSize:
-                                widget.fontSize ?? (widget.isSmall ? 12 : 18),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
-                    ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
-                          duration: 4.seconds,
-                          color: isDarkText
-                              ? Colors.black.withValues(alpha: 0.1)
-                              : Colors.white.withValues(alpha: 0.15),
-                        ),
+                    child:
+                        Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (widget.icon != null) ...[
+                                  Icon(
+                                    widget.icon,
+                                    color: contentColor,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                Text(
+                                  widget.text.toUpperCase(),
+                                  style: GoogleFonts.outfit(
+                                    color: contentColor,
+                                    fontSize:
+                                        widget.fontSize ??
+                                        (widget.isSmall ? 12 : 18),
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .shimmer(
+                              duration: 4.seconds,
+                              color: isDarkText
+                                  ? Colors.black.withValues(alpha: 0.1)
+                                  : Colors.white.withValues(alpha: 0.15),
+                            ),
                   ),
                   // Loading Layer
                   if (widget.isLoading)
-                    LudoLoadingDots(size: widget.isSmall ? 24 : 35)
-                        .animate()
-                        .fadeIn(duration: 300.ms),
+                    LudoLoadingDots(
+                      size: widget.isSmall ? 24 : 35,
+                    ).animate().fadeIn(duration: 300.ms),
                 ],
               ),
             ),
@@ -528,16 +543,20 @@ class _GlassCardState extends State<GlassCard> {
                   borderRadius: BorderRadius.circular(24),
                   color: Colors.white.withValues(alpha: 0.05),
                   border: Border.all(
-                      color: widget.accentColor
-                          .withValues(alpha: widget.isPrimary ? 0.18 : 0.06),
-                      width: 1.0),
+                    color: widget.accentColor.withValues(
+                      alpha: widget.isPrimary ? 0.18 : 0.06,
+                    ),
+                    width: 1.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                        color: widget.accentColor
-                            .withValues(alpha: _isHovered ? 0.15 : 0.08),
-                        blurRadius: _isHovered ? 50 : 25,
-                        spreadRadius: _isHovered ? 4 : 0,
-                        offset: const Offset(0, 15)),
+                      color: widget.accentColor.withValues(
+                        alpha: _isHovered ? 0.15 : 0.08,
+                      ),
+                      blurRadius: _isHovered ? 50 : 25,
+                      spreadRadius: _isHovered ? 4 : 0,
+                      offset: const Offset(0, 15),
+                    ),
                     if (widget.isPrimary)
                       BoxShadow(
                         color: widget.accentColor.withValues(alpha: 0.05),
@@ -569,9 +588,11 @@ class _GlassCardState extends State<GlassCard> {
                     Positioned(
                       right: -20,
                       bottom: -20,
-                      child: Icon(widget.icon,
-                          size: widget.height * 0.9,
-                          color: widget.accentColor.withValues(alpha: 0.12)),
+                      child: Icon(
+                        widget.icon,
+                        size: widget.height * 0.9,
+                        color: widget.accentColor.withValues(alpha: 0.12),
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(widget.height * 0.15),
@@ -582,59 +603,76 @@ class _GlassCardState extends State<GlassCard> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(widget.icon,
-                                  color: widget.accentColor,
-                                  size: widget.height * 0.25),
+                              Icon(
+                                widget.icon,
+                                color: widget.accentColor,
+                                size: widget.height * 0.25,
+                              ),
                               if (widget.isComingSoon)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: widget.accentColor
-                                        .withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                        color: widget.accentColor
-                                            .withValues(alpha: 0.4),
-                                        width: 1),
-                                  ),
-                                  child: Text(
-                                    "COMING SOON",
-                                    style: TextStyle(
-                                      color: widget.accentColor,
-                                      fontSize: 7,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.0,
-                                    ),
-                                  ),
-                                )
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: widget.accentColor.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: widget.accentColor.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "COMING SOON",
+                                        style: TextStyle(
+                                          color: widget.accentColor,
+                                          fontSize: 7,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1.0,
+                                        ),
+                                      ),
+                                    )
                                     .animate(
-                                        onPlay: (c) => c.repeat(reverse: true))
+                                      onPlay: (c) => c.repeat(reverse: true),
+                                    )
                                     .scale(
-                                        begin: const Offset(1, 1),
-                                        end: const Offset(1.05, 1.05),
-                                        duration: 1.5.seconds,
-                                        curve: Curves.easeInOut)
+                                      begin: const Offset(1, 1),
+                                      end: const Offset(1.05, 1.05),
+                                      duration: 1.5.seconds,
+                                      curve: Curves.easeInOut,
+                                    )
                                     .shimmer(
-                                        duration: 3.seconds,
-                                        color: AppColors.imperialJade
-                                            .withValues(alpha: 0.2)),
+                                      duration: 3.seconds,
+                                      color: AppColors.imperialJade.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                    ),
                             ],
                           ),
                           SizedBox(height: widget.height * 0.1),
-                          Text(widget.title,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: widget.height * 0.13,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.0)),
-                          Text(widget.subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  fontSize: widget.height * 0.08,
-                                  fontWeight: FontWeight.w500)),
+                          Text(
+                            widget.title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: widget.height * 0.13,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          Text(
+                            widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: widget.height * 0.08,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -675,7 +713,9 @@ class _GlassCardState extends State<GlassCard> {
 
     // Add a very subtle pulse for the primary card to make it feel alive
     if (widget.isPrimary) {
-      card = card.animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+      card = card
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .scale(
             begin: const Offset(1, 1),
             end: const Offset(1.01, 1.01),
             duration: 4.seconds,
@@ -683,7 +723,9 @@ class _GlassCardState extends State<GlassCard> {
           );
 
       // Add a soft breathing glow
-      card = card.animate(onPlay: (c) => c.repeat(reverse: true)).custom(
+      card = card
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .custom(
             duration: 4.seconds,
             builder: (context, value, child) => Container(
               decoration: BoxDecoration(
@@ -733,8 +775,9 @@ class GlassContainer extends StatelessWidget {
         boxShadow: showGlow
             ? [
                 BoxShadow(
-                  color: (glowColor ?? AppColors.primaryCyan)
-                      .withValues(alpha: 0.15),
+                  color: (glowColor ?? AppColors.primaryCyan).withValues(
+                    alpha: 0.15,
+                  ),
                   blurRadius: 40,
                   spreadRadius: 5,
                 ),
@@ -751,8 +794,9 @@ class GlassContainer extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
               color: color ?? Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.12), // Whisper border
-                  width: 1.0),
+                color: Colors.white.withValues(alpha: 0.12), // Whisper border
+                width: 1.0,
+              ),
             ),
             child: child,
           ),
@@ -774,7 +818,9 @@ class CustomSnackBar {
   }) {
     try {
       final container = ProviderScope.containerOf(context);
-      container.read(snackBarProvider.notifier).show(
+      container
+          .read(snackBarProvider.notifier)
+          .show(
             message: message,
             icon: icon,
             color: color,
@@ -807,10 +853,7 @@ class CustomSnackBarHost extends ConsumerWidget {
         layoutBuilder: (child, previousChildren) {
           return Stack(
             alignment: Alignment.center,
-            children: [
-              ...previousChildren,
-              if (child != null) child,
-            ],
+            children: [...previousChildren, if (child != null) child],
           );
         },
         transitionBuilder: (child, animation) {
@@ -864,8 +907,8 @@ class _SnackBarContent extends StatelessWidget {
     final snackBarColor = isError
         ? Colors.redAccent
         : isSuccess
-            ? const Color(0xFF00FFA3)
-            : color ?? Colors.cyanAccent;
+        ? const Color(0xFF00FFA3)
+        : color ?? Colors.cyanAccent;
 
     return SafeArea(
       top: false,
@@ -879,9 +922,7 @@ class _SnackBarContent extends StatelessWidget {
               child: Dismissible(
                 key: UniqueKey(),
                 direction: DismissDirection.horizontal,
-                dismissThresholds: const {
-                  DismissDirection.horizontal: 0.1,
-                },
+                dismissThresholds: const {DismissDirection.horizontal: 0.1},
                 onDismissed: (_) => onDismissed(),
                 child: Container(
                   padding: const EdgeInsets.all(16),
@@ -912,8 +953,8 @@ class _SnackBarContent extends StatelessWidget {
                           isError
                               ? Icons.error_outline
                               : isSuccess
-                                  ? Icons.check_circle_outline
-                                  : icon,
+                              ? Icons.check_circle_outline
+                              : icon,
                           color: snackBarColor,
                           size: 20,
                         ),
@@ -959,20 +1000,19 @@ class MatchmakingLoader extends StatelessWidget {
           // Expanding "Radar" Rings
           ...List.generate(3, (index) {
             return Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color:
-                      (color ?? AppColors.primaryCyan).withValues(alpha: 0.15),
-                  width: 1,
-                ),
-              ),
-            )
-                .animate(
-                  onPlay: (controller) => controller.repeat(),
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: (color ?? AppColors.primaryCyan).withValues(
+                        alpha: 0.15,
+                      ),
+                      width: 1,
+                    ),
+                  ),
                 )
+                .animate(onPlay: (controller) => controller.repeat())
                 .scale(
                   begin: const Offset(0.5, 0.5),
                   end: const Offset(2.0, 2.0),
@@ -985,17 +1025,20 @@ class MatchmakingLoader extends StatelessWidget {
 
           // Outer pulsing ring
           Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color:
-                    (color ?? Colors.deepPurpleAccent).withValues(alpha: 0.2),
-                width: 2,
-              ),
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: (color ?? Colors.deepPurpleAccent).withValues(
+                      alpha: 0.2,
+                    ),
+                    width: 2,
+                  ),
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scale(
                 begin: const Offset(1, 1),
                 end: const Offset(1.1, 1.1),
                 duration: 2.seconds,
@@ -1008,11 +1051,14 @@ class MatchmakingLoader extends StatelessWidget {
             height: size * 1.1,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.fromBorderSide(BorderSide(
-                color:
-                    (color ?? AppColors.imperialAmber).withValues(alpha: 0.1),
-                width: 1,
-              )),
+              border: Border.fromBorderSide(
+                BorderSide(
+                  color: (color ?? AppColors.imperialAmber).withValues(
+                    alpha: 0.1,
+                  ),
+                  width: 1,
+                ),
+              ),
             ),
           ).animate(onPlay: (c) => c.repeat()).rotate(duration: 5.seconds),
 
@@ -1021,25 +1067,25 @@ class MatchmakingLoader extends StatelessWidget {
 
           // Center icon or dot
           Container(
-            width: size * 0.35,
-            height: size * 0.35,
-            decoration: BoxDecoration(
-              color: AppColors.starPlatinum,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.starPlatinumGlow,
-                  blurRadius: 15,
-                  spreadRadius: 2,
+                width: size * 0.35,
+                height: size * 0.35,
+                decoration: BoxDecoration(
+                  color: AppColors.starPlatinum,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.starPlatinumGlow,
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Icon(
-              Icons.public,
-              size: size * 0.22,
-              color: Colors.black.withValues(alpha: 0.8),
-            ),
-          )
+                child: Icon(
+                  Icons.public,
+                  size: size * 0.22,
+                  color: Colors.black.withValues(alpha: 0.8),
+                ),
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .scale(
                 begin: const Offset(1, 1),
@@ -1070,43 +1116,48 @@ class LudoLoadingDots extends StatelessWidget {
         children: [
           // Rotating container
           Stack(
-            children: List.generate(4, (index) {
-              final colors = [
-                const Color(0xFF2196F3), // Blue
-                const Color(0xFFFFC107), // Yellow
-                const Color(0xFF4CAF50), // Green
-                const Color(0xFFF44336), // Red
-              ];
+                children: List.generate(4, (index) {
+                  final colors = [
+                    const Color(0xFF2196F3), // Blue
+                    const Color(0xFFFFC107), // Yellow
+                    const Color(0xFF4CAF50), // Green
+                    const Color(0xFFF44336), // Red
+                  ];
 
-              return RotationTransition(
-                turns: AlwaysStoppedAnimation(index * 0.25),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    width: dotSize,
-                    height: dotSize,
-                    decoration: BoxDecoration(
-                      color: colors[index],
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors[index].withValues(alpha: 0.6),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                        ),
-                      ],
+                  return RotationTransition(
+                    turns: AlwaysStoppedAnimation(index * 0.25),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child:
+                          Container(
+                                width: dotSize,
+                                height: dotSize,
+                                decoration: BoxDecoration(
+                                  color: colors[index],
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colors[index].withValues(
+                                        alpha: 0.6,
+                                      ),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                              )
+                              .animate(onPlay: (c) => c.repeat(reverse: true))
+                              .scale(
+                                begin: const Offset(0.7, 0.7),
+                                end: const Offset(1.2, 1.2),
+                                duration: 800.ms,
+                                delay: (index * 200).ms,
+                                curve: Curves.easeInOut,
+                              ),
                     ),
-                  ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
-                        begin: const Offset(0.7, 0.7),
-                        end: const Offset(1.2, 1.2),
-                        duration: 800.ms,
-                        delay: (index * 200).ms,
-                        curve: Curves.easeInOut,
-                      ),
-                ),
-              );
-            }),
-          )
+                  );
+                }),
+              )
               .animate(onPlay: (c) => c.repeat())
               .rotate(duration: 3.seconds, curve: Curves.linear),
         ],

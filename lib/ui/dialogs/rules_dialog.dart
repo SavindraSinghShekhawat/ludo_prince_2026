@@ -22,26 +22,51 @@ class RulesDialog extends StatelessWidget {
         ],
       ),
       body: [
-        _buildRule(Icons.looks_6, Colors.amberAccent, 'Roll a 6',
-            'You must roll a 6 to move a token out of your base.'),
-        _buildRule(Icons.replay, Colors.cyanAccent, 'Extra Turn',
-            'Rolling a 6 gives you an additional turn.'),
-        _buildRule(Icons.block, Colors.redAccent, 'Consecutive 6s',
-            'Rolling three consecutive 6s skips your turn and passes it to the next player.'),
-        _buildRule(Icons.stars, Colors.greenAccent, 'Safe Spots',
-            'Tokens on marked safe spots (stars) cannot be captured.'),
-        _buildRule(Icons.sports_kabaddi, Colors.orangeAccent, 'Capture',
-            'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.'),
-        _buildRule(Icons.flag, const Color(0xFFE5E4E2), 'Winning',
-            'The first player to move all 4 of their tokens to the home area at the center of the board wins.'),
+        _buildRule(
+          Icons.looks_6,
+          Colors.amberAccent,
+          'Roll a 6',
+          'You must roll a 6 to move a token out of your base.',
+        ),
+        _buildRule(
+          Icons.replay,
+          Colors.cyanAccent,
+          'Extra Turn',
+          'Rolling a 6 gives you an additional turn.',
+        ),
+        _buildRule(
+          Icons.block,
+          Colors.redAccent,
+          'Consecutive 6s',
+          'Rolling three consecutive 6s skips your turn and passes it to the next player.',
+        ),
+        _buildRule(
+          Icons.stars,
+          Colors.greenAccent,
+          'Safe Spots',
+          'Tokens on marked safe spots (stars) cannot be captured.',
+        ),
+        _buildRule(
+          Icons.sports_kabaddi,
+          Colors.orangeAccent,
+          'Capture',
+          'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.',
+        ),
+        _buildRule(
+          Icons.flag,
+          const Color(0xFFE5E4E2),
+          'Winning',
+          'The first player to move all 4 of their tokens to the home area at the center of the board wins.',
+        ),
       ],
       footer: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFE5E4E2),
           foregroundColor: const Color(0xFF1E1E2C),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         onPressed: () => Navigator.of(context).pop(),
         child: const Text(
@@ -57,7 +82,11 @@ class RulesDialog extends StatelessWidget {
   }
 
   Widget _buildRule(
-      IconData icon, Color color, String title, String description) {
+    IconData icon,
+    Color color,
+    String title,
+    String description,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(

@@ -45,8 +45,9 @@ class GameModeInfoDialog extends StatelessWidget {
           backgroundColor: const Color(0xFFE5E4E2),
           foregroundColor: const Color(0xFF1E1E2C),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         onPressed: () => Navigator.of(context).pop(),
         child: const Text(

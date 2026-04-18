@@ -60,9 +60,10 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('SHARE FEEDBACK',
-              style:
-                  TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+          title: const Text(
+            'SHARE FEEDBACK',
+            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -121,7 +122,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           hintText:
                               "Tell us about your experience or report a bug...",
                           hintStyle: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.3)),
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
                           filled: true,
                           fillColor: Colors.black.withValues(alpha: 0.2),
                           border: OutlineInputBorder(
@@ -133,8 +135,9 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed:
-                            _isFeedbackSubmitting ? null : _submitFeedback,
+                        onPressed: _isFeedbackSubmitting
+                            ? null
+                            : _submitFeedback,
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
@@ -163,8 +166,9 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFF1A1A2E)),
+                                      strokeWidth: 2,
+                                      color: Color(0xFF1A1A2E),
+                                    ),
                                   )
                                 : const Text(
                                     "SUBMIT FEEDBACK",
@@ -183,10 +187,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                 const Text(
                   "Your feedback helps us make Ludo Prince better for everyone. We read every submission!",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white24,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white24, fontSize: 12),
                 ),
               ],
             ),

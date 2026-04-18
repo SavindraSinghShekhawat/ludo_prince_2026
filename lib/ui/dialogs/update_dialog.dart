@@ -43,18 +43,21 @@ class UpdateDialog extends StatelessWidget {
     } else {
       // Fallback to web URL
       final webUrl = Uri.parse(
-          Theme.of(navigatorKey.currentContext!).platform == TargetPlatform.iOS
-              ? 'https://apps.apple.com/app/id$appId'
-              : 'https://play.google.com/store/apps/details?id=$packageName');
+        Theme.of(navigatorKey.currentContext!).platform == TargetPlatform.iOS
+            ? 'https://apps.apple.com/app/id$appId'
+            : 'https://play.google.com/store/apps/details?id=$packageName',
+      );
 
       AppLogger.info(
-          '[UpdateDialog] Native scheme failed or unsupported. Falling back to web: $webUrl');
+        '[UpdateDialog] Native scheme failed or unsupported. Falling back to web: $webUrl',
+      );
 
       if (await canLaunchUrl(webUrl)) {
         await launchUrl(webUrl, mode: LaunchMode.externalApplication);
       } else {
         AppLogger.error(
-            '[UpdateDialog] Could not launch any update URL (native or web)');
+          '[UpdateDialog] Could not launch any update URL (native or web)',
+        );
       }
     }
   }
@@ -92,40 +95,41 @@ class UpdateDialog extends StatelessWidget {
         const SizedBox(height: 16),
         // Animated Icon
         Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCyan.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primaryCyan.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryCyan.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.system_update_rounded,
-              color: AppColors.primaryCyan,
-              size: 56,
-            ),
-          )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scale(
-                begin: const Offset(1, 1),
-                end: const Offset(1.12, 1.12),
-                duration: 1500.ms,
-                curve: Curves.easeInOutSine,
-              )
-              .shimmer(
-                duration: 3000.ms,
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
+          child:
+              Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryCyan.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.system_update_rounded,
+                      color: AppColors.primaryCyan,
+                      size: 56,
+                    ),
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(1, 1),
+                    end: const Offset(1.12, 1.12),
+                    duration: 1500.ms,
+                    curve: Curves.easeInOutSine,
+                  )
+                  .shimmer(
+                    duration: 3000.ms,
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
         ),
         const SizedBox(height: 24),
 
@@ -159,45 +163,51 @@ class UpdateDialog extends StatelessWidget {
         ).animate().fadeIn(delay: 500.ms),
         const SizedBox(height: 12),
       ],
-      footer: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GameButton(
-            text: 'UPDATE NOW',
-            color: AppColors.primaryCyan,
-            onTap: _launchUpdate,
-            isPrimary: true,
-            width: double.infinity,
-          ),
-          if (!isForceUpdate) ...[
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white54,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-              ),
-              child: Text(
-                'MAYBE LATER',
-                style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-          ],
-        ],
-      )
-          .animate()
-          .fadeIn(delay: 700.ms)
-          .slideY(begin: 0.2, curve: Curves.easeOutBack),
+      footer:
+          Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GameButton(
+                    text: 'UPDATE NOW',
+                    color: AppColors.primaryCyan,
+                    onTap: _launchUpdate,
+                    isPrimary: true,
+                    width: double.infinity,
+                  ),
+                  if (!isForceUpdate) ...[
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white54,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 24,
+                        ),
+                      ),
+                      child: Text(
+                        'MAYBE LATER',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              )
+              .animate()
+              .fadeIn(delay: 700.ms)
+              .slideY(begin: 0.2, curve: Curves.easeOutBack),
     );
   }
 
-  Widget _buildVersionBadge(String version,
-      {required String label, bool isLatest = false}) {
+  Widget _buildVersionBadge(
+    String version, {
+    required String label,
+    bool isLatest = false,
+  }) {
     return Column(
       children: [
         Text(

@@ -39,10 +39,7 @@ class PlayerSetupConfig {
   final String name;
   final PlayerType type;
 
-  PlayerSetupConfig({
-    required this.name,
-    this.type = PlayerType.localHuman,
-  });
+  PlayerSetupConfig({required this.name, this.type = PlayerType.localHuman});
 }
 
 class LudoController implements GameController {
@@ -78,17 +75,19 @@ class LudoController implements GameController {
   final PlayerSlot? localPlayerSlot;
   final GameMode gameMode;
 
-  LudoController(Map<PlayerSlot, PlayerSetupConfig> config,
-      {this.initialState = InitialGameState.normal,
-      this.localPlayerSlot,
-      this.gameMode = GameMode.classic,
-      GameEventProvider? eventProvider})
-      : _state = GameState(
-            gameId: "",
-            players: [],
-            turnOrder: [],
-            currentTurn: PlayerSlot.slot1),
-        eventProvider = eventProvider ?? LocalEventProvider() {
+  LudoController(
+    Map<PlayerSlot, PlayerSetupConfig> config, {
+    this.initialState = InitialGameState.normal,
+    this.localPlayerSlot,
+    this.gameMode = GameMode.classic,
+    GameEventProvider? eventProvider,
+  }) : _state = GameState(
+         gameId: "",
+         players: [],
+         turnOrder: [],
+         currentTurn: PlayerSlot.slot1,
+       ),
+       eventProvider = eventProvider ?? LocalEventProvider() {
     _state = _createInitialState(config, initialState, gameMode);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
@@ -131,8 +130,9 @@ class LudoController implements GameController {
     if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
       return;
     }
-    final currentPlayer =
-        _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    final currentPlayer = _state.players.firstWhere(
+      (p) => p.slot == _state.currentTurn,
+    );
     if (currentPlayer.type != PlayerType.localBot) return;
 
     _isActionInProgress = true;
@@ -173,9 +173,11 @@ class LudoController implements GameController {
       // Fallback only if Random.secure() is unsupported on the platform.
       // We use the current time and a few other entropy sources for the fallback seed.
       print(
-          "WARNING: Random.secure() not supported. Using seeded Random as fallback.");
-      return __rng ??=
-          Random(DateTime.now().microsecondsSinceEpoch ^ 0xDEADBEEF);
+        "WARNING: Random.secure() not supported. Using seeded Random as fallback.",
+      );
+      return __rng ??= Random(
+        DateTime.now().microsecondsSinceEpoch ^ 0xDEADBEEF,
+      );
     }
   }
 
@@ -242,15 +244,13 @@ class LudoController implements GameController {
 
     // Initial "anticipation" phase for all players (Local, Remote, and Bot)
     // If the local player already optimistically landed, we skip the waiting phase
-    bool alreadyLanded = !_state.isWaitingForResult &&
+    bool alreadyLanded =
+        !_state.isWaitingForResult &&
         _state.isRolling &&
         _state.diceValue == value;
 
     if (!alreadyLanded) {
-      _state = _state.copyWith(
-        isRolling: true,
-        isWaitingForResult: true,
-      );
+      _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
       if (!_isDisposed) _streamController.add(_state);
 
       // Minimum "anticipation" duration to ensure the loop is heard/seen
@@ -282,17 +282,20 @@ class LudoController implements GameController {
 
     // Auto move if only 1 valid token or all valid tokens at same place
     if (resultState.isDiceRolled) {
-      final player = resultState.players
-          .firstWhere((p) => p.slot == resultState.currentTurn);
+      final player = resultState.players.firstWhere(
+        (p) => p.slot == resultState.currentTurn,
+      );
 
       final validTokens = player.tokens
           .where((t) => _engine.isValidMove(t, resultState.diceValue))
           .toList();
 
       if (validTokens.isNotEmpty) {
-        bool allSamePosition = validTokens.every((t) =>
-            t.state == validTokens.first.state &&
-            t.position == validTokens.first.position);
+        bool allSamePosition = validTokens.every(
+          (t) =>
+              t.state == validTokens.first.state &&
+              t.position == validTokens.first.position,
+        );
 
         bool allInHome = validTokens.every((t) => t.state == TokenState.home);
 
@@ -329,8 +332,9 @@ class LudoController implements GameController {
     _isActionInProgress = false;
 
     if (autoMoveId != null) {
-      final player =
-          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+      final player = _state.players.firstWhere(
+        (p) => p.slot == _state.currentTurn,
+      );
       final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
       await Future.delayed(const Duration(milliseconds: 250));
       await sendMoveIntent(token);
@@ -392,8 +396,11 @@ class LudoController implements GameController {
     }
   }
 
-  GameState _createInitialState(Map<PlayerSlot, PlayerSetupConfig> config,
-      InitialGameState initialState, GameMode gameMode) {
+  GameState _createInitialState(
+    Map<PlayerSlot, PlayerSetupConfig> config,
+    InitialGameState initialState,
+    GameMode gameMode,
+  ) {
     List<Player> players = config.entries.map((e) {
       List<Token> tokens = List.generate(4, (i) => Token(id: i, slot: e.key));
 

@@ -32,10 +32,12 @@ class PlayerCountSelector extends StatelessWidget {
           checkmarkColor: Colors.black,
           backgroundColor: Colors.white.withValues(alpha: 0.05),
           side: BorderSide(
-              color: isSelected ? Colors.transparent : Colors.white24),
+            color: isSelected ? Colors.transparent : Colors.white24,
+          ),
           labelStyle: TextStyle(
-              color: isSelected ? Colors.black : Colors.white70,
-              fontWeight: FontWeight.bold),
+            color: isSelected ? Colors.black : Colors.white70,
+            fontWeight: FontWeight.bold,
+          ),
         );
       }).toList(),
     );

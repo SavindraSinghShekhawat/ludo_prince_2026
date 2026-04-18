@@ -90,7 +90,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 20),
+                            horizontal: 40,
+                            vertical: 20,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -103,8 +105,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 onTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (_) => const LobbyScreen(
-                                          isQuickMatch: true)),
+                                    builder: (_) =>
+                                        const LobbyScreen(isQuickMatch: true),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -120,8 +123,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (_) =>
-                                                const FriendsScreen()),
+                                          builder: (_) => const FriendsScreen(),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -136,8 +139,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (_) =>
-                                                const LocalSetupScreen()),
+                                          builder: (_) =>
+                                              const LocalSetupScreen(),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -193,8 +197,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) =>
-                                const LobbyScreen(isQuickMatch: true)),
+                          builder: (_) => const LobbyScreen(isQuickMatch: true),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -212,7 +216,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const FriendsScreen()),
+                                builder: (_) => const FriendsScreen(),
+                              ),
                             ),
                           ),
                         ),
@@ -227,7 +232,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const LocalSetupScreen()),
+                                builder: (_) => const LocalSetupScreen(),
+                              ),
                             ),
                           ),
                         ),
@@ -266,8 +272,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       border: _isScrolled
                           ? Border(
                               bottom: BorderSide(
-                                color: AppColors.primaryCyan
-                                    .withValues(alpha: 0.1),
+                                color: AppColors.primaryCyan.withValues(
+                                  alpha: 0.1,
+                                ),
                                 width: 1,
                               ),
                             )
@@ -300,7 +307,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildOnlineStatusBar(int count) {
     // Show actual real numbers as requested
     final displayCount = count.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -325,13 +334,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF00FF88).withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-              )
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00FF88).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .scale(
                     begin: const Offset(0.8, 0.8),
@@ -390,17 +399,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ? NetworkImage(profile!.photoURL!)
                         : null,
                     child: profile?.photoURL == null
-                        ? const Icon(Icons.person,
-                            color: Colors.white, size: 20)
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 20,
+                          )
                         : null,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(profile?.displayName ?? displayName,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  profile?.displayName ?? displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -408,10 +423,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               _buildNotificationIcon(context, unreadCount),
               const SizedBox(width: 12),
-              _buildHeaderIcon(context, Icons.settings, onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
-              }),
+              _buildHeaderIcon(
+                context,
+                Icons.settings,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -433,25 +454,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: hasUnread
-                  ? AppColors.primaryCyan.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.05),
-              border: Border.all(
-                color: hasUnread
-                    ? AppColors.primaryCyan.withValues(alpha: 0.2)
-                    : Colors.transparent,
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              hasUnread ? Icons.notifications_active : Icons.notifications,
-              color: hasUnread ? AppColors.primaryCyan : Colors.white70,
-              size: 20,
-            ),
-          )
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: hasUnread
+                      ? AppColors.primaryCyan.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.05),
+                  border: Border.all(
+                    color: hasUnread
+                        ? AppColors.primaryCyan.withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  hasUnread ? Icons.notifications_active : Icons.notifications,
+                  color: hasUnread ? AppColors.primaryCyan : Colors.white70,
+                  size: 20,
+                ),
+              )
               .animate(
                 target: hasUnread ? 1 : 0,
                 onPlay: (c) => c.repeat(reverse: true),
@@ -462,10 +483,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 duration: 1.5.seconds,
                 curve: Curves.easeInOut,
               )
-              .shimmer(
-                duration: 3.seconds,
-                color: Colors.white24,
-              ),
+              .shimmer(duration: 3.seconds, color: Colors.white24),
           if (hasUnread)
             Positioned(
               top: -4,
@@ -475,8 +493,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.primaryCyan,
                   shape: BoxShape.circle,
-                  border:
-                      Border.all(color: AppColors.systemBackground, width: 2),
+                  border: Border.all(
+                    color: AppColors.systemBackground,
+                    width: 2,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primaryCyan.withValues(alpha: 0.5),
@@ -485,10 +505,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
-                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Center(
                   child: Text(
                     count > 9 ? '9+' : '$count',
@@ -506,15 +523,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildHeaderIcon(BuildContext context, IconData icon,
-      {VoidCallback? onTap}) {
+  Widget _buildHeaderIcon(
+    BuildContext context,
+    IconData icon, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white.withValues(alpha: 0.05)),
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white.withValues(alpha: 0.05),
+        ),
         child: Icon(icon, color: Colors.white70, size: 20),
       ),
     );
@@ -525,13 +546,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _footerLink("Settings", () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
         }),
         const _FooterDivider(),
         _footerLink("About & Fairness", () {
           Navigator.push(
-              context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+            context,
+            MaterialPageRoute(builder: (_) => const AboutScreen()),
+          );
         }),
       ],
     );
@@ -540,8 +565,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _footerLink(String text, VoidCallback onTap) {
     return TextButton(
       onPressed: onTap,
-      child: Text(text,
-          style: const TextStyle(color: Colors.white60, fontSize: 13)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white60, fontSize: 13),
+      ),
     );
   }
 

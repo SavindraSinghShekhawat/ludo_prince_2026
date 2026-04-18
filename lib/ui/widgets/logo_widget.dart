@@ -6,11 +6,7 @@ class LogoWidget extends StatelessWidget {
   final double fontSize;
   final bool showCrown;
 
-  const LogoWidget({
-    super.key,
-    this.fontSize = 28,
-    this.showCrown = true,
-  });
+  const LogoWidget({super.key, this.fontSize = 28, this.showCrown = true});
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +22,19 @@ class LogoWidget extends StatelessWidget {
               children: [
                 // Backlight Glow
                 Container(
-                  width: fontSize * 1.8,
-                  height: fontSize * 1.8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFFE5E4E2).withValues(alpha: 0.3),
-                        const Color(0xFFBCC6CC).withValues(alpha: 0.1),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                )
+                      width: fontSize * 1.8,
+                      height: fontSize * 1.8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFFE5E4E2).withValues(alpha: 0.3),
+                            const Color(0xFFBCC6CC).withValues(alpha: 0.1),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .scale(
                       begin: const Offset(0.8, 0.8),
@@ -47,7 +43,9 @@ class LogoWidget extends StatelessWidget {
                       curve: Curves.easeInOutSine,
                     )
                     .blur(
-                        begin: const Offset(10, 10), end: const Offset(20, 20)),
+                      begin: const Offset(10, 10),
+                      end: const Offset(20, 20),
+                    ),
 
                 // Sparkles / Particles (Platinum Stream)
                 ...List.generate(6, (index) {
@@ -62,26 +60,35 @@ class LogoWidget extends StatelessWidget {
                     child: Center(
                       child: Transform.translate(
                         offset: Offset(xOffset, 0),
-                        child: Icon(
-                          Icons.star,
-                          color: const Color(0xFFE5E4E2)
-                              .withValues(alpha: 0.8), // Platinum
-                          size: 4 + (index % 4 * 3),
-                        )
-                            .animate(onPlay: (c) => c.repeat())
-                            .fadeIn(delay: delay.ms, duration: 600.ms)
-                            .scale(begin: Offset.zero, end: const Offset(1, 1))
-                            .moveY(
-                                begin: 0,
-                                end: -180,
-                                duration: 3.5.seconds,
-                                curve: Curves.easeOutQuad)
-                            .moveX(
-                                begin: 0,
-                                end: (index % 2 == 0 ? 20 : -20),
-                                duration: 3.5.seconds)
-                            .fadeOut(
-                                delay: (delay + 2200).ms, duration: 1000.ms),
+                        child:
+                            Icon(
+                                  Icons.star,
+                                  color: const Color(
+                                    0xFFE5E4E2,
+                                  ).withValues(alpha: 0.8), // Platinum
+                                  size: 4 + (index % 4 * 3),
+                                )
+                                .animate(onPlay: (c) => c.repeat())
+                                .fadeIn(delay: delay.ms, duration: 600.ms)
+                                .scale(
+                                  begin: Offset.zero,
+                                  end: const Offset(1, 1),
+                                )
+                                .moveY(
+                                  begin: 0,
+                                  end: -180,
+                                  duration: 3.5.seconds,
+                                  curve: Curves.easeOutQuad,
+                                )
+                                .moveX(
+                                  begin: 0,
+                                  end: (index % 2 == 0 ? 20 : -20),
+                                  duration: 3.5.seconds,
+                                )
+                                .fadeOut(
+                                  delay: (delay + 2200).ms,
+                                  duration: 1000.ms,
+                                ),
                       ),
                     ),
                   );
@@ -89,11 +96,11 @@ class LogoWidget extends StatelessWidget {
 
                 // The Crown itself
                 Image.asset(
-                  'assets/crown.png',
-                  width: fontSize * 1.5,
-                  height: fontSize * 1.5,
-                  fit: BoxFit.contain,
-                )
+                      'assets/crown.png',
+                      width: fontSize * 1.5,
+                      height: fontSize * 1.5,
+                      fit: BoxFit.contain,
+                    )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .moveY(
                       begin: 0,
@@ -117,37 +124,41 @@ class LogoWidget extends StatelessWidget {
             ),
           ),
         ShaderMask(
-          blendMode: BlendMode.srcIn,
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              Color(0xFFE5E4E2), // Platinum Light
-              Color(0xFFFFFFFF), // White highlight
-              Color(0xFFBCC6CC), // Platinum Dark
-              Color(0xFFE5E4E2), // Return to Light
-            ],
-            stops: [0.0, 0.4, 0.8, 1.0],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: Text(
-            "LUDO PRINCE",
-            style: GoogleFonts.outfit(
-              textStyle: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4.0,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    offset: const Offset(2, 2),
-                    blurRadius: 4,
-                  ),
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [
+                  Color(0xFFE5E4E2), // Platinum Light
+                  Color(0xFFFFFFFF), // White highlight
+                  Color(0xFFBCC6CC), // Platinum Dark
+                  Color(0xFFE5E4E2), // Return to Light
                 ],
+                stops: [0.0, 0.4, 0.8, 1.0],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds),
+              child: Text(
+                "LUDO PRINCE",
+                style: GoogleFonts.outfit(
+                  textStyle: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 4.0,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        offset: const Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
               ),
+            )
+            .animate(onPlay: (c) => c.repeat())
+            .shimmer(
+              duration: 3.seconds,
+              color: Colors.white.withValues(alpha: 0.4),
             ),
-          ),
-        ).animate(onPlay: (c) => c.repeat()).shimmer(
-            duration: 3.seconds, color: Colors.white.withValues(alpha: 0.4)),
       ],
     );
   }

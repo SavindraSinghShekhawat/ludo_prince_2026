@@ -40,8 +40,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     super.initState();
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      _friendsSubscription =
-          profileService.getFriends(currentUser.uid).listen((friends) {
+      _friendsSubscription = profileService.getFriends(currentUser.uid).listen((
+        friends,
+      ) {
         if (mounted) {
           setState(() {
             _allFriends = friends;
@@ -75,9 +76,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         _filteredFriends = _allFriends;
       } else {
         _filteredFriends = _allFriends
-            .where((f) => (f.displayName ?? '')
-                .toLowerCase()
-                .contains(query.toLowerCase()))
+            .where(
+              (f) => (f.displayName ?? '').toLowerCase().contains(
+                query.toLowerCase(),
+              ),
+            )
             .toList();
       }
     });
@@ -96,7 +99,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         final friendIds = _allFriends.map((f) => f.uid).toSet();
         _searchResults = results
             .where(
-                (r) => r.uid != currentUser?.uid && !friendIds.contains(r.uid))
+              (r) => r.uid != currentUser?.uid && !friendIds.contains(r.uid),
+            )
             .toList();
         _isSearching = false;
       });
@@ -107,8 +111,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final isGuest = user == null || user.isAnonymous;
-    final unreadCount =
-        ref.watch(notificationProvider).inbox.where((n) => !n.isRead).length;
+    final unreadCount = ref
+        .watch(notificationProvider)
+        .inbox
+        .where((n) => !n.isRead)
+        .length;
 
     return AnimatedBackground(
       child: Scaffold(
@@ -145,9 +152,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                       child: Text(
                         unreadCount > 9 ? '9+' : unreadCount.toString(),
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 6,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 6,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -216,7 +224,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   }
 
   Widget _buildActionCard(
-      String title, IconData icon, Color color, VoidCallback onTap) {
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: GlassContainer(
@@ -244,20 +256,14 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const LobbyScreen(
-          isQuickMatch: false,
-          isHost: true,
-        ),
+        builder: (_) => const LobbyScreen(isQuickMatch: false, isHost: true),
       ),
     );
   }
 
   void _handleJoinRoom() {
     // We will implement JoinByCodeDialog later
-    CustomDialogLayout.show(
-      context: context,
-      child: const JoinByCodeDialog(),
-    );
+    CustomDialogLayout.show(context: context, child: const JoinByCodeDialog());
   }
 
   Widget _buildGuestNudge() {
@@ -267,14 +273,20 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Icon(Icons.lock_person_outlined,
-                color: AppColors.imperialJade, size: 48),
+            const Icon(
+              Icons.lock_person_outlined,
+              color: AppColors.imperialJade,
+              size: 48,
+            ),
             const SizedBox(height: 16),
-            const Text('LINK ACCOUNT',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+            const Text(
+              'LINK ACCOUNT',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
             const Text(
               'Link your account to add persistent friends and chat with them anytime!',
@@ -286,8 +298,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               text: 'LINK NOW',
               isSmall: true,
               onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const AuthScreen()));
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AuthScreen()),
+                );
               },
             ),
           ],
@@ -331,12 +344,15 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           children: [
             Icon(icon, color: Colors.white38, size: 18),
             const SizedBox(width: 8),
-            Text(title,
-                style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
           ],
         ),
       ),
@@ -349,8 +365,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         child: Padding(
           padding: EdgeInsets.all(40.0),
           child: Center(
-            child: Text('No friends yet. Start searching!',
-                style: TextStyle(color: Colors.white30)),
+            child: Text(
+              'No friends yet. Start searching!',
+              style: TextStyle(color: Colors.white30),
+            ),
           ),
         ),
       );
@@ -360,8 +378,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Text('No matching friends found.',
-              style: TextStyle(color: Colors.white30, fontSize: 13)),
+          child: Text(
+            'No matching friends found.',
+            style: TextStyle(color: Colors.white30, fontSize: 13),
+          ),
         ),
       );
     }
@@ -383,8 +403,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Text('No new players found matching your search.',
-              style: TextStyle(color: Colors.white30, fontSize: 13)),
+          child: Text(
+            'No new players found matching your search.',
+            style: TextStyle(color: Colors.white30, fontSize: 13),
+          ),
         ),
       );
     }
@@ -413,14 +435,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor:
-                      AppColors.imperialJade.withValues(alpha: 0.1),
+                  backgroundColor: AppColors.imperialJade.withValues(
+                    alpha: 0.1,
+                  ),
                   backgroundImage: user.photoURL != null
                       ? NetworkImage(user.photoURL!)
                       : null,
                   child: user.photoURL == null
-                      ? const Icon(Icons.person,
-                          color: AppColors.imperialJade, size: 30)
+                      ? const Icon(
+                          Icons.person,
+                          color: AppColors.imperialJade,
+                          size: 30,
+                        )
                       : null,
                 ),
                 StreamBuilder<Map<String, dynamic>>(
@@ -441,8 +467,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           color: isOnline
                               ? Colors.greenAccent
                               : (isInLobby || isInGame)
-                                  ? Colors.orangeAccent
-                                  : Colors.grey,
+                              ? Colors.orangeAccent
+                              : Colors.grey,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.black, width: 2),
                         ),
@@ -457,23 +483,32 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.displayName ?? 'Player',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
+                  Text(
+                    user.displayName ?? 'Player',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.emoji_events,
-                          color: AppColors.imperialAmber, size: 14),
+                      const Icon(
+                        Icons.emoji_events,
+                        color: AppColors.imperialAmber,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
-                      Text('${user.gamesWon} WINS',
-                          style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5)),
+                      Text(
+                        '${user.gamesWon} WINS',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -481,13 +516,17 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             ),
             if (isFriend) ...[
               _buildSmallPlatinumButton(
-                  'CHALLENGE', () => _handleChallenge(user)),
+                'CHALLENGE',
+                () => _handleChallenge(user),
+              ),
             ] else ...[
               _buildSmallPlatinumButton('ADD', () async {
                 final currentUser = FirebaseAuth.instance.currentUser;
                 if (currentUser != null) {
                   await profileService.sendFriendRequest(
-                      currentUser.uid, user.uid);
+                    currentUser.uid,
+                    user.uid,
+                  );
                   if (mounted) {
                     CustomSnackBar.show(
                       context,
@@ -509,8 +548,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     if (user == null) return;
 
     // Show loading indicator
-    CustomSnackBar.show(context,
-        message: 'Creating private room...', icon: Icons.hourglass_empty);
+    CustomSnackBar.show(
+      context,
+      message: 'Creating private room...',
+      icon: Icons.hourglass_empty,
+    );
 
     try {
       // 1. Create a private game
@@ -560,12 +602,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
       );
 
-      CustomSnackBar.show(context,
-          message: 'Challenge sent to ${target.displayName}!', isSuccess: true);
+      CustomSnackBar.show(
+        context,
+        message: 'Challenge sent to ${target.displayName}!',
+        isSuccess: true,
+      );
     } catch (e) {
       if (!mounted) return;
-      CustomSnackBar.show(context,
-          message: 'Error sending challenge: $e', isError: true);
+      CustomSnackBar.show(
+        context,
+        message: 'Error sending challenge: $e',
+        isError: true,
+      );
     }
   }
 

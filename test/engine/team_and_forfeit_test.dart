@@ -28,10 +28,11 @@ void main() {
             name: "Blue",
             tokens: [
               Token(
-                  id: 0,
-                  slot: PlayerSlot.slot1,
-                  state: TokenState.board,
-                  position: 0)
+                id: 0,
+                slot: PlayerSlot.slot1,
+                state: TokenState.board,
+                position: 0,
+              ),
             ],
           ),
           Player(
@@ -39,10 +40,11 @@ void main() {
             name: "Green",
             tokens: [
               Token(
-                  id: 0,
-                  slot: PlayerSlot.slot3,
-                  state: TokenState.board,
-                  position: 26)
+                id: 0,
+                slot: PlayerSlot.slot3,
+                state: TokenState.board,
+                position: 26,
+              ),
             ],
           ),
         ],
@@ -55,10 +57,16 @@ void main() {
       final blueToken = state.players[0].tokens[0];
       final result = engine.applyStep(state, blueToken, allowCapture: true);
 
-      expect(result.events.contains(EngineEvent.capture), false,
-          reason: "Teammates should not capture each other");
-      expect(result.state.players[1].tokens[0].state, TokenState.board,
-          reason: "Teammate token should remain on board");
+      expect(
+        result.events.contains(EngineEvent.capture),
+        false,
+        reason: "Teammates should not capture each other",
+      );
+      expect(
+        result.state.players[1].tokens[0].state,
+        TokenState.board,
+        reason: "Teammate token should remain on board",
+      );
     });
 
     test("Team win condition: both teammates must finish", () {
@@ -71,29 +79,34 @@ void main() {
             slot: PlayerSlot.slot1,
             name: "Blue",
             tokens: List.generate(
-                4,
-                (i) => Token(
-                    id: i,
-                    slot: PlayerSlot.slot1,
-                    state: TokenState.finished,
-                    position: 56)),
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot1,
+                state: TokenState.finished,
+                position: 56,
+              ),
+            ),
           ),
           Player(
             slot: PlayerSlot.slot3,
             name: "Green",
             tokens: [
               Token(
-                  id: 0,
-                  slot: PlayerSlot.slot3,
-                  state: TokenState.homeStretch,
-                  position: 55),
+                id: 0,
+                slot: PlayerSlot.slot3,
+                state: TokenState.homeStretch,
+                position: 55,
+              ),
               ...List.generate(
-                  3,
-                  (i) => Token(
-                      id: i + 1,
-                      slot: PlayerSlot.slot3,
-                      state: TokenState.finished,
-                      position: 56)),
+                3,
+                (i) => Token(
+                  id: i + 1,
+                  slot: PlayerSlot.slot3,
+                  state: TokenState.finished,
+                  position: 56,
+                ),
+              ),
             ],
           ),
         ],
@@ -128,45 +141,53 @@ void main() {
             slot: PlayerSlot.slot1,
             name: "Blue",
             tokens: List.generate(
-                4,
-                (i) => Token(
-                    id: i,
-                    slot: PlayerSlot.slot1,
-                    state: TokenState.finished,
-                    position: 56)),
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot1,
+                state: TokenState.finished,
+                position: 56,
+              ),
+            ),
           ),
           Player(
             slot: PlayerSlot.slot3,
             name: "Green",
             tokens: List.generate(
-                4,
-                (i) => Token(
-                    id: i,
-                    slot: PlayerSlot.slot3,
-                    state: TokenState.board,
-                    position: 0)),
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot3,
+                state: TokenState.board,
+                position: 0,
+              ),
+            ),
           ),
           Player(
             slot: PlayerSlot.slot4,
             name: "Red",
             tokens: List.generate(
-                4,
-                (i) => Token(
-                    id: i,
-                    slot: PlayerSlot.slot4,
-                    state: TokenState.board,
-                    position: 0)),
+              4,
+              (i) => Token(
+                id: i,
+                slot: PlayerSlot.slot4,
+                state: TokenState.board,
+                position: 0,
+              ),
+            ),
           ),
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4, PlayerSlot.slot3],
         currentTurn: PlayerSlot.slot3, // Green's turn
-        winners: const [], // Note: Slot 1 is NOT in winners yet because Green hasn't finished
+        winners:
+            const [], // Note: Slot 1 is NOT in winners yet because Green hasn't finished
       );
 
       // Verify slot 1 has finished all tokens
       expect(
-          state.players[0].tokens.every((t) => t.state == TokenState.finished),
-          true);
+        state.players[0].tokens.every((t) => t.state == TokenState.finished),
+        true,
+      );
 
       // Green moves
       final stateAfterRoll = state.copyWith(diceValue: 2, isDiceRolled: true);
@@ -231,7 +252,7 @@ void main() {
           PlayerSlot.slot1,
           PlayerSlot.slot2,
           PlayerSlot.slot3,
-          PlayerSlot.slot4
+          PlayerSlot.slot4,
         ],
         currentTurn: PlayerSlot.slot1,
         winners: [],

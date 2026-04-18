@@ -8,13 +8,22 @@ import 'game_engine.dart';
 class BotAI {
   static final GameEngine _engine = GameEngine();
 
+  static bool _isTeammate(GameState state, PlayerSlot a, PlayerSlot b) {
+    if (state.gameMode != GameMode.team) return false;
+    return (a == PlayerSlot.slot1 && b == PlayerSlot.slot3) ||
+        (a == PlayerSlot.slot3 && b == PlayerSlot.slot1) ||
+        (a == PlayerSlot.slot2 && b == PlayerSlot.slot4) ||
+        (a == PlayerSlot.slot4 && b == PlayerSlot.slot2);
+  }
+
   static Token? getBestMove(Player player, GameState state) {
     if (!state.isDiceRolled) return null;
 
     final dice = state.diceValue;
 
-    final validTokens =
-        player.tokens.where((t) => _engine.isValidMove(t, dice)).toList();
+    final validTokens = player.tokens
+        .where((t) => _engine.isValidMove(t, dice))
+        .toList();
 
     if (validTokens.isEmpty) return null;
     if (validTokens.length == 1) return validTokens.first;
@@ -45,7 +54,11 @@ class BotAI {
   }
 
   static int _evaluateMove(
-      Player player, Token token, GameState state, int dice) {
+    Player player,
+    Token token,
+    GameState state,
+    int dice,
+  ) {
     int score = 0;
 
     int steps = dice;
@@ -83,17 +96,23 @@ class BotAI {
 
     if (simulatedToken.state == TokenState.board) {
       int targetAbsPos = BoardPath.getAbsolutePosition(
-          simulatedToken.slot, simulatedToken.position);
+        simulatedToken.slot,
+        simulatedToken.position,
+      );
 
       // Capture evaluation
       int capturedPos = -1;
       for (var opp in state.players) {
-        if (opp.slot == player.slot) continue;
+        if (opp.slot == player.slot ||
+            _isTeammate(state, player.slot, opp.slot))
+          continue;
 
         for (var oppToken in opp.tokens) {
           if (oppToken.state == TokenState.board) {
-            int oppAbsPos =
-                BoardPath.getAbsolutePosition(oppToken.slot, oppToken.position);
+            int oppAbsPos = BoardPath.getAbsolutePosition(
+              oppToken.slot,
+              oppToken.position,
+            );
 
             if (oppAbsPos == targetAbsPos &&
                 !BoardPath.isSafeSpot(simulatedToken.position)) {
@@ -123,8 +142,10 @@ class BotAI {
       for (var myToken in player.tokens) {
         if (myToken == token) continue;
         if (myToken.state == TokenState.board) {
-          int abs =
-              BoardPath.getAbsolutePosition(myToken.slot, myToken.position);
+          int abs = BoardPath.getAbsolutePosition(
+            myToken.slot,
+            myToken.position,
+          );
 
           if (abs == targetAbsPos) {
             formsBlock = true;
@@ -193,8 +214,9 @@ class BotAI {
     }
 
     // Aggressive mode when winning
-    int finishedCount =
-        player.tokens.where((t) => t.state == TokenState.finished).length;
+    int finishedCount = player.tokens
+        .where((t) => t.state == TokenState.finished)
+        .length;
 
     if (finishedCount >= 2) {
       score += 200;
@@ -211,12 +233,14 @@ class BotAI {
     int attackers = 0;
 
     for (var opp in state.players) {
-      if (opp.slot == t.slot) continue;
+      if (opp.slot == t.slot || _isTeammate(state, t.slot, opp.slot)) continue;
 
       for (var oppToken in opp.tokens) {
         if (oppToken.state == TokenState.board) {
-          int oppAbsPos =
-              BoardPath.getAbsolutePosition(oppToken.slot, oppToken.position);
+          int oppAbsPos = BoardPath.getAbsolutePosition(
+            oppToken.slot,
+            oppToken.position,
+          );
 
           int dist = (absPos - oppAbsPos + 52) % 52;
 
@@ -239,12 +263,14 @@ class BotAI {
     int targets = 0;
 
     for (var opp in state.players) {
-      if (opp.slot == t.slot) continue;
+      if (opp.slot == t.slot || _isTeammate(state, t.slot, opp.slot)) continue;
 
       for (var oppToken in opp.tokens) {
         if (oppToken.state == TokenState.board) {
-          int oppAbsPos =
-              BoardPath.getAbsolutePosition(oppToken.slot, oppToken.position);
+          int oppAbsPos = BoardPath.getAbsolutePosition(
+            oppToken.slot,
+            oppToken.position,
+          );
 
           int dist = (oppAbsPos - absPos + 52) % 52;
 

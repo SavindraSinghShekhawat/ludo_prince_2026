@@ -25,7 +25,8 @@ class SocialService {
     if (user == null) return;
 
     AppLogger.debug(
-        "SocialService: Initializing presence for ${user.isAnonymous ? 'GUEST' : 'USER'} ${user.uid}");
+      "SocialService: Initializing presence for ${user.isAnonymous ? 'GUEST' : 'USER'} ${user.uid}",
+    );
     final presenceRef = _database.ref('presence/${user.uid}');
     final connectedRef = _database.ref('.info/connected');
 
