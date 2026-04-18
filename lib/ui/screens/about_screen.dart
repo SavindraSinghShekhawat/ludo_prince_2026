@@ -90,9 +90,7 @@ class AboutScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 40),
                 Center(
-                  child: ref
-                      .watch(packageInfoProvider)
-                      .when(
+                  child: ref.watch(packageInfoProvider).when(
                         data: (info) => Text(
                           "v${info.version}${kReleaseMode ? '' : '+${info.buildNumber}'}",
                           style: TextStyle(

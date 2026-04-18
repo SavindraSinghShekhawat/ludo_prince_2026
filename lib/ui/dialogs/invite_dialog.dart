@@ -29,10 +29,10 @@ class InviteDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-                  Icons.videogame_asset_outlined,
-                  color: Colors.cyanAccent,
-                  size: 60,
-                )
+              Icons.videogame_asset_outlined,
+              color: Colors.cyanAccent,
+              size: 60,
+            )
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .shimmer(duration: 2.seconds),
             const SizedBox(height: 24),

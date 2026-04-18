@@ -41,16 +41,15 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     ]).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
 
     // Scale animation: pop up and down
-    _scaleAnimation =
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: 1.25, end: 1.0), weight: 1),
-        ]).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
-          ),
-        );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 1.0), weight: 1),
+    ]).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+      ),
+    );
   }
 
   @override

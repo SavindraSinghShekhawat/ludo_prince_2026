@@ -48,9 +48,8 @@ class SettingsDialog extends ConsumerWidget {
         const SizedBox(height: 12),
         _buildQuickToggle(
           context,
-          icon: audio.isVibrationEnabled
-              ? Icons.vibration
-              : Icons.phonelink_ring,
+          icon:
+              audio.isVibrationEnabled ? Icons.vibration : Icons.phonelink_ring,
           value: audio.isVibrationEnabled,
           onChanged: (_) => audio.toggleVibration(),
           accentColor: const Color(0xFF00FF88), // Spring Jade

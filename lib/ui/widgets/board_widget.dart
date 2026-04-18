@@ -244,9 +244,8 @@ class StaticBoardPainter extends CustomPainter {
 
     // Team Labels (Optional: could keep as widgets if interaction is needed, but here we paint them)
     if (gameMode == GameMode.team) {
-      final String teamLabel = (col == 0 && row == 0) || (col == 9 && row == 9)
-          ? 'B'
-          : 'A';
+      final String teamLabel =
+          (col == 0 && row == 0) || (col == 9 && row == 9) ? 'B' : 'A';
 
       double labelX, labelY;
       if ((col == 0 && row == 9) || (col == 9 && row == 9)) {
@@ -269,12 +268,11 @@ class StaticBoardPainter extends CustomPainter {
         labelCenter,
         badgeRadius,
         Paint()
-          ..shader =
-              RadialGradient(
-                colors: [color, color.withValues(alpha: 0.8)],
-              ).createShader(
-                Rect.fromCircle(center: labelCenter, radius: badgeRadius),
-              ),
+          ..shader = RadialGradient(
+            colors: [color, color.withValues(alpha: 0.8)],
+          ).createShader(
+            Rect.fromCircle(center: labelCenter, radius: badgeRadius),
+          ),
       );
       canvas.drawCircle(
         labelCenter,
@@ -476,12 +474,15 @@ class StaticBoardPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     final int pointCount = (rect.width * rect.height * 0.04).toInt();
     for (int i = 0; i < pointCount; i++) {
-      canvas.drawPoints(PointMode.points, [
-        Offset(
-          rect.left + random.nextDouble() * rect.width,
-          rect.top + random.nextDouble() * rect.height,
-        ),
-      ], paint);
+      canvas.drawPoints(
+          PointMode.points,
+          [
+            Offset(
+              rect.left + random.nextDouble() * rect.width,
+              rect.top + random.nextDouble() * rect.height,
+            ),
+          ],
+          paint);
     }
   }
 

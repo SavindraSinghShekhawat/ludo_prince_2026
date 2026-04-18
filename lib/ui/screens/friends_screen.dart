@@ -78,8 +78,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         _filteredFriends = _allFriends
             .where(
               (f) => (f.displayName ?? '').toLowerCase().contains(
-                query.toLowerCase(),
-              ),
+                    query.toLowerCase(),
+                  ),
             )
             .toList();
       }
@@ -111,11 +111,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final isGuest = user == null || user.isAnonymous;
-    final unreadCount = ref
-        .watch(notificationProvider)
-        .inbox
-        .where((n) => !n.isRead)
-        .length;
+    final unreadCount =
+        ref.watch(notificationProvider).inbox.where((n) => !n.isRead).length;
 
     return AnimatedBackground(
       child: Scaffold(
@@ -467,8 +464,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           color: isOnline
                               ? Colors.greenAccent
                               : (isInLobby || isInGame)
-                              ? Colors.orangeAccent
-                              : Colors.grey,
+                                  ? Colors.orangeAccent
+                                  : Colors.grey,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.black, width: 2),
                         ),

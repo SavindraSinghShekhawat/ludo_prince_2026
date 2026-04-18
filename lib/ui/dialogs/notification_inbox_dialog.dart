@@ -22,10 +22,10 @@ class NotificationInboxDialog extends ConsumerWidget {
       header: Row(
         children: [
           const Icon(
-                Icons.notifications_active_outlined,
-                color: AppColors.primaryCyan,
-                size: 28,
-              )
+            Icons.notifications_active_outlined,
+            color: AppColors.primaryCyan,
+            size: 28,
+          )
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .scale(
                 begin: const Offset(1, 1),
@@ -59,7 +59,7 @@ class NotificationInboxDialog extends ConsumerWidget {
               onPressed: inbox.isEmpty
                   ? null
                   : () =>
-                        ref.read(notificationProvider.notifier).markAllAsRead(),
+                      ref.read(notificationProvider.notifier).markAllAsRead(),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 minimumSize: Size.zero,
@@ -195,9 +195,8 @@ class NotificationInboxDialog extends ConsumerWidget {
                           style: GoogleFonts.outfit(
                             color: n.isRead ? Colors.white70 : Colors.white,
                             fontSize: 14,
-                            fontWeight: n.isRead
-                                ? FontWeight.w500
-                                : FontWeight.w700,
+                            fontWeight:
+                                n.isRead ? FontWeight.w500 : FontWeight.w700,
                           ),
                         ),
                       ),
@@ -229,23 +228,21 @@ class NotificationInboxDialog extends ConsumerWidget {
             ),
             if (!n.isRead)
               Container(
-                    margin: const EdgeInsets.only(left: 12),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryCyan,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryCyan.withValues(alpha: 0.5),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                        ),
-                      ],
+                margin: const EdgeInsets.only(left: 12),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCyan,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.5),
+                      blurRadius: 4,
+                      spreadRadius: 1,
                     ),
-                  )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .fade(
+                  ],
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(
                     duration: 1.seconds,
                     begin: 0.4,
                     end: 1.0,

@@ -70,8 +70,8 @@ class CustomDialogLayout extends StatelessWidget {
           constraints: BoxConstraints(
             maxWidth:
                 MediaQuery.of(context).orientation == Orientation.landscape
-                ? 500
-                : double.infinity,
+                    ? 500
+                    : double.infinity,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

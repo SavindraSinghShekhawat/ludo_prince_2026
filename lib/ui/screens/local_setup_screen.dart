@@ -106,8 +106,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
             constraints: BoxConstraints(
               maxWidth:
                   MediaQuery.of(context).orientation == Orientation.landscape
-                  ? 800
-                  : double.infinity,
+                      ? 800
+                      : double.infinity,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
@@ -246,14 +246,14 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                               padding: const EdgeInsets.all(12),
                                               child:
                                                   (_isBotConfig[slot] ?? false)
-                                                  ? RobotIcon(
-                                                      size: 22,
-                                                      color: displayColor,
-                                                    )
-                                                  : Icon(
-                                                      Icons.person,
-                                                      color: displayColor,
-                                                    ),
+                                                      ? RobotIcon(
+                                                          size: 22,
+                                                          color: displayColor,
+                                                        )
+                                                      : Icon(
+                                                          Icons.person,
+                                                          color: displayColor,
+                                                        ),
                                             ),
                                             filled: true,
                                             fillColor: const Color(0xFF2A2A3D),

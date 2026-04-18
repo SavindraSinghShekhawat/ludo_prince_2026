@@ -94,10 +94,10 @@ class RollEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-    'type': 'roll',
-    'diceValue': diceValue,
-    'timestamp': timestamp,
-  };
+        'type': 'roll',
+        'diceValue': diceValue,
+        'timestamp': timestamp,
+      };
 }
 
 class MoveEvent extends GameEvent {
@@ -107,11 +107,11 @@ class MoveEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-    'type': 'move',
-    'tokenId': tokenId,
-    'timestamp': timestamp,
-    'autoMove': autoMove,
-  };
+        'type': 'move',
+        'tokenId': tokenId,
+        'timestamp': timestamp,
+        'autoMove': autoMove,
+      };
 }
 
 class QuitEvent extends GameEvent {
@@ -120,10 +120,10 @@ class QuitEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-    'type': 'quit',
-    'playerSlot': playerSlot.name,
-    'timestamp': timestamp,
-  };
+        'type': 'quit',
+        'playerSlot': playerSlot.name,
+        'timestamp': timestamp,
+      };
 }
 
 class SkipEvent extends GameEvent {
@@ -132,8 +132,8 @@ class SkipEvent extends GameEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-    'type': 'skip',
-    'playerSlot': playerSlot.name,
-    'timestamp': timestamp,
-  };
+        'type': 'skip',
+        'playerSlot': playerSlot.name,
+        'timestamp': timestamp,
+      };
 }

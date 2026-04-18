@@ -42,11 +42,11 @@ class Token {
   }
 
   Map<String, dynamic> toJson() => {
-    "id": id,
-    "slot": slot.name,
-    "state": state.name,
-    "position": position,
-  };
+        "id": id,
+        "slot": slot.name,
+        "state": state.name,
+        "position": position,
+      };
 
   factory Token.fromJson(Map<String, dynamic> json) {
     return Token(

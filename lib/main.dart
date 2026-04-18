@@ -105,9 +105,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
           final data = Map<String, dynamic>.from(entry.value as Map);
 
           if (data['status'] == 'pending') {
-            container
-                .read(notificationProvider.notifier)
-                .addNotification(
+            container.read(notificationProvider.notifier).addNotification(
                   LudoNotification(
                     id: inviteId,
                     type: NotificationType.gameInvite,
@@ -136,9 +134,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
         profileService.getIncomingFriendRequests(user.uid).listen((reqs) {
           final container = ProviderScope.containerOf(context, listen: false);
           for (final req in reqs) {
-            container
-                .read(notificationProvider.notifier)
-                .addNotification(
+            container.read(notificationProvider.notifier).addNotification(
                   LudoNotification(
                     id: req.id,
                     type: NotificationType.friendRequest,
@@ -156,6 +152,12 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
   }
 
   StreamSubscription? _requestsSubscription;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/crown.png'), context);
+  }
 
   @override
   void dispose() {
@@ -203,14 +205,14 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
           secondary: AppColors.midnightSapphire,
         ),
         scaffoldBackgroundColor: AppColors.systemBackground,
-        textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme)
-            .copyWith(
-              titleLarge: GoogleFonts.outfit(
-                fontWeight: FontWeight.w900,
-                fontSize: 22,
-                letterSpacing: 1.2,
-              ),
-            ),
+        textTheme:
+            GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
+          titleLarge: GoogleFonts.outfit(
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: 1.2,
+          ),
+        ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,

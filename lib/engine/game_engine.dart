@@ -53,9 +53,8 @@ class GameEngine {
       return p;
     }).toList();
 
-    final validTokens = player.tokens
-        .where((t) => isValidMove(t, diceValue))
-        .toList();
+    final validTokens =
+        player.tokens.where((t) => isValidMove(t, diceValue)).toList();
 
     if (validTokens.isEmpty) {
       final skipResult = _nextTurn(
@@ -228,8 +227,7 @@ class GameEngine {
 
         // Team Mode capture prevention
         if (state.gameMode == GameMode.team) {
-          bool isTeammate =
-              (updatedToken.slot == PlayerSlot.slot1 &&
+          bool isTeammate = (updatedToken.slot == PlayerSlot.slot1 &&
                   p.slot == PlayerSlot.slot3) ||
               (updatedToken.slot == PlayerSlot.slot3 &&
                   p.slot == PlayerSlot.slot1) ||
@@ -360,9 +358,8 @@ class GameEngine {
       );
     } else if (newState.gameMode == GameMode.team) {
       // Rule: If any player leaves, their team loses and the other team wins.
-      final quitterTeam = (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3)
-          ? "A"
-          : "B";
+      final quitterTeam =
+          (slot == PlayerSlot.slot1 || slot == PlayerSlot.slot3) ? "A" : "B";
       final winningTeam = quitterTeam == "A" ? "B" : "A";
 
       final teamASlots = [PlayerSlot.slot1, PlayerSlot.slot3];
@@ -413,10 +410,10 @@ class GameEngine {
     return (slot == PlayerSlot.slot1)
         ? PlayerSlot.slot3
         : (slot == PlayerSlot.slot3)
-        ? PlayerSlot.slot1
-        : (slot == PlayerSlot.slot2)
-        ? PlayerSlot.slot4
-        : PlayerSlot.slot2;
+            ? PlayerSlot.slot1
+            : (slot == PlayerSlot.slot2)
+                ? PlayerSlot.slot4
+                : PlayerSlot.slot2;
   }
 
   Player _getPlayer(GameState state, PlayerSlot slot) {

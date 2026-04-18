@@ -90,10 +90,10 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                        Icons.warning_amber_rounded,
-                        color: AppColors.crimsonVelvet,
-                        size: 48,
-                      )
+                    Icons.warning_amber_rounded,
+                    color: AppColors.crimsonVelvet,
+                    size: 48,
+                  )
                       .animate(onPlay: (c) => c.repeat(reverse: true))
                       .shimmer(duration: 2.seconds, color: Colors.white24)
                       .scale(
@@ -528,9 +528,8 @@ class _TokenLayer extends ConsumerWidget {
               );
             } else {
               double multiSpread = spread * 0.8;
-              int cols = (overlapping.length > 4 && overlapping.length <= 6)
-                  ? 3
-                  : 4;
+              int cols =
+                  (overlapping.length > 4 && overlapping.length <= 6) ? 3 : 4;
               int row = index ~/ cols;
               int col = index % cols;
               overlapOffset = Offset(
@@ -800,8 +799,7 @@ class _PlayerPanelContent extends StatelessWidget {
     final isTurn = slot == currentTurn;
     final Color displayColor = AppColors.getUiColorForSlot(slot);
     final playerName = player.name;
-    final isBot =
-        player.type == PlayerType.localBot ||
+    final isBot = player.type == PlayerType.localBot ||
         player.type == PlayerType.remoteBot;
     final bool isRightAligned = isLandscape
         ? !isLeft
@@ -944,9 +942,8 @@ class _PlayerPanelContent extends StatelessWidget {
     Widget panelContent = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: isTurn
-            ? Colors.white.withValues(alpha: 0.15)
-            : Colors.transparent,
+        color:
+            isTurn ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isTurn ? Colors.white : Colors.white24,
@@ -964,9 +961,8 @@ class _PlayerPanelContent extends StatelessWidget {
 
     return Expanded(
       child: Align(
-        alignment: isRightAligned
-            ? Alignment.centerRight
-            : Alignment.centerLeft,
+        alignment:
+            isRightAligned ? Alignment.centerRight : Alignment.centerLeft,
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Column(
@@ -1022,52 +1018,52 @@ class _RankBadge extends StatelessWidget {
     }
 
     return Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: badgeColor.withValues(alpha: 0.15),
-                boxShadow: [
-                  if (rank <= 3)
-                    BoxShadow(
-                      color: badgeColor.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 2),
-                    ),
-                ],
-                border: Border.all(
-                  color: badgeColor.withValues(alpha: 0.8),
-                  width: rank == 1 ? 2.5 : 1.5,
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: badgeColor.withValues(alpha: 0.15),
+            boxShadow: [
+              if (rank <= 3)
+                BoxShadow(
+                  color: badgeColor.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 2),
                 ),
+            ],
+            border: Border.all(
+              color: badgeColor.withValues(alpha: 0.8),
+              width: rank == 1 ? 2.5 : 1.5,
+            ),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(rankIcon, color: badgeColor, size: rank == 1 ? 22 : 18),
+            Text(
+              rankText,
+              style: TextStyle(
+                color: badgeColor,
+                fontWeight: FontWeight.w900,
+                fontSize: rank == 1 ? 14 : 12,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black54,
+                    blurRadius: 2,
+                    offset: Offset(1, 1),
+                  ),
+                ],
               ),
             ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(rankIcon, color: badgeColor, size: rank == 1 ? 22 : 18),
-                Text(
-                  rankText,
-                  style: TextStyle(
-                    color: badgeColor,
-                    fontWeight: FontWeight.w900,
-                    fontSize: rank == 1 ? 14 : 12,
-                    shadows: const [
-                      Shadow(
-                        color: Colors.black54,
-                        blurRadius: 2,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ],
-        )
+        ),
+      ],
+    )
         .animate(onPlay: (controller) => controller.repeat())
         .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5))
         .scale(
@@ -1099,33 +1095,28 @@ class _SkipIndicator extends StatelessWidget {
       children: List.generate(5, (index) {
         final isSkipped = index < skipCount;
         return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 1.5),
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSkipped
-                    ? AppColors.crimsonVelvet
-                    : AppColors.imperialJade,
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                        (isSkipped
-                                ? AppColors.crimsonVelvet
-                                : AppColors.imperialJade)
-                            .withValues(alpha: 0.8),
-                    blurRadius: 5,
-                    spreadRadius: 1,
-                  ),
-                ],
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  width: 0.4,
-                ),
+          margin: const EdgeInsets.symmetric(horizontal: 1.5),
+          width: 5,
+          height: 5,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isSkipped ? AppColors.crimsonVelvet : AppColors.imperialJade,
+            boxShadow: [
+              BoxShadow(
+                color: (isSkipped
+                        ? AppColors.crimsonVelvet
+                        : AppColors.imperialJade)
+                    .withValues(alpha: 0.8),
+                blurRadius: 5,
+                spreadRadius: 1,
               ),
-            )
-            .animate(target: isSkipped ? 1 : 0)
-            .shake(
+            ],
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+              width: 0.4,
+            ),
+          ),
+        ).animate(target: isSkipped ? 1 : 0).shake(
               duration: 400.ms,
               hz: 4,
               curve: Curves.easeInOut,
@@ -1332,9 +1323,8 @@ class _BorderTimerPainter extends CustomPainter {
 
       // D. LEADING SPARK (Bright tip)
       if (progress > 0.01) {
-        final tipPoint = metric
-            .getTangentForOffset(length * progress)
-            ?.position;
+        final tipPoint =
+            metric.getTangentForOffset(length * progress)?.position;
         if (tipPoint != null) {
           final sparkPaint = Paint()
             ..color = Colors.white

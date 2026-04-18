@@ -179,8 +179,7 @@ void main() {
         ],
         turnOrder: [PlayerSlot.slot1, PlayerSlot.slot4, PlayerSlot.slot3],
         currentTurn: PlayerSlot.slot3, // Green's turn
-        winners:
-            const [], // Note: Slot 1 is NOT in winners yet because Green hasn't finished
+        winners: const [], // Note: Slot 1 is NOT in winners yet because Green hasn't finished
       );
 
       // Verify slot 1 has finished all tokens

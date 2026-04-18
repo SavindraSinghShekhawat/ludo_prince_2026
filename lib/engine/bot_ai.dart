@@ -21,9 +21,8 @@ class BotAI {
 
     final dice = state.diceValue;
 
-    final validTokens = player.tokens
-        .where((t) => _engine.isValidMove(t, dice))
-        .toList();
+    final validTokens =
+        player.tokens.where((t) => _engine.isValidMove(t, dice)).toList();
 
     if (validTokens.isEmpty) return null;
     if (validTokens.length == 1) return validTokens.first;
@@ -104,8 +103,7 @@ class BotAI {
       int capturedPos = -1;
       for (var opp in state.players) {
         if (opp.slot == player.slot ||
-            _isTeammate(state, player.slot, opp.slot))
-          continue;
+            _isTeammate(state, player.slot, opp.slot)) continue;
 
         for (var oppToken in opp.tokens) {
           if (oppToken.state == TokenState.board) {
@@ -214,9 +212,8 @@ class BotAI {
     }
 
     // Aggressive mode when winning
-    int finishedCount = player.tokens
-        .where((t) => t.state == TokenState.finished)
-        .length;
+    int finishedCount =
+        player.tokens.where((t) => t.state == TokenState.finished).length;
 
     if (finishedCount >= 2) {
       score += 200;

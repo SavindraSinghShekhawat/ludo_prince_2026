@@ -6,7 +6,7 @@ final gameControllerProvider = Provider<GameController>((ref) {
   throw UnimplementedError("GameController must be overridden");
 });
 
-final gameStreamProvider = StreamProvider<GameState>(
+final gameStreamProvider = StreamProvider.autoDispose<GameState>(
   (ref) {
     final controller = ref.watch(gameControllerProvider);
     return controller.watchGame();

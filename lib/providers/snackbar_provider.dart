@@ -49,8 +49,7 @@ class SnackBarNotifier extends Notifier<SnackBarState?> {
 
     _dismissTimer?.cancel();
 
-    final calculatedDuration =
-        duration ??
+    final calculatedDuration = duration ??
         Duration(
           milliseconds: (2000 + (message.length * 50)).clamp(3000, 7000),
         );

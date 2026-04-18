@@ -54,10 +54,9 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         await user.updateDisplayName(newName);
 
         // 2. Update Firestore profile
-        final updatedProfile =
-            (currentProfile ??
-                    UserProfile(uid: user.uid, createdAt: DateTime.now()))
-                .copyWith(displayName: newName);
+        final updatedProfile = (currentProfile ??
+                UserProfile(uid: user.uid, createdAt: DateTime.now()))
+            .copyWith(displayName: newName);
         await profileService.createOrUpdateProfile(updatedProfile);
 
         if (mounted) {
@@ -113,8 +112,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
       body: userProfileAsync.when(
         data: (profile) {
           final isAnonymous = user.isAnonymous;
-          final displayName =
-              profile?.displayName ??
+          final displayName = profile?.displayName ??
               (user.displayName != null && user.displayName!.isNotEmpty
                   ? user.displayName!
                   : 'Anonymous King');

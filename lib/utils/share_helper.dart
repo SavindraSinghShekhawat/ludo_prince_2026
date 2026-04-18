@@ -9,9 +9,8 @@ class ShareHelper {
 
   static Future<void> shareApp(BuildContext context) async {
     final RenderBox? box = context.findRenderObject() as RenderBox?;
-    final Rect? sharePositionOrigin = box != null
-        ? (box.localToGlobal(Offset.zero) & box.size)
-        : null;
+    final Rect? sharePositionOrigin =
+        box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
 
     final String fullMessage =
         'Ready to be the next Ludo Prince? ✨ Join me for the ultimate Ludo experience! Download Ludo Prince now and let\'s see who rules the board! ⚔️🎲\n\nAndroid: $androidLink\niOS: $iosLink';
@@ -25,9 +24,8 @@ class ShareHelper {
 
   static Future<void> shareGameId(BuildContext context, String gameId) async {
     final RenderBox? box = context.findRenderObject() as RenderBox?;
-    final Rect? sharePositionOrigin = box != null
-        ? (box.localToGlobal(Offset.zero) & box.size)
-        : null;
+    final Rect? sharePositionOrigin =
+        box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
 
     final String message =
         "The board is set, the dice are ready! 🎲 I'm waiting for you in the Ludo Prince lobby. Use Game ID: $gameId to join my game and win the match! ✨⚔️🎲\n\nAndroid: $androidLink\niOS: $iosLink";
@@ -43,9 +41,8 @@ class ShareHelper {
     String code,
   ) async {
     final RenderBox? box = context.findRenderObject() as RenderBox?;
-    final Rect? sharePositionOrigin = box != null
-        ? (box.localToGlobal(Offset.zero) & box.size)
-        : null;
+    final Rect? sharePositionOrigin =
+        box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
 
     final String message =
         "The board is set, the dice are ready! 🎲 I'm waiting for you in the Ludo Prince lobby. JOINING CODE: $code\n\nEnter this code in 'Play with Friends' -> 'Join Room' to start the match! ✨⚔️🎲\n\nAndroid: $androidLink\niOS: $iosLink";

@@ -170,23 +170,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       children: [
                         // Backlight Glow
                         Container(
-                              width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    AppColors.starPlatinum.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    AppColors.starPlatinum.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    Colors.transparent,
-                                  ],
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                AppColors.starPlatinum.withValues(
+                                  alpha: 0.3,
                                 ),
-                              ),
-                            )
+                                AppColors.starPlatinum.withValues(
+                                  alpha: 0.1,
+                                ),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        )
                             .animate(onPlay: (c) => c.repeat(reverse: true))
                             .scale(
                               begin: const Offset(0.8, 0.8),
@@ -201,11 +201,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
                         // The Crown itself
                         Image.asset(
-                              'assets/crown.png',
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.contain,
-                            )
+                          'assets/crown.png',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.contain,
+                        )
                             .animate(onPlay: (c) => c.repeat(reverse: true))
                             .moveY(
                               begin: 0,
@@ -274,10 +274,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   color: Colors.white,
                                   textColor: Colors.black87,
                                 ).animate().slideY(
-                                  begin: 0.5,
-                                  duration: 400.ms,
-                                  curve: Curves.easeOut,
-                                ),
+                                      begin: 0.5,
+                                      duration: 400.ms,
+                                      curve: Curves.easeOut,
+                                    ),
                                 const SizedBox(height: 16),
                                 _AuthButton(
                                   label: 'Continue with Apple',
@@ -294,10 +294,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   color: Colors.white,
                                   textColor: Colors.black87,
                                 ).animate().slideY(
-                                  begin: 0.5,
-                                  duration: 500.ms,
-                                  curve: Curves.easeOut,
-                                ),
+                                      begin: 0.5,
+                                      duration: 500.ms,
+                                      curve: Curves.easeOut,
+                                    ),
                               ],
                             ),
                     ),

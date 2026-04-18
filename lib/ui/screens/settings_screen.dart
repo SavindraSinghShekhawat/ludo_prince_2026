@@ -216,9 +216,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 48),
 
                 Center(
-                  child: ref
-                      .watch(packageInfoProvider)
-                      .when(
+                  child: ref.watch(packageInfoProvider).when(
                         data: (info) => Text(
                           "Ludo Prince v${info.version}${kReleaseMode ? '' : '+${info.buildNumber}'}",
                           style: TextStyle(

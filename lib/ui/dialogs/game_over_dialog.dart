@@ -217,81 +217,80 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
               }
 
               return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: place == 1
-                          ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
-                          : Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: placeColor.withValues(alpha: 0.3),
-                        width: place == 1 ? 2.5 : 1.5,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: place == 1
+                      ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: placeColor.withValues(alpha: 0.3),
+                    width: place == 1 ? 2.5 : 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      alignment: Alignment.center,
+                      child: Text(
+                        placeText,
+                        style: TextStyle(
+                          fontSize: place == 1 ? 24 : 18,
+                          fontWeight: FontWeight.w900,
+                          color: placeColor,
+                        ),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          alignment: Alignment.center,
-                          child: Text(
-                            placeText,
-                            style: TextStyle(
-                              fontSize: place == 1 ? 24 : 18,
-                              fontWeight: FontWeight.w900,
-                              color: placeColor,
-                            ),
+                    Container(
+                      width: 20,
+                      height: 20,
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _getPlayerColor(playerSlot),
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getPlayerColor(
+                              playerSlot,
+                            ).withValues(alpha: 0.8),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          margin: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _getPlayerColor(playerSlot),
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _getPlayerColor(
-                                  playerSlot,
-                                ).withValues(alpha: 0.8),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            player.name,
-                            style: TextStyle(
-                              fontSize: place == 1 ? 20 : 18,
-                              fontWeight: place == 1
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (placeIcon != null) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                                placeIcon,
-                                color: placeColor,
-                                size: place == 1 ? 28 : 24,
-                              )
-                              .animate(target: place == 1 ? 1 : 0)
-                              .scale(duration: 800.ms, curve: Curves.elasticOut)
-                              .shimmer(duration: 1500.ms, delay: 800.ms),
                         ],
-                      ],
+                      ),
                     ),
-                  )
+                    Expanded(
+                      child: Text(
+                        player.name,
+                        style: TextStyle(
+                          fontSize: place == 1 ? 20 : 18,
+                          fontWeight:
+                              place == 1 ? FontWeight.w800 : FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (placeIcon != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        placeIcon,
+                        color: placeColor,
+                        size: place == 1 ? 28 : 24,
+                      )
+                          .animate(target: place == 1 ? 1 : 0)
+                          .scale(duration: 800.ms, curve: Curves.elasticOut)
+                          .shimmer(duration: 1500.ms, delay: 800.ms),
+                    ],
+                  ],
+                ),
+              )
                   .animate(delay: (200 * index).ms)
                   .fadeIn(duration: 500.ms)
                   .slideX(begin: 0.5);

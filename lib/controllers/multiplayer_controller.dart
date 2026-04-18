@@ -108,20 +108,20 @@ class MultiplayerGameController extends LudoController {
         .child('prefetchedRoll')
         .onValue
         .listen((event) {
-          final val = event.snapshot.value as int?;
-          if (isDisposed) return;
+      final val = event.snapshot.value as int?;
+      if (isDisposed) return;
 
-          // If we are currently rolling or already landed on this value optimistically,
-          // ignore the server update to prevent "ping-ponging" the old value back.
-          if (state.isRolling || state.isDiceRolled) {
-            if (state.diceValue == val) return;
-          }
+      // If we are currently rolling or already landed on this value optimistically,
+      // ignore the server update to prevent "ping-ponging" the old value back.
+      if (state.isRolling || state.isDiceRolled) {
+        if (state.diceValue == val) return;
+      }
 
-          if (val != state.prefetchedRoll) {
-            state = state.copyWith(prefetchedRoll: val);
-            streamController.add(state);
-          }
-        });
+      if (val != state.prefetchedRoll) {
+        state = state.copyWith(prefetchedRoll: val);
+        streamController.add(state);
+      }
+    });
   }
 
   void _startTimeoutMonitor() {

@@ -43,18 +43,16 @@ class PresenceService {
           AppLogger.debug(
             "PresenceService: User ${user.uid} is connected to RTDB. Setting up onDisconnect.",
           );
-          presenceRef
-              .onDisconnect()
-              .update({"online": false, "lastActive": ServerValue.timestamp})
-              .then((_) {
-                AppLogger.debug(
-                  "PresenceService: onDisconnect set for ${user.uid}",
-                );
-                presenceRef.update({
-                  "online": true,
-                  "lastActive": ServerValue.timestamp,
-                });
-              });
+          presenceRef.onDisconnect().update(
+              {"online": false, "lastActive": ServerValue.timestamp}).then((_) {
+            AppLogger.debug(
+              "PresenceService: onDisconnect set for ${user.uid}",
+            );
+            presenceRef.update({
+              "online": true,
+              "lastActive": ServerValue.timestamp,
+            });
+          });
         }
       });
     });

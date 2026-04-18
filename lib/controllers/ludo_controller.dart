@@ -81,13 +81,13 @@ class LudoController implements GameController {
     this.localPlayerSlot,
     this.gameMode = GameMode.classic,
     GameEventProvider? eventProvider,
-  }) : _state = GameState(
-         gameId: "",
-         players: [],
-         turnOrder: [],
-         currentTurn: PlayerSlot.slot1,
-       ),
-       eventProvider = eventProvider ?? LocalEventProvider() {
+  })  : _state = GameState(
+          gameId: "",
+          players: [],
+          turnOrder: [],
+          currentTurn: PlayerSlot.slot1,
+        ),
+        eventProvider = eventProvider ?? LocalEventProvider() {
     _state = _createInitialState(config, initialState, gameMode);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
@@ -244,8 +244,7 @@ class LudoController implements GameController {
 
     // Initial "anticipation" phase for all players (Local, Remote, and Bot)
     // If the local player already optimistically landed, we skip the waiting phase
-    bool alreadyLanded =
-        !_state.isWaitingForResult &&
+    bool alreadyLanded = !_state.isWaitingForResult &&
         _state.isRolling &&
         _state.diceValue == value;
 

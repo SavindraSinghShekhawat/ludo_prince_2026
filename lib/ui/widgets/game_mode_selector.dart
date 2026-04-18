@@ -122,11 +122,10 @@ class GameModeSelector extends StatelessWidget {
                     .withValues(alpha: isEnabled ? 1.0 : 0.4),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color:
-                  (isSelected
-                          ? Colors.blueAccent.withValues(alpha: 0.5)
-                          : Colors.white10)
-                      .withValues(alpha: isEnabled ? 1.0 : 0.4),
+              color: (isSelected
+                      ? Colors.blueAccent.withValues(alpha: 0.5)
+                      : Colors.white10)
+                  .withValues(alpha: isEnabled ? 1.0 : 0.4),
               width: 2,
             ),
             boxShadow: isSelected && isEnabled
@@ -181,11 +180,10 @@ class GameModeSelector extends StatelessWidget {
                   icon: Icon(
                     Icons.help_outline,
                     size: 22,
-                    color:
-                        (isSelected
-                                ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
-                                : Colors.white38)
-                            .withValues(alpha: isEnabled ? 1.0 : 0.4),
+                    color: (isSelected
+                            ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
+                            : Colors.white38)
+                        .withValues(alpha: isEnabled ? 1.0 : 0.4),
                   ),
                   onPressed: () {
                     CustomDialogLayout.show(

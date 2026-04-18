@@ -89,16 +89,16 @@ class ProfileService {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .asyncMap((snapshot) async {
-          List<FriendRequest> requests = [];
-          for (var doc in snapshot.docs) {
-            final fromUid = doc.data()['from'];
-            final profile = await getUserProfile(fromUid);
-            requests.add(
-              FriendRequest.fromFirestore(doc, fromProfile: profile),
-            );
-          }
-          return requests;
-        });
+      List<FriendRequest> requests = [];
+      for (var doc in snapshot.docs) {
+        final fromUid = doc.data()['from'];
+        final profile = await getUserProfile(fromUid);
+        requests.add(
+          FriendRequest.fromFirestore(doc, fromProfile: profile),
+        );
+      }
+      return requests;
+    });
   }
 
   Future<void> acceptFriendRequest(FriendRequest request) async {
@@ -136,13 +136,13 @@ class ProfileService {
         .collection('friends')
         .snapshots()
         .asyncMap((snapshot) async {
-          List<UserProfile> friends = [];
-          for (var doc in snapshot.docs) {
-            final profile = await getUserProfile(doc.id);
-            if (profile != null) friends.add(profile);
-          }
-          return friends;
-        });
+      List<UserProfile> friends = [];
+      for (var doc in snapshot.docs) {
+        final profile = await getUserProfile(doc.id);
+        if (profile != null) friends.add(profile);
+      }
+      return friends;
+    });
   }
 }
 
@@ -150,5 +150,5 @@ final profileService = ProfileService();
 
 final friendRequestsProvider =
     StreamProvider.family<List<FriendRequest>, String>((ref, uid) {
-      return profileService.getIncomingFriendRequests(uid);
-    });
+  return profileService.getIncomingFriendRequests(uid);
+});

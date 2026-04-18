@@ -32,9 +32,8 @@ class RemoteConfigService {
       await _remoteConfig.setConfigSettings(
         RemoteConfigSettings(
           fetchTimeout: const Duration(minutes: 1),
-          minimumFetchInterval: kDebugMode
-              ? Duration.zero
-              : const Duration(hours: 1),
+          minimumFetchInterval:
+              kDebugMode ? Duration.zero : const Duration(hours: 1),
         ),
       );
 
@@ -90,9 +89,8 @@ class RemoteConfigService {
       AppLogger.debug(
         '[RemoteConfigService] Local version is BELOW minimum supported version',
       );
-      _updateStatus = forceRequested
-          ? UpdateStatus.force
-          : UpdateStatus.suggest;
+      _updateStatus =
+          forceRequested ? UpdateStatus.force : UpdateStatus.suggest;
     } else if (_isVersionLower(currentVersion, remoteLatest)) {
       AppLogger.debug(
         '[RemoteConfigService] Local version is BELOW remote latest version',
@@ -115,14 +113,10 @@ class RemoteConfigService {
       // Clean target just in case
       final cleanTarget = target.split('+').first;
 
-      final currentParts = current
-          .split('.')
-          .map((e) => int.tryParse(e) ?? 0)
-          .toList();
-      final targetParts = cleanTarget
-          .split('.')
-          .map((e) => int.tryParse(e) ?? 0)
-          .toList();
+      final currentParts =
+          current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final targetParts =
+          cleanTarget.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
       for (var i = 0; i < 3; i++) {
         final c = i < currentParts.length ? currentParts[i] : 0;

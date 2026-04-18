@@ -307,9 +307,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildOnlineStatusBar(int count) {
     // Show actual real numbers as requested
     final displayCount = count.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -334,13 +334,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00FF88).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                  )
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00FF88).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+              )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .scale(
                     begin: const Offset(0.8, 0.8),
@@ -454,25 +454,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         clipBehavior: Clip.none,
         children: [
           Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: hasUnread
-                      ? AppColors.primaryCyan.withValues(alpha: 0.1)
-                      : Colors.white.withValues(alpha: 0.05),
-                  border: Border.all(
-                    color: hasUnread
-                        ? AppColors.primaryCyan.withValues(alpha: 0.2)
-                        : Colors.transparent,
-                    width: 1,
-                  ),
-                ),
-                child: Icon(
-                  hasUnread ? Icons.notifications_active : Icons.notifications,
-                  color: hasUnread ? AppColors.primaryCyan : Colors.white70,
-                  size: 20,
-                ),
-              )
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: hasUnread
+                  ? AppColors.primaryCyan.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                color: hasUnread
+                    ? AppColors.primaryCyan.withValues(alpha: 0.2)
+                    : Colors.transparent,
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              hasUnread ? Icons.notifications_active : Icons.notifications,
+              color: hasUnread ? AppColors.primaryCyan : Colors.white70,
+              size: 20,
+            ),
+          )
               .animate(
                 target: hasUnread ? 1 : 0,
                 onPlay: (c) => c.repeat(reverse: true),

@@ -135,9 +135,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed: _isFeedbackSubmitting
-                            ? null
-                            : _submitFeedback,
+                        onPressed:
+                            _isFeedbackSubmitting ? null : _submitFeedback,
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(

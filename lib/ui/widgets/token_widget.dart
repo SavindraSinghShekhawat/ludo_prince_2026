@@ -25,119 +25,133 @@ class TokenWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Offset gridPos = BoardPath.getTokenOffset(token);
 
-    double tokenSize =
-        cellSize *
+    double tokenSize = cellSize *
         0.85 *
         scaleAdjustment; // Applied scale adjustment for stacking
     double offsetXY = (cellSize - tokenSize) / 2;
 
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.linear,
-      left: gridPos.dx * cellSize + offsetXY + overlapOffset.dx,
-      top: gridPos.dy * cellSize + offsetXY + overlapOffset.dy,
-      width: tokenSize,
-      height: tokenSize,
-      child: RepaintBoundary(
-        child: IgnorePointer(
-          ignoring: !isMovable,
-          child: Consumer(
-            builder: (context, ref, child) {
-              return GestureDetector(
-                onTap: () {
-                  ref.read(gameControllerProvider).sendMoveIntent(token);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        _getGlowColor(token.slot),
-                        _getColor(token.slot),
-                      ],
-                      center: Alignment.center,
-                      radius: 1.0,
-                    ),
-                    border: Border.all(
-                      color: Colors.white.withValues(
-                        alpha: AppColors.tokenBorderOpacity,
+    final double targetX = gridPos.dx * cellSize + offsetXY + overlapOffset.dx;
+    final double targetY = gridPos.dy * cellSize + offsetXY + overlapOffset.dy;
+
+    return Positioned(
+      left: 0,
+      top: 0,
+      child: TweenAnimationBuilder<Offset>(
+        tween: Tween<Offset>(
+            begin: Offset(targetX, targetY), end: Offset(targetX, targetY)),
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.linear,
+        builder: (context, value, child) {
+          return Transform.translate(
+            offset: value,
+            child: SizedBox(
+              width: tokenSize,
+              height: tokenSize,
+              child: child,
+            ),
+          );
+        },
+        child: RepaintBoundary(
+          child: IgnorePointer(
+            ignoring: !isMovable,
+            child: Consumer(
+              builder: (context, ref, child) {
+                return GestureDetector(
+                  onTap: () {
+                    ref.read(gameControllerProvider).sendMoveIntent(token);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          _getGlowColor(token.slot),
+                          _getColor(token.slot),
+                        ],
+                        center: Alignment.center,
+                        radius: 1.0,
                       ),
-                      width: isMovable ? 2.0 : 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.45),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1.5),
+                      border: Border.all(
+                        color: Colors.white.withValues(
+                          alpha: AppColors.tokenBorderOpacity,
+                        ),
+                        width: isMovable ? 2.0 : 1.2,
                       ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                      if (isMovable)
+                      boxShadow: [
                         BoxShadow(
-                          color: _getGlowColor(
-                            token.slot,
-                          ).withValues(alpha: 0.6),
-                          blurRadius: 15,
-                          spreadRadius: 3,
+                          color: Colors.black.withOpacity(0.45),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1.5),
                         ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      // Gloss/Reflection layer
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(
-                                  alpha: AppColors.tokenReflectionAlpha,
-                                ),
-                                Colors.white.withValues(alpha: 0.05),
-                                Colors.black.withValues(alpha: 0.05),
-                              ],
-                              stops: const [0.0, 0.4, 1.0],
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.35),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                        if (isMovable)
+                          BoxShadow(
+                            color: _getGlowColor(
+                              token.slot,
+                            ).withValues(alpha: 0.6),
+                            blurRadius: 15,
+                            spreadRadius: 3,
+                          ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Gloss/Reflection layer
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(
+                                    alpha: AppColors.tokenReflectionAlpha,
+                                  ),
+                                  Colors.white.withValues(alpha: 0.05),
+                                  Colors.black.withValues(alpha: 0.05),
+                                ],
+                                stops: const [0.0, 0.4, 1.0],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      // Inner ring for premium look
-                      Center(
-                        child: Container(
-                          width: tokenSize * 0.76,
-                          height: tokenSize * 0.76,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              width: 1.0,
+                        // Inner ring for premium look
+                        Center(
+                          child: Container(
+                            width: tokenSize * 0.76,
+                            height: tokenSize * 0.76,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                width: 1.0,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      // Center dot
-                      Center(
-                        child: Container(
-                          width: tokenSize * 0.15,
-                          height: tokenSize * 0.15,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.6),
+                        // Center dot
+                        Center(
+                          child: Container(
+                            width: tokenSize * 0.15,
+                            height: tokenSize * 0.15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
