@@ -15,6 +15,20 @@ function randomInt(min: number, max: number) {
   return val;
 }
 
+const CHANCES_FOR_SIX = [0.00, 0.02, 0.05, 0.128, 0.21, 0.34, 0.55, 0.82, 1.00];
+
+function generatePRDDice(seed: number, pity: number): number {
+  const safePity = Math.max(0, Math.min(pity, CHANCES_FOR_SIX.length - 1));
+  const chanceOfSix = CHANCES_FOR_SIX[safePity];
+  const threshold = Math.floor(chanceOfSix * 10000000);
+
+  if (seed < threshold) {
+    return 6;
+  } else {
+    return (seed % 5) + 1;
+  }
+}
+
 export const handleGameAction = onValueCreated(
   {
     ref: "/ludogames/{gameId}/actionRequests/{uid}",
@@ -70,9 +84,18 @@ export const handleGameAction = onValueCreated(
             return;
           }
 
-          const dice = game.prefetchedRoll || randomInt(1, 7);
+          const pityCount = players[currentTurn].sixPity ?? 2;
+          const seed = game.prefetchedSeed ?? randomInt(0, 10000000);
+          const dice = generatePRDDice(seed, pityCount);
+
+          if (dice === 6) {
+            players[currentTurn].sixPity = 0;
+          } else {
+            players[currentTurn].sixPity = pityCount + 1;
+          }
+
           AppLogger.info(`[handleGameAction] AUDIT_ROLL: Player ${playerSlot} rolled ${dice} in game ${gameId}`);
-          AppLogger.debug(`[handleGameAction] ACCEPT ROLL: Used dice ${dice} (pref: ${game.prefetchedRoll}) for ${playerSlot}`);
+          AppLogger.debug(`[handleGameAction] ACCEPT ROLL: Used dice ${dice} (seed: ${seed}, pity: ${pityCount}) for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");
@@ -87,7 +110,7 @@ export const handleGameAction = onValueCreated(
           } as RollEvent;
           game.eventCounter = eventCounter;
           game.isDiceRolled = true;
-          delete game.prefetchedRoll;
+          delete game.prefetchedSeed;
           return game;
         } else if (type === "move") {
           if (playerSlot !== currentTurn) {
@@ -115,7 +138,7 @@ export const handleGameAction = onValueCreated(
           game.eventCounter = eventCounter;
 
           game.isDiceRolled = false;
-          game.prefetchedRoll = randomInt(1, 7);
+          game.prefetchedSeed = randomInt(0, 10000000);
           return game;
         } else if (type === "timeout") {
           const now = Date.now();
@@ -163,7 +186,7 @@ export const handleGameAction = onValueCreated(
           game.turnStartedAt = ServerValue.TIMESTAMP;
           game.turnNumber = (game.turnNumber || 0) + 1;
           game.isDiceRolled = false;
-          game.prefetchedRoll = randomInt(1, 7);
+          game.prefetchedSeed = randomInt(0, 10000000);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");

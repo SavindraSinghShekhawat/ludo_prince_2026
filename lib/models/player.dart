@@ -11,6 +11,7 @@ class Player {
   final PlayerType type;
   final PlayerStatus status;
   final int skipCount;
+  final int sixPity;
   final List<Token> tokens;
 
   Player({
@@ -20,6 +21,7 @@ class Player {
     this.type = PlayerType.localHuman,
     this.status = PlayerStatus.active,
     this.skipCount = 0,
+    this.sixPity = 2,
     required this.tokens,
   }) : uid = uid ??
             "local_${slot.name}_${DateTime.now().microsecondsSinceEpoch}";
@@ -30,6 +32,7 @@ class Player {
     PlayerType? type,
     PlayerStatus? status,
     int? skipCount,
+    int? sixPity,
     List<Token>? tokens,
   }) {
     return Player(
@@ -39,6 +42,7 @@ class Player {
       type: type ?? this.type,
       status: status ?? this.status,
       skipCount: skipCount ?? this.skipCount,
+      sixPity: sixPity ?? this.sixPity,
       tokens: tokens ?? this.tokens,
     );
   }
@@ -50,6 +54,7 @@ class Player {
         "type": type.name,
         "status": status.name,
         "skipCount": skipCount,
+        "sixPity": sixPity,
         "tokens": tokens.map((t) => t.toJson()).toList(),
       };
 
@@ -63,6 +68,7 @@ class Player {
         (e) => e.name == (json["status"] ?? "active"),
       ),
       skipCount: json["skipCount"] ?? 0,
+      sixPity: json["sixPity"] ?? 2,
       tokens: (json["tokens"] as List).map((e) => Token.fromJson(e)).toList(),
     );
   }

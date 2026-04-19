@@ -45,10 +45,13 @@ class GameEngine {
 
     final player = _getPlayer(state, state.currentTurn);
 
-    // Reset skip count on successful roll
+    // Reset skip count and update sixPity on successful roll
     final updatedPlayers = state.players.map((p) {
       if (p.slot == state.currentTurn) {
-        return p.copyWith(skipCount: 0);
+        return p.copyWith(
+          skipCount: 0,
+          sixPity: diceValue == 6 ? 0 : p.sixPity + 1,
+        );
       }
       return p;
     }).toList();

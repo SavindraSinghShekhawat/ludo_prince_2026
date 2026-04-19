@@ -47,7 +47,7 @@ class MultiplayerGameController extends LudoController {
         gameType: GameType.online,
         turnStartedAt: _turnStartedAt,
         turnTimeSeconds: turnTime,
-        prefetchedRoll: data['prefetchedRoll'] as int?,
+        prefetchedSeed: data['prefetchedSeed'] as int?,
       );
     } else {
       // If no snapshot, ensure state has correct mode from DB
@@ -56,7 +56,7 @@ class MultiplayerGameController extends LudoController {
         final mode = GameMode.values.firstWhere((e) => e.name == dbMode);
         state = state.copyWith(
           gameMode: mode,
-          prefetchedRoll: data['prefetchedRoll'] as int?,
+          prefetchedSeed: data['prefetchedSeed'] as int?,
         );
       }
     }
@@ -105,7 +105,7 @@ class MultiplayerGameController extends LudoController {
         .ref()
         .child('ludogames')
         .child(gameId)
-        .child('prefetchedRoll')
+        .child('prefetchedSeed')
         .onValue
         .listen((event) {
       final val = event.snapshot.value as int?;
@@ -117,8 +117,8 @@ class MultiplayerGameController extends LudoController {
         if (state.diceValue == val) return;
       }
 
-      if (val != state.prefetchedRoll) {
-        state = state.copyWith(prefetchedRoll: val);
+      if (val != state.prefetchedSeed) {
+        state = state.copyWith(prefetchedSeed: val);
         streamController.add(state);
       }
     });

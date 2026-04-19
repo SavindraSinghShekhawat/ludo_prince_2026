@@ -38,7 +38,7 @@ class FirebaseEventProvider extends GameEventProvider {
   Stream<GameEvent> get events => _controller.stream;
 
   @override
-  Future<void> onRollRequested() async {
+  Future<void> onRollRequested({int? diceValue}) async {
     final uid = firebaseService.auth.currentUser!.uid;
 
     await _db

@@ -5,6 +5,7 @@ export interface PlayerEntry {
   joinedAt: object | number;
   status: string;
   skipCount: number;
+  sixPity?: number;
   team?: string;
   tokens?: Record<string, unknown>;
 }

@@ -266,7 +266,7 @@ class TabletopTexturePainter extends CustomPainter {
 
 class GameButton extends StatefulWidget {
   final String text;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color color;
   final IconData? icon;
   final bool isPrimary;
@@ -280,7 +280,7 @@ class GameButton extends StatefulWidget {
   const GameButton({
     super.key,
     required this.text,
-    required this.onTap,
+    this.onTap,
     this.color = AppColors.starPlatinum,
     this.icon,
     this.isPrimary = false,
@@ -310,7 +310,7 @@ class _GameButtonState extends State<GameButton> {
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        if (!widget.isLoading) widget.onTap();
+        if (!widget.isLoading && widget.onTap != null) widget.onTap!();
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(

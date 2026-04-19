@@ -181,7 +181,35 @@ class LudoController implements GameController {
     }
   }
 
+  static const List<double> _prdChances = [
+    0.00,
+    0.02,
+    0.05,
+    0.128,
+    0.21,
+    0.34,
+    0.55,
+    0.82,
+    1.00
+  ];
+
+  static int generatePRDDice(int seed, int pity) {
+    if (pity < 0) pity = 0;
+    if (pity >= _prdChances.length) pity = _prdChances.length - 1;
+
+    double chanceOfSix = _prdChances[pity];
+    int threshold = (chanceOfSix * 10000000).toInt();
+
+    if (seed < threshold) {
+      return 6;
+    } else {
+      return (seed % 5) + 1;
+    }
+  }
+
   static int generateDiceValue() => _rng.nextInt(6) + 1;
+
+  static int generateRandomSeed() => _rng.nextInt(10000000);
 
   @override
   Future<void> sendRollIntent() async {
@@ -193,15 +221,19 @@ class LudoController implements GameController {
       return;
     }
 
-    final prefetched = _state.prefetchedRoll;
+    final prefetchedSeed = _state.prefetchedSeed;
 
-    if (prefetched != null && state.gameType == GameType.online) {
+    if (prefetchedSeed != null && state.gameType == GameType.online) {
       // OPTIMISTIC PREFETCH FLOW
+      final currentPlayer =
+          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+      final diceValue = generatePRDDice(prefetchedSeed, currentPlayer.sixPity);
+
       _state = _state.copyWith(
         isRolling: true,
         isWaitingForResult: true,
-        diceValue: prefetched,
-        prefetchedRoll: null, // Clear it locally so it cannot be reused
+        diceValue: diceValue,
+        prefetchedSeed: null, // Clear it locally so it cannot be reused
       );
       if (!_isDisposed) _streamController.add(_state);
 
@@ -222,7 +254,16 @@ class LudoController implements GameController {
       // CLASSIC FLOW (Local, Bot, or fallback)
       _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
       if (!_isDisposed) _streamController.add(_state);
-      eventProvider.onRollRequested();
+
+      int? localDice;
+      if (state.gameType == GameType.local) {
+        final currentPlayer =
+            _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+        localDice =
+            generatePRDDice(generateRandomSeed(), currentPlayer.sixPity);
+      }
+
+      eventProvider.onRollRequested(diceValue: localDice);
     }
   }
 

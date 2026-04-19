@@ -9,8 +9,15 @@ void main() {
         const iterations = 10000000;
         final results = List.filled(7, 0);
 
+        int currentPity = 2;
         for (var i = 0; i < iterations; i++) {
-          final roll = LudoController.generateDiceValue();
+          final seed = LudoController.generateRandomSeed();
+          final roll = LudoController.generatePRDDice(seed, currentPity);
+          if (roll == 6) {
+            currentPity = 0;
+          } else {
+            currentPity++;
+          }
           results[roll]++;
         }
 

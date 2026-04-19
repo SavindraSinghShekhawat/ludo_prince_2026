@@ -13,6 +13,7 @@ class DiceRandomnessScreen extends StatefulWidget {
 
 class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
   final Map<int, int> _distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+  int _currentPity = 2;
 
   int _totalRolls = 0;
   bool _isRunning = false;
@@ -23,6 +24,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
     setState(() {
       _isRunning = true;
       _totalRolls = 0;
+      _currentPity = 2;
       for (var i = 1; i <= 6; i++) {
         _distribution[i] = 0;
       }
@@ -59,7 +61,13 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
 
       // Tight loop for batch simulation
       for (int i = 0; i < currentBatchSize; i++) {
-        final val = LudoController.generateDiceValue();
+        final seed = LudoController.generateRandomSeed();
+        final val = LudoController.generatePRDDice(seed, _currentPity);
+        if (val == 6) {
+          _currentPity = 0;
+        } else {
+          _currentPity++;
+        }
         _distribution[val] = (_distribution[val] ?? 0) + 1;
       }
       _totalRolls += currentBatchSize;

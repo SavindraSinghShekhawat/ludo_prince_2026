@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
+import 'network_service.dart';
 import '../utils/app_logger.dart';
 import '../firebase_options.dart';
 import 'profile_service.dart';
@@ -40,9 +41,8 @@ class FirebaseService {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Enable offline persistence
-    FirebaseDatabase.instance.setPersistenceEnabled(true);
-    FirebaseDatabase.instance.setPersistenceCacheSizeBytes(10000000);
+    // Disable offline persistence as per requirement (to avoid race conditions/stale sync)
+    FirebaseDatabase.instance.setPersistenceEnabled(false);
 
     auth = FirebaseAuth.instance;
     firestore = FirebaseFirestore.instance;
@@ -88,6 +88,19 @@ class FirebaseService {
 
     // Initialize Remote Config
     await remoteConfigService.initialize();
+
+    // Setup connectivity listener for database
+    networkService.connectivityStream.listen((isOnline) {
+      if (isOnline) {
+        database.goOnline();
+        AppLogger.debug(
+            '[FirebaseService] Internet restored: database.goOnline()');
+      } else {
+        database.goOffline();
+        AppLogger.debug(
+            '[FirebaseService] Internet lost: database.goOffline()');
+      }
+    });
 
     _initialized = true;
 

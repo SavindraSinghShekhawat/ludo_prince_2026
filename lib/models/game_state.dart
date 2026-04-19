@@ -22,7 +22,7 @@ class GameState {
   final GameAction lastAction;
   final List<PlayerSlot> winners;
   final GameType gameType;
-  final int? prefetchedRoll;
+  final int? prefetchedSeed;
 
   final int? turnStartedAt;
   final int turnTimeSeconds;
@@ -48,7 +48,7 @@ class GameState {
     this.lastAction = GameAction.none,
     this.winners = const [],
     this.gameType = GameType.local,
-    this.prefetchedRoll,
+    this.prefetchedSeed,
     this.turnStartedAt,
     this.turnTimeSeconds = 15,
     this.turnActionCount = 0,
@@ -70,7 +70,7 @@ class GameState {
     List<PlayerSlot>? winners,
     GameType? gameType,
     int? turnStartedAt,
-    int? prefetchedRoll,
+    int? prefetchedSeed,
     int? turnTimeSeconds,
     int? turnActionCount,
   }) {
@@ -89,7 +89,7 @@ class GameState {
       lastAction: lastAction ?? this.lastAction,
       winners: winners ?? this.winners,
       gameType: gameType ?? this.gameType,
-      prefetchedRoll: prefetchedRoll ?? this.prefetchedRoll,
+      prefetchedSeed: prefetchedSeed ?? this.prefetchedSeed,
       turnStartedAt: turnStartedAt ?? this.turnStartedAt,
       turnTimeSeconds: turnTimeSeconds ?? this.turnTimeSeconds,
       turnActionCount: turnActionCount ?? this.turnActionCount,
@@ -111,7 +111,7 @@ class GameState {
         "lastAction": lastAction.name,
         "winners": winners.map((e) => e.name).toList(),
         "gameType": gameType.name,
-        "prefetchedRoll": prefetchedRoll,
+        "prefetchedSeed": prefetchedSeed,
         "turnStartedAt": turnStartedAt,
         "turnTimeSeconds": turnTimeSeconds,
         "turnActionCount": turnActionCount,
@@ -147,7 +147,7 @@ class GameState {
       gameType: GameType.values.firstWhere(
         (e) => e.name == (json["gameType"] ?? GameType.local.name),
       ),
-      prefetchedRoll: json["prefetchedRoll"],
+      prefetchedSeed: json["prefetchedSeed"],
       turnStartedAt: json["turnStartedAt"] != null
           ? (json["turnStartedAt"] is int
               ? json["turnStartedAt"]

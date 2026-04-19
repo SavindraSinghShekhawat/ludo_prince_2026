@@ -27,6 +27,8 @@ import '../../models/user_profile.dart';
 import '../../utils/colors.dart';
 import '../../utils/share_helper.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/connectivity_provider.dart';
+import '../widgets/status_badge.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -280,39 +282,87 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: Column(
-                children: [
-                  if (_isLoading) ...[
-                    Text(
-                      widget.isQuickMatch
-                          ? 'SEARCHING... ${_matchmakingSeconds}s'
-                          : 'CREATING...',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        letterSpacing: 2.0,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final isOnline = ref.watch(isOnlineProvider);
+
+                  return Column(
+                    children: [
+                      if (!isOnline) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.redAccent.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.wifi_off,
+                                color: Colors.redAccent,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'NO INTERNET CONNECTION',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate().shake(),
+                        const SizedBox(height: 16),
+                      ],
+                      if (_isLoading) ...[
+                        Text(
+                          widget.isQuickMatch
+                              ? 'SEARCHING... ${_matchmakingSeconds}s'
+                              : 'CREATING...',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            letterSpacing: 2.0,
+                          ),
+                        ).animate(onPlay: (c) => c.repeat()).shimmer(
+                            duration: 2.seconds, color: Colors.white24),
+                        const SizedBox(height: 16),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: GameButton(
+                          text: widget.isQuickMatch
+                              ? 'QUICK MATCH'
+                              : 'CREATE ROOM',
+                          isLoading: _isLoading,
+                          color: !isOnline
+                              ? Colors.white24
+                              : AppColors.starPlatinum,
+                          onTap: !isOnline
+                              ? null
+                              : () {
+                                  if (widget.isQuickMatch) {
+                                    _joinQueue(_maxPlayers, _gameMode);
+                                  } else {
+                                    _createPrivateRoom(_maxPlayers, _gameMode);
+                                  }
+                                },
+                        ),
                       ),
-                    )
-                        .animate(onPlay: (c) => c.repeat())
-                        .shimmer(duration: 2.seconds, color: Colors.white24),
-                    const SizedBox(height: 16),
-                  ],
-                  SizedBox(
-                    width: double.infinity,
-                    child: GameButton(
-                      text: widget.isQuickMatch ? 'QUICK MATCH' : 'CREATE ROOM',
-                      isLoading: _isLoading,
-                      onTap: () {
-                        if (widget.isQuickMatch) {
-                          _joinQueue(_maxPlayers, _gameMode);
-                        } else {
-                          _createPrivateRoom(_maxPlayers, _gameMode);
-                        }
-                      },
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -840,23 +890,14 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                           )
                                         : null,
                                   ),
-                                  if (isOnline)
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.midnightSapphire,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.black,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                      ),
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: StatusBadge(
+                                      isOnline: isOnline,
+                                      size: 10,
                                     ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(width: 10),
@@ -910,16 +951,14 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     );
   }
 
-  // --- Logic ---
-
   Future<void> _joinQueue(int maxPlayers, GameMode gameMode) async {
     setState(() {
       _isLoading = true;
     });
 
-    final online = await NetworkService.hasInternet();
+    final isOnline = ref.read(isOnlineProvider);
 
-    if (!online) {
+    if (!isOnline) {
       if (mounted) {
         CustomSnackBar.show(
           context,

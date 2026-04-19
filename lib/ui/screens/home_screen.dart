@@ -16,6 +16,8 @@ import '../dialogs/notification_inbox_dialog.dart';
 import '../widgets/logo_widget.dart';
 import '../../providers/presence_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/connectivity_provider.dart';
+import '../widgets/status_badge.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -371,6 +373,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final profile = ref.watch(userProfileProvider).value;
     final notificationState = ref.watch(notificationProvider);
     final unreadCount = notificationState.inbox.where((n) => !n.isRead).length;
+    final isOnline = ref.watch(isOnlineProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
@@ -392,19 +395,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white24, width: 2),
                   ),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.white.withValues(alpha: 0.1),
-                    backgroundImage: profile?.photoURL != null
-                        ? NetworkImage(profile!.photoURL!)
-                        : null,
-                    child: profile?.photoURL == null
-                        ? const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 20,
-                          )
-                        : null,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        backgroundImage: profile?.photoURL != null
+                            ? NetworkImage(profile!.photoURL!)
+                            : null,
+                        child: profile?.photoURL == null
+                            ? const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        right: -1,
+                        bottom: -1,
+                        child: StatusBadge(isOnline: isOnline),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 12),

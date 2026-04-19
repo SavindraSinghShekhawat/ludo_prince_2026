@@ -106,7 +106,7 @@ export const handleMatchmaking = onValueCreated(
         eventCounter: 0,
         players: {},
         isDiceRolled: false,
-        prefetchedRoll: randomInt(1, 7),
+        prefetchedSeed: randomInt(0, 10000000),
         settings: {
           turnTimeSeconds: 15,
           maxSkips: 5,
@@ -137,6 +137,7 @@ export const handleMatchmaking = onValueCreated(
           joinedAt: ServerValue.TIMESTAMP,
           status: "active",
           skipCount: 0,
+          sixPity: 2,
         };
 
         if (mode === "team_2v2") {

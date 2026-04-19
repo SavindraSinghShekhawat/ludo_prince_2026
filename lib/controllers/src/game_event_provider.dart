@@ -5,7 +5,7 @@ import '../../models/token.dart';
 
 abstract class GameEventProvider {
   Stream<GameEvent> get events;
-  void onRollRequested();
+  void onRollRequested({int? diceValue});
   void onMoveRequested(int tokenId);
   void onQuitRequested(PlayerSlot slot);
   void dispose();
@@ -20,11 +20,11 @@ class LocalEventProvider extends GameEventProvider {
   Stream<GameEvent> get events => _controller.stream;
 
   @override
-  void onRollRequested() {
+  void onRollRequested({int? diceValue}) {
     // Generate dice value here to ensure it's the source of truth
-    final diceValue = LudoController.generateDiceValue();
+    final dice = diceValue ?? LudoController.generateDiceValue();
     _controller.add(
-      RollEvent(diceValue, timestamp: DateTime.now().millisecondsSinceEpoch),
+      RollEvent(dice, timestamp: DateTime.now().millisecondsSinceEpoch),
     );
   }
 
