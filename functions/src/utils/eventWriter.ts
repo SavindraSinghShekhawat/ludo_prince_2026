@@ -9,8 +9,8 @@ import {GameDocument} from "../models/GameDocument";
  * @param {string} gameId ID of the game
  * @param {GameEvent} event Event payload to append to the events log
  */
-export async function writeGameEvent(gameId: string, event: GameEvent) {
-  const gameRef = admin.database().ref(`ludogames/${gameId}`);
+export async function writeGameEvent(gameType: string, gameId: string, event: GameEvent) {
+  const gameRef = admin.database().ref(`games/${gameType}/${gameId}`);
 
   await gameRef.transaction((game: GameDocument | null) => {
     if (!game) return game;

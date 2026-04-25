@@ -3,10 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/shared_ui.dart';
-import '../widgets/custom_dialog_layout.dart';
-import '../../utils/colors.dart';
-import '../../utils/app_logger.dart';
-import '../../utils/app_keys.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 
 class UpdateDialog extends StatelessWidget {
   final bool isForceUpdate;
@@ -22,17 +20,15 @@ class UpdateDialog extends StatelessWidget {
     required this.newVersion,
   });
 
-  Future<void> _launchUpdate() async {
+  Future<void> _launchUpdate(BuildContext context) async {
     final String packageName = 'com.paisphere.ludoprince';
     final String appId = '6760012267';
 
     Uri? url;
-    if (Theme.of(navigatorKey.currentContext!).platform ==
-        TargetPlatform.android) {
+    if (Theme.of(context).platform == TargetPlatform.android) {
       url = Uri.parse('market://details?id=$packageName');
       AppLogger.debug('[UpdateDialog] Attempting Android Market scheme: $url');
-    } else if (Theme.of(navigatorKey.currentContext!).platform ==
-        TargetPlatform.iOS) {
+    } else if (Theme.of(context).platform == TargetPlatform.iOS) {
       url = Uri.parse('itms-apps://itunes.apple.com/app/id$appId');
       AppLogger.debug('[UpdateDialog] Attempting iOS App Store scheme: $url');
     }
@@ -43,7 +39,7 @@ class UpdateDialog extends StatelessWidget {
     } else {
       // Fallback to web URL
       final webUrl = Uri.parse(
-        Theme.of(navigatorKey.currentContext!).platform == TargetPlatform.iOS
+        Theme.of(context).platform == TargetPlatform.iOS
             ? 'https://apps.apple.com/app/id$appId'
             : 'https://play.google.com/store/apps/details?id=$packageName',
       );
@@ -64,7 +60,7 @@ class UpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomDialogLayout(
+    return AppDialogLayout(
       header: Stack(
         alignment: Alignment.center,
         children: [
@@ -165,10 +161,10 @@ class UpdateDialog extends StatelessWidget {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GameButton(
+          AppButton(
             text: 'UPDATE NOW',
             color: AppColors.primaryCyan,
-            onTap: _launchUpdate,
+            onTap: () => _launchUpdate(context),
             isPrimary: true,
             width: double.infinity,
           ),
@@ -253,7 +249,7 @@ class UpdateDialog extends StatelessWidget {
     required String currentVersion,
     required String newVersion,
   }) {
-    return CustomDialogLayout.show(
+    return AppDialogLayout.show(
       context: context,
       barrierDismissible: !isForce,
       child: UpdateDialog(

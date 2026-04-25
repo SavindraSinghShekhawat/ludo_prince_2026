@@ -1,18 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
-import '../../providers/audio_provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/package_info_provider.dart';
+import 'package:ludo_prince/providers/audio_provider.dart';
+import 'package:ludo_prince/providers/auth_provider.dart';
+import 'package:ludo_prince/providers/package_info_provider.dart';
 import 'dice_randomness_screen.dart';
 import '../widgets/shared_ui.dart';
-import '../../utils/colors.dart';
-import '../dialogs/profile_dialog.dart';
-import '../../utils/share_helper.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
+import 'package:ludo_prince/utils/share_helper.dart';
 import 'feedback_screen.dart';
-import '../../services/remote_config_service.dart';
-import '../dialogs/update_dialog.dart';
+import 'package:ludo_prince/services/remote_config_service.dart';
+import 'package:ludo_prince/ui/dialogs/update_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -32,7 +31,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (mounted) {
         if (status == UpdateStatus.none) {
-          CustomSnackBar.show(
+          AppSnackBar.show(
             context,
             message: "You're already on the latest version!",
             isSuccess: true,
@@ -49,7 +48,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.show(
+        AppSnackBar.show(
           context,
           message: "Failed to check for updates: $e",
           isError: true,
@@ -65,7 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final audio = ref.watch(audioProvider);
     final displayName = ref.watch(displayNameProvider);
 
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(title: const Text('SETTINGS')),
@@ -80,7 +79,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: () {
-                    CustomDialogLayout.show(
+                    AppDialogLayout.show(
                       context: context,
                       child: const ProfileDialog(),
                     );
@@ -297,7 +296,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
-          LudoToggle(
+          AppToggle(
             value: value,
             onChanged: onChanged,
             accentColor: accentColor,

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class LogoWidget extends StatelessWidget {
+class AppLogo extends StatelessWidget {
   final double fontSize;
   final bool showCrown;
 
-  const LogoWidget({super.key, this.fontSize = 28, this.showCrown = true});
+  const AppLogo({super.key, this.fontSize = 28, this.showCrown = true});
 
   @override
   Widget build(BuildContext context) {

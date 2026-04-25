@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
-import '../../providers/notification_provider.dart';
+import 'app_dialog_layout.dart';
+import 'package:ludo_prince/providers/notification_provider.dart';
 import '../../models/ludo_notification.dart';
-import '../../utils/colors.dart';
-import '../dialogs/friend_requests_dialog.dart';
-import '../dialogs/invite_dialog.dart';
-import '../../utils/app_keys.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import '../../ui/dialogs/friend_requests_dialog.dart';
+import '../../ui/dialogs/invite_dialog.dart';
 
-class TopNotificationHost extends ConsumerWidget {
-  const TopNotificationHost({super.key});
+class AppNotificationHost extends ConsumerWidget {
+  const AppNotificationHost({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -180,13 +179,13 @@ class TopNotificationToast extends ConsumerWidget {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {
-      CustomDialogLayout.show(
-        context: navigatorKey.currentState!.context,
+      AppDialogLayout.show(
+        context: context,
         child: const FriendRequestsDialog(),
       );
     } else if (n.type == NotificationType.gameInvite) {
-      CustomDialogLayout.show(
-        context: navigatorKey.currentState!.context,
+      AppDialogLayout.show(
+        context: context,
         barrierDismissible: false,
         child: InviteDialog(
           inviteId: n.id,

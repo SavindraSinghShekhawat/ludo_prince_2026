@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/audio_provider.dart';
+import 'package:ludo_prince/providers/audio_provider.dart';
 import '../screens/settings_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../utils/colors.dart';
-import '../widgets/custom_dialog_layout.dart';
+import 'package:ludo_prince/utils/colors.dart';
 import '../widgets/shared_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -15,7 +14,7 @@ class SettingsDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audio = ref.watch(audioProvider);
 
-    return CustomDialogLayout(
+    return AppDialogLayout(
       header: Center(
         child: Text(
           'QUICK SETTINGS',
@@ -56,7 +55,7 @@ class SettingsDialog extends ConsumerWidget {
           label: "Vibration",
         ),
         const SizedBox(height: 24),
-        GameButton(
+        AppButton(
           text: "ALL SETTINGS",
           height: 52,
           fontSize: 16,
@@ -115,7 +114,7 @@ class SettingsDialog extends ConsumerWidget {
               ),
             ),
           ),
-          LudoToggle(
+          AppToggle(
             value: value,
             onChanged: onChanged,
             accentColor: accentColor,

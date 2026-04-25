@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/social_service.dart';
+import 'package:ludo_prince/services/social_service.dart';
 import '../widgets/shared_ui.dart';
 import '../screens/lobby_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';

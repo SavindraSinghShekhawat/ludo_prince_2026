@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/package_info_provider.dart';
-import '../../utils/colors.dart';
+import 'package:ludo_prince/providers/package_info_provider.dart';
+import 'package:ludo_prince/utils/colors.dart';
 import '../widgets/shared_ui.dart';
 
 class AboutScreen extends ConsumerWidget {
@@ -10,7 +10,7 @@ class AboutScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(

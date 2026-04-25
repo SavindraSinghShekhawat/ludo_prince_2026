@@ -103,7 +103,9 @@ class BotAI {
       int capturedPos = -1;
       for (var opp in state.players) {
         if (opp.slot == player.slot ||
-            _isTeammate(state, player.slot, opp.slot)) continue;
+            _isTeammate(state, player.slot, opp.slot)) {
+          continue;
+        }
 
         for (var oppToken in opp.tokens) {
           if (oppToken.state == TokenState.board) {

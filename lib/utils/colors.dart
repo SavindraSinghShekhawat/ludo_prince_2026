@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 
 class AppColors {
   // Royale Player Colors (Deep, sophisticated tones)

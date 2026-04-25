@@ -1,19 +1,20 @@
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math';
 
-import '../../models/game_state.dart';
-import '../../models/player.dart';
-import '../../models/token.dart';
-import '../../providers/game_provider.dart';
-import '../../controllers/ludo_controller.dart';
-import '../../services/audio_service.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/providers/game_provider.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 import '../screens/home_screen.dart';
-import '../screens/ludo_screen.dart';
+import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
 import '../screens/lobby_screen.dart';
-import '../widgets/custom_dialog_layout.dart';
 
 class GameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
@@ -125,7 +126,7 @@ class _GameOverDialogState extends ConsumerState<GameOverDialog> {
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
-          CustomDialogLayout(
+          AppDialogLayout(
             showHeaderDivider: false,
             header: Column(
               mainAxisSize: MainAxisSize.min,

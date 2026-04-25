@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
-import '../../models/token.dart';
-import '../../models/board_path.dart';
-import '../../utils/colors.dart';
+import '../../domain/models/token.dart';
+import '../../domain/models/board_path.dart';
+import 'package:ludo_prince/utils/colors.dart';
 
 class TokenWidget extends StatelessWidget {
   final Token token;

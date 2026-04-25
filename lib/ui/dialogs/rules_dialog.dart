@@ -1,12 +1,13 @@
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+
 import 'package:flutter/material.dart';
-import '../widgets/custom_dialog_layout.dart';
 
 class RulesDialog extends StatelessWidget {
   const RulesDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return CustomDialogLayout(
+    return AppDialogLayout(
       header: const Row(
         children: [
           Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import '../utils/app_logger.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:flutter/services.dart';
 import 'presence_service.dart';
 import 'social_service.dart';

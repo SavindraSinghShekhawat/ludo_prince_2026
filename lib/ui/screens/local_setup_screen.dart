@@ -1,22 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
-import 'package:ludo_prince/ui/widgets/robot_icon.dart';
-import 'package:ludo_prince/models/player.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/robot_icon.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
-import 'ludo_screen.dart';
-import '../../utils/colors.dart';
-import '../dialogs/rules_dialog.dart';
-import '../dialogs/settings_dialog.dart';
-import '../../models/game_state.dart';
-import '../../controllers/ludo_controller.dart';
-import '../../models/token.dart';
-import '../widgets/player_count_selector.dart';
-import '../widgets/game_mode_selector.dart';
-import '../widgets/shared_ui.dart';
+import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/ui/dialogs/rules_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/player_count_selector.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/game_mode_selector.dart';
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
   const LocalSetupScreen({super.key});
@@ -72,7 +71,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   Widget build(BuildContext context) {
     final activeSlots = _getActiveSlots(_numPlayers);
 
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -81,7 +80,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
             IconButton(
               icon: const Icon(Icons.help_outline),
               onPressed: () {
-                CustomDialogLayout.show(
+                AppDialogLayout.show(
                   context: context,
                   child: const RulesDialog(),
                 );
@@ -91,7 +90,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                CustomDialogLayout.show(
+                AppDialogLayout.show(
                   context: context,
                   child: const SettingsDialog(),
                 );
@@ -335,7 +334,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: GameButton(
+                  child: AppButton(
                     text: 'START GAME',
                     isPrimary: true,
                     fontSize: 18,

@@ -1,23 +1,24 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
 import '../../models/user_profile.dart';
-import '../../services/profile_service.dart';
+import 'package:ludo_prince/services/profile_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'auth_screen.dart';
-import 'lobby_screen.dart';
-import '../dialogs/join_by_code_dialog.dart';
+import 'package:ludo_prince/ui/screens/lobby_screen.dart';
+import 'package:ludo_prince/ui/dialogs/join_by_code_dialog.dart';
 import '../widgets/shared_ui.dart';
-import '../../services/social_service.dart';
-import '../../services/matchmaking_service.dart';
-import '../../services/firebase_service.dart';
-import '../../models/game_state.dart' show GameMode;
-import '../../utils/colors.dart';
-import '../../providers/notification_provider.dart';
-import '../../providers/auth_provider.dart';
-import '../dialogs/notification_inbox_dialog.dart';
+import 'package:ludo_prince/services/social_service.dart';
+import 'package:ludo_prince/services/matchmaking_service.dart';
+import 'package:ludo_prince/services/firebase_service.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart'
+    show GameMode;
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/providers/notification_provider.dart';
+import 'package:ludo_prince/providers/auth_provider.dart';
+import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
+import 'package:ludo_prince/core/constants/firebase_paths.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -114,7 +115,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final unreadCount =
         ref.watch(notificationProvider).inbox.where((n) => !n.isRead).length;
 
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -126,7 +127,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 IconButton(
                   icon: const Icon(Icons.notifications_none_outlined),
                   onPressed: () {
-                    CustomDialogLayout.show(
+                    AppDialogLayout.show(
                       context: context,
                       child: const NotificationInboxDialog(),
                     );
@@ -260,7 +261,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   void _handleJoinRoom() {
     // We will implement JoinByCodeDialog later
-    CustomDialogLayout.show(context: context, child: const JoinByCodeDialog());
+    AppDialogLayout.show(context: context, child: const JoinByCodeDialog());
   }
 
   Widget _buildGuestNudge() {
@@ -291,7 +292,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 20),
-            GameButton(
+            AppButton(
               text: 'LINK NOW',
               isSmall: true,
               onTap: () {
@@ -525,7 +526,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                     user.uid,
                   );
                   if (mounted) {
-                    CustomSnackBar.show(
+                    AppSnackBar.show(
                       context,
                       message: 'Friend request sent to ${user.displayName}!',
                       isSuccess: true,
@@ -545,7 +546,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     if (user == null) return;
 
     // Show loading indicator
-    CustomSnackBar.show(
+    AppSnackBar.show(
       context,
       message: 'Creating private room...',
       icon: Icons.hourglass_empty,
@@ -564,8 +565,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       // 2. Look up the joining code
       final gameSnap = await firebaseService.database
           .ref()
-          .child('ludogames')
-          .child(gameId)
+          .child(FirebasePaths.session('ludo', gameId))
           .get();
 
       if (!gameSnap.exists) throw Exception("Failed to create game node");
@@ -599,14 +599,14 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
       );
 
-      CustomSnackBar.show(
+      AppSnackBar.show(
         context,
         message: 'Challenge sent to ${target.displayName}!',
         isSuccess: true,
       );
     } catch (e) {
       if (!mounted) return;
-      CustomSnackBar.show(
+      AppSnackBar.show(
         context,
         message: 'Error sending challenge: $e',
         isError: true,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'shared_ui.dart';
-import '../../utils/colors.dart';
+import 'glass_container.dart';
+import 'package:ludo_prince/utils/colors.dart';
 
-class CustomDialogLayout extends StatelessWidget {
+class AppDialogLayout extends StatelessWidget {
   final Widget header;
   final List<Widget> body;
   final Widget? footer;
@@ -10,7 +10,7 @@ class CustomDialogLayout extends StatelessWidget {
   final bool showHeaderDivider;
   final double borderRadius;
 
-  const CustomDialogLayout({
+  const AppDialogLayout({
     super.key,
     required this.header,
     required this.body,

@@ -3,32 +3,30 @@ import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:ludo_prince/services/network_service.dart';
-import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
-import '../../services/firebase_service.dart';
-import '../../services/matchmaking_service.dart';
-import '../../services/audio_service.dart';
-import '../../models/game_state.dart';
-import '../../models/player.dart';
-import '../../models/token.dart';
-import '../../controllers/ludo_controller.dart';
-import '../../controllers/multiplayer_controller.dart';
-import '../../providers/game_provider.dart';
-import 'home_screen.dart';
-import 'ludo_screen.dart';
-import '../widgets/player_count_selector.dart';
-import '../widgets/game_mode_selector.dart';
-import '../widgets/shared_ui.dart';
-import '../dialogs/settings_dialog.dart';
-import '../dialogs/profile_dialog.dart';
-import '../../services/social_service.dart';
-import '../../services/profile_service.dart';
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+import 'package:ludo_prince/services/firebase_service.dart';
+import 'package:ludo_prince/services/matchmaking_service.dart';
+import 'package:ludo_prince/services/audio_service.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
+import 'package:ludo_prince/controllers/multiplayer_controller.dart';
+import 'package:ludo_prince/providers/game_provider.dart';
+import 'package:ludo_prince/ui/screens/home_screen.dart';
+import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/player_count_selector.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/game_mode_selector.dart';
+import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
+import 'package:ludo_prince/services/social_service.dart';
+import 'package:ludo_prince/services/profile_service.dart';
 import '../../models/user_profile.dart';
-import '../../utils/colors.dart';
-import '../../utils/share_helper.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/connectivity_provider.dart';
-import '../widgets/status_badge.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/utils/share_helper.dart';
+import 'package:ludo_prince/providers/auth_provider.dart';
+import 'package:ludo_prince/providers/connectivity_provider.dart';
+import 'package:ludo_prince/core/constants/firebase_paths.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   final String? initialGameId;
@@ -139,8 +137,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         // Only host deletes the lobby
         final gameEvent = await firebaseService.database
             .ref()
-            .child('ludogames')
-            .child(_activeGameId!)
+            .child(FirebasePaths.session('ludo', _activeGameId!))
             .once();
 
         if (gameEvent.snapshot.exists) {
@@ -166,7 +163,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -190,7 +187,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             IconButton(
               icon: const Icon(Icons.person_outline),
               onPressed: () {
-                CustomDialogLayout.show(
+                AppDialogLayout.show(
                   context: context,
                   child: const ProfileDialog(),
                 );
@@ -200,7 +197,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                CustomDialogLayout.show(
+                AppDialogLayout.show(
                   context: context,
                   child: const SettingsDialog(),
                 );
@@ -341,7 +338,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                       ],
                       SizedBox(
                         width: double.infinity,
-                        child: GameButton(
+                        child: AppButton(
                           text: widget.isQuickMatch
                               ? 'QUICK MATCH'
                               : 'CREATE ROOM',
@@ -521,7 +518,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: SizedBox(
                                   width: double.infinity,
-                                  child: GameButton(
+                                  child: AppButton(
                                     text: 'START BATTLE',
                                     onTap: currentPlayers >= 2
                                         ? () => matchmakingService.startGame(
@@ -590,7 +587,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               ],
             ),
           ),
-          GameButton(
+          AppButton(
             text: 'SHARE',
             icon: Icons.share,
             onTap: () => ShareHelper.shareJoiningCode(context, code),
@@ -893,7 +890,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                   Positioned(
                                     right: 0,
                                     bottom: 0,
-                                    child: StatusBadge(
+                                    child: AppStatusBadge(
                                       isOnline: isOnline,
                                       size: 10,
                                     ),
@@ -929,7 +926,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                           gameId: gameId,
                                           joiningCode: code,
                                         );
-                                        CustomSnackBar.show(
+                                        AppSnackBar.show(
                                           context,
                                           message: 'Invite sent!',
                                         );
@@ -960,7 +957,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
     if (!isOnline) {
       if (mounted) {
-        CustomSnackBar.show(
+        AppSnackBar.show(
           context,
           message: "No internet connection. Please connect to play online.",
           isError: true,
@@ -986,7 +983,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 _isLoading = false;
                 _activeGameId = null;
               });
-              CustomSnackBar.show(
+              AppSnackBar.show(
                 context,
                 message: "Matchmaking failed: no players found",
                 isError: true,
@@ -1027,9 +1024,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     Future.microtask(() async {
       final playersEvent = await firebaseService.database
           .ref()
-          .child('ludogames')
-          .child(_activeGameId!)
-          .child('players')
+          .child(FirebasePaths.players('ludo', _activeGameId!))
           .once();
 
       final currentUserUid = firebaseService.auth.currentUser!.uid;
@@ -1078,7 +1073,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   // --- UI Helpers ---
 
   void _showError(String msg) {
-    CustomSnackBar.show(context, message: msg, isError: true);
+    AppSnackBar.show(context, message: msg, isError: true);
   }
 
   Color _getSlotColor(int index) {

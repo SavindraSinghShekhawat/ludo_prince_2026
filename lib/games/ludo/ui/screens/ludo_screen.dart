@@ -2,24 +2,23 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ludo_prince/controllers/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
-import '../../services/firebase_service.dart';
-import 'package:ludo_prince/models/player.dart';
-import 'package:ludo_prince/ui/widgets/robot_icon.dart';
-import '../../utils/colors.dart';
-import '../../models/game_state.dart';
-import '../../models/token.dart';
-import '../../models/board_path.dart';
-import '../widgets/board_widget.dart';
-import '../widgets/token_widget.dart';
-import '../widgets/dice_widget.dart';
-import '../widgets/shared_ui.dart';
-import '../widgets/custom_dialog_layout.dart';
-import 'home_screen.dart';
-import '../dialogs/rules_dialog.dart';
-import '../dialogs/settings_dialog.dart';
-import '../dialogs/game_over_dialog.dart';
+import 'package:ludo_prince/services/firebase_service.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/robot_icon.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import '../../domain/models/game_state.dart';
+import '../../domain/models/token.dart';
+import '../../domain/models/board_path.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/board_widget.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/token_widget.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/dice_widget.dart';
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+import 'package:ludo_prince/ui/screens/home_screen.dart';
+import 'package:ludo_prince/ui/dialogs/rules_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/game_over_dialog.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
@@ -59,7 +58,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
 
   @override
   Widget build(BuildContext context) {
-    return const AnimatedBackground(
+    return const AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: _GameAppBar(),
@@ -83,9 +82,9 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
       leading: BackButton(
         color: Colors.white,
         onPressed: () {
-          CustomDialogLayout.show(
+          AppDialogLayout.show(
             context: context,
-            child: CustomDialogLayout(
+            child: AppDialogLayout(
               header: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -124,7 +123,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
               footer: Row(
                 children: [
                   Expanded(
-                    child: GameButton(
+                    child: AppButton(
                       text: 'STAY',
                       height: 52,
                       fontSize: 16,
@@ -133,7 +132,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: GameButton(
+                    child: AppButton(
                       text: 'EXIT',
                       color: AppColors.crimsonVelvet,
                       height: 52,
@@ -166,7 +165,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.help_outline, color: Colors.white, size: 28),
           onPressed: () {
-            CustomDialogLayout.show(
+            AppDialogLayout.show(
               context: context,
               child: const RulesDialog(),
             );
@@ -176,7 +175,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.settings, color: Colors.white),
           onPressed: () {
-            CustomDialogLayout.show(
+            AppDialogLayout.show(
               context: context,
               child: const SettingsDialog(),
             );
@@ -207,7 +206,7 @@ class _GameBody extends ConsumerWidget {
             // Show dialog for everyone, including those who left/forfeited
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              CustomDialogLayout.show(
+              AppDialogLayout.show(
                 context: context,
                 barrierDismissible: false,
                 child: GameOverDialog(state: state),

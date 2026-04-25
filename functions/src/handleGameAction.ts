@@ -31,15 +31,16 @@ function generatePRDDice(seed: number, pity: number): number {
 
 export const handleGameAction = onValueCreated(
   {
-    ref: "/ludogames/{gameId}/actionRequests/{uid}",
+    ref: "/games/{gameType}/{gameId}/actionRequests/{uid}",
   },
   async (event) => {
+    const gameType = event.params.gameType;
     const gameId = event.params.gameId;
     const uid = event.params.uid;
     const data = event.data.val();
 
     AppLogger.debug("[handleGameAction] ==================== START ====================");
-    AppLogger.debug(`[handleGameAction] Triggered for gameId=${gameId}, uid=${uid}`);
+    AppLogger.debug(`[handleGameAction] Triggered for game=${gameType}, gameId=${gameId}, uid=${uid}`);
     if (!data) {
       AppLogger.debug("[handleGameAction] No data found. Exiting.");
       return;
@@ -48,13 +49,13 @@ export const handleGameAction = onValueCreated(
     const type = data.type;
     AppLogger.debug(`[handleGameAction] Request type: ${type}`);
 
-    const gameRef = admin.database().ref(`ludogames/${gameId}`);
-    const requestRef = admin.database().ref(`ludogames/${gameId}/actionRequests/${uid}`);
+    const gameRef = admin.database().ref(`games/${gameType}/${gameId}`);
+    const requestRef = admin.database().ref(`games/${gameType}/${gameId}/actionRequests/${uid}`);
 
     try {
       await gameRef.transaction((game: GameDocument | null) => {
-        if (!game) return game; // Return null to trigger server-side fetch if un-cached
-        if (game.status !== "playing") return; // Abort if game is truly over
+        if (!game) return game;
+        if (game.status !== "playing") return;
 
         // 1. Identify player slot
         const players = game.players || {};
@@ -68,7 +69,7 @@ export const handleGameAction = onValueCreated(
 
         if (!playerSlot) {
           AppLogger.error(`UID ${uid} not found in game ${gameId}`);
-          return; // Abort transaction
+          return;
         }
 
         const currentTurn = game.currentTurn;
@@ -86,16 +87,23 @@ export const handleGameAction = onValueCreated(
 
           const pityCount = players[currentTurn].sixPity ?? 2;
           const seed = game.prefetchedSeed ?? randomInt(0, 10000000);
-          const dice = generatePRDDice(seed, pityCount);
-
-          if (dice === 6) {
-            players[currentTurn].sixPity = 0;
+          
+          let dice = 1;
+          if (gameType === "ludo") {
+             dice = generatePRDDice(seed, pityCount);
           } else {
-            players[currentTurn].sixPity = pityCount + 1;
+             dice = (seed % 6) + 1; // Generic roll
+          }
+
+          if (gameType === "ludo") {
+            if (dice === 6) {
+              players[currentTurn].sixPity = 0;
+            } else {
+              players[currentTurn].sixPity = pityCount + 1;
+            }
           }
 
           AppLogger.info(`[handleGameAction] AUDIT_ROLL: Player ${playerSlot} rolled ${dice} in game ${gameId}`);
-          AppLogger.debug(`[handleGameAction] ACCEPT ROLL: Used dice ${dice} (seed: ${seed}, pity: ${pityCount}) for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
           const eventId = String(eventCounter).padStart(5, "0");
@@ -147,7 +155,7 @@ export const handleGameAction = onValueCreated(
 
           if (now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
             AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
-            return; // Too early
+            return;
           }
 
           const currentPlayer = players[currentTurn];
@@ -216,7 +224,7 @@ export const handleGameAction = onValueCreated(
           return game;
         }
 
-        return; // Abort if unknown type
+        return;
       });
       // Clear the request node
       await requestRef.remove();

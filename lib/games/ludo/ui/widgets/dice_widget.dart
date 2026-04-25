@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 
-import '../../models/game_state.dart';
+import '../../domain/models/game_state.dart';
 
 class DiceWidget extends ConsumerStatefulWidget {
   const DiceWidget({super.key});

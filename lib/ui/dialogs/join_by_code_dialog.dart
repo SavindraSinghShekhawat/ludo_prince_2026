@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../services/matchmaking_service.dart';
-import '../../services/audio_service.dart';
+import 'package:ludo_prince/services/matchmaking_service.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 import '../widgets/shared_ui.dart';
 import '../screens/lobby_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';

@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:math';
 
-import '../engine/bot_ai.dart';
-import '../engine/game_engine.dart';
-import '../models/game_state.dart';
-import '../models/player.dart';
-import '../services/firebase_service.dart';
-import '../models/token.dart';
-import '../utils/test_initialization.dart';
+import '../domain/engine/bot_ai.dart';
+import '../domain/engine/game_engine.dart';
+import '../domain/models/game_state.dart';
+import '../domain/models/player.dart';
+import 'package:ludo_prince/services/firebase_service.dart';
+import '../domain/models/token.dart';
+import 'package:ludo_prince/utils/test_initialization.dart';
 import 'src/audio_listener.dart';
 import 'src/move_executor.dart';
 import 'src/game_event_provider.dart';

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../utils/colors.dart';
+import 'package:ludo_prince/utils/colors.dart';
 
-class StatusBadge extends StatelessWidget {
+class AppStatusBadge extends StatelessWidget {
   final bool isOnline;
   final double size;
 
-  const StatusBadge({
+  const AppStatusBadge({
     super.key,
     required this.isOnline,
     this.size = 14,

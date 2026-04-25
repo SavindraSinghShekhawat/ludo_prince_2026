@@ -1,54 +1,60 @@
 {
   "rules": {
-    "presence": {
-      "$uid": {
-        ".read": "auth != null",
-        ".write": "auth != null && auth.uid == $uid"
-      }
-    },
-    "stats": {
-      "onlineCount": {
-        ".read": true,
-        ".write": false 
-      }
-    },
-    "ludogames": {
-      ".indexOn": ["status"],
-      ".read": "auth != null",
-      ".write": "auth != null",
-      "$gameId": {
-        "prefetchedRoll": {
-          ".read": "auth != null && data.parent().child('players').child(data.parent().child('currentTurn').val()).child('uid').val() === auth.uid",
-          ".write": false
+    "games": {
+      "$gameType": {
+        ".indexOn": ["status", "joiningCode"],
+        "$sessionId": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['status', 'players'])"
         }
       }
     },
     "matchmaking": {
-      "$mode": {
-        "queue": {
-          ".indexOn": ["joinedAt"],
-          "$uid": {
-            ".read": "auth != null && auth.uid == $uid",
-            ".write": "auth != null && auth.uid == $uid"
+      "$gameType": {
+        "$mode": {
+          "queue": {
+            ".indexOn": ["joinedAt"],
+            ".read": "auth != null",
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid",
+              ".validate": "newData.hasChildren(['joinedAt', 'name'])"
+            }
+          },
+          "processing": {
+            ".read": "auth != null",
+            ".write": "auth != null"
           }
         }
       }
     },
     "matchmakingAssignments": {
       "$uid": {
-        ".read": "auth != null && auth.uid == $uid",
-        ".write": "auth != null && auth.uid == $uid"
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
       }
     },
     "privateRoomCodes": {
+      ".read": "auth != null",
       "$code": {
-        ".read": "auth != null",
         ".write": "auth != null"
+      }
+    },
+    "presence": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
       }
     },
     "invites": {
       "$uid": {
-        ".read": "auth != null && auth.uid == $uid",
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+    "stats": {
+      "onlineCount": {
+        ".read": true,
         ".write": "auth != null"
       }
     }

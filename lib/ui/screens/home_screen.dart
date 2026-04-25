@@ -1,23 +1,21 @@
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ludo_prince/ui/widgets/custom_dialog_layout.dart';
-import 'settings_screen.dart';
-import 'about_screen.dart';
-import 'local_setup_screen.dart';
-import 'lobby_screen.dart';
-import 'friends_screen.dart';
-import '../../providers/auth_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../widgets/shared_ui.dart';
-import '../../utils/colors.dart';
-import '../dialogs/profile_dialog.dart';
-import '../dialogs/notification_inbox_dialog.dart';
-import '../widgets/logo_widget.dart';
-import '../../providers/presence_provider.dart';
-import '../../providers/notification_provider.dart';
-import '../../providers/connectivity_provider.dart';
-import '../widgets/status_badge.dart';
+import 'package:ludo_prince/ui/screens/settings_screen.dart';
+import 'package:ludo_prince/ui/screens/about_screen.dart';
+import 'package:ludo_prince/ui/screens/local_setup_screen.dart';
+import 'package:ludo_prince/ui/screens/lobby_screen.dart';
+import 'package:ludo_prince/ui/screens/friends_screen.dart';
+import 'package:ludo_prince/providers/auth_provider.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
+import 'package:ludo_prince/providers/presence_provider.dart';
+import 'package:ludo_prince/providers/notification_provider.dart';
+import 'package:ludo_prince/providers/connectivity_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -59,7 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (isLandscape) {
       return Scaffold(
-        body: AnimatedBackground(
+        body: AppBackground(
           showParticles: true,
           child: SafeArea(
             bottom: false,
@@ -79,7 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const LogoWidget(fontSize: 48),
+                              const AppLogo(fontSize: 48),
                               const SizedBox(height: 20),
                               _buildOnlineStatusBar(onlineCount),
                             ],
@@ -170,7 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Portrait Layout
     return Scaffold(
-      body: AnimatedBackground(
+      body: AppBackground(
         showParticles: true,
         child: Stack(
           children: [
@@ -289,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           _buildHeader(context, ref),
                           const SizedBox(height: 10),
-                          const LogoWidget(fontSize: 42),
+                          const AppLogo(fontSize: 42),
                           const SizedBox(height: 16),
                           _buildOnlineStatusBar(onlineCount),
                           const SizedBox(height: 24),
@@ -382,7 +380,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           GestureDetector(
             onTap: () {
-              CustomDialogLayout.show(
+              AppDialogLayout.show(
                 context: context,
                 child: const ProfileDialog(),
               );
@@ -414,7 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Positioned(
                         right: -1,
                         bottom: -1,
-                        child: StatusBadge(isOnline: isOnline),
+                        child: AppStatusBadge(isOnline: isOnline),
                       ),
                     ],
                   ),
@@ -457,7 +455,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        CustomDialogLayout.show(
+        AppDialogLayout.show(
           context: context,
           child: const NotificationInboxDialog(),
         );

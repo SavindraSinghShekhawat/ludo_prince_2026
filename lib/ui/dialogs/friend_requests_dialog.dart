@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/friend_request.dart';
-import '../../services/profile_service.dart';
-import '../../utils/colors.dart';
+import 'package:ludo_prince/services/profile_service.dart';
+import 'package:ludo_prince/utils/colors.dart';
 import '../widgets/shared_ui.dart';
 
 class FriendRequestsDialog extends ConsumerWidget {
@@ -157,7 +157,7 @@ class FriendRequestsDialog extends ConsumerWidget {
             onTap: () async {
               await profileService.acceptFriendRequest(request);
               if (context.mounted) {
-                CustomSnackBar.show(
+                AppSnackBar.show(
                   context,
                   message: 'Friend request accepted!',
                   isSuccess: true,

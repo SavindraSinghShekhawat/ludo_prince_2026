@@ -1,20 +1,22 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
-import '../models/game_state.dart';
-import '../models/player.dart';
-import '../models/token.dart';
-import '../engine/game_engine.dart';
-import '../engine/bot_ai.dart';
-import '../services/firebase_service.dart';
-import 'ludo_controller.dart';
-import 'src/firebase_event_provider.dart';
-import 'src/game_event_provider.dart';
-import '../utils/app_logger.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
+import 'package:ludo_prince/games/ludo/domain/engine/bot_ai.dart';
+import 'package:ludo_prince/services/firebase_service.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/controller/src/firebase_event_provider.dart';
+import 'package:ludo_prince/games/ludo/controller/src/game_event_provider.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
+import 'package:ludo_prince/core/constants/firebase_paths.dart';
 
-import '../services/social_service.dart';
+import 'package:ludo_prince/services/social_service.dart';
 
 class MultiplayerGameController extends LudoController {
   final String gameId;
+  final String gameType;
   final FirebaseDatabase _db = firebaseService.database;
   int _lastAppliedEventId = 0;
   Timer? _timeoutMonitor;
@@ -25,6 +27,7 @@ class MultiplayerGameController extends LudoController {
     super.config, {
     required this.gameId,
     required PlayerSlot super.localPlayerSlot,
+    this.gameType = 'ludo',
   }) : super(eventProvider: FirebaseEventProvider(gameId: gameId)) {
     // Mark the game as online immediately so GameOverDialog navigates correctly.
     state = state.copyWith(gameType: GameType.online);
@@ -32,7 +35,8 @@ class MultiplayerGameController extends LudoController {
   }
 
   Future<void> initializeFromSnapshot() async {
-    final gameEvent = await _db.ref().child('ludogames').child(gameId).once();
+    final gameEvent =
+        await _db.ref().child(FirebasePaths.session(gameType, gameId)).once();
     if (!gameEvent.snapshot.exists) return;
 
     final data = Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
@@ -67,9 +71,7 @@ class MultiplayerGameController extends LudoController {
     final lastIdPad = _lastAppliedEventId.toString().padLeft(5, '0');
     final eventsQuery = await _db
         .ref()
-        .child('ludogames')
-        .child(gameId)
-        .child('events')
+        .child(FirebasePaths.events(gameType, gameId))
         .orderByKey()
         .startAt(lastIdPad)
         .once();
@@ -103,8 +105,7 @@ class MultiplayerGameController extends LudoController {
     _prefRollSubscription?.cancel();
     _prefRollSubscription = _db
         .ref()
-        .child('ludogames')
-        .child(gameId)
+        .child(FirebasePaths.session(gameType, gameId))
         .child('prefetchedSeed')
         .onValue
         .listen((event) {
@@ -150,8 +151,7 @@ class MultiplayerGameController extends LudoController {
     // Actually, any active client can send it.
     await _db
         .ref()
-        .child('ludogames')
-        .child(gameId)
+        .child(FirebasePaths.session(gameType, gameId))
         .child('actionRequests')
         .child(currentUser.uid)
         .set({'type': 'timeout', 'requestedAt': ServerValue.timestamp});
@@ -198,7 +198,7 @@ class MultiplayerGameController extends LudoController {
   }
 
   Future<void> _saveSnapshot() async {
-    await _db.ref().child('ludogames').child(gameId).update({
+    await _db.ref().child(FirebasePaths.session(gameType, gameId)).update({
       'stateSnapshot': {
         'gameState': state.toJson(),
         'lastEventId': _lastAppliedEventId,
@@ -284,14 +284,17 @@ class MultiplayerGameController extends LudoController {
           updates['isDiceRolled'] = false;
         }
 
-        _db.ref().child('ludogames').child(gameId).update(updates);
+        _db
+            .ref()
+            .child(FirebasePaths.session(gameType, gameId))
+            .update(updates);
       }
     } else if (state.isGameOver && localPlayerSlot == PlayerSlot.slot1) {
       final winnerUids = state.winners.map((slot) {
         return state.players.firstWhere((p) => p.slot == slot).uid;
       }).toList();
 
-      _db.ref().child('ludogames').child(gameId).update({
+      _db.ref().child(FirebasePaths.session(gameType, gameId)).update({
         'status': 'finished',
         'winners': winnerUids,
       });

@@ -1,4 +1,4 @@
-import '../models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 
 enum InitialGameState {
   normal,

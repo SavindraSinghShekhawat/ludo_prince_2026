@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/network_service.dart';
+import 'package:ludo_prince/services/network_service.dart';
 
 final connectivityProvider = StreamProvider<bool>((ref) {
   return networkService.connectivityStream;

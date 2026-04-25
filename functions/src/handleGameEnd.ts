@@ -6,14 +6,15 @@ import {AppLogger} from "./utils/logger";
 
 export const handleGameEnd = onValueUpdated(
   {
-    ref: "/ludogames/{gameId}/status",
+    ref: "/games/{gameType}/{gameId}/status",
   },
   async (event) => {
     const status = event.data?.after.val();
     if (status !== "finished") return;
 
+    const gameType = event.params.gameType;
     const gameId = event.params.gameId;
-    const gameRef = admin.database().ref(`ludogames/${gameId}`);
+    const gameRef = admin.database().ref(`games/${gameType}/${gameId}`);
     const gameSnap = await gameRef.get();
     const game = gameSnap.val() as GameDocument & { winners?: string[] } | null;
 
@@ -22,7 +23,7 @@ export const handleGameEnd = onValueUpdated(
       return;
     }
 
-    AppLogger.debug(`[handleGameEnd] Processing stats for game: ${gameId}`);
+    AppLogger.debug(`[handleGameEnd] Processing stats for game: ${gameId} in ${gameType}`);
 
     const firestore = admin.firestore();
     const batch = firestore.batch();

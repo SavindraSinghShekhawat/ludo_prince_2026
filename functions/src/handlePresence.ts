@@ -29,13 +29,13 @@ export const handlePresence = onValueUpdated({
   // 2. If disconnected, handle potential turn skipping
   if (after?.online === false) {
     AppLogger.debug(`[handlePresence] User ${uid} went offline. Checking for active turns...`);
-    // This is a bit expensive to query all ludogames,
-    // but we can query ludogames where currentTurn logic might be needed.
+    // This is a bit expensive to query all games,
+    // but we can query games where currentTurn logic might be needed.
     // In a real app, we'd have a mapping of UID to active games.
     // For now, let's assume we have a way to find relevant games or just rely on a timeout function.
 
     // Better approach: If they just joined a game, the client set up an onDisconnect
-    // for ludogames/{gameId}/players/{slot}/connected.
+    // for games/{gameType}/{gameId}/players/{slot}/connected.
     // We should trigger off THAT instead.
   }
 });

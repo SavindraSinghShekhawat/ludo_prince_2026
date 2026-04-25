@@ -1,9 +1,10 @@
-import '../utils/app_logger.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import '../models/game_state.dart';
-import '../models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'firebase_service.dart';
+import 'package:ludo_prince/core/constants/firebase_paths.dart';
 
 class MatchmakingService {
   FirebaseDatabase get _db => firebaseService.database;
@@ -20,11 +21,12 @@ class MatchmakingService {
     bool isPrivate = true,
     GameMode gameMode = GameMode.classic,
     String? playerName,
+    String gameType = 'ludo',
   }) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
 
-    final gameRef = _db.ref().child('ludogames').push();
+    final gameRef = _db.ref().child(FirebasePaths.gameRoot(gameType)).push();
     final gameId = gameRef.key!;
 
     final effectiveName = playerName ??
@@ -69,7 +71,7 @@ class MatchmakingService {
       }).timeout(const Duration(seconds: 10));
 
       if (isPrivate && joiningCode != null) {
-        await _db.ref().child('privateRoomCodes').child(joiningCode).set({
+        await _db.ref().child(FirebasePaths.privateRoomCode(joiningCode)).set({
           'gameId': gameId,
           'createdAt': ServerValue.timestamp,
         });
@@ -85,14 +87,15 @@ class MatchmakingService {
     return gameId;
   }
 
-  Future<void> joinGame(String gameId, {String? playerName}) async {
+  Future<void> joinGame(String gameId,
+      {String? playerName, String gameType = 'ludo'}) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
     final nameToUse = playerName ??
         user.displayName ??
         "Guest #${user.uid.substring(user.uid.length > 4 ? user.uid.length - 4 : 0).toUpperCase()}";
 
-    final gameRef = _db.ref().child('ludogames').child(gameId);
+    final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
 
     final transactionResult = await gameRef.runTransaction((Object? gameData) {
       if (gameData == null) {
@@ -159,11 +162,12 @@ class MatchmakingService {
   Future<void> updateGameSettings(
     String gameId,
     int maxPlayers,
-    GameMode gameMode,
-  ) async {
+    GameMode gameMode, {
+    String gameType = 'ludo',
+  }) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
-    final gameRef = _db.ref().child('ludogames').child(gameId);
+    final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
 
     final snapshot = await gameRef.get();
     if (snapshot.exists) {
@@ -179,15 +183,18 @@ class MatchmakingService {
     }
   }
 
-  Future<void> startGame(String gameId) async {
-    final gameRef = _db.ref().child('ludogames').child(gameId);
+  Future<void> startGame(String gameId, {String gameType = 'ludo'}) async {
+    final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
     final gameSnap = await gameRef.get();
 
     if (gameSnap.exists) {
       final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
       final joiningCode = gameData['joiningCode'];
       if (joiningCode != null) {
-        await _db.ref().child('privateRoomCodes').child(joiningCode).remove();
+        await _db
+            .ref()
+            .child(FirebasePaths.privateRoomCode(joiningCode))
+            .remove();
       }
     }
 
@@ -199,7 +206,7 @@ class MatchmakingService {
 
   Future<String?> getGameIdFromCode(String code) async {
     final snapshot =
-        await _db.ref().child('privateRoomCodes').child(code).get();
+        await _db.ref().child(FirebasePaths.privateRoomCode(code)).get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       return data['gameId'] as String?;
@@ -218,6 +225,7 @@ class MatchmakingService {
     int maxPlayers,
     GameMode gameMode, {
     String? playerName,
+    String gameType = 'ludo',
   }) async {
     await _ensureAuthenticated();
     final user = _auth.currentUser!;
@@ -226,11 +234,9 @@ class MatchmakingService {
 
     final queueRef = _db
         .ref()
-        .child('matchmaking')
-        .child(modeQueue)
-        .child('queue')
-        .child(uid);
-    final assignmentRef = _db.ref().child('matchmakingAssignments').child(uid);
+        .child(FirebasePaths.matchmakingSlot(gameType, modeQueue, uid));
+    final assignmentRef =
+        _db.ref().child(FirebasePaths.matchmakingAssignment(uid));
 
     // 1. Clear any old assignment
     await assignmentRef.remove();
@@ -258,41 +264,41 @@ class MatchmakingService {
     });
   }
 
-  Future<void> leaveQueue(int maxPlayers, GameMode gameMode) async {
+  Future<void> leaveQueue(int maxPlayers, GameMode gameMode,
+      {String gameType = 'ludo'}) async {
     await _ensureAuthenticated();
     final uid = _auth.currentUser!.uid;
     final modeQueue = _getModeQueueName(maxPlayers, gameMode);
 
     await _db
         .ref()
-        .child('matchmaking')
-        .child(modeQueue)
-        .child('queue')
-        .child(uid)
+        .child(FirebasePaths.matchmakingSlot(gameType, modeQueue, uid))
         .remove();
-    await _db.ref().child('matchmakingAssignments').child(uid).remove();
+    await _db.ref().child(FirebasePaths.matchmakingAssignment(uid)).remove();
   }
 
-  Future<void> updateHostHeartbeat(String gameId) async {
-    await _db.ref().child('ludogames').child(gameId).update({
+  Future<void> updateHostHeartbeat(String gameId,
+      {String gameType = 'ludo'}) async {
+    await _db.ref().child(FirebasePaths.session(gameType, gameId)).update({
       'hostLastActive': ServerValue.timestamp,
     });
   }
 
-  Future<void> deleteLobby(String gameId) async {
+  Future<void> deleteLobby(String gameId, {String gameType = 'ludo'}) async {
     try {
-      await _db.ref().child('ludogames').child(gameId).remove();
+      await _db.ref().child(FirebasePaths.session(gameType, gameId)).remove();
     } catch (e) {
       AppLogger.error("Error deleting lobby $gameId: $e");
     }
   }
 
-  Stream<DatabaseEvent> watchGame(String gameId) {
-    return _db.ref().child('ludogames').child(gameId).onValue;
+  Stream<DatabaseEvent> watchGame(String gameId, {String gameType = 'ludo'}) {
+    return _db.ref().child(FirebasePaths.session(gameType, gameId)).onValue;
   }
 
-  Stream<DatabaseEvent> watchPlayers(String gameId) {
-    return _db.ref().child('ludogames').child(gameId).child('players').onValue;
+  Stream<DatabaseEvent> watchPlayers(String gameId,
+      {String gameType = 'ludo'}) {
+    return _db.ref().child(FirebasePaths.players(gameType, gameId)).onValue;
   }
 }
 

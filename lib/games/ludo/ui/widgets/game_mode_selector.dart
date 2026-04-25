@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/game_state.dart';
-import '../dialogs/game_mode_info_dialog.dart';
-import 'custom_dialog_layout.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/ui/dialogs/game_mode_info_dialog.dart';
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 class GameModeSelector extends StatelessWidget {
   final GameMode currentMode;
@@ -186,7 +186,7 @@ class GameModeSelector extends StatelessWidget {
                         .withValues(alpha: isEnabled ? 1.0 : 0.4),
                   ),
                   onPressed: () {
-                    CustomDialogLayout.show(
+                    AppDialogLayout.show(
                       context: context,
                       child: GameModeInfoDialog(
                         title: infoTitle,

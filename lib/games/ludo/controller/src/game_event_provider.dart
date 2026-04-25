@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../ludo_controller.dart';
-import '../../models/token.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 
 abstract class GameEventProvider {
   Stream<GameEvent> get events;

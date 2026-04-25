@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/ludo_controller.dart';
-import '../models/game_state.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 
 final gameControllerProvider = Provider<GameController>((ref) {
   throw UnimplementedError("GameController must be overridden");

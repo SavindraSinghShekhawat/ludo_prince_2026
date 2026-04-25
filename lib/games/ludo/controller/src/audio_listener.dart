@@ -1,9 +1,9 @@
 import 'dart:async';
-import '../../engine/game_engine.dart';
-import '../../models/game_state.dart';
-import '../../models/player.dart';
-import '../../services/audio_service.dart';
-import '../ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/services/audio_service.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 
 class AudioControllerListener {
   final GameController controller;

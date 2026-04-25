@@ -13,73 +13,60 @@ import {randomInt} from "node:crypto";
  */
 export const handleMatchmaking = onValueCreated(
   {
-    ref: "/matchmaking/{mode}/queue/{uid}",
+    ref: "/matchmaking/{gameType}/{mode}/queue/{uid}",
   },
   async (event) => {
-    AppLogger.debug(`[handleMatchmaking] Triggered for mode: ${event.params.mode}, uid: ${event.params.uid}`);
+    const gameType = event.params.gameType;
     const mode = event.params.mode;
-    // const uid = event.params.uid; // Triggered by this user
+    
+    AppLogger.debug(`[handleMatchmaking] Triggered for game: ${gameType}, mode: ${mode}, uid: ${event.params.uid}`);
 
-    const queueRef = admin.database().ref(`matchmaking/${mode}/queue`);
+    const queueRef = admin.database().ref(`matchmaking/${gameType}/${mode}/queue`);
 
     // 1. Get required player count for the mode
     let requiredPlayers = 0;
-    switch (mode) {
-    case "classic_2p":
+    // Common Ludo modes
+    if (gameType === "ludo") {
+      switch (mode) {
+        case "classic_2p":
+          requiredPlayers = 2;
+          break;
+        case "classic_3p":
+          requiredPlayers = 3;
+          break;
+        case "classic_4p":
+        case "team_2v2":
+          requiredPlayers = 4;
+          break;
+        default:
+          AppLogger.error(`Unknown ludo mode: ${mode}`);
+          return;
+      }
+    } else {
+      // Default fallback for other games
       requiredPlayers = 2;
-      break;
-    case "classic_3p":
-      requiredPlayers = 3;
-      break;
-    case "classic_4p":
-    case "team_2v2":
-      requiredPlayers = 4;
-      break;
-    default:
-      AppLogger.error(`Unknown game mode: ${mode}`);
-      return;
     }
 
     // 2. Read the queue for this mode
-    // We order by joinedAt to prioritize people who have been waiting longer
     const queueSnap = await queueRef.orderByChild("joinedAt").limitToFirst(requiredPlayers).get();
 
     if (queueSnap.numChildren() < requiredPlayers) {
-      // Not enough players yet
       return;
     }
 
-    // 3. We have enough players.
-    // HOWEVER, to prevent race conditions (multiple functions triggering at once),
-    // we should use a transaction or a locking mechanism.
-    // In RTDB, we can use a transaction on a "locked" flag or just rely on the first one
-    // to successfully remove players from the queue.
-
-    // Better approach for RTDB: Use a transaction on the queue subset or a separate lock path.
-    // For simplicity and speed as requested, we'll attempt a multi-path update.
-    // current queue status in the update condition (though RTDB multi-path update doesn't
-    // support conditions on individual paths like Firestore's write batches).
-
-    // Instead, let's use a transaction on a "processing" node for this mode
-    const lockRef = admin.database().ref(`matchmaking/${mode}/processing`);
+    const lockRef = admin.database().ref(`matchmaking/${gameType}/${mode}/processing`);
 
     try {
       const lockResult = await lockRef.transaction((currentValue) => {
-        if (currentValue === true) {
-          // Already being processed by another instance
-          return;
-        }
-        return true; // Lock it
+        if (currentValue === true) return;
+        return true;
       });
 
-      if (!lockResult.committed) {
-        return;
-      }
+      if (!lockResult.committed) return;
 
-      // Re-verify queue after acquiring lock
       const freshQueueSnap = await queueRef.orderByChild("joinedAt").limitToFirst(requiredPlayers).get();
       if (freshQueueSnap.numChildren() < requiredPlayers) {
-        await lockRef.set(false); // Release lock
+        await lockRef.set(false);
         return;
       }
 
@@ -92,7 +79,7 @@ export const handleMatchmaking = onValueCreated(
       });
 
       // 4. Create new game
-      const gameRef = admin.database().ref("ludogames").push();
+      const gameRef = admin.database().ref(`games/${gameType}`).push();
       const gameId = gameRef.key;
 
       const gameData: GameDocument = {
@@ -102,7 +89,7 @@ export const handleMatchmaking = onValueCreated(
         currentTurn: "slot1",
         turnNumber: 1,
         turnStartedAt: ServerValue.TIMESTAMP,
-        turnOrder: [], // Will be populated below
+        turnOrder: [],
         eventCounter: 0,
         players: {},
         isDiceRolled: false,
@@ -118,16 +105,16 @@ export const handleMatchmaking = onValueCreated(
       playersInMatch.forEach((player, index) => {
         let slot = `slot${index + 1}`;
 
-        // Refine slot mapping to follow CLOCKWISE rotation
-        if (mode === "classic_2p") {
-          slot = index === 0 ? "slot1" : "slot3";
-        } else if (mode === "classic_3p") {
-          const threePlayerSlots = ["slot1", "slot4", "slot3"];
-          slot = threePlayerSlots[index];
-        } else {
-          // 4 players (classic_4p or team_2v2)
-          const fourPlayerSlots = ["slot1", "slot4", "slot3", "slot2"];
-          slot = fourPlayerSlots[index];
+        if (gameType === "ludo") {
+          if (mode === "classic_2p") {
+            slot = index === 0 ? "slot1" : "slot3";
+          } else if (mode === "classic_3p") {
+            const threePlayerSlots = ["slot1", "slot4", "slot3"];
+            slot = threePlayerSlots[index];
+          } else {
+            const fourPlayerSlots = ["slot1", "slot4", "slot3", "slot2"];
+            slot = fourPlayerSlots[index];
+          }
         }
 
         const playerEntry: PlayerEntry = {
@@ -147,29 +134,23 @@ export const handleMatchmaking = onValueCreated(
         gameData.players[slot] = playerEntry;
         (gameData.turnOrder as string[]).push(slot);
 
-        // Matchmaking assignments
         updates[`matchmakingAssignments/${player.uid}`] = {
           gameId: gameId,
+          gameType: gameType,
           assignedAt: ServerValue.TIMESTAMP,
         };
 
-        // Remove from queue
-        updates[`matchmaking/${mode}/queue/${player.uid}`] = null;
+        updates[`matchmaking/${gameType}/${mode}/queue/${player.uid}`] = null;
       });
 
-      // Add the game itself
-      updates[`ludogames/${gameId}`] = gameData;
+      updates[`games/${gameType}/${gameId}`] = gameData;
+      updates[`matchmaking/${gameType}/${mode}/processing`] = false;
 
-      // Release lock in the same update if possible, or right after
-      updates[`matchmaking/${mode}/processing`] = false;
-
-      // 5. Execute atomic update
       await admin.database().ref().update(updates);
 
-      AppLogger.debug(`Match created: ${gameId} for mode ${mode} with players: ${playersInMatch.map((p) => p.uid).join(", ")}`);
+      AppLogger.debug(`Match created: ${gameId} in ${gameType} for mode ${mode}`);
     } catch (error) {
       AppLogger.error("Matchmaking error:", error);
-      // Ensure lock is released even on error
       await lockRef.set(false);
     }
   }

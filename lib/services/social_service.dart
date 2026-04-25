@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'firebase_service.dart';
-import '../utils/app_logger.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 
 enum UserStatus { online, offline, inLobby, inGame }
 

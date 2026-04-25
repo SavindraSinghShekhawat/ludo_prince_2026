@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../controllers/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import '../widgets/shared_ui.dart';
-import '../../utils/colors.dart';
+import 'package:ludo_prince/utils/colors.dart';
 
 class DiceRandomnessScreen extends StatefulWidget {
   const DiceRandomnessScreen({super.key});
@@ -96,7 +96,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         appBar: AppBar(title: const Text('DICE FAIRNESS CHECK')),
         body: SafeArea(
@@ -341,7 +341,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
       children: [
         SizedBox(
           width: double.infinity,
-          child: GameButton(
+          child: AppButton(
             text: _isRunning ? 'Stop Simulation' : 'Run Simulation',
             isPrimary: true,
             onTap: _isRunning ? _stopSimulation : _runSimulation,

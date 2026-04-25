@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../services/device_info_service.dart';
-import '../../services/feedback_service.dart';
+import 'package:ludo_prince/services/device_info_service.dart';
+import 'package:ludo_prince/services/feedback_service.dart';
 import '../widgets/shared_ui.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -34,7 +34,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
           .submitFeedback(message, deviceMetadata: deviceMetadata);
       if (mounted) {
         _feedbackController.clear();
-        CustomSnackBar.show(
+        AppSnackBar.show(
           context,
           message: 'Thank you for your feedback!',
           isSuccess: true,
@@ -43,7 +43,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.show(
+        AppSnackBar.show(
           context,
           message: 'Failed to send feedback. Please try again.',
           isError: true,
@@ -56,7 +56,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(

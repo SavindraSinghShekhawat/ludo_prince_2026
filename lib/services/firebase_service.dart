@@ -7,7 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'network_service.dart';
-import '../utils/app_logger.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 import '../firebase_options.dart';
 import 'profile_service.dart';
 import '../models/user_profile.dart';

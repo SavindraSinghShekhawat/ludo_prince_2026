@@ -1,12 +1,13 @@
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../providers/notification_provider.dart';
+import 'package:ludo_prince/providers/notification_provider.dart';
 import '../../models/ludo_notification.dart';
-import '../../utils/colors.dart';
-import '../widgets/custom_dialog_layout.dart';
+import 'package:ludo_prince/utils/colors.dart';
 import 'friend_requests_dialog.dart';
 import 'invite_dialog.dart';
 
@@ -18,7 +19,7 @@ class NotificationInboxDialog extends ConsumerWidget {
     final state = ref.watch(notificationProvider);
     final inbox = state.inbox;
 
-    return CustomDialogLayout(
+    return AppDialogLayout(
       header: Row(
         children: [
           const Icon(
@@ -284,12 +285,12 @@ class NotificationInboxDialog extends ConsumerWidget {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {
-      CustomDialogLayout.show(
+      AppDialogLayout.show(
         context: context,
         child: const FriendRequestsDialog(), // Handled by service listener
       );
     } else if (n.type == NotificationType.gameInvite) {
-      CustomDialogLayout.show(
+      AppDialogLayout.show(
         context: context,
         barrierDismissible: false,
         child: InviteDialog(

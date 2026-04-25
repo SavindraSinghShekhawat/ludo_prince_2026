@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../models/game_state.dart';
-import '../../utils/colors.dart';
+import '../../domain/models/game_state.dart';
+import 'package:ludo_prince/utils/colors.dart';
 
 class BoardWidget extends StatelessWidget {
   final GameMode gameMode;

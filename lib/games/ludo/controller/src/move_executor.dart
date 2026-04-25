@@ -1,7 +1,7 @@
 import 'dart:async';
-import '../../engine/game_engine.dart';
-import '../../models/game_state.dart';
-import '../../models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 
 class MoveExecutor {
   final GameEngine engine;

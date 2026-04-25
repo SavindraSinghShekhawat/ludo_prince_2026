@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../services/auth_service.dart';
-import '../../utils/colors.dart';
-import '../../providers/auth_provider.dart';
+import 'package:ludo_prince/services/auth_service.dart';
+import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/providers/auth_provider.dart';
 import '../screens/auth_screen.dart';
 import '../screens/friends_screen.dart';
 import '../widgets/shared_ui.dart';
-import '../widgets/custom_dialog_layout.dart';
-import '../../services/profile_service.dart';
+import 'package:ludo_prince/services/profile_service.dart';
 import '../../models/user_profile.dart';
 
 class ProfileDialog extends ConsumerStatefulWidget {
@@ -38,7 +37,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
   Future<void> _handleSave(UserProfile? currentProfile) async {
     final newName = _nameController.text.trim();
     if (newName.isEmpty) {
-      CustomSnackBar.show(
+      AppSnackBar.show(
         context,
         message: 'Name cannot be empty!',
         isError: true,
@@ -60,7 +59,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         await profileService.createOrUpdateProfile(updatedProfile);
 
         if (mounted) {
-          CustomSnackBar.show(
+          AppSnackBar.show(
             context,
             message: 'Profile updated successfully!',
             isSuccess: true,
@@ -73,7 +72,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.show(
+        AppSnackBar.show(
           context,
           message: 'Failed to update profile: $e',
           isError: true,
@@ -90,7 +89,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
 
     final userProfileAsync = ref.watch(userProfileProvider);
 
-    return CustomDialogLayout(
+    return AppDialogLayout(
       header: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -126,7 +125,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
             Center(
               child: GestureDetector(
                 onTap: () {
-                  CustomSnackBar.show(
+                  AppSnackBar.show(
                     context,
                     message: "Profile picture updates are coming soon!",
                   );
@@ -280,7 +279,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
               AppColors.imperialJade,
               isAnonymous
                   ? () {
-                      CustomSnackBar.show(
+                      AppSnackBar.show(
                         context,
                         message: 'Link your account to unlock Friends!',
                         color: Colors.cyanAccent,

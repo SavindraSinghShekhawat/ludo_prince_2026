@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'home_screen.dart';
+import 'package:ludo_prince/ui/screens/home_screen.dart';
 import '../widgets/shared_ui.dart';
-import '../../utils/colors.dart';
+import 'package:ludo_prince/utils/colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -52,7 +52,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBackground(
+    return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
@@ -118,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   horizontal: 40.0,
                   vertical: 20.0,
                 ),
-                child: GameButton(
+                child: AppButton(
                   text: _currentPage == _onboardingData.length - 1
                       ? "START PLAYING"
                       : "CONTINUE",

@@ -1,5 +1,6 @@
+import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+
 import 'package:flutter/material.dart';
-import '../widgets/custom_dialog_layout.dart';
 
 class GameModeInfoItem {
   final IconData icon;
@@ -24,7 +25,7 @@ class GameModeInfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomDialogLayout(
+    return AppDialogLayout(
       header: Row(
         children: [
           Icon(headerIcon, color: const Color(0xFFE5E4E2), size: 28),
