@@ -87,12 +87,12 @@ export const handleGameAction = onValueCreated(
 
           const pityCount = players[currentTurn].sixPity ?? 2;
           const seed = game.prefetchedSeed ?? randomInt(0, 10000000);
-          
+
           let dice = 1;
           if (gameType === "ludo") {
-             dice = generatePRDDice(seed, pityCount);
+            dice = generatePRDDice(seed, pityCount);
           } else {
-             dice = (seed % 6) + 1; // Generic roll
+            dice = (seed % 6) + 1; // Generic roll
           }
 
           if (gameType === "ludo") {

@@ -18,7 +18,7 @@ export const handleMatchmaking = onValueCreated(
   async (event) => {
     const gameType = event.params.gameType;
     const mode = event.params.mode;
-    
+
     AppLogger.debug(`[handleMatchmaking] Triggered for game: ${gameType}, mode: ${mode}, uid: ${event.params.uid}`);
 
     const queueRef = admin.database().ref(`matchmaking/${gameType}/${mode}/queue`);
@@ -28,19 +28,19 @@ export const handleMatchmaking = onValueCreated(
     // Common Ludo modes
     if (gameType === "ludo") {
       switch (mode) {
-        case "classic_2p":
-          requiredPlayers = 2;
-          break;
-        case "classic_3p":
-          requiredPlayers = 3;
-          break;
-        case "classic_4p":
-        case "team_2v2":
-          requiredPlayers = 4;
-          break;
-        default:
-          AppLogger.error(`Unknown ludo mode: ${mode}`);
-          return;
+      case "classic_2p":
+        requiredPlayers = 2;
+        break;
+      case "classic_3p":
+        requiredPlayers = 3;
+        break;
+      case "classic_4p":
+      case "team_2v2":
+        requiredPlayers = 4;
+        break;
+      default:
+        AppLogger.error(`Unknown ludo mode: ${mode}`);
+        return;
       }
     } else {
       // Default fallback for other games
