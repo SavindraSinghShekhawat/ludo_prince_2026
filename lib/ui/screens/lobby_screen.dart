@@ -11,7 +11,7 @@ import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
-import 'package:ludo_prince/controllers/multiplayer_controller.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_multiplayer_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
@@ -22,7 +22,7 @@ import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
 import 'package:ludo_prince/services/social_service.dart';
 import 'package:ludo_prince/services/profile_service.dart';
 import '../../models/user_profile.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/utils/share_helper.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/providers/connectivity_provider.dart';
@@ -1049,7 +1049,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         }
       }
 
-      final controller = MultiplayerGameController(
+      final controller = LudoMultiplayerController(
         config,
         gameId: _activeGameId!,
         localPlayerSlot: localSlot,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'glass_container.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 
 class AppDialogLayout extends StatelessWidget {
   final Widget header;

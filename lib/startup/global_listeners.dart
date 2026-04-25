@@ -5,7 +5,7 @@ import 'package:ludo_prince/services/social_service.dart';
 import 'package:ludo_prince/services/profile_service.dart';
 import 'package:ludo_prince/services/remote_config_service.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
-import '../models/ludo_notification.dart';
+import 'package:ludo_prince/models/app_notification.dart';
 import '../ui/dialogs/update_dialog.dart';
 
 /// Sets up global listeners for invites, friend requests, and update checks.
@@ -39,7 +39,7 @@ class GlobalListeners {
 
           if (data['status'] == 'pending') {
             container.read(notificationProvider.notifier).addNotification(
-                  LudoNotification(
+                  AppNotification(
                     id: inviteId,
                     type: NotificationType.gameInvite,
                     title: 'GAME INVITATION',
@@ -68,7 +68,7 @@ class GlobalListeners {
           final container = ProviderScope.containerOf(context, listen: false);
           for (final req in reqs) {
             container.read(notificationProvider.notifier).addNotification(
-                  LudoNotification(
+                  AppNotification(
                     id: req.id,
                     type: NotificationType.friendRequest,
                     title: 'FRIEND REQUEST',

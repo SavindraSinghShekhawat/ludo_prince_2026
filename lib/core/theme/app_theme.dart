@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 
 /// Centralised theme builder for the entire app.
 class AppTheme {

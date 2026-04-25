@@ -14,7 +14,7 @@ import 'package:ludo_prince/core/constants/firebase_paths.dart';
 
 import 'package:ludo_prince/services/social_service.dart';
 
-class MultiplayerGameController extends LudoController {
+class LudoMultiplayerController extends LudoController {
   final String gameId;
   final String gameType;
   final FirebaseDatabase _db = firebaseService.database;
@@ -23,13 +23,13 @@ class MultiplayerGameController extends LudoController {
   int? _turnStartedAt;
   StreamSubscription? _prefRollSubscription;
 
-  MultiplayerGameController(
+  LudoMultiplayerController(
     super.config, {
     required this.gameId,
     required PlayerSlot super.localPlayerSlot,
     this.gameType = 'ludo',
   }) : super(eventProvider: FirebaseEventProvider(gameId: gameId)) {
-    // Mark the game as online immediately so GameOverDialog navigates correctly.
+    // Mark the game as online immediately so LudoGameOverDialog navigates correctly.
     state = state.copyWith(gameType: GameType.online);
     socialService.updatePresence(UserStatus.inGame, gameId: gameId);
   }
@@ -143,7 +143,7 @@ class MultiplayerGameController extends LudoController {
     if (currentUser == null) return;
 
     AppLogger.debug(
-      '[MultiplayerGameController] Sending timeout request to Firebase for game $gameId',
+      '[LudoMultiplayerController] Sending timeout request to Firebase for game $gameId',
     );
 
     // Only send if it's NOT our turn (let others claim the turn)

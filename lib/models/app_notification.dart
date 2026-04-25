@@ -1,6 +1,6 @@
 enum NotificationType { friendRequest, gameInvite, system }
 
-class LudoNotification {
+class AppNotification {
   final String id;
   final NotificationType type;
   final String title;
@@ -9,7 +9,7 @@ class LudoNotification {
   final DateTime timestamp;
   bool isRead;
 
-  LudoNotification({
+  AppNotification({
     required this.id,
     required this.type,
     required this.title,
@@ -19,8 +19,8 @@ class LudoNotification {
     this.isRead = false,
   });
 
-  LudoNotification copyWith({bool? isRead}) {
-    return LudoNotification(
+  AppNotification copyWith({bool? isRead}) {
+    return AppNotification(
       id: id,
       type: type,
       title: title,

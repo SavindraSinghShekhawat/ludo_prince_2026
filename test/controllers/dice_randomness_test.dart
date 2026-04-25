@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ludo_prince/controllers/ludo_controller.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 
 void main() {
   group('Dice Randomness Tests (via Controller)', () {

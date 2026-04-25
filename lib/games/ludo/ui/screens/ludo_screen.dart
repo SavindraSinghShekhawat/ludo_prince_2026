@@ -7,7 +7,7 @@ import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/robot_icon.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import '../../domain/models/game_state.dart';
 import '../../domain/models/token.dart';
 import '../../domain/models/board_path.dart';
@@ -16,9 +16,9 @@ import 'package:ludo_prince/games/ludo/ui/widgets/token_widget.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/dice_widget.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
-import 'package:ludo_prince/ui/dialogs/rules_dialog.dart';
+import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_rules_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
-import 'package:ludo_prince/ui/dialogs/game_over_dialog.dart';
+import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_game_over_dialog.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class LudoScreen extends ConsumerStatefulWidget {
@@ -167,7 +167,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onPressed: () {
             AppDialogLayout.show(
               context: context,
-              child: const RulesDialog(),
+              child: const LudoRulesDialog(),
             );
           },
           tooltip: 'Game Rules',
@@ -209,7 +209,7 @@ class _GameBody extends ConsumerWidget {
               AppDialogLayout.show(
                 context: context,
                 barrierDismissible: false,
-                child: GameOverDialog(state: state),
+                child: LudoGameOverDialog(state: state),
               );
             });
           }

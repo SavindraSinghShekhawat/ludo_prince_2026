@@ -10,7 +10,7 @@ import 'package:ludo_prince/ui/screens/local_setup_screen.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import 'package:ludo_prince/ui/screens/friends_screen.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
 import 'package:ludo_prince/providers/presence_provider.dart';

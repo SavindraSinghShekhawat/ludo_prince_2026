@@ -12,20 +12,20 @@ import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/services/audio_service.dart';
-import '../screens/home_screen.dart';
+import 'package:ludo_prince/ui/screens/home_screen.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
-import '../screens/lobby_screen.dart';
+import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 
-class GameOverDialog extends ConsumerStatefulWidget {
+class LudoGameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
 
-  const GameOverDialog({super.key, required this.state});
+  const LudoGameOverDialog({super.key, required this.state});
 
   @override
-  ConsumerState<GameOverDialog> createState() => _GameOverDialogState();
+  ConsumerState<LudoGameOverDialog> createState() => _LudoGameOverDialogState();
 }
 
-class _GameOverDialogState extends ConsumerState<GameOverDialog> {
+class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
   late ConfettiController _confettiController;
 
   Color _getPlayerColor(PlayerSlot pSlot) {

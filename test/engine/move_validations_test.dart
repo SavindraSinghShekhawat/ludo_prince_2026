@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ludo_prince/engine/game_engine.dart';
-import 'package:ludo_prince/models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'test_utils.dart';
 
 void main() {

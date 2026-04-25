@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'app_dialog_layout.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
-import '../../models/ludo_notification.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/models/app_notification.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import '../../ui/dialogs/friend_requests_dialog.dart';
 import '../../ui/dialogs/invite_dialog.dart';
 
@@ -53,7 +53,7 @@ class AppNotificationHost extends ConsumerWidget {
 }
 
 class TopNotificationToast extends ConsumerWidget {
-  final LudoNotification notification;
+  final AppNotification notification;
 
   const TopNotificationToast({super.key, required this.notification});
 
@@ -149,7 +149,7 @@ class TopNotificationToast extends ConsumerWidget {
     );
   }
 
-  Color _getNotificationColor(LudoNotification n) {
+  Color _getNotificationColor(AppNotification n) {
     switch (n.type) {
       case NotificationType.friendRequest:
         return AppColors.primaryCyan;
@@ -160,7 +160,7 @@ class TopNotificationToast extends ConsumerWidget {
     }
   }
 
-  IconData _getNotificationIcon(LudoNotification n) {
+  IconData _getNotificationIcon(AppNotification n) {
     switch (n.type) {
       case NotificationType.friendRequest:
         return Icons.person_add_outlined;
@@ -174,7 +174,7 @@ class TopNotificationToast extends ConsumerWidget {
   static void _handleNotificationClick(
     BuildContext context,
     WidgetRef ref,
-    LudoNotification n,
+    AppNotification n,
   ) async {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 

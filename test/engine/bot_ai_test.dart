@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ludo_prince/engine/bot_ai.dart';
-import 'package:ludo_prince/models/game_state.dart';
-import 'package:ludo_prince/models/player.dart';
-import 'package:ludo_prince/models/token.dart';
-import 'package:ludo_prince/models/board_path.dart';
+import 'package:ludo_prince/games/ludo/domain/engine/bot_ai.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/board_path.dart';
 
 void main() {
   group('BotAI Move Selection', () {

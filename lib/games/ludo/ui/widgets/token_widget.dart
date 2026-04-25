@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import '../../domain/models/token.dart';
 import '../../domain/models/board_path.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 
 class TokenWidget extends StatelessWidget {
   final Token token;

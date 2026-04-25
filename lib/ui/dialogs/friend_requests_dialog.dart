@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/friend_request.dart';
 import 'package:ludo_prince/services/profile_service.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import '../widgets/shared_ui.dart';
 
 class FriendRequestsDialog extends ConsumerWidget {

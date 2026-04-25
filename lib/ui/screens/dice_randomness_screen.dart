@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import '../widgets/shared_ui.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 
 class DiceRandomnessScreen extends StatefulWidget {
   const DiceRandomnessScreen({super.key});

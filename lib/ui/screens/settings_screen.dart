@@ -6,7 +6,7 @@ import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/providers/package_info_provider.dart';
 import 'dice_randomness_screen.dart';
 import '../widgets/shared_ui.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
 import 'package:ludo_prince/utils/share_helper.dart';
 import 'feedback_screen.dart';

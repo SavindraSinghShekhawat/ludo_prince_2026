@@ -14,7 +14,7 @@ import 'package:ludo_prince/services/matchmaking_service.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart'
     show GameMode;
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';

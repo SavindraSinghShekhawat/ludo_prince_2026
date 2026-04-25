@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/audio_provider.dart';
 import '../screens/settings_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import '../widgets/shared_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 

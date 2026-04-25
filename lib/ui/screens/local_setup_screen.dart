@@ -7,8 +7,8 @@ import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
-import 'package:ludo_prince/utils/colors.dart';
-import 'package:ludo_prince/ui/dialogs/rules_dialog.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_rules_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
@@ -82,7 +82,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               onPressed: () {
                 AppDialogLayout.show(
                   context: context,
-                  child: const RulesDialog(),
+                  child: const LudoRulesDialog(),
                 );
               },
               tooltip: 'Game Rules',

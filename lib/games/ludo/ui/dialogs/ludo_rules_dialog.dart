@@ -2,8 +2,8 @@ import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 import 'package:flutter/material.dart';
 
-class RulesDialog extends StatelessWidget {
-  const RulesDialog({super.key});
+class LudoRulesDialog extends StatelessWidget {
+  const LudoRulesDialog({super.key});
 
   @override
   Widget build(BuildContext context) {

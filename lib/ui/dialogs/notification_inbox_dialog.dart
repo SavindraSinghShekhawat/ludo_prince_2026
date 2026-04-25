@@ -6,8 +6,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
-import '../../models/ludo_notification.dart';
-import 'package:ludo_prince/utils/colors.dart';
+import 'package:ludo_prince/models/app_notification.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'friend_requests_dialog.dart';
 import 'invite_dialog.dart';
 
@@ -128,7 +128,7 @@ class NotificationInboxDialog extends ConsumerWidget {
   Widget _buildNotificationItem(
     BuildContext context,
     WidgetRef ref,
-    LudoNotification n,
+    AppNotification n,
   ) {
     final color = _getNotificationColor(n);
     final timeStr = DateFormat('h:mm a').format(n.timestamp);
@@ -255,7 +255,7 @@ class NotificationInboxDialog extends ConsumerWidget {
     );
   }
 
-  Color _getNotificationColor(LudoNotification n) {
+  Color _getNotificationColor(AppNotification n) {
     switch (n.type) {
       case NotificationType.friendRequest:
         return AppColors.primaryCyan;
@@ -266,7 +266,7 @@ class NotificationInboxDialog extends ConsumerWidget {
     }
   }
 
-  IconData _getNotificationIcon(LudoNotification n) {
+  IconData _getNotificationIcon(AppNotification n) {
     switch (n.type) {
       case NotificationType.friendRequest:
         return Icons.person_add_outlined;
@@ -280,7 +280,7 @@ class NotificationInboxDialog extends ConsumerWidget {
   void _handleNotificationClick(
     BuildContext context,
     WidgetRef ref,
-    LudoNotification n,
+    AppNotification n,
   ) {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 

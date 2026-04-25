@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/ludo_notification.dart';
+import 'package:ludo_prince/models/app_notification.dart';
 
 class NotificationState {
-  final List<LudoNotification> inbox;
-  final LudoNotification? activeToast;
+  final List<AppNotification> inbox;
+  final AppNotification? activeToast;
 
   NotificationState({this.inbox = const [], this.activeToast});
 
   NotificationState copyWith({
-    List<LudoNotification>? inbox,
-    LudoNotification? activeToast,
+    List<AppNotification>? inbox,
+    AppNotification? activeToast,
     bool clearActiveToast = false,
   }) {
     return NotificationState(
@@ -29,7 +29,7 @@ class NotificationNotifier extends Notifier<NotificationState> {
     return NotificationState();
   }
 
-  void addNotification(LudoNotification notification, {bool showToast = true}) {
+  void addNotification(AppNotification notification, {bool showToast = true}) {
     // Check if notification with same ID already exists
     if (state.inbox.any((n) => n.id == notification.id)) return;
 

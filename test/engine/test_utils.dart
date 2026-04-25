@@ -1,6 +1,6 @@
-import 'package:ludo_prince/models/game_state.dart';
-import 'package:ludo_prince/models/player.dart';
-import 'package:ludo_prince/models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/domain/models/player.dart';
+import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 
 GameState baseState() {
   return GameState(
