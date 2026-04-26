@@ -410,8 +410,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             : null,
                       ),
                       Positioned(
-                        right: -1,
-                        bottom: -1,
+                        right: -2,
+                        bottom: -2,
                         child: AppStatusBadge(isOnline: isOnline),
                       ),
                     ],

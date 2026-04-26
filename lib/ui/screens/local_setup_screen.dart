@@ -384,28 +384,34 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   }
 
   Widget _buildTeamHeader(String title) {
+    final Color teamColor =
+        title.contains('A') ? AppColors.player1BlueUI : AppColors.player4RedUI;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, top: 8.0),
+      padding: const EdgeInsets.only(bottom: 12.0, top: 16.0),
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 20,
-            decoration: BoxDecoration(
-              color: title.contains('A')
-                  ? AppColors.player1BlueUI
-                  : AppColors.player4RedUI,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w900,
               fontSize: 14,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    teamColor.withValues(alpha: 0.4),
+                    teamColor.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -415,38 +421,62 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
 
   Widget _buildVsDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Row(
         children: [
-          Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.blueAccent.withValues(alpha: 0.8),
-                  Colors.redAccent.withValues(alpha: 0.8),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.player1BlueUI.withValues(alpha: 0.3),
-                  blurRadius: 10,
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.0),
+                    Colors.white.withValues(alpha: 0.1),
+                  ],
                 ),
-              ],
-            ),
-            child: const Text(
-              'VS',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                fontStyle: FontStyle.italic,
               ),
             ),
           ),
-          Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              'VS',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                letterSpacing: 4,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.1),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

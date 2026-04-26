@@ -1,3 +1,4 @@
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 import 'package:flutter/material.dart';
@@ -25,23 +26,25 @@ class LudoGameOverDialog extends ConsumerStatefulWidget {
   ConsumerState<LudoGameOverDialog> createState() => _LudoGameOverDialogState();
 }
 
+class TeamResult {
+  final String name;
+  final List<PlayerSlot> slots;
+  final List<Player> players;
+  final bool isWinner;
+
+  TeamResult({
+    required this.name,
+    required this.slots,
+    required this.players,
+    required this.isWinner,
+  });
+}
+
 class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
   late ConfettiController _confettiController;
 
   Color _getPlayerColor(PlayerSlot pSlot) {
-    switch (pSlot) {
-      case PlayerSlot.slot1:
-        return Colors.blue;
-
-      case PlayerSlot.slot2:
-        return Colors.amber;
-
-      case PlayerSlot.slot3:
-        return Colors.green;
-
-      case PlayerSlot.slot4:
-        return Colors.red;
-    }
+    return AppColors.getUiColorForSlot(pSlot);
   }
 
   @override
@@ -62,6 +65,8 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTeamMode = widget.state.gameMode == GameMode.team;
+
     final bool hasBots = widget.state.players.any(
       (p) => p.type == PlayerType.localBot || p.type == PlayerType.remoteBot,
     );
@@ -89,7 +94,14 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
     Color headerColor;
     IconData headerIcon;
 
-    if (isAllHuman || isAllBots) {
+    if (isTeamMode) {
+      final winningSlot = widget.state.winners.first;
+      final bool isTeamAWinner =
+          winningSlot == PlayerSlot.slot1 || winningSlot == PlayerSlot.slot3;
+      headerText = isTeamAWinner ? "TEAM A WINS!" : "TEAM B WINS!";
+      headerColor = const Color(0xFFE5E4E2); // Platinum
+      headerIcon = Icons.emoji_events;
+    } else if (isAllHuman || isAllBots) {
       headerText = "MATCH FINISHED!";
       headerColor = const Color(0xFFE5E4E2);
       headerIcon = Icons.emoji_events;
@@ -111,14 +123,17 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
     }
 
     // 3. Control Sound/Confetti
-    // If bots won over humans completely, we stop the celebration.
-    final bool shouldCelebrate =
+    bool shouldCelebrate =
         isAllHuman || isAllBots || (!noHumanFinished && bestHumanRank <= 3);
+
+    if (isTeamMode) {
+      // In team mode, celebrate if a human team won or if it's all bots/humans
+      shouldCelebrate = true;
+    }
 
     if (!shouldCelebrate &&
         _confettiController.state == ConfettiControllerState.playing) {
       _confettiController.stop();
-      // Optionally stop victory audio if it plays on a loop
     }
 
     return PopScope(
@@ -185,117 +200,7 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                 ).animate().fadeIn(delay: 400.ms),
               ],
             ),
-            body: List.generate(widget.state.winners.length, (index) {
-              final playerSlot = widget.state.winners[index];
-              final player = widget.state.players.firstWhere(
-                (p) => p.slot == playerSlot,
-              );
-              final place = index + 1;
-              final isLast = place == widget.state.winners.length;
-
-              Color placeColor = Colors.white;
-              String placeText = "#$place";
-              IconData? placeIcon;
-
-              if (place == 1) {
-                placeColor = const Color(0xFFE5E4E2);
-                placeText = "1st";
-                placeIcon = Icons.emoji_events;
-              } else if (place == 2) {
-                placeColor = const Color(0xFFB0B4B8);
-                placeText = "2nd";
-                placeIcon = Icons.workspace_premium;
-              } else if (place == 3) {
-                placeColor = const Color(0xFF8A8D91);
-                placeText = "3rd";
-                placeIcon = Icons.workspace_premium;
-              }
-
-              if (isLast) {
-                placeColor = Colors.redAccent.shade200;
-                placeText = "Last";
-                placeIcon = Icons.sentiment_very_dissatisfied;
-              }
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: place == 1
-                      ? const Color(0xFFE5E4E2).withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: placeColor.withValues(alpha: 0.3),
-                    width: place == 1 ? 2.5 : 1.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      alignment: Alignment.center,
-                      child: Text(
-                        placeText,
-                        style: TextStyle(
-                          fontSize: place == 1 ? 24 : 18,
-                          fontWeight: FontWeight.w900,
-                          color: placeColor,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getPlayerColor(playerSlot),
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getPlayerColor(
-                              playerSlot,
-                            ).withValues(alpha: 0.8),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        player.name,
-                        style: TextStyle(
-                          fontSize: place == 1 ? 20 : 18,
-                          fontWeight:
-                              place == 1 ? FontWeight.w800 : FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (placeIcon != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        placeIcon,
-                        color: placeColor,
-                        size: place == 1 ? 28 : 24,
-                      )
-                          .animate(target: place == 1 ? 1 : 0)
-                          .scale(duration: 800.ms, curve: Curves.elasticOut)
-                          .shimmer(duration: 1500.ms, delay: 800.ms),
-                    ],
-                  ],
-                ),
-              )
-                  .animate(delay: (200 * index).ms)
-                  .fadeIn(duration: 500.ms)
-                  .slideX(begin: 0.5);
-            }),
+            body: isTeamMode ? _buildTeamBody() : _buildClassicBody(),
             scrollFooter: true,
             footer: Row(
               children: [
@@ -405,5 +310,234 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildClassicBody() {
+    return List.generate(widget.state.winners.length, (index) {
+      final playerSlot = widget.state.winners[index];
+      final player = widget.state.players.firstWhere(
+        (p) => p.slot == playerSlot,
+      );
+      final place = index + 1;
+      final isLast = place == widget.state.winners.length;
+
+      Color placeColor = Colors.white;
+      String placeText = "#$place";
+      IconData? placeIcon;
+
+      if (place == 1) {
+        placeColor = const Color(0xFFE5E4E2);
+        placeText = "1st";
+        placeIcon = Icons.emoji_events;
+      } else if (place == 2) {
+        placeColor = const Color(0xFFB0B4B8);
+        placeText = "2nd";
+        placeIcon = Icons.workspace_premium;
+      } else if (place == 3) {
+        placeColor = const Color(0xFF8A8D91);
+        placeText = "3rd";
+        placeIcon = Icons.workspace_premium;
+      }
+
+      if (isLast) {
+        placeColor = Colors.redAccent.shade200;
+        placeText = "Last";
+        placeIcon = Icons.sentiment_very_dissatisfied;
+      }
+
+      return _buildPlayerRow(
+        player: player,
+        index: index,
+        isWinner: place == 1,
+        placeText: placeText,
+        placeColor: placeColor,
+        placeIcon: placeIcon,
+      );
+    });
+  }
+
+  List<Widget> _buildTeamBody() {
+    final teamASlots = [PlayerSlot.slot1, PlayerSlot.slot3];
+    final teamBSlots = [PlayerSlot.slot2, PlayerSlot.slot4];
+
+    final winningSlot = widget.state.winners.first;
+    final bool isTeamAWinner = teamASlots.contains(winningSlot);
+
+    final List<TeamResult> teams = [
+      TeamResult(
+        name: "TEAM A",
+        slots: teamASlots,
+        players: widget.state.players
+            .where((p) => teamASlots.contains(p.slot))
+            .toList(),
+        isWinner: isTeamAWinner,
+      ),
+      TeamResult(
+        name: "TEAM B",
+        slots: teamBSlots,
+        players: widget.state.players
+            .where((p) => teamBSlots.contains(p.slot))
+            .toList(),
+        isWinner: !isTeamAWinner,
+      ),
+    ];
+
+    // Sort to put winner first
+    teams.sort((a, b) => b.isWinner ? 1 : -1);
+
+    List<Widget> children = [];
+    for (int i = 0; i < teams.length; i++) {
+      final team = teams[i];
+      final Color teamColor =
+          team.isWinner ? const Color(0xFFE5E4E2) : Colors.redAccent.shade200;
+
+      children.add(
+        Padding(
+          padding: EdgeInsets.only(bottom: 12, top: i == 0 ? 0 : 16),
+          child: Row(
+            children: [
+              Text(
+                team.name,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        teamColor.withValues(alpha: 0.4),
+                        teamColor.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ).animate(delay: (300 * i).ms).fadeIn().slideX(begin: -0.1),
+      );
+
+      for (int pIdx = 0; pIdx < team.players.length; pIdx++) {
+        final player = team.players[pIdx];
+        children.add(
+          _buildPlayerRow(
+            player: player,
+            index: (i * 2) + pIdx,
+            isWinner: team.isWinner,
+            placeText: team.isWinner ? "Won" : "Lost",
+            placeColor: teamColor,
+            placeIcon: team.isWinner ? Icons.emoji_events : null,
+            showTextAtEnd: true,
+          ),
+        );
+      }
+    }
+
+    return children;
+  }
+
+  Widget _buildPlayerRow({
+    required Player player,
+    required int index,
+    required bool isWinner,
+    required String placeText,
+    required Color placeColor,
+    IconData? placeIcon,
+    bool showTextAtEnd = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: isWinner
+            ? const Color(0xFFE5E4E2).withValues(alpha: 0.1)
+            : Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: placeColor.withValues(alpha: 0.2),
+          width: isWinner ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          if (!showTextAtEnd)
+            Container(
+              width: 50,
+              alignment: Alignment.center,
+              child: Text(
+                placeText,
+                style: TextStyle(
+                  fontSize: isWinner ? 16 : 14,
+                  fontWeight: FontWeight.w900,
+                  color: placeColor.withValues(alpha: 0.9),
+                ),
+              ),
+            ),
+          Container(
+            width: 20,
+            height: 20,
+            margin: EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _getPlayerColor(player.slot),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: _getPlayerColor(player.slot).withValues(alpha: 0.8),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              player.name,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: isWinner ? FontWeight.w800 : FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (showTextAtEnd)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                placeText,
+                style: TextStyle(
+                  fontSize: isWinner ? 16 : 14,
+                  fontWeight: FontWeight.w900,
+                  color: placeColor.withValues(alpha: 0.9),
+                ),
+              ),
+            ),
+          if (placeIcon != null) ...[
+            const SizedBox(width: 8),
+            Icon(
+              placeIcon,
+              color: placeColor,
+              size: 24,
+            )
+                .animate(target: isWinner ? 1 : 0)
+                .scale(duration: 800.ms, curve: Curves.elasticOut)
+                .shimmer(duration: 1500.ms, delay: 800.ms),
+          ],
+        ],
+      ),
+    ).animate(delay: (150 * index).ms).fadeIn(duration: 400.ms).slideX(
+          begin: 0.3,
+        );
   }
 }

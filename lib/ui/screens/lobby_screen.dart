@@ -888,8 +888,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                         : null,
                                   ),
                                   Positioned(
-                                    right: 0,
-                                    bottom: 0,
+                                    right: -1,
+                                    bottom: -1,
                                     child: AppStatusBadge(
                                       isOnline: isOnline,
                                       size: 10,

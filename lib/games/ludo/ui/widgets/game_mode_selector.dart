@@ -123,7 +123,7 @@ class GameModeSelector extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: (isSelected
-                      ? Colors.blueAccent.withValues(alpha: 0.5)
+                      ? const Color(0xFFB0B4B8).withValues(alpha: 0.6)
                       : Colors.white10)
                   .withValues(alpha: isEnabled ? 1.0 : 0.4),
               width: 2,
@@ -131,9 +131,9 @@ class GameModeSelector extends StatelessWidget {
             boxShadow: isSelected && isEnabled
                 ? [
                     BoxShadow(
-                      color: Colors.blueAccent.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      spreadRadius: 2,
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ]
                 : [],
