@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -342,18 +341,18 @@ class _BoardArea extends StatelessWidget {
           aspectRatio: 1,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                color: AppColors.boardGlassBackground,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final boardSize = constraints.biggest.shortestSide;
-                    final cellSize = boardSize / 15;
+            // Replaced BackdropFilter with a static semi-transparent overlay.
+            // BackdropFilter was forcing the GPU to re-blur on every frame
+            // whenever any sibling (tokens, animations) repainted.
+            child: Container(
+              color: AppColors.boardGlassBackground,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final boardSize = constraints.biggest.shortestSide;
+                  final cellSize = boardSize / 15;
 
-                    return _BoardInteractionLayer(cellSize: cellSize);
-                  },
-                ),
+                  return _BoardInteractionLayer(cellSize: cellSize);
+                },
               ),
             ),
           ),
@@ -440,13 +439,32 @@ class _TokenLayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameState = ref.watch(gameStreamProvider).value;
-    if (gameState == null) return const SizedBox.shrink();
+    // Use granular select() calls instead of watching the entire GameState.
+    // This prevents _TokenLayer from rebuilding when irrelevant fields change
+    // (e.g., message, isRolling, turnStartedAt, turnActionCount).
+    // Token/Player equality operators make this diff efficient.
+    final players = ref.watch(
+      gameStreamProvider.select((s) => s.value?.players),
+    );
+    final currentTurn = ref.watch(
+      gameStreamProvider.select((s) => s.value?.currentTurn),
+    );
+    final isDiceRolled = ref.watch(
+      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
+    );
+    final diceValue = ref.watch(
+      gameStreamProvider.select((s) => s.value?.diceValue ?? 1),
+    );
+    final gameType = ref.watch(
+      gameStreamProvider.select((s) => s.value?.gameType),
+    );
 
-    final players = gameState.players;
-    final currentTurn = gameState.currentTurn;
-    final isDiceRolled = gameState.isDiceRolled;
-    final diceValue = gameState.diceValue;
+    if (players == null) return const SizedBox.shrink();
+
+    // We still need getVisualSlot, which requires a full GameState reference.
+    // Read it without watching to avoid extra rebuilds.
+    final gameState = ref.read(gameStreamProvider).value;
+    if (gameState == null) return const SizedBox.shrink();
 
     final List<Widget> tokenWidgets = [];
     final Map<String, List<Token>> boardOverlaps = {};

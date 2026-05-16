@@ -47,7 +47,7 @@ class MoveExecutor {
       onMoveStart(steps);
       Token currentToken = token;
 
-      // 2. Intermediate steps
+      // 2. Intermediate steps (no audio — only accumulate events for final step)
       for (int i = 0; i < steps - 1; i++) {
         currentToken = engine.advanceOneStep(currentToken);
 
@@ -58,7 +58,6 @@ class MoveExecutor {
         );
         currentState = result.state;
         accumulatedEvents.addAll(result.events);
-        onEngineEvents(result.events);
 
         onStateUpdate(currentState);
 

@@ -8,6 +8,7 @@ import '../domain/models/player.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import '../domain/models/token.dart';
 import 'package:ludo_prince/utils/test_initialization.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 import 'src/audio_listener.dart';
 import 'src/move_executor.dart';
 import 'src/game_event_provider.dart';
@@ -104,7 +105,8 @@ class LudoController implements GameController {
     );
 
     _eventSubscription = this.eventProvider.events.listen(handleGameEvent);
-    Future.microtask(_checkBotTurn);
+    // Use event-loop scheduling (not microtask) so the first frame renders before bot acts
+    Future.delayed(Duration.zero, _checkBotTurn);
   }
 
   bool get isMyTurn =>
@@ -136,6 +138,9 @@ class LudoController implements GameController {
     if (currentPlayer.type != PlayerType.localBot) return;
 
     _isActionInProgress = true;
+    // Use Future.delayed (Timer-based) instead of Future.microtask to ensure
+    // the UI event loop gets a chance to process frames between bot turns.
+    // This prevents the freeze when multiple bots trade rapid-fire turns.
     await Future.delayed(const Duration(milliseconds: 200));
     _isActionInProgress = false;
 
@@ -376,10 +381,12 @@ class LudoController implements GameController {
         (p) => p.slot == _state.currentTurn,
       );
       final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
+      // Yield to the event loop before auto-move to allow UI to render
       await Future.delayed(const Duration(milliseconds: 50));
       await sendMoveIntent(token);
     } else {
-      _checkBotTurn();
+      // Schedule on event loop (not microtask) so UI can paint between bot turns
+      Future.delayed(Duration.zero, _checkBotTurn);
     }
   }
 
@@ -397,7 +404,8 @@ class LudoController implements GameController {
       );
       _streamController.add(_state);
     }
-    _checkBotTurn();
+    // Schedule bot turn check on event loop to yield to UI between turns
+    Future.delayed(Duration.zero, _checkBotTurn);
   }
 
   @override
@@ -431,6 +439,8 @@ class LudoController implements GameController {
     _audioListener.stop();
     _eventSubscription?.cancel();
     eventProvider.dispose();
+    // Release all pooled audio players to free native resources
+    audioService.disposeAllSfx();
     if (!_streamController.isClosed) {
       await _streamController.close();
     }

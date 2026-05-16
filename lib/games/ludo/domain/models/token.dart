@@ -32,6 +32,18 @@ class Token {
     this.position = -1,
   });
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Token &&
+          id == other.id &&
+          slot == other.slot &&
+          state == other.state &&
+          position == other.position;
+
+  @override
+  int get hashCode => Object.hash(id, slot, state, position);
+
   Token copyWith({PlayerSlot? slot, TokenState? state, int? position}) {
     return Token(
       id: id,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'token.dart';
 
 enum PlayerType { localHuman, remoteHuman, localBot, remoteBot }
@@ -25,6 +26,31 @@ class Player {
     required this.tokens,
   }) : uid = uid ??
             "local_${slot.name}_${DateTime.now().microsecondsSinceEpoch}";
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Player &&
+          slot == other.slot &&
+          uid == other.uid &&
+          name == other.name &&
+          type == other.type &&
+          status == other.status &&
+          skipCount == other.skipCount &&
+          sixPity == other.sixPity &&
+          listEquals(tokens, other.tokens);
+
+  @override
+  int get hashCode => Object.hash(
+        slot,
+        uid,
+        name,
+        type,
+        status,
+        skipCount,
+        sixPity,
+        Object.hashAll(tokens),
+      );
 
   Player copyWith({
     String? uid,

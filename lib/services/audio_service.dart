@@ -16,6 +16,11 @@ class AudioService extends ChangeNotifier {
   AudioPlayer? _rollLoopPlayer;
   bool _shouldBeLoopingRoll = false;
 
+  /// Pool of active SFX players, keyed by filename.
+  /// Ensures at most one AudioPlayer per sound file exists at any time,
+  /// preventing the unbounded memory growth from FlameAudio.play().
+  final Map<String, AudioPlayer> _sfxPlayers = {};
+
   bool get isBgmEnabled => _isBgmEnabled;
   bool get isSfxEnabled => _isSfxEnabled;
   bool get isVibrationEnabled => _isVibrationEnabled;
@@ -30,6 +35,41 @@ class AudioService extends ChangeNotifier {
 
     _initialized = true;
     notifyListeners();
+  }
+
+  /// Plays a SFX file using a pooled AudioPlayer.
+  /// Disposes the previous player for the same file before creating a new one,
+  /// keeping the total player count bounded to ~12 (one per unique sound).
+  Future<void> _playSfx(String file, {double volume = 0.8}) async {
+    await init();
+    if (!_isSfxEnabled) return;
+
+    // Dispose previous player for this sound to free native resources
+    final old = _sfxPlayers.remove(file);
+    if (old != null) {
+      try {
+        old.dispose();
+      } catch (_) {
+        // Player may already be disposed
+      }
+    }
+
+    try {
+      _sfxPlayers[file] = await FlameAudio.play(file, volume: volume);
+    } catch (e) {
+      debugPrint('AudioService: Failed to play $file: $e');
+    }
+  }
+
+  /// Releases all pooled SFX players. Call when the game ends or the app
+  /// goes to background to free native audio resources immediately.
+  void disposeAllSfx() {
+    for (final player in _sfxPlayers.values) {
+      try {
+        player.dispose();
+      } catch (_) {}
+    }
+    _sfxPlayers.clear();
   }
 
   Future<void> toggleBGM() async {
@@ -94,10 +134,7 @@ class AudioService extends ChangeNotifier {
   }
 
   Future<void> playRoll() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('roll.wav', volume: 0.8);
+    await _playSfx('roll.wav', volume: 0.8);
   }
 
   Future<void> startRollLoop() async {
@@ -116,53 +153,32 @@ class AudioService extends ChangeNotifier {
   }
 
   Future<void> playSix() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('six.wav', volume: 0.8);
+    await _playSfx('six.wav', volume: 0.8);
   }
 
   Future<void> playMove(int steps) async {
-    await init();
-    if (!_isSfxEnabled) return;
-
     final safeSteps = steps.clamp(1, 6);
-    FlameAudio.play('move_$safeSteps.wav', volume: 0.5);
+    await _playSfx('move_$safeSteps.wav', volume: 0.5);
   }
 
   Future<void> playDie() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('die.wav', volume: 0.8);
+    await _playSfx('die.wav', volume: 0.8);
   }
 
   Future<void> playHome() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('home.wav', volume: 0.8);
+    await _playSfx('home.wav', volume: 0.8);
   }
 
   Future<void> playSafe() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('safe.wav', volume: 0.8);
+    await _playSfx('safe.wav', volume: 0.8);
   }
 
   Future<void> playStart() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('start.wav', volume: 0.8);
+    await _playSfx('start.wav', volume: 0.8);
   }
 
   Future<void> playVictory() async {
-    await init();
-    if (!_isSfxEnabled) return;
-
-    FlameAudio.play('victory.wav', volume: 0.8);
+    await _playSfx('victory.wav', volume: 0.8);
   }
 
   Future<void> playVibrate() async {
