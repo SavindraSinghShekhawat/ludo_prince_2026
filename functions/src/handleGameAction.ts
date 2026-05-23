@@ -15,7 +15,7 @@ function randomInt(min: number, max: number) {
   return val;
 }
 
-const CHANCES_FOR_SIX = [0.00, 0.02, 0.05, 0.128, 0.21, 0.34, 0.55, 0.82, 1.00];
+const CHANCES_FOR_SIX = [0.00, 0.02, 0.05, 0.133077, 0.21, 0.34, 0.55, 0.82, 1.00];
 
 function generatePRDDice(seed: number, pity: number): number {
   const safePity = Math.max(0, Math.min(pity, CHANCES_FOR_SIX.length - 1));

@@ -190,7 +190,7 @@ class LudoController implements GameController {
     0.00,
     0.02,
     0.05,
-    0.128,
+    0.133077,
     0.21,
     0.34,
     0.55,

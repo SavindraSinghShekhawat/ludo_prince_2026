@@ -46,6 +46,7 @@ class FirebaseService {
 
     auth = FirebaseAuth.instance;
     firestore = FirebaseFirestore.instance;
+    firestore.settings = const Settings(persistenceEnabled: false);
     functions = FirebaseFunctions.instance;
 
     if (!kReleaseMode) {
@@ -73,9 +74,15 @@ class FirebaseService {
         await auth.currentUser!.reload();
       }
     } catch (e) {
-      // If reload fails (e.g., emulator data cleared), sign in again
-      await auth.signOut();
-      await auth.signInAnonymously();
+      AppLogger.debug('Initial auth check failed (might be offline): $e');
+      try {
+        await auth.signOut();
+        await auth.signInAnonymously();
+      } catch (authError) {
+        AppLogger.error(
+            'Failed to sign in anonymously (offline mode): $authError');
+        // Do not throw; allow app to initialize offline
+      }
     }
 
     // Connect to serverTimeOffset to synchronize clocks
@@ -90,11 +97,23 @@ class FirebaseService {
     await remoteConfigService.initialize();
 
     // Setup connectivity listener for database
-    networkService.connectivityStream.listen((isOnline) {
+    networkService.connectivityStream.listen((isOnline) async {
       if (isOnline) {
         database.goOnline();
         AppLogger.debug(
             '[FirebaseService] Internet restored: database.goOnline()');
+
+        // If we started completely offline and now have internet, try to auth
+        if (auth.currentUser == null) {
+          try {
+            AppLogger.debug(
+                '[FirebaseService] Internet restored, attempting anonymous sign in');
+            await auth.signInAnonymously();
+          } catch (e) {
+            AppLogger.error(
+                '[FirebaseService] Sign in failed after internet restored: $e');
+          }
+        }
       } else {
         database.goOffline();
         AppLogger.debug(
