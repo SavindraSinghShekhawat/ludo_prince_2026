@@ -21,7 +21,7 @@ class SettingsDialog extends ConsumerWidget {
           'QUICK SETTINGS',
           style: GoogleFonts.outfit(
             color: Colors.white,
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.8,
           ),

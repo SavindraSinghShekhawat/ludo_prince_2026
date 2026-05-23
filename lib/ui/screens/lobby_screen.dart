@@ -942,7 +942,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 'INVITE',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.5,
                 ),

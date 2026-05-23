@@ -98,9 +98,9 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
             'PLAYER PROFILE',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.8,
             ),
           ),
           IconButton(

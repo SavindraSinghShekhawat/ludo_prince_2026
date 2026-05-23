@@ -248,7 +248,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             color: Colors.white.withValues(alpha: 0.5),
             fontSize: 12,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2.0,
+            letterSpacing: 1.5,
           ),
         ),
         const SizedBox(height: 8),

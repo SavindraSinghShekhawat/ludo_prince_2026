@@ -42,8 +42,8 @@ class FriendRequestsDialog extends ConsumerWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.8,
                   ),
                 ),
                 const Spacer(),
@@ -137,7 +137,7 @@ class FriendRequestsDialog extends ConsumerWidget {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: 16,
                   ),
                 ),
                 Text(

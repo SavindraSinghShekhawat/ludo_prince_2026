@@ -41,8 +41,8 @@ class NotificationInboxDialog extends ConsumerWidget {
             style: GoogleFonts.outfit(
               color: Colors.white,
               fontSize: 20,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.8,
             ),
           ),
           const Spacer(),

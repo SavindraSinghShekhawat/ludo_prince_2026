@@ -155,7 +155,7 @@ class _GlassCardState extends State<GlassCard> {
                                     "COMING SOON",
                                     style: TextStyle(
                                       color: widget.accentColor,
-                                      fontSize: 7,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1.0,
                                     ),

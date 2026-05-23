@@ -381,8 +381,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               title,
               style: const TextStyle(
                 color: Colors.white38,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
               ),
             ),
@@ -725,7 +725,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           label.toUpperCase(),
           style: const TextStyle(
             color: AppColors.systemBackground,
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.0,
           ),

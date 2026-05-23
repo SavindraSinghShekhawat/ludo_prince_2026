@@ -120,7 +120,7 @@ class _AppButtonState extends State<AppButton> {
                           fontSize:
                               widget.fontSize ?? (widget.isSmall ? 14 : 16),
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 2.0,
+                          letterSpacing: 1.5,
                         ),
                       ),
                     ],
