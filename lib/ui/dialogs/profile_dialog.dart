@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ludo_prince/services/auth_service.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import '../screens/auth_screen.dart';
 import '../screens/friends_screen.dart';
@@ -132,12 +133,22 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                 },
                 child: CircleAvatar(
                   radius: 40,
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  backgroundColor: Colors.primaries[
+                      displayName.hashCode % Colors.primaries.length],
                   backgroundImage: profile?.photoURL != null
                       ? NetworkImage(profile!.photoURL!)
                       : null,
                   child: profile?.photoURL == null
-                      ? const Icon(Icons.person, size: 40, color: Colors.white)
+                      ? Text(
+                          displayName.isNotEmpty
+                              ? displayName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
                       : null,
                 ),
               ),
@@ -253,31 +264,43 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                   ),
                 ),
               ),
-            const SizedBox(height: 32),
-            _buildStatRow(
-              Icons.emoji_events,
-              'Games Won',
-              '${profile?.gamesWon ?? 0}',
-            ),
-            const SizedBox(height: 12),
-            _buildStatRow(
-              Icons.videogame_asset,
-              'Games Played',
-              '${profile?.gamesPlayed ?? 0}',
-            ),
-            const SizedBox(height: 12),
-            _buildStatRow(
-              Icons.people,
-              'Friends',
-              '${profile?.friendsCount ?? 0}',
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMiniStat(Icons.videogame_asset, 'Played',
+                      '${profile?.gamesPlayed ?? 0}', AppColors.primaryCyan),
+                  Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withValues(alpha: 0.1)),
+                  _buildMiniStat(Icons.emoji_events, 'Won',
+                      '${profile?.gamesWon ?? 0}', AppColors.imperialAmber),
+                  Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withValues(alpha: 0.1)),
+                  _buildMiniStat(
+                      Icons.pie_chart,
+                      'Win Rate',
+                      '${((profile?.gamesPlayed ?? 0) > 0 ? ((profile?.gamesWon ?? 0) / (profile?.gamesPlayed ?? 1)) * 100 : 0).toStringAsFixed(0)}%',
+                      AppColors.imperialJade),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
-            _buildActionButton(
-              context,
-              'FRIENDS',
-              Icons.people,
-              AppColors.imperialJade,
-              isAnonymous
+            AppButton(
+              text: 'FRIENDS',
+              icon: Icons.people,
+              color: AppColors.imperialJade,
+              onTap: isAnonymous
                   ? () {
                       AppSnackBar.show(
                         context,
@@ -289,35 +312,32 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const FriendsScreen(),
+                        SlideUpPageRoute(
+                          page: const FriendsScreen(),
                         ),
                       );
                     },
             ),
             const SizedBox(height: 12),
             if (isAnonymous)
-              _buildActionButton(
-                context,
-                'LINK ACCOUNT',
-                Icons.link,
-                const Color(0xFFE5E4E2),
-                () {
+              AppButton(
+                text: 'LINK ACCOUNT',
+                icon: Icons.link,
+                color: AppColors.starPlatinum,
+                onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const AuthScreen()),
+                    SlideUpPageRoute(page: const AuthScreen()),
                   );
                 },
-                isPlatinum: true,
               )
             else
-              _buildActionButton(
-                context,
-                'SIGN OUT',
-                Icons.logout,
-                Colors.redAccent.withValues(alpha: 0.8),
-                () async {
+              AppButton(
+                text: 'SIGN OUT',
+                icon: Icons.logout,
+                color: Colors.redAccent.withValues(alpha: 0.8),
+                onTap: () async {
                   await authService.signOut();
                   if (context.mounted) Navigator.pop(context);
                 },
@@ -339,97 +359,21 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
     );
   }
 
-  Widget _buildStatRow(IconData icon, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.starPlatinum, size: 18),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-          const Spacer(),
-          Text(
-            value,
+  Widget _buildMiniStat(
+      IconData icon, String label, String value, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(height: 8),
+        Text(value,
             style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed, {
-    bool isPlatinum = false,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          height: 54,
-          decoration: BoxDecoration(
-            color: isPlatinum ? null : color.withValues(alpha: 0.1),
-            gradient: isPlatinum
-                ? LinearGradient(
-                    colors: [AppColors.starPlatinum, const Color(0xFFB0B4B8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isPlatinum ? Colors.white54 : color.withValues(alpha: 0.3),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isPlatinum
-                    ? Colors.black.withValues(alpha: 0.2)
-                    : color.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isPlatinum ? AppColors.systemBackground : color,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isPlatinum ? AppColors.systemBackground : color,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 2),
+        Text(label,
+            style: const TextStyle(color: Colors.white54, fontSize: 10)),
+      ],
     );
   }
 }

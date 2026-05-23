@@ -15,6 +15,7 @@ import 'package:ludo_prince/games/ludo/ui/widgets/token_widget.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/dice_widget.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_rules_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
 import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_game_over_dialog.dart';
@@ -140,7 +141,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ref.read(gameControllerProvider).quitGame();
                         Navigator.of(context).pop();
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const HomeScreen()),
+                          FadeThroughPageRoute(page: const HomeScreen()),
                           (route) => false,
                         );
                       },

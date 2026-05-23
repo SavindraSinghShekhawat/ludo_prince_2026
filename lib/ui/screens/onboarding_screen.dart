@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
 import '../widgets/shared_ui.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -56,96 +58,140 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (value) {
-                    setState(() {
-                      _currentPage = value;
-                    });
-                  },
-                  itemCount: _onboardingData.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(40.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _getIcon(_onboardingData[index]["icon"]!),
-                            size: 100,
-                            color: AppColors.starPlatinum,
+              Column(
+                children: [
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (value) {
+                        setState(() {
+                          _currentPage = value;
+                        });
+                      },
+                      itemCount: _onboardingData.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _getIcon(_onboardingData[index]["icon"]!),
+                                size: 100,
+                                color: AppColors.starPlatinum,
+                              )
+                                  .animate(
+                                      onPlay: (controller) =>
+                                          controller.repeat())
+                                  .shimmer(
+                                      duration: 2000.ms,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.5))
+                                  .animate(
+                                      onPlay: (controller) =>
+                                          controller.repeat(reverse: true))
+                                  .moveY(
+                                      begin: -8,
+                                      end: 8,
+                                      duration: 1500.ms,
+                                      curve: Curves.easeInOut),
+                              const SizedBox(height: 40),
+                              Text(
+                                _onboardingData[index]["title"]!,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 2.0,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                _onboardingData[index]["description"]!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white70,
+                                  height: 1.6,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 40),
-                          Text(
-                            _onboardingData[index]["title"]!,
-                            style: GoogleFonts.outfit(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 2.0,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            _onboardingData[index]["description"]!,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white70,
-                              height: 1.6,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      },
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      _onboardingData.length,
+                      (index) => buildDot(index, context),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40.0,
+                      vertical: 20.0,
+                    ),
+                    child: AppButton(
+                      text: _currentPage == _onboardingData.length - 1
+                          ? "START PLAYING"
+                          : "CONTINUE",
+                      isPrimary: true,
+                      onTap: () async {
+                        if (_currentPage == _onboardingData.length - 1) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('hasSeenOnboarding', true);
+
+                          if (context.mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              FadeThroughPageRoute(
+                                page: const HomeScreen(),
+                              ),
+                            );
+                          }
+                        } else {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeIn,
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _onboardingData.length,
-                  (index) => buildDot(index, context),
-                ),
-              ),
-              const SizedBox(height: 40),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40.0,
-                  vertical: 20.0,
-                ),
-                child: AppButton(
-                  text: _currentPage == _onboardingData.length - 1
-                      ? "START PLAYING"
-                      : "CONTINUE",
-                  isPrimary: true,
-                  onTap: () async {
-                    if (_currentPage == _onboardingData.length - 1) {
+              if (_currentPage != _onboardingData.length - 1)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: TextButton(
+                    onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setBool('hasSeenOnboarding', true);
-
                       if (context.mounted) {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
+                          FadeThroughPageRoute(page: const HomeScreen()),
                         );
                       }
-                    } else {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeIn,
-                      );
-                    }
-                  },
+                    },
+                    child: const Text(
+                      'SKIP',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),

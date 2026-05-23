@@ -161,8 +161,8 @@ class _SnackBarContent extends StatelessWidget {
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                            letterSpacing: 2.0,
+                            fontSize: 14,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),

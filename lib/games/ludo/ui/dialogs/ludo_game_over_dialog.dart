@@ -1,5 +1,6 @@
 import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -207,7 +208,7 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      FadeThroughPageRoute(page: const HomeScreen()),
                       (route) => false,
                     );
                   },
@@ -229,9 +230,8 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                       if (widget.state.gameType == GameType.online) {
                         Navigator.of(context).pop();
                         Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const LobbyScreen(isQuickMatch: true),
+                          ScaleFadePageRoute(
+                            page: const LobbyScreen(isQuickMatch: true),
                           ),
                         );
                       } else {
@@ -244,8 +244,8 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                         }
 
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => ProviderScope(
+                          ScaleFadePageRoute(
+                            page: ProviderScope(
                               overrides: [
                                 gameControllerProvider.overrideWithValue(
                                   LudoController(config),

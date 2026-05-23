@@ -126,6 +126,7 @@ class _ParticlesWidgetState extends State<ParticlesWidget>
   late AnimationController _controller;
   final List<_Particle> _particles = [];
   final math.Random _random = math.Random();
+  bool _initialized = false;
 
   @override
   void initState() {
@@ -134,9 +135,18 @@ class _ParticlesWidgetState extends State<ParticlesWidget>
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
+  }
 
-    for (int i = 0; i < 20; i++) {
-      _particles.add(_Particle(_random));
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final size = MediaQuery.of(context).size;
+      final int count = (size.width * size.height / 15000).ceil().clamp(10, 50);
+      for (int i = 0; i < count; i++) {
+        _particles.add(_Particle(_random, size.width, size.height));
+      }
+      _initialized = true;
     }
   }
 
@@ -154,7 +164,7 @@ class _ParticlesWidgetState extends State<ParticlesWidget>
         for (var p in _particles) {
           p.update();
         }
-        return CustomPaint(painter: ParticlesPainter(particles: _particles));
+        return CustomPaint(painter: _ParticlesPainter(particles: _particles));
       },
     );
   }
@@ -168,14 +178,16 @@ class _Particle {
   late double size;
   late double opacity;
   final math.Random random;
+  final double width;
+  final double height;
 
-  _Particle(this.random) {
+  _Particle(this.random, this.width, this.height) {
     reset();
   }
 
   void reset() {
-    x = random.nextDouble() * 400; // Relative to screen
-    y = random.nextDouble() * 800;
+    x = random.nextDouble() * width;
+    y = random.nextDouble() * height;
     vx = (random.nextDouble() - 0.5) * 0.2;
     vy = (random.nextDouble() - 0.5) * 0.2;
     size = random.nextDouble() * 2 + 1;
@@ -185,27 +197,23 @@ class _Particle {
   void update() {
     x += vx;
     y += vy;
-    if (x < -50 || x > 450 || y < -50 || y > 850) {
+    if (x < -50 || x > width + 50 || y < -50 || y > height + 50) {
       reset();
     }
   }
 }
 
-class ParticlesPainter extends CustomPainter {
+class _ParticlesPainter extends CustomPainter {
   final List<_Particle> particles;
-  ParticlesPainter({required this.particles});
+  _ParticlesPainter({required this.particles});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
 
     for (var p in particles) {
-      // Scale x/y to actual size
-      final px = (p.x / 400) * size.width;
-      final py = (p.y / 800) * size.height;
-
       paint.color = AppColors.starPlatinum.withValues(alpha: p.opacity);
-      canvas.drawCircle(Offset(px, py), p.size, paint);
+      canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
     }
   }
 

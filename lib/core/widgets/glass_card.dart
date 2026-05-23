@@ -53,7 +53,11 @@ class _GlassCardState extends State<GlassCard> {
             ..setEntry(3, 2, 0.001) // Perspective
             ..rotateX(_isHovered ? -0.05 : 0.0)
             ..rotateY(_isHovered ? 0.05 : 0.0)
-            ..scale(_isPressed ? 0.96 : (_isHovered ? 1.02 : 1.0)),
+            ..multiply(Matrix4.diagonal3Values(
+              _isPressed ? 0.96 : (_isHovered ? 1.02 : 1.0),
+              _isPressed ? 0.96 : (_isHovered ? 1.02 : 1.0),
+              1.0,
+            )),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: BackdropFilter(
@@ -207,29 +211,10 @@ class _GlassCardState extends State<GlassCard> {
     );
 
     // Add a single, clean white shimmer for an elegant light-reflection effect
-    card = card
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
+    card = card.animate(onPlay: (c) => c.repeat()).shimmer(
           duration: 3.seconds,
           delay: 1.seconds,
           color: Colors.white.withValues(alpha: 0.15),
-        )
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .custom(
-          duration: 4.seconds,
-          builder: (context, value, child) => Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.accentColor.withValues(alpha: 0.03 * value),
-                  blurRadius: 20 * value,
-                  spreadRadius: 1 * value,
-                ),
-              ],
-            ),
-            child: child,
-          ),
         );
 
     // Add a very subtle pulse for the primary card to make it feel alive
@@ -239,24 +224,6 @@ class _GlassCardState extends State<GlassCard> {
             end: const Offset(1.01, 1.01),
             duration: 4.seconds,
             curve: Curves.easeInOut,
-          );
-
-      // Add a soft breathing glow
-      card = card.animate(onPlay: (c) => c.repeat(reverse: true)).custom(
-            duration: 4.seconds,
-            builder: (context, value, child) => Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.accentColor.withValues(alpha: 0.08 * value),
-                    blurRadius: 10 + (10 * value),
-                    spreadRadius: 1.5 * value,
-                  ),
-                ],
-              ),
-              child: child,
-            ),
           );
     }
 

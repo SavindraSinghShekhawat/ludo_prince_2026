@@ -4,6 +4,7 @@ import 'package:ludo_prince/providers/audio_provider.dart';
 import '../screens/settings_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import '../widgets/shared_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -63,7 +64,7 @@ class SettingsDialog extends ConsumerWidget {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              FadeThroughPageRoute(page: const SettingsScreen()),
             );
           },
         ),
@@ -100,7 +101,15 @@ class SettingsDialog extends ConsumerWidget {
                   : Colors.white.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: accentColor, size: 24),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                icon,
+                key: ValueKey<IconData>(icon),
+                color: accentColor,
+                size: 24,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(

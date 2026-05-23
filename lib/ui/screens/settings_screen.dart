@@ -11,6 +11,7 @@ import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
 import 'package:ludo_prince/utils/share_helper.dart';
 import 'feedback_screen.dart';
 import 'package:ludo_prince/services/remote_config_service.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/ui/dialogs/update_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -181,7 +182,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   accentColor: AppColors.imperialJade,
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+                    FadeThroughPageRoute(page: const FeedbackScreen()),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -196,8 +197,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   accentColor: AppColors.midnightSapphire,
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const DiceRandomnessScreen(),
+                    FadeThroughPageRoute(
+                      page: const DiceRandomnessScreen(),
                     ),
                   ),
                 ),
@@ -238,14 +239,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.5),
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 2.0,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 1,
+          width: 150,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.2),
+                Colors.white.withValues(alpha: 0.0),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -270,7 +289,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   : Colors.white.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: accentColor, size: 24),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                icon,
+                key: ValueKey<IconData>(icon),
+                color: accentColor,
+                size: 24,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(

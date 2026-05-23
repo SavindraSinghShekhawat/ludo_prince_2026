@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -15,6 +17,7 @@ import 'package:ludo_prince/games/ludo/controller/ludo_multiplayer_controller.da
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/player_count_selector.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/game_mode_selector.dart';
 import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
@@ -79,7 +82,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         _showError("Failed to join game: ${e.toString()}");
         setState(() => _isLoading = false);
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          FadeThroughPageRoute(page: const HomeScreen()),
         );
       }
     }
@@ -154,7 +157,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           _showError("No active players found. Please try again.");
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
+            FadeThroughPageRoute(page: const HomeScreen()),
           );
         }
       }
@@ -178,7 +181,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 Navigator.pop(context);
               } else {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  FadeThroughPageRoute(page: const HomeScreen()),
                 );
               }
             },
@@ -322,31 +325,93 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                         const SizedBox(height: 16),
                       ],
                       if (_isLoading) ...[
-                        Text(
-                          widget.isQuickMatch
-                              ? 'SEARCHING... ${_matchmakingSeconds}s'
-                              : 'CREATING...',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                            letterSpacing: 2.0,
-                          ),
-                        ).animate(onPlay: (c) => c.repeat()).shimmer(
-                            duration: 2.seconds, color: Colors.white24),
-                        const SizedBox(height: 16),
+                        if (widget.isQuickMatch) ...[
+                          Builder(builder: (context) {
+                            final bool isUrgent = _matchmakingSeconds < 10;
+                            final Color timerColor =
+                                isUrgent ? Colors.amber : Colors.cyanAccent;
+                            return Column(
+                              children: [
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 70,
+                                      height: 70,
+                                      child: TweenAnimationBuilder<double>(
+                                        tween: Tween<double>(
+                                            begin: 0,
+                                            end: _matchmakingSeconds / 60),
+                                        duration: const Duration(seconds: 1),
+                                        builder: (context, value, _) {
+                                          final angle = -math.pi / 2 +
+                                              (value * 2 * math.pi);
+                                          final dx = 35 + 35 * math.cos(angle);
+                                          final dy = 35 + 35 * math.sin(angle);
+
+                                          return Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              Positioned.fill(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  value: value,
+                                                  strokeWidth: 2,
+                                                  color: timerColor.withValues(
+                                                      alpha: 0.6),
+                                                  backgroundColor: Colors.white
+                                                      .withValues(alpha: 0.05),
+                                                ),
+                                              ),
+                                              if (value > 0)
+                                                Positioned(
+                                                  left: dx - 3,
+                                                  top: dy - 3,
+                                                  child: Container(
+                                                    width: 6,
+                                                    height: 6,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      shape: BoxShape.circle,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: timerColor,
+                                                          blurRadius: 6,
+                                                          spreadRadius: 1,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const AppLoadingDots(size: 30),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            );
+                          }),
+                        ],
                       ],
                       SizedBox(
                         width: double.infinity,
                         child: AppButton(
-                          text: widget.isQuickMatch
-                              ? 'QUICK MATCH'
-                              : 'CREATE ROOM',
-                          isLoading: _isLoading,
-                          color: !isOnline
+                          text: _isLoading
+                              ? (widget.isQuickMatch
+                                  ? 'SEARCHING... ${_matchmakingSeconds}s'
+                                  : 'CREATING...')
+                              : (widget.isQuickMatch
+                                  ? 'QUICK MATCH'
+                                  : 'CREATE ROOM'),
+                          isLoading: false,
+                          color: (!isOnline || _isLoading)
                               ? Colors.white24
                               : AppColors.starPlatinum,
-                          onTap: !isOnline
+                          onTap: (!isOnline || _isLoading)
                               ? null
                               : () {
                                   if (widget.isQuickMatch) {
@@ -519,12 +584,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                 child: SizedBox(
                                   width: double.infinity,
                                   child: AppButton(
-                                    text: 'START BATTLE',
+                                    text: currentPlayers >= 2
+                                        ? 'START BATTLE'
+                                        : 'WAITING FOR PLAYERS...',
+                                    color: currentPlayers >= 2
+                                        ? AppColors.starPlatinum
+                                        : Colors.white24,
                                     onTap: currentPlayers >= 2
                                         ? () => matchmakingService.startGame(
                                               _activeGameId!,
                                             )
-                                        : () {}, // Handle disabled state via UI or logic
+                                        : null,
                                   ),
                                 ),
                               ),
@@ -575,14 +645,28 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                SelectableText(
-                  code,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
-                  ),
+                Row(
+                  children: [
+                    SelectableText(
+                      code,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.copy,
+                          color: Colors.white54, size: 20),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: code));
+                        AppSnackBar.show(context,
+                            message: 'Code copied to clipboard!');
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -598,17 +682,41 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   Widget _buildQuickMatchHeader() {
+    final bool isUrgent = _matchmakingSeconds < 10;
+    final Color timerColor = isUrgent ? Colors.amber : Colors.cyanAccent;
+
     return GlassContainer(
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          const MatchmakingLoader(size: 80),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 100,
+                height: 100,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: _matchmakingSeconds / 60),
+                  duration: const Duration(seconds: 1),
+                  builder: (context, value, _) {
+                    return CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 4,
+                      color: timerColor,
+                      backgroundColor: Colors.white10,
+                    );
+                  },
+                ),
+              ),
+              const MatchmakingLoader(size: 80),
+            ],
+          ),
           const SizedBox(height: 24),
           Text(
             'SEARCHING FOR EMPERORS... (${_matchmakingSeconds}s)',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isUrgent ? timerColor : Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.w900,
               letterSpacing: 2.0,
@@ -655,7 +763,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     Color slotColor = _getSlotColor(slot.index);
     bool isEmpty = data == null;
 
-    return GlassContainer(
+    final card = GlassContainer(
       padding: EdgeInsets.zero,
       borderRadius: 20,
       glowColor: isEmpty ? Colors.transparent : slotColor,
@@ -682,7 +790,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: isEmpty
-                      ? Colors.white.withValues(alpha: 0.05)
+                      ? Colors.white.withValues(alpha: 0.1)
                       : slotColor.withValues(alpha: 0.3),
                   width: 2,
                 ),
@@ -692,7 +800,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                   end: Alignment.bottomRight,
                   colors: [
                     isEmpty
-                        ? Colors.white.withValues(alpha: 0.02)
+                        ? Colors.white.withValues(alpha: 0.05)
                         : slotColor.withValues(alpha: 0.1),
                     isEmpty
                         ? Colors.transparent
@@ -748,7 +856,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                       .toString()
                                       .toUpperCase(),
                               style: TextStyle(
-                                color: isEmpty ? Colors.white24 : Colors.white,
+                                color: isEmpty ? Colors.white38 : Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.2,
@@ -795,6 +903,22 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           duration: 400.ms,
           curve: Curves.easeOutBack,
         );
+
+    if (isEmpty) {
+      return card
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .shimmer(
+            duration: 2.seconds,
+            color: Colors.white.withValues(alpha: 0.1),
+          )
+          .scale(
+            begin: const Offset(0.98, 0.98),
+            end: const Offset(1.0, 1.0),
+            duration: 2.seconds,
+          );
+    }
+
+    return card;
   }
 
   Widget _buildInviteSidebar(
@@ -1060,8 +1184,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       await audioService.playStart();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => ProviderScope(
+        ScaleFadePageRoute(
+          page: ProviderScope(
             overrides: [gameControllerProvider.overrideWithValue(controller)],
             child: const LudoScreen(),
           ),

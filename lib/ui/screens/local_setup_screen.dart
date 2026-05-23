@@ -15,6 +15,7 @@ import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/player_count_selector.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/game_mode_selector.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 class LocalSetupScreen extends ConsumerStatefulWidget {
@@ -357,8 +358,8 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
 
                       if (!context.mounted) return;
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (childContext) => ProviderScope(
+                        ScaleFadePageRoute(
+                          page: ProviderScope(
                             overrides: [
                               gameControllerProvider.overrideWithValue(
                                 LudoController(

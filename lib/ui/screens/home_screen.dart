@@ -11,6 +11,8 @@ import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import 'package:ludo_prince/ui/screens/friends_screen.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
+import 'package:ludo_prince/core/widgets/animated_counter.dart';
 import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
 import 'package:ludo_prince/providers/presence_provider.dart';
@@ -27,6 +29,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
+  bool _isAvatarPressed = false;
 
   @override
   void initState() {
@@ -104,9 +107,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 isPrimary: true,
                                 onTap: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const LobbyScreen(isQuickMatch: true),
+                                  ScaleFadePageRoute(
+                                    page: const LobbyScreen(isQuickMatch: true),
                                   ),
                                 ),
                               ),
@@ -122,8 +124,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       height: 120,
                                       onTap: () => Navigator.push(
                                         context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const FriendsScreen(),
+                                        SlideUpPageRoute(
+                                          page: const FriendsScreen(),
                                         ),
                                       ),
                                     ),
@@ -138,9 +140,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       height: 120,
                                       onTap: () => Navigator.push(
                                         context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const LocalSetupScreen(),
+                                        SlideUpPageRoute(
+                                          page: const LocalSetupScreen(),
                                         ),
                                       ),
                                     ),
@@ -196,8 +197,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       isPrimary: true,
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const LobbyScreen(isQuickMatch: true),
+                        ScaleFadePageRoute(
+                          page: const LobbyScreen(isQuickMatch: true),
                         ),
                       ),
                     ),
@@ -215,8 +216,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             height: 120,
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => const FriendsScreen(),
+                              SlideUpPageRoute(
+                                page: const FriendsScreen(),
                               ),
                             ),
                           ),
@@ -231,8 +232,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             height: 120,
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => const LocalSetupScreen(),
+                              SlideUpPageRoute(
+                                page: const LocalSetupScreen(),
                               ),
                             ),
                           ),
@@ -305,11 +306,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildOnlineStatusBar(int count) {
-    // Show actual real numbers as requested
-    final displayCount = count.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
+    final bool isEmpty = count == 0;
+    final Color dotColor =
+        isEmpty ? const Color(0xFFFFB300) : const Color(0xFF00FF88);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -328,8 +327,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Container(
                 width: 6,
                 height: 6,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF00FF88),
+                decoration: BoxDecoration(
+                  color: dotColor,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -337,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00FF88).withValues(alpha: 0.1),
+                  color: dotColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
               )
@@ -352,15 +351,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           const SizedBox(width: 10),
-          Text(
-            "$displayCount EMPERORS ONLINE",
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
+          if (isEmpty)
+            Text(
+              "BE THE FIRST TO PLAY!",
+              style: TextStyle(
+                color: dotColor.withValues(alpha: 0.9),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).fadeIn(
+                  duration: 2.seconds,
+                  begin: 0.6,
+                )
+          else
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedCounter(
+                  value: count,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const Text(
+                  " EMPERORS ONLINE",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
             ),
-          ),
         ],
       ),
     );
@@ -379,54 +406,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () {
+            onTapDown: (_) => setState(() => _isAvatarPressed = true),
+            onTapUp: (_) {
+              setState(() => _isAvatarPressed = false);
               AppDialogLayout.show(
                 context: context,
                 child: const ProfileDialog(),
               );
             },
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24, width: 2),
-                  ),
-                  child: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        backgroundImage: profile?.photoURL != null
-                            ? NetworkImage(profile!.photoURL!)
-                            : null,
-                        child: profile?.photoURL == null
-                            ? const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 20,
-                              )
-                            : null,
+            onTapCancel: () => setState(() => _isAvatarPressed = false),
+            child: AnimatedScale(
+              scale: _isAvatarPressed ? 0.92 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _isAvatarPressed
+                            ? AppColors.primaryCyan.withValues(alpha: 0.5)
+                            : Colors.white24,
+                        width: 2,
                       ),
-                      Positioned(
-                        right: -2,
-                        bottom: -2,
-                        child: AppStatusBadge(isOnline: isOnline),
-                      ),
-                    ],
+                    ),
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          backgroundImage: profile?.photoURL != null
+                              ? NetworkImage(profile!.photoURL!)
+                              : null,
+                          child: profile?.photoURL == null
+                              ? const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 20,
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: AppStatusBadge(isOnline: isOnline),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  profile?.displayName ?? displayName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  Text(
+                    profile?.displayName ?? displayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Row(
@@ -439,7 +479,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    FadeThroughPageRoute(page: const SettingsScreen()),
                   );
                 },
               ),
@@ -555,27 +595,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _footerLink("Settings", () {
+        _footerLink(Icons.settings_outlined, "Settings", () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            FadeThroughPageRoute(page: const SettingsScreen()),
           );
         }),
         const _FooterDivider(),
-        _footerLink("About & Fairness", () {
+        _footerLink(Icons.balance_outlined, "About & Fairness", () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const AboutScreen()),
+            FadeThroughPageRoute(page: const AboutScreen()),
           );
         }),
       ],
     );
   }
 
-  Widget _footerLink(String text, VoidCallback onTap) {
-    return TextButton(
+  Widget _footerLink(IconData icon, String text, VoidCallback onTap) {
+    return TextButton.icon(
       onPressed: onTap,
-      child: Text(
+      icon: Icon(icon, size: 14, color: Colors.white38),
+      label: Text(
         text,
         style: const TextStyle(color: Colors.white60, fontSize: 13),
       ),
@@ -584,22 +625,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildCommunityNote() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0),
-      child: Column(
-        children: [
-          Divider(color: Colors.white.withValues(alpha: 0.05)),
-          const SizedBox(height: 16),
-          Text(
-            "Thanks for supporting us in the beginning! Players might be few now, but we'll get there together. 🚀",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              height: 1.6,
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.06),
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.rocket_launch_outlined,
+              color: AppColors.primaryCyan.withValues(alpha: 0.5),
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Thanks for supporting us early on! Players might be few now, but we'll get there together.",
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

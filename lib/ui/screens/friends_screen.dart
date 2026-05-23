@@ -15,6 +15,7 @@ import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart'
     show GameMode;
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
@@ -29,6 +30,7 @@ class FriendsScreen extends ConsumerStatefulWidget {
 
 class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   List<UserProfile> _allFriends = [];
   List<UserProfile> _filteredFriends = [];
   List<UserProfile> _searchResults = [];
@@ -57,6 +59,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _debounce?.cancel();
     _friendsSubscription?.cancel();
     super.dispose();
@@ -227,34 +230,54 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     Color color,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassContainer(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool isPressed = false;
+        return GestureDetector(
+          onTapDown: (_) => setState(() => isPressed = true),
+          onTapUp: (_) {
+            setState(() => isPressed = false);
+            onTap();
+          },
+          onTapCancel: () => setState(() => isPressed = false),
+          child: AnimatedContainer(
+            duration: 150.ms,
+            curve: Curves.easeOut,
+            transform: Matrix4.diagonal3Values(
+              isPressed ? 0.95 : 1.0,
+              isPressed ? 0.95 : 1.0,
+              1.0,
+            ),
+            transformAlignment: Alignment.center,
+            child: GlassContainer(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  Icon(icon, color: color, size: 32),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   void _handleCreateRoom() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LobbyScreen(isQuickMatch: false, isHost: true),
+      ScaleFadePageRoute(
+        page: const LobbyScreen(isQuickMatch: false, isHost: true),
       ),
     );
   }
@@ -297,7 +320,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               isSmall: true,
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const AuthScreen()),
+                  SlideUpPageRoute(page: const AuthScreen()),
                 );
               },
             ),
@@ -316,17 +339,29 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           borderRadius: 20,
           child: TextField(
             controller: _searchController,
+            focusNode: _searchFocusNode,
             style: const TextStyle(color: Colors.white),
             onChanged: _onSearchChanged,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Search by Name or Ludo ID...',
-              hintStyle: TextStyle(color: Colors.white38),
-              prefixIcon: Icon(Icons.search, color: AppColors.imperialJade),
+              hintStyle: const TextStyle(color: Colors.white38),
+              prefixIcon:
+                  const Icon(Icons.search, color: AppColors.imperialJade),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear,
+                          color: Colors.white54, size: 20),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                    )
+                  : null,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               filled: false,
-              contentPadding: EdgeInsets.symmetric(vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
@@ -359,14 +394,41 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   Widget _buildFriendsList() {
     if (_filteredFriends.isEmpty && _searchController.text.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.all(40.0),
-          child: Center(
-            child: Text(
-              'No friends yet. Start searching!',
-              style: TextStyle(color: Colors.white30),
-            ),
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.people_alt_outlined,
+                color: Colors.white24,
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Your friend list is empty.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Find players by name or ID to add them to your friends list.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              AppButton(
+                text: 'SEARCH PLAYERS',
+                isSmall: true,
+                onTap: () {
+                  _searchFocusNode.requestFocus();
+                },
+              ),
+            ],
           ),
         ),
       );
@@ -447,33 +509,6 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         )
                       : null,
                 ),
-                StreamBuilder<Map<String, dynamic>>(
-                  stream: socialService.watchUserStatus(user.uid),
-                  builder: (context, snapshot) {
-                    final status = snapshot.data?['status'] ?? 'offline';
-                    final isOnline = status == 'online';
-                    final isInLobby = status == 'inLobby';
-                    final isInGame = status == 'inGame';
-
-                    return Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: isOnline
-                              ? Colors.greenAccent
-                              : (isInLobby || isInGame)
-                                  ? Colors.orangeAccent
-                                  : Colors.grey,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black, width: 2),
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
             const SizedBox(width: 16),
@@ -506,6 +541,60 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      StreamBuilder<Map<String, dynamic>>(
+                        stream: socialService.watchUserStatus(user.uid),
+                        builder: (context, snapshot) {
+                          final status = snapshot.data?['status'] ?? 'offline';
+                          if (status == 'offline')
+                            return const SizedBox.shrink();
+
+                          final isInGame = status == 'inGame';
+                          final isInLobby = status == 'inLobby';
+
+                          String statusText = 'Online';
+                          Color statusColor = Colors.greenAccent;
+                          if (isInGame) {
+                            statusText = 'In Game';
+                            statusColor = Colors.orangeAccent;
+                          } else if (isInLobby) {
+                            statusText = 'In Lobby';
+                            statusColor = Colors.orangeAccent;
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: statusColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                      color: statusColor,
+                                      shape: BoxShape.circle),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  statusText.toUpperCase(),
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -590,8 +679,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       // 5. Navigate to Lobby
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => LobbyScreen(
+        ScaleFadePageRoute(
+          page: LobbyScreen(
             initialGameId: gameId,
             isHost: true,
             isQuickMatch: false,

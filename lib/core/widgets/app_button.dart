@@ -46,101 +46,106 @@ class _AppButtonState extends State<AppButton> {
     final Color contentColor =
         isDarkText ? AppColors.systemBackground : Colors.white;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        if (!widget.isLoading && widget.onTap != null) widget.onTap!();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: 200.ms,
-        curve: Curves.easeOut,
-        height: buttonHeight,
-        width: widget.width,
-        constraints: BoxConstraints(minWidth: widget.isLoading ? 60 : 120),
-        transform: Matrix4.identity()
-          ..scale(_isPressed && !widget.isLoading ? 0.97 : 1.0),
-        transformAlignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
-          color: widget.color,
-          border: widget.isPrimary
-              ? Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1.5,
-                )
-              : Border.all(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  width: 1.0,
-                ),
-          boxShadow: [
+    return AnimatedContainer(
+      duration: 200.ms,
+      curve: Curves.easeOut,
+      height: buttonHeight,
+      width: widget.width,
+      constraints: BoxConstraints(minWidth: widget.isLoading ? 60 : 120),
+      transform: Matrix4.diagonal3Values(
+        _isPressed && !widget.isLoading ? 0.97 : 1.0,
+        _isPressed && !widget.isLoading ? 0.97 : 1.0,
+        1.0,
+      ),
+      transformAlignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
+        color: widget.color,
+        border: widget.isPrimary
+            ? Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1.5,
+              )
+            : Border.all(
+                color: Colors.black.withValues(alpha: 0.1),
+                width: 1.0,
+              ),
+        boxShadow: [
+          BoxShadow(
+            color: widget.color.withValues(alpha: 0.3),
+            blurRadius: 12,
+            spreadRadius: 1,
+          ),
+          if (widget.isLoading)
             BoxShadow(
-              color: widget.color.withValues(alpha: 0.3),
-              blurRadius: 12,
-              spreadRadius: 1,
+              color: widget.color.withValues(alpha: 0.5),
+              blurRadius: 20,
+              spreadRadius: 3,
             ),
-            if (widget.isLoading)
-              BoxShadow(
-                color: widget.color.withValues(alpha: 0.5),
-                blurRadius: 20,
-                spreadRadius: 3,
-              ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: widget.isLoading ? null : widget.onTap,
-            borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: widget.isLoading ? 0 : (widget.isSmall ? 16 : 24),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Text/Icon Layer
-                  AnimatedOpacity(
-                    opacity: widget.isLoading ? 0.0 : 1.0,
-                    duration: 250.ms,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (widget.icon != null) ...[
-                          Icon(
-                            widget.icon,
-                            color: contentColor,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                        ],
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isLoading ? null : widget.onTap,
+          onHighlightChanged: widget.isLoading
+              ? null
+              : (isHovering) => setState(() => _isPressed = isHovering),
+          borderRadius: BorderRadius.circular(widget.isLoading ? 30 : 15),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.isLoading ? 0 : (widget.isSmall ? 16 : 24),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Opacity(
+                  opacity: widget.isLoading ? 0.0 : 1.0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.icon != null) ...[
+                        Icon(
+                          widget.icon,
+                          color: contentColor,
+                          size: widget.isSmall ? 18 : 22,
+                        ),
+                        SizedBox(width: widget.isSmall ? 6 : 8),
+                      ],
+                      Text(
+                        widget.text,
+                        style: GoogleFonts.outfit(
+                          color: contentColor,
+                          fontSize:
+                              widget.fontSize ?? (widget.isSmall ? 14 : 16),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.isLoading)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppLoadingDots(size: widget.isSmall ? 24 : 35),
+                      if (widget.loadingText != null) ...[
+                        const SizedBox(width: 8),
                         Text(
-                          widget.text.toUpperCase(),
+                          widget.loadingText!,
                           style: GoogleFonts.outfit(
                             color: contentColor,
-                            fontSize:
-                                widget.fontSize ?? (widget.isSmall ? 12 : 18),
-                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             letterSpacing: 1.5,
                           ),
                         ),
                       ],
-                    ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
-                          duration: 4.seconds,
-                          color: isDarkText
-                              ? Colors.black.withValues(alpha: 0.1)
-                              : Colors.white.withValues(alpha: 0.15),
-                        ),
+                    ],
                   ),
-                  // Loading Layer
-                  if (widget.isLoading)
-                    AppLoadingDots(
-                      size: widget.isSmall ? 24 : 35,
-                    ).animate().fadeIn(duration: 300.ms),
-                ],
-              ),
+              ],
             ),
           ),
         ),
