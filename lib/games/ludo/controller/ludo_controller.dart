@@ -26,8 +26,8 @@ abstract class GameController {
   Future<void> sendMoveIntent(Token token);
 
   // 2. Executions (Apply the action to the state with animations/effects)
-  Future<void> executeRoll(int value);
-  Future<void> executeMove(int tokenId);
+  Future<void> executeRoll(int value, {bool fastForward = false});
+  Future<void> executeMove(int tokenId, {bool fastForward = false});
 
   // 3. Status
   void pause();
@@ -72,6 +72,9 @@ class LudoController implements GameController {
   final GameEventProvider eventProvider;
   StreamSubscription<GameEvent>? _eventSubscription;
 
+  final List<GameEvent> _eventQueue = [];
+  bool _isProcessingQueue = false;
+
   @override
   final PlayerSlot? localPlayerSlot;
   final GameMode gameMode;
@@ -104,7 +107,7 @@ class LudoController implements GameController {
       isDisposed: () => _isDisposed,
     );
 
-    _eventSubscription = this.eventProvider.events.listen(handleGameEvent);
+    _eventSubscription = this.eventProvider.events.listen(_onEventReceived);
     // Use event-loop scheduling (not microtask) so the first frame renders before bot acts
     Future.delayed(Duration.zero, _checkBotTurn);
   }
@@ -112,15 +115,60 @@ class LudoController implements GameController {
   bool get isMyTurn =>
       localPlayerSlot == null || state.currentTurn == localPlayerSlot;
 
-  Future<void> handleGameEvent(GameEvent event) async {
-    if (_isDisposed || _isPaused || _isActionInProgress || _state.isGameOver) {
+  void _onEventReceived(GameEvent event) {
+    _eventQueue.add(event);
+    if (!_isProcessingQueue) {
+      _processEventQueue();
+    }
+  }
+
+  Future<void> _processEventQueue() async {
+    if (_isProcessingQueue) return;
+    _isProcessingQueue = true;
+
+    try {
+      while (_eventQueue.isNotEmpty) {
+        if (_isDisposed || _state.isGameOver) {
+          _eventQueue.clear();
+          break;
+        }
+        if (_isPaused) {
+          break;
+        }
+
+        while (_isActionInProgress) {
+          await Future.delayed(const Duration(milliseconds: 50));
+          if (_isDisposed || _state.isGameOver || _isPaused) break;
+        }
+
+        if (_isDisposed || _state.isGameOver || _isPaused) break;
+
+        final event = _eventQueue.removeAt(0);
+        final bool fastForward =
+            _eventQueue.isNotEmpty; // Fast forward if not the last event
+        try {
+          await handleGameEvent(event, fastForward: fastForward);
+        } catch (e, st) {
+          // Log the error and forcefully release locks to prevent permanent freeze
+          print("Error processing game event: $e\n$st");
+          _isActionInProgress = false;
+        }
+      }
+    } finally {
+      _isProcessingQueue = false;
+    }
+  }
+
+  Future<void> handleGameEvent(GameEvent event,
+      {bool fastForward = false}) async {
+    if (_isDisposed || _state.isGameOver) {
       return;
     }
 
     if (event is RollEvent) {
-      await executeRoll(event.diceValue);
+      await executeRoll(event.diceValue, fastForward: fastForward);
     } else if (event is MoveEvent) {
-      await executeMove(event.tokenId);
+      await executeMove(event.tokenId, fastForward: fastForward);
     } else if (event is QuitEvent) {
       final result = _engine.quitPlayer(_state, event.playerSlot);
       _state = result.state.copyWith(lastAction: GameAction.quit);
@@ -284,7 +332,8 @@ class LudoController implements GameController {
   }
 
   @override
-  Future<void> executeRoll(int value, {bool skipSounds = false}) async {
+  Future<void> executeRoll(int value,
+      {bool skipSounds = false, bool fastForward = false}) async {
     if (_isDisposed || _state.isDiceRolled || _isActionInProgress) return;
     _isActionInProgress = true;
 
@@ -294,7 +343,7 @@ class LudoController implements GameController {
         _state.isRolling &&
         _state.diceValue == value;
 
-    if (!alreadyLanded) {
+    if (!alreadyLanded && !fastForward) {
       _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
       if (!_isDisposed) _streamController.add(_state);
 
@@ -315,6 +364,12 @@ class LudoController implements GameController {
 
       // Fixed duration for the "landing" animation
       await Future.delayed(const Duration(milliseconds: 450));
+    } else if (!alreadyLanded && fastForward) {
+      _state = _state.copyWith(
+        isRolling: false,
+        isWaitingForResult: false,
+        diceValue: value,
+      );
     }
     if (!_isDisposed) _streamController.add(_state);
 
@@ -357,7 +412,7 @@ class LudoController implements GameController {
       turnActionCount: _state.turnActionCount + 1,
     );
 
-    if (!skipSounds && !_isDisposed) {
+    if (!skipSounds && !fastForward && !_isDisposed) {
       _audioListener.handleEngineEvents(result.events);
     }
 
@@ -365,7 +420,7 @@ class LudoController implements GameController {
 
     bool isAutoAction = autoMoveId != null || isTurnSkipped;
 
-    if (isAutoAction) {
+    if (isAutoAction && !fastForward) {
       // Pause so user can digest the roll before the auto-move/skip
       await Future.delayed(const Duration(milliseconds: 150));
       if (_isDisposed) {
@@ -382,7 +437,7 @@ class LudoController implements GameController {
       );
       final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
       // Yield to the event loop before auto-move to allow UI to render
-      await Future.delayed(const Duration(milliseconds: 50));
+      if (!fastForward) await Future.delayed(const Duration(milliseconds: 50));
       await sendMoveIntent(token);
     } else {
       // Schedule on event loop (not microtask) so UI can paint between bot turns
@@ -391,10 +446,11 @@ class LudoController implements GameController {
   }
 
   @override
-  Future<void> executeMove(int tokenId) async {
+  Future<void> executeMove(int tokenId, {bool fastForward = false}) async {
     if (_isDisposed || _isActionInProgress) return;
     _isActionInProgress = true;
-    await _executor.execute(_state, tokenId, _state.diceValue);
+    await _executor.execute(_state, tokenId, _state.diceValue,
+        fastForward: fastForward);
     _isActionInProgress = false;
     if (!_isDisposed) {
       // Always set new timestamp for whoever's turn it is now (Bonus turn or next player)
@@ -427,6 +483,9 @@ class LudoController implements GameController {
   void resume() {
     if (_isPaused) {
       _isPaused = false;
+      if (_eventQueue.isNotEmpty && !_isProcessingQueue) {
+        _processEventQueue();
+      }
       _checkBotTurn();
     }
   }

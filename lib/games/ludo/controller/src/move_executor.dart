@@ -18,7 +18,8 @@ class MoveExecutor {
     required this.isDisposed,
   });
 
-  Future<void> execute(GameState state, int tokenId, int diceValue) async {
+  Future<void> execute(GameState state, int tokenId, int diceValue,
+      {bool fastForward = false}) async {
     final player = state.players.firstWhere((p) => p.slot == state.currentTurn);
     final token = player.tokens.firstWhere((t) => t.id == tokenId);
 
@@ -29,14 +30,14 @@ class MoveExecutor {
 
       // 1. Home exit case
       if (token.state == TokenState.home && steps == 6) {
-        onMoveStart(1);
+        if (!fastForward) onMoveStart(1);
 
         Token updated = token.copyWith(state: TokenState.board, position: 0);
 
         final result = engine.applyStep(currentState, updated);
         currentState = result.state;
         accumulatedEvents.addAll(result.events);
-        onEngineEvents(result.events);
+        if (!fastForward) onEngineEvents(result.events);
 
         onStateUpdate(currentState);
 
@@ -44,7 +45,7 @@ class MoveExecutor {
         return;
       }
 
-      onMoveStart(steps);
+      if (!fastForward) onMoveStart(steps);
       Token currentToken = token;
 
       // 2. Intermediate steps (no audio — only accumulate events for final step)
@@ -62,7 +63,8 @@ class MoveExecutor {
         onStateUpdate(currentState);
 
         if (isDisposed()) return;
-        await Future.delayed(const Duration(milliseconds: 150));
+        if (!fastForward)
+          await Future.delayed(const Duration(milliseconds: 150));
       }
 
       // 3. Final step
@@ -75,7 +77,7 @@ class MoveExecutor {
       );
       currentState = result.state;
       accumulatedEvents.addAll(result.events);
-      onEngineEvents(result.events);
+      if (!fastForward) onEngineEvents(result.events);
 
       onStateUpdate(currentState);
 

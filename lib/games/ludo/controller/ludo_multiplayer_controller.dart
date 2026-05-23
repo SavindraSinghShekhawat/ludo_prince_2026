@@ -125,6 +125,8 @@ class LudoMultiplayerController extends LudoController {
     });
   }
 
+  int _lastTimeoutRequestTime = 0;
+
   void _startTimeoutMonitor() {
     _timeoutMonitor?.cancel();
     _timeoutMonitor = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -133,7 +135,10 @@ class LudoMultiplayerController extends LudoController {
       final now = firebaseService.serverTimeMillis;
       // We add a 2 second buffer to account for network latency and clock skew. Turn time is 15s.
       if (now > _turnStartedAt! + 17000) {
-        _sendTimeoutRequest();
+        if (now > _lastTimeoutRequestTime + 5000) {
+          _lastTimeoutRequestTime = now;
+          _sendTimeoutRequest();
+        }
       }
     });
   }
@@ -221,7 +226,8 @@ class LudoMultiplayerController extends LudoController {
   }
 
   @override
-  Future<void> handleGameEvent(GameEvent event) async {
+  Future<void> handleGameEvent(GameEvent event,
+      {bool fastForward = false}) async {
     if (isDisposed) return;
 
     if (event is RollEvent) {
@@ -241,7 +247,7 @@ class LudoMultiplayerController extends LudoController {
         AppLogger.debug('Ignoring stale SkipEvent for ${event.playerSlot}');
       }
     } else {
-      await super.handleGameEvent(event);
+      await super.handleGameEvent(event, fastForward: fastForward);
     }
 
     final newTurn = state.currentTurn;
