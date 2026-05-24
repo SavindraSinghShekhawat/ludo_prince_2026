@@ -182,7 +182,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   accentColor: AppColors.imperialJade,
                   onTap: () => Navigator.push(
                     context,
-                    FadeThroughPageRoute(page: const FeedbackScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const FeedbackScreen()),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -197,8 +198,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   accentColor: AppColors.midnightSapphire,
                   onTap: () => Navigator.push(
                     context,
-                    FadeThroughPageRoute(
-                      page: const DiceRandomnessScreen(),
+                    MaterialPageRoute(
+                      builder: (context) => const DiceRandomnessScreen(),
                     ),
                   ),
                 ),

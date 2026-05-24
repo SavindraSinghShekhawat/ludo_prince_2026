@@ -150,8 +150,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           if (context.mounted) {
                             Navigator.pushReplacement(
                               context,
-                              FadeThroughPageRoute(
-                                page: const HomeScreen(),
+                              MaterialPageRoute(
+                                builder: (context) => const HomeScreen(),
                               ),
                             );
                           }
@@ -178,7 +178,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       if (context.mounted) {
                         Navigator.pushReplacement(
                           context,
-                          FadeThroughPageRoute(page: const HomeScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const HomeScreen()),
                         );
                       }
                     },

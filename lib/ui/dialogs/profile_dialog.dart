@@ -312,8 +312,8 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        SlideUpPageRoute(
-                          page: const FriendsScreen(),
+                        MaterialPageRoute(
+                          builder: (context) => const FriendsScreen(),
                         ),
                       );
                     },
@@ -328,7 +328,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    SlideUpPageRoute(page: const AuthScreen()),
+                    MaterialPageRoute(builder: (context) => const AuthScreen()),
                   );
                 },
               )

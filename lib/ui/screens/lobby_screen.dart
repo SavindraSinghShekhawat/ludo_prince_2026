@@ -82,7 +82,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         _showError("Failed to join game: ${e.toString()}");
         setState(() => _isLoading = false);
         Navigator.of(context).pushReplacement(
-          FadeThroughPageRoute(page: const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
     }
@@ -157,7 +157,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           _showError("No active players found. Please try again.");
           Navigator.pushReplacement(
             context,
-            FadeThroughPageRoute(page: const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         }
       }
@@ -181,7 +181,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 Navigator.pop(context);
               } else {
                 Navigator.of(context).pushReplacement(
-                  FadeThroughPageRoute(page: const HomeScreen()),
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
                 );
               }
             },

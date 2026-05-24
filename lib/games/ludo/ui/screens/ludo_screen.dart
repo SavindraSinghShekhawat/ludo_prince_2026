@@ -56,13 +56,92 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
     }
   }
 
+  void _showExitDialog() {
+    AppDialogLayout.show(
+      context: context,
+      child: AppDialogLayout(
+        header: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.crimsonVelvet,
+              size: 48,
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .shimmer(duration: 2.seconds, color: Colors.white24)
+                .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.1, 1.1),
+                  duration: 1.seconds,
+                  curve: Curves.easeInOut,
+                ),
+            const SizedBox(height: 16),
+            const Text(
+              'EXIT GAME?',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.8,
+              ),
+            ),
+          ],
+        ),
+        body: const [
+          Text(
+            'Are you sure you want to stop playing? Current progress will be lost.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+        ],
+        footer: Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                text: 'STAY',
+                height: 52,
+                fontSize: 16,
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AppButton(
+                text: 'EXIT',
+                color: AppColors.crimsonVelvet,
+                height: 52,
+                fontSize: 16,
+                onTap: () {
+                  ref.read(gameControllerProvider).quitGame();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    (route) => false,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const AppBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: _GameAppBar(),
-        body: SafeArea(child: _GameBody()),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        _showExitDialog();
+      },
+      child: const AppBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: _GameAppBar(),
+          body: SafeArea(child: _GameBody()),
+        ),
       ),
     );
   }
@@ -79,80 +158,7 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: BackButton(
-        color: Colors.white,
-        onPressed: () {
-          AppDialogLayout.show(
-            context: context,
-            child: AppDialogLayout(
-              header: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    color: AppColors.crimsonVelvet,
-                    size: 48,
-                  )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .shimmer(duration: 2.seconds, color: Colors.white24)
-                      .scale(
-                        begin: const Offset(1, 1),
-                        end: const Offset(1.1, 1.1),
-                        duration: 1.seconds,
-                        curve: Curves.easeInOut,
-                      ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'EXIT GAME?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.8,
-                    ),
-                  ),
-                ],
-              ),
-              body: const [
-                Text(
-                  'Are you sure you want to stop playing? Current progress will be lost.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-              ],
-              footer: Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      text: 'STAY',
-                      height: 52,
-                      fontSize: 16,
-                      onTap: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      text: 'EXIT',
-                      color: AppColors.crimsonVelvet,
-                      height: 52,
-                      fontSize: 16,
-                      onTap: () {
-                        ref.read(gameControllerProvider).quitGame();
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pushAndRemoveUntil(
-                          FadeThroughPageRoute(page: const HomeScreen()),
-                          (route) => false,
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+      leading: const BackButton(color: Colors.white),
       title: Text(
         'LUDO PRINCE',
         style: GoogleFonts.outfit(

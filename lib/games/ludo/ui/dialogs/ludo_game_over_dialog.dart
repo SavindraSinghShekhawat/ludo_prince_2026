@@ -208,7 +208,8 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushAndRemoveUntil(
-                      FadeThroughPageRoute(page: const HomeScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const HomeScreen()),
                       (route) => false,
                     );
                   },

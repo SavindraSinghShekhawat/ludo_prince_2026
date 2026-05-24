@@ -64,7 +64,7 @@ class SettingsDialog extends ConsumerWidget {
             Navigator.pop(context);
             Navigator.push(
               context,
-              FadeThroughPageRoute(page: const SettingsScreen()),
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
             );
           },
         ),

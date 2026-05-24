@@ -320,7 +320,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               isSmall: true,
               onTap: () {
                 Navigator.of(context).push(
-                  SlideUpPageRoute(page: const AuthScreen()),
+                  MaterialPageRoute(builder: (context) => const AuthScreen()),
                 );
               },
             ),

@@ -124,8 +124,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       height: 120,
                                       onTap: () => Navigator.push(
                                         context,
-                                        SlideUpPageRoute(
-                                          page: const FriendsScreen(),
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const FriendsScreen(),
                                         ),
                                       ),
                                     ),
@@ -140,8 +141,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       height: 120,
                                       onTap: () => Navigator.push(
                                         context,
-                                        SlideUpPageRoute(
-                                          page: const LocalSetupScreen(),
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LocalSetupScreen(),
                                         ),
                                       ),
                                     ),
@@ -216,8 +218,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             height: 120,
                             onTap: () => Navigator.push(
                               context,
-                              SlideUpPageRoute(
-                                page: const FriendsScreen(),
+                              MaterialPageRoute(
+                                builder: (context) => const FriendsScreen(),
                               ),
                             ),
                           ),
@@ -232,8 +234,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             height: 120,
                             onTap: () => Navigator.push(
                               context,
-                              SlideUpPageRoute(
-                                page: const LocalSetupScreen(),
+                              MaterialPageRoute(
+                                builder: (context) => const LocalSetupScreen(),
                               ),
                             ),
                           ),
@@ -479,7 +481,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    FadeThroughPageRoute(page: const SettingsScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsScreen()),
                   );
                 },
               ),
@@ -598,14 +601,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _footerLink(Icons.settings_outlined, "Settings", () {
           Navigator.push(
             context,
-            FadeThroughPageRoute(page: const SettingsScreen()),
+            MaterialPageRoute(builder: (context) => const SettingsScreen()),
           );
         }),
         const _FooterDivider(),
         _footerLink(Icons.balance_outlined, "About & Fairness", () {
           Navigator.push(
             context,
-            FadeThroughPageRoute(page: const AboutScreen()),
+            MaterialPageRoute(builder: (context) => const AboutScreen()),
           );
         }),
       ],
