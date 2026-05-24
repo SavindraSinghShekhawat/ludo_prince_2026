@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 7.0.0+61
+version: 7.0.0+63
 
 environment:
   sdk: ^3.5.3
@@ -71,6 +71,9 @@ dev_dependencies:
   rename_app: ^1.6.5
   # dart run change_app_package_name:main com.paisphere.ludoprince
   change_app_package_name: ^1.5.0
+  # dart run flutter_native_splash:create
+  flutter_native_splash: ^2.4.7
+  image: ^4.8.0
 
 
 flutter_launcher_icons:
@@ -78,7 +81,7 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon.png"
   adaptive_icon_foreground: "assets/icon_foreground.png"
-  adaptive_icon_background: "assets/icon.png"
+  adaptive_icon_background: "#1D3048"
   remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -124,3 +127,12 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_native_splash:
+  color: "#1D3048"
+  image: "assets/icon_foreground_padded.png"
+  android_12:
+    color: "#1D3048"
+    image: "assets/icon_foreground_padded.png"
+  android: true
+  ios: true
