@@ -6,6 +6,7 @@ import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:flutter/services.dart';
 import 'presence_service.dart';
 import 'social_service.dart';
+import 'profile_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -77,14 +78,9 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      // Explicitly set offline status before signing out to update global count
-      final uid = _auth.currentUser?.uid;
-      if (uid != null) {
-        await FirebaseDatabase.instance.ref('presence/$uid').update({
-          'online': false,
-          'lastActive': ServerValue.timestamp,
-        });
-      }
+      // We no longer manually update presence here. 
+      // The Firebase onDisconnect trigger will automatically and instantly 
+      // mark the user as offline when _auth.signOut() severs the connection.
 
       await _auth.signOut();
 
@@ -96,6 +92,38 @@ class AuthService {
       await socialService.init();
     } catch (e) {
       AppLogger.error('Error during sign out: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.isAnonymous) return;
+
+      final uid = user.uid;
+
+      // 1. Set offline status is handled automatically by onDisconnect 
+      // when the auth user is deleted in step 3.
+
+      // 2. Delete Firestore profile
+      try {
+        await profileService.deleteProfile(uid).timeout(const Duration(seconds: 3));
+      } catch (e) {
+        AppLogger.error('Could not delete profile from Firestore: $e');
+      }
+
+      // 3. Delete Firebase Auth user
+      await user.delete();
+
+      // 4. Re-sign in anonymously
+      await signInAnonymously();
+
+      // 5. Re-init services
+      presenceService.setPresence();
+      await socialService.init();
+    } catch (e) {
+      AppLogger.error('Error deleting account: $e');
       rethrow;
     }
   }

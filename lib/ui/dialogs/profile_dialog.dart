@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ludo_prince/services/auth_service.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
-import 'package:ludo_prince/core/widgets/app_page_routes.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
+import 'package:ludo_prince/providers/snackbar_provider.dart';
 import '../screens/auth_screen.dart';
 import '../screens/friends_screen.dart';
 import '../widgets/shared_ui.dart';
@@ -81,6 +82,50 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         setState(() => _isSaving = false);
       }
     }
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.systemSurface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Delete Account?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Are you sure? This action cannot be undone. All your progress, friends, and data will be permanently lost.',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CANCEL',
+                  style: TextStyle(color: AppColors.primaryCyan)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final snackBar = ref.read(snackBarProvider.notifier);
+                Navigator.pop(dialogContext); // close confirmation
+                Navigator.pop(context); // close profile dialog immediately
+                
+                try {
+                  await authService.deleteAccount();
+                  snackBar.show(message: 'Account successfully deleted.', isSuccess: true);
+                } catch (e) {
+                  snackBar.show(message: 'Failed to delete account. You may need to log in again. Error: $e', isError: true);
+                  AppLogger.error('Failed to delete account: $e');
+                }
+              },
+              child: const Text('DELETE', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -332,16 +377,39 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                   );
                 },
               )
-            else
-              AppButton(
-                text: 'SIGN OUT',
-                icon: Icons.logout,
-                color: Colors.redAccent.withValues(alpha: 0.8),
-                onTap: () async {
-                  await authService.signOut();
-                  if (context.mounted) Navigator.pop(context);
-                },
+            else ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    onPressed: () async {
+                      final snackBar = ref.read(snackBarProvider.notifier);
+                      Navigator.pop(context);
+                      try {
+                        await authService.signOut();
+                      } catch (e) {
+                        snackBar.show(message: 'Sign out failed: $e', isError: true);
+                      }
+                    },
+                    icon: const Icon(Icons.logout, color: Colors.white70, size: 18),
+                    label: const Text(
+                      'SIGN OUT',
+                      style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                  Container(width: 1, height: 20, color: Colors.white24),
+                  TextButton.icon(
+                    onPressed: () => _showDeleteConfirmation(context),
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
+                    label: const Text(
+                      'DELETE ACCOUNT',
+                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ],
               ),
+            ],
           ];
         },
         loading: () => [

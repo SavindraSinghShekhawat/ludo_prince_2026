@@ -31,6 +31,15 @@ class ProfileService {
     }
   }
 
+  Future<void> deleteProfile(String uid) async {
+    try {
+      await _firestore.collection('users').doc(uid).delete();
+    } catch (e) {
+      AppLogger.error('Error deleting user profile: $e');
+      rethrow;
+    }
+  }
+
   Future<List<UserProfile>> searchUsers(String query) async {
     if (query.isEmpty) return [];
     try {
