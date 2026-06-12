@@ -1,3 +1,4 @@
+import 'package:ludo_prince/services/firebase_service.dart';
 import 'player.dart';
 import 'token.dart';
 
@@ -161,6 +162,20 @@ class GameState {
 
 extension GameStateVisual on GameState {
   PlayerSlot get localPlayerSlot {
+    if (gameType == GameType.online) {
+      final uid = firebaseService.auth.currentUser?.uid;
+      if (uid != null) {
+        final localPlayer = players.firstWhere(
+          (p) => p.uid == uid,
+          orElse: () => players.firstWhere(
+            (p) => p.type == PlayerType.localHuman,
+            orElse: () => players.first,
+          ),
+        );
+        return localPlayer.slot;
+      }
+    }
+
     final localPlayer = players.firstWhere(
       (p) => p.type == PlayerType.localHuman,
       orElse: () => players.first,
