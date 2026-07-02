@@ -68,30 +68,14 @@ class FirebaseEventProvider extends GameEventProvider {
 
   @override
   Future<void> onQuitRequested(PlayerSlot slot) async {
-    final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
+    final uid = firebaseService.auth.currentUser!.uid;
 
-    await gameRef.runTransaction((Object? gameData) {
-      if (gameData == null) return Transaction.success(gameData);
-
-      Map<String, dynamic> game = Map<String, dynamic>.from(gameData as Map);
-      final eventCounter = (game['eventCounter'] as int? ?? 0) + 1;
-      final turnNumber = game['turnNumber'] as int;
-
-      final eventId = eventCounter.toString().padLeft(5, '0');
-
-      if (game['events'] == null) {
-        game['events'] = <String, dynamic>{};
-      }
-      game['events'][eventId] = {
-        'type': 'quit',
-        'playerSlot': slot.name,
-        'turnNumber': turnNumber,
-        'timestamp': ServerValue.timestamp,
-      };
-
-      game['eventCounter'] = eventCounter;
-      return Transaction.success(game);
-    });
+    await _db
+        .ref()
+        .child(FirebasePaths.session(gameType, gameId))
+        .child('actionRequests')
+        .child(uid)
+        .set({'type': 'quit', 'timestamp': ServerValue.timestamp});
   }
 
   @override

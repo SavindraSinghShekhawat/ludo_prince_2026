@@ -19,7 +19,7 @@ class FirebasePaths {
 
   /// Events sub-node.
   static String events(String gameType, String sessionId) =>
-      'games/$gameType/$sessionId/events';
+      'gameEvents/$gameType/$sessionId';
 
   /// Action requests sub-node (for timeout handling).
   static String actionRequests(String gameType, String sessionId) =>

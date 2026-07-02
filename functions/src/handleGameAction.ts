@@ -53,9 +53,16 @@ export const handleGameAction = onValueCreated(
     const requestRef = admin.database().ref(`games/${gameType}/${gameId}/actionRequests/${uid}`);
 
     try {
-      await gameRef.transaction((game: GameDocument | null) => {
-        if (!game) return game;
-        if (game.status !== "playing") return;
+      const txResult = await gameRef.transaction((game: GameDocument | null) => {
+        AppLogger.debug(`[handleGameAction] transaction callback started`);
+        if (!game) {
+          AppLogger.debug(`[handleGameAction] ABORT: game ${gameId} not found.`);
+          return game; // return null to successfully commit null, preventing abort log suppression
+        }
+        if (game.status !== "playing") {
+          AppLogger.debug(`[handleGameAction] ABORT: game ${gameId} status is ${game.status}`);
+          return game;
+        }
 
         // 1. Identify player slot
         const players = game.players || {};
@@ -69,7 +76,7 @@ export const handleGameAction = onValueCreated(
 
         if (!playerSlot) {
           AppLogger.error(`UID ${uid} not found in game ${gameId}`);
-          return;
+          return game;
         }
 
         const currentTurn = game.currentTurn;
@@ -78,11 +85,11 @@ export const handleGameAction = onValueCreated(
         if (type === "roll") {
           if (playerSlot !== currentTurn) {
             AppLogger.debug(`[handleGameAction] REJECT ROLL: ${playerSlot} tried to roll, but it is ${currentTurn}'s turn.`);
-            return;
+            return game;
           }
           if (game.isDiceRolled) {
             AppLogger.debug("[handleGameAction] REJECT ROLL: Dice already rolled this turn.");
-            return;
+            return game;
           }
 
           const pityCount = players[currentTurn].sixPity ?? 2;
@@ -106,41 +113,38 @@ export const handleGameAction = onValueCreated(
           AppLogger.info(`[handleGameAction] AUDIT_ROLL: Player ${playerSlot} rolled ${dice} in game ${gameId}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
-          const eventId = String(eventCounter).padStart(5, "0");
-
-          if (!game.events) game.events = {};
-          game.events[eventId] = {
+          
+          game._latestEvent = {
             type: "roll",
             playerSlot: currentTurn,
             diceValue: dice,
-            turnNumber: game.turnNumber,
+            turnNumber: game.turnNumber || 0,
             timestamp: ServerValue.TIMESTAMP,
           } as RollEvent;
           game.eventCounter = eventCounter;
+          game.diceValue = dice;
           game.isDiceRolled = true;
           delete game.prefetchedSeed;
           return game;
         } else if (type === "move") {
           if (playerSlot !== currentTurn) {
             AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move, but it is ${currentTurn}'s turn.`);
-            return;
+            return game;
           }
           if (!game.isDiceRolled) {
             AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move without rolling.`);
-            return;
+            return game;
           }
 
           AppLogger.debug(`[handleGameAction] ACCEPT MOVE: Token ${data.tokenId} for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
-          const eventId = String(eventCounter).padStart(5, "0");
 
-          if (!game.events) game.events = {};
-          game.events[eventId] = {
+          game._latestEvent = {
             type: "move",
             playerSlot: currentTurn,
             tokenId: data.tokenId,
-            turnNumber: game.turnNumber,
+            turnNumber: game.turnNumber || 0,
             timestamp: ServerValue.TIMESTAMP,
           } as MoveEvent;
           game.eventCounter = eventCounter;
@@ -155,13 +159,13 @@ export const handleGameAction = onValueCreated(
 
           if (now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
             AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
-            return;
+            return game;
           }
 
           const currentPlayer = players[currentTurn];
           if (!currentPlayer) {
             AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: current player ${currentTurn} not found.`);
-            return;
+            return game;
           }
 
           AppLogger.debug(`[handleGameAction] ACCEPT TIMEOUT: Skipping turn for ${currentTurn}`);
@@ -189,7 +193,7 @@ export const handleGameAction = onValueCreated(
             break;
           }
 
-          const eventTurnNumber = game.turnNumber;
+          const eventTurnNumber = game.turnNumber || 0;
           game.currentTurn = nextTurn;
           game.turnStartedAt = ServerValue.TIMESTAMP;
           game.turnNumber = (game.turnNumber || 0) + 1;
@@ -197,10 +201,8 @@ export const handleGameAction = onValueCreated(
           game.prefetchedSeed = randomInt(0, 10000000);
 
           const eventCounter = (game.eventCounter || 0) + 1;
-          const eventId = String(eventCounter).padStart(5, "0");
 
-          if (!game.events) game.events = {};
-          game.events[eventId] = {
+          game._latestEvent = {
             type: "skip",
             playerSlot: currentTurn,
             turnNumber: eventTurnNumber,
@@ -222,10 +224,85 @@ export const handleGameAction = onValueCreated(
             }
           }
           return game;
+        } else if (type === "quit") {
+          const currentPlayer = players[playerSlot];
+          if (!currentPlayer) return game;
+
+          AppLogger.debug(`[handleGameAction] ACCEPT QUIT: ${playerSlot} quit`);
+          currentPlayer.status = "left";
+
+          const eventCounter = (game.eventCounter || 0) + 1;
+          const eventTurnNumber = game.turnNumber || 0;
+
+          game._latestEvent = {
+            type: "quit",
+            playerSlot: playerSlot,
+            turnNumber: eventTurnNumber,
+            timestamp: ServerValue.TIMESTAMP,
+          };
+          game.eventCounter = eventCounter;
+
+          // If it was their turn, skip to next player
+          if (game.currentTurn === playerSlot) {
+            const turnOrder = game.turnOrder || ["slot1", "slot4", "slot3", "slot2"];
+            const winners = game.winners || [];
+            let idx = turnOrder.indexOf(game.currentTurn);
+            let nextTurn = game.currentTurn;
+
+            for (let i = 0; i < turnOrder.length; i++) {
+              idx = (idx + 1) % turnOrder.length;
+              const candidate = turnOrder[idx];
+              if (winners.includes(candidate)) continue;
+              if (!players[candidate] || players[candidate].status === "left") continue;
+              nextTurn = candidate;
+              break;
+            }
+
+            game.currentTurn = nextTurn;
+            game.turnStartedAt = ServerValue.TIMESTAMP;
+            game.turnNumber = (game.turnNumber || 0) + 1;
+            game.isDiceRolled = false;
+            game.prefetchedSeed = randomInt(0, 10000000);
+          }
+
+          // Check if game is finished
+          const winners = game.winners || [];
+          const activePlayers = Object.entries(players)
+            .filter(([slot, p]) => (p as PlayerEntry).status === "active" && !winners.includes(slot));
+          if (activePlayers.length <= 1) {
+            game.status = "finished";
+            const lastPlayer = activePlayers[0];
+            if (lastPlayer) {
+              game.winners = game.winners || [];
+              game.winners.push(lastPlayer[0]);
+            }
+          }
+          return game;
         }
 
-        return;
+        return game;
       });
+      
+      // Process post-transaction event persistence
+      if (txResult.committed && txResult.snapshot.exists()) {
+        const newGame = txResult.snapshot.val();
+        if (newGame._latestEvent) {
+          const eventId = String(newGame.eventCounter).padStart(5, "0");
+          const updates: any = {};
+          
+          // Append the event to gameEvents node
+          updates[`gameEvents/${gameType}/${gameId}/${eventId}`] = newGame._latestEvent;
+          // Atomically remove _latestEvent from the game object
+          updates[`games/${gameType}/${gameId}/_latestEvent`] = null;
+          // Also cleanup the old events node if it exists (legacy compatibility)
+          if (newGame.events !== undefined) {
+             updates[`games/${gameType}/${gameId}/events`] = null;
+          }
+          
+          await admin.database().ref().update(updates);
+        }
+      }
+
       // Clear the request node
       await requestRef.remove();
     } catch (err) {

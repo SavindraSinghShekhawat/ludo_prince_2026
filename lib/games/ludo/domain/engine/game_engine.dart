@@ -45,11 +45,10 @@ class GameEngine {
 
     final player = _getPlayer(state, state.currentTurn);
 
-    // Reset skip count and update sixPity on successful roll
+    // Update sixPity on successful roll
     final updatedPlayers = state.players.map((p) {
       if (p.slot == state.currentTurn) {
         return p.copyWith(
-          skipCount: 0,
           sixPity: diceValue == 6 ? 0 : p.sixPity + 1,
         );
       }
@@ -101,13 +100,7 @@ class GameEngine {
       return EngineResult(state); // ❗ prevent illegal multiplayer move
     }
 
-    // Reset skip count on successful move
-    final updatedPlayers = state.players.map((p) {
-      if (p.slot == state.currentTurn) {
-        return p.copyWith(skipCount: 0);
-      }
-      return p;
-    }).toList();
+    final updatedPlayers = state.players;
 
     List<EngineEvent> events = [];
     bool isSix = state.diceValue == 6;

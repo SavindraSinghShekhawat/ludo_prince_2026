@@ -94,7 +94,8 @@ class LudoMultiplayerController extends LudoController {
 
     // Now start listening for new events
     if (eventProvider is FirebaseEventProvider) {
-      (eventProvider as FirebaseEventProvider).startListening(lastIdPad);
+      final newLastIdPad = _lastAppliedEventId.toString().padLeft(5, '0');
+      (eventProvider as FirebaseEventProvider).startListening(newLastIdPad);
     }
 
     if (!isDisposed) streamController.add(state);
@@ -233,6 +234,10 @@ class LudoMultiplayerController extends LudoController {
     if (event is RollEvent) {
       _lastAppliedEventId++;
     } else if (event is MoveEvent) {
+      _lastAppliedEventId++;
+    } else if (event is SkipEvent) {
+      _lastAppliedEventId++;
+    } else if (event is QuitEvent) {
       _lastAppliedEventId++;
     }
 

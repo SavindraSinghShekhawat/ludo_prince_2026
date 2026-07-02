@@ -17,6 +17,7 @@ export interface GameDocument {
   eventCounter: number;
   players: Record<string, PlayerEntry>;
   events?: Record<string, GameEvent>;
+  _latestEvent?: GameEvent;
   settings: {
     turnTimeSeconds: number;
     maxSkips: number;

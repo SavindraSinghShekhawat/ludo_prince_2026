@@ -10,6 +10,14 @@
         }
       }
     },
+    "gameEvents": {
+      "$gameType": {
+        "$sessionId": {
+          ".read": "auth != null",
+          ".write": false
+        }
+      }
+    },
     "matchmaking": {
       "$gameType": {
         "$mode": {
