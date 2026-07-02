@@ -54,7 +54,7 @@ export const handleGameAction = onValueCreated(
 
     try {
       const txResult = await gameRef.transaction((game: GameDocument | null) => {
-        AppLogger.debug(`[handleGameAction] transaction callback started`);
+        AppLogger.debug("[handleGameAction] transaction callback started");
         if (!game) {
           AppLogger.debug(`[handleGameAction] ABORT: game ${gameId} not found.`);
           return game; // return null to successfully commit null, preventing abort log suppression
@@ -288,7 +288,7 @@ export const handleGameAction = onValueCreated(
         const newGame = txResult.snapshot.val();
         if (newGame._latestEvent) {
           const eventId = String(newGame.eventCounter).padStart(5, "0");
-          const updates: any = {};
+          const updates: Record<string, unknown> = {};
           
           // Append the event to gameEvents node
           updates[`gameEvents/${gameType}/${gameId}/${eventId}`] = newGame._latestEvent;
@@ -296,7 +296,7 @@ export const handleGameAction = onValueCreated(
           updates[`games/${gameType}/${gameId}/_latestEvent`] = null;
           // Also cleanup the old events node if it exists (legacy compatibility)
           if (newGame.events !== undefined) {
-             updates[`games/${gameType}/${gameId}/events`] = null;
+            updates[`games/${gameType}/${gameId}/events`] = null;
           }
           
           await admin.database().ref().update(updates);
