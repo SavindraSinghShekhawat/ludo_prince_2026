@@ -336,17 +336,30 @@ class LudoController implements GameController {
   @override
   Future<void> executeRoll(int value,
       {bool skipSounds = false, bool fastForward = false}) async {
-    if (_isDisposed || _state.isDiceRolled || _isActionInProgress) return;
+    if (_isDisposed || _isActionInProgress) return;
+    
+    // Store whether it was our turn before we evaluate the roll
+    bool wasMyTurn = localPlayerSlot == _state.currentTurn;
+
     _isActionInProgress = true;
 
-    // Initial "anticipation" phase for all players (Local, Remote, and Bot)
-    // If the local player already optimistically landed, we skip the waiting phase
-    bool alreadyLanded = !_state.isWaitingForResult &&
-        _state.isRolling &&
-        _state.diceValue == value;
+    // For local human, pause execution if the previous action was a roll
+    if (!fastForward && _state.lastAction == GameAction.roll) {
+      // Pause slightly between sequential rolls
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (_isDisposed) {
+        _isActionInProgress = false;
+        return;
+      }
+    }
+
+    bool alreadyLanded = _state.diceValue == value && !_state.isRolling;
 
     if (!alreadyLanded && !fastForward) {
-      _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
+      _state = _state.copyWith(
+        isRolling: true,
+        isWaitingForResult: true,
+      );
       if (!_isDisposed) _streamController.add(_state);
 
       // Minimum "anticipation" duration to ensure the loop is heard/seen
@@ -441,6 +454,9 @@ class LudoController implements GameController {
       // Yield to the event loop before auto-move to allow UI to render
       if (!fastForward) await Future.delayed(const Duration(milliseconds: 50));
       await sendMoveIntent(token);
+    } else if (isTurnSkipped && wasMyTurn && _state.gameType == GameType.online) {
+      eventProvider.onSkipRequested();
+      Future.delayed(Duration.zero, _checkBotTurn);
     } else {
       // Schedule on event loop (not microtask) so UI can paint between bot turns
       Future.delayed(Duration.zero, _checkBotTurn);

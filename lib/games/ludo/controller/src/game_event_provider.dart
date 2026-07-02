@@ -7,6 +7,7 @@ abstract class GameEventProvider {
   Stream<GameEvent> get events;
   void onRollRequested({int? diceValue});
   void onMoveRequested(int tokenId);
+  void onSkipRequested();
   void onQuitRequested(PlayerSlot slot);
   void dispose();
 }
@@ -32,6 +33,13 @@ class LocalEventProvider extends GameEventProvider {
   void onMoveRequested(int tokenId) {
     _controller.add(
       MoveEvent(tokenId, timestamp: DateTime.now().millisecondsSinceEpoch),
+    );
+  }
+
+  @override
+  void onSkipRequested() {
+    _controller.add(
+      SkipEvent(PlayerSlot.slot1, timestamp: DateTime.now().millisecondsSinceEpoch), // slot doesn't matter for local stub
     );
   }
 

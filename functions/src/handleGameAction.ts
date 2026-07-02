@@ -224,6 +224,51 @@ export const handleGameAction = onValueCreated(
             }
           }
           return game;
+        } else if (type === "skip") {
+          if (playerSlot !== currentTurn) {
+            AppLogger.debug(`[handleGameAction] REJECT SKIP: ${playerSlot} tried to skip, but it is ${currentTurn}'s turn.`);
+            return game;
+          }
+          if (!game.isDiceRolled) {
+            AppLogger.debug(`[handleGameAction] REJECT SKIP: ${playerSlot} tried to skip without rolling.`);
+            return game;
+          }
+
+          AppLogger.debug(`[handleGameAction] ACCEPT SKIP: No valid moves for ${currentTurn}`);
+
+          // Find next player
+          const turnOrder = game.turnOrder || ["slot1", "slot4", "slot3", "slot2"];
+          const winners = game.winners || [];
+          let idx = turnOrder.indexOf(currentTurn);
+          let nextTurn = currentTurn;
+
+          for (let i = 0; i < turnOrder.length; i++) {
+            idx = (idx + 1) % turnOrder.length;
+            const candidate = turnOrder[idx];
+            if (winners.includes(candidate)) continue;
+            if (!players[candidate] || players[candidate].status === "left") continue;
+            nextTurn = candidate;
+            break;
+          }
+
+          const eventTurnNumber = game.turnNumber || 0;
+          game.currentTurn = nextTurn;
+          game.turnStartedAt = ServerValue.TIMESTAMP;
+          game.turnNumber = (game.turnNumber || 0) + 1;
+          game.isDiceRolled = false;
+          game.prefetchedSeed = randomInt(0, 10000000);
+
+          const eventCounter = (game.eventCounter || 0) + 1;
+
+          game._latestEvent = {
+            type: "skip",
+            playerSlot: currentTurn,
+            turnNumber: eventTurnNumber,
+            timestamp: ServerValue.TIMESTAMP,
+          };
+          game.eventCounter = eventCounter;
+
+          return game;
         } else if (type === "quit") {
           const currentPlayer = players[playerSlot];
           if (!currentPlayer) return game;

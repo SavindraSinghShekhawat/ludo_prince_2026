@@ -67,6 +67,18 @@ class FirebaseEventProvider extends GameEventProvider {
   }
 
   @override
+  Future<void> onSkipRequested() async {
+    final uid = firebaseService.auth.currentUser!.uid;
+
+    await _db
+        .ref()
+        .child(FirebasePaths.session(gameType, gameId))
+        .child('actionRequests')
+        .child(uid)
+        .set({'type': 'skip', 'timestamp': ServerValue.timestamp});
+  }
+
+  @override
   Future<void> onQuitRequested(PlayerSlot slot) async {
     final uid = firebaseService.auth.currentUser!.uid;
 
