@@ -1169,6 +1169,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           config[slot] = PlayerSetupConfig(
             name: data['name'],
             type: PlayerType.remoteHuman,
+            uid: data['uid'],
           );
         }
       }

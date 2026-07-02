@@ -39,8 +39,10 @@ abstract class GameController {
 class PlayerSetupConfig {
   final String name;
   final PlayerType type;
+  final String? uid;
 
-  PlayerSetupConfig({required this.name, this.type = PlayerType.localHuman});
+  PlayerSetupConfig(
+      {required this.name, this.type = PlayerType.localHuman, this.uid});
 }
 
 class LudoController implements GameController {
@@ -517,6 +519,7 @@ class LudoController implements GameController {
 
       return Player(
         slot: e.key,
+        uid: e.value.uid,
         name: e.value.name,
         type: e.value.type,
         tokens: tokens,
