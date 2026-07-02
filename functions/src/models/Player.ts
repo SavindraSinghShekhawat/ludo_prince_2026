@@ -1,3 +1,12 @@
+export type TokenState = "home" | "board" | "homeStretch" | "finished";
+
+export interface Token {
+  id: number;
+  slot: string;
+  position: number;
+  state: TokenState;
+}
+
 export interface PlayerEntry {
   uid: string;
   name: string;
@@ -7,5 +16,5 @@ export interface PlayerEntry {
   skipCount: number;
   sixPity?: number;
   team?: string;
-  tokens?: Record<string, unknown>;
+  tokens?: Token[];
 }

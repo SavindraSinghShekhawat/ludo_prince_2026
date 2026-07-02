@@ -6,7 +6,7 @@ import {PlayerEntry} from "./models/Player";
 import {RollEvent, MoveEvent} from "./models/GameEvent";
 import {AppLogger} from "./utils/logger";
 import * as crypto from "node:crypto";
-
+import {LudoEngine} from "./engine/LudoEngine";
 function randomInt(min: number, max: number) {
   // Use node:crypto.randomInt for cryptographically secure randomness.
   // This is the gold standard for secure randomness in Node.js.
@@ -82,6 +82,45 @@ export const handleGameAction = onValueCreated(
         const currentTurn = game.currentTurn;
 
         // Validation based on type
+        let type = data.type;
+
+        // --- VALIDATION PHASE ---
+        if (type === "move") {
+          if (playerSlot !== currentTurn) {
+            AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move, but it is ${currentTurn}'s turn.`);
+            return game;
+          }
+          if (!game.isDiceRolled) {
+            AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move without rolling.`);
+            return game;
+          }
+          const playerTokens = players[currentTurn].tokens;
+          const token = playerTokens ? playerTokens.find(t => t.id === data.tokenId) : null;
+          if (!token || !game.diceValue || !LudoEngine.isValidMove(token, game.diceValue)) {
+            AppLogger.debug(`[handleGameAction] ILLEGAL MOVE DETECTED for ${currentTurn}! Treating as timeout penalty.`);
+            type = "timeout"; // Treat as a timeout penalty
+          }
+        } else if (type === "skip") {
+          if (playerSlot !== currentTurn) {
+            AppLogger.debug(`[handleGameAction] REJECT SKIP: ${playerSlot} tried to skip, but it is ${currentTurn}'s turn.`);
+            return game;
+          }
+          if (!game.isDiceRolled) {
+            AppLogger.debug(`[handleGameAction] REJECT SKIP: ${playerSlot} tried to skip without rolling.`);
+            return game;
+          }
+          const playerTokens = players[currentTurn].tokens || [];
+          const validMoves = LudoEngine.getValidMoves(playerTokens, game.diceValue || 1);
+          if (validMoves.length > 0) {
+            AppLogger.debug(
+              "[handleGameAction] ILLEGAL SKIP DETECTED for " + currentTurn + "! " +
+              "Player has valid moves. Treating as timeout penalty."
+            );
+            type = "timeout"; // Treat as a timeout penalty
+          }
+        }
+
+        // --- EXECUTION PHASE ---
         if (type === "roll") {
           if (playerSlot !== currentTurn) {
             AppLogger.debug(`[handleGameAction] REJECT ROLL: ${playerSlot} tried to roll, but it is ${currentTurn}'s turn.`);
@@ -127,18 +166,15 @@ export const handleGameAction = onValueCreated(
           delete game.prefetchedSeed;
           return game;
         } else if (type === "move") {
-          if (playerSlot !== currentTurn) {
-            AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move, but it is ${currentTurn}'s turn.`);
-            return game;
-          }
-          if (!game.isDiceRolled) {
-            AppLogger.debug(`[handleGameAction] REJECT MOVE: ${playerSlot} tried to move without rolling.`);
-            return game;
-          }
-
           AppLogger.debug(`[handleGameAction] ACCEPT MOVE: Token ${data.tokenId} for ${playerSlot}`);
 
           const eventCounter = (game.eventCounter || 0) + 1;
+
+          // Apply move to server authoritative state
+          if (game.diceValue) {
+            const moveResult = LudoEngine.applyMove(players, currentTurn, data.tokenId, game.diceValue, game.gameMode);
+            game.players = moveResult.players;
+          }
 
           game._latestEvent = {
             type: "move",
@@ -157,7 +193,9 @@ export const handleGameAction = onValueCreated(
           const turnStartedAt = (game.turnStartedAt as number) || 0;
           const turnTimeSeconds = (game.settings?.turnTimeSeconds || 15);
 
-          if (now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
+          // Only enforce time requirement if it was an ACTUAL timeout request.
+          // If it was a penalized skip/move (which we converted to a timeout), data.type won't be "timeout".
+          if (data.type === "timeout" && now < turnStartedAt + (turnTimeSeconds * 1000) - 500) {
             AppLogger.debug(`[handleGameAction] REJECT TIMEOUT: Too early. now=${now}, turnStartedAt=${turnStartedAt}`);
             return game;
           }
@@ -225,15 +263,6 @@ export const handleGameAction = onValueCreated(
           }
           return game;
         } else if (type === "skip") {
-          if (playerSlot !== currentTurn) {
-            AppLogger.debug(`[handleGameAction] REJECT SKIP: ${playerSlot} tried to skip, but it is ${currentTurn}'s turn.`);
-            return game;
-          }
-          if (!game.isDiceRolled) {
-            AppLogger.debug(`[handleGameAction] REJECT SKIP: ${playerSlot} tried to skip without rolling.`);
-            return game;
-          }
-
           AppLogger.debug(`[handleGameAction] ACCEPT SKIP: No valid moves for ${currentTurn}`);
 
           // Find next player

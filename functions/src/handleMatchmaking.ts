@@ -125,6 +125,12 @@ export const handleMatchmaking = onValueCreated(
           status: "active",
           skipCount: 0,
           sixPity: 2,
+          tokens: [
+            { id: 0, slot, position: 0, state: "home" },
+            { id: 1, slot, position: 0, state: "home" },
+            { id: 2, slot, position: 0, state: "home" },
+            { id: 3, slot, position: 0, state: "home" }
+          ]
         };
 
         if (mode === "team_2v2") {

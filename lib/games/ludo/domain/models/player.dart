@@ -95,7 +95,11 @@ class Player {
       ),
       skipCount: json["skipCount"] ?? 0,
       sixPity: json["sixPity"] ?? 2,
-      tokens: (json["tokens"] as List).map((e) => Token.fromJson(e)).toList(),
+      tokens: (json["tokens"] as List).map((e) {
+        final tokenMap = Map<String, dynamic>.from(e as Map);
+        tokenMap['slot'] ??= json["slot"];
+        return Token.fromJson(tokenMap);
+      }).toList(),
     );
   }
 }

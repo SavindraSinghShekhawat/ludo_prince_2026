@@ -42,55 +42,57 @@ class LudoMultiplayerController extends LudoController {
     final data = Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
     _turnStartedAt = data['turnStartedAt'] as int?;
 
-    final snapshot = data['stateSnapshot'];
-    if (snapshot != null) {
-      final gameStateJson = Map<String, dynamic>.from(snapshot['gameState']);
-      _lastAppliedEventId = snapshot['lastEventId'] as int;
-      final turnTime = (data['settings']?['turnTimeSeconds'] as int?) ?? 8;
-      state = GameState.fromJson(gameStateJson).copyWith(
-        gameType: GameType.online,
-        turnStartedAt: _turnStartedAt,
-        turnTimeSeconds: turnTime,
-        prefetchedSeed: data['prefetchedSeed'] as int?,
-      );
-    } else {
-      // If no snapshot, ensure state has correct mode from DB
-      final dbMode = data['gameMode'];
-      if (dbMode != null) {
-        final mode = GameMode.values.firstWhere((e) => e.name == dbMode);
-        state = state.copyWith(
-          gameMode: mode,
-          prefetchedSeed: data['prefetchedSeed'] as int?,
-        );
-      }
+    // Instant Reconnection via Server-Authoritative Token State
+    final dbMode = data['gameMode'];
+    final mode = dbMode != null
+        ? GameMode.values.firstWhere((e) => e.name == dbMode, orElse: () => GameMode.classic)
+        : GameMode.classic;
+        
+    final turnTime = (data['settings']?['turnTimeSeconds'] as int?) ?? 15;
+    final currentTurnName = data['currentTurn'] as String?;
+    PlayerSlot? currentTurn = currentTurnName != null
+        ? PlayerSlot.values.firstWhere((e) => e.name == currentTurnName, orElse: () => state.currentTurn)
+        : null;
+
+    state = state.copyWith(
+      gameType: GameType.online,
+      gameMode: mode,
+      turnStartedAt: _turnStartedAt,
+      turnTimeSeconds: turnTime,
+      prefetchedSeed: data['prefetchedSeed'] as int?,
+      currentTurn: currentTurn,
+      diceValue: (data['diceValue'] as int?) ?? state.diceValue,
+      isDiceRolled: (data['isDiceRolled'] as bool?) ?? state.isDiceRolled,
+    );
+
+    // Sync token positions instantly from Firebase
+    final firebasePlayers = data['players'] as Map<dynamic, dynamic>?;
+    if (firebasePlayers != null) {
+      final updatedPlayers = state.players.map((p) {
+        final fbp = firebasePlayers[p.slot.name];
+        if (fbp != null) {
+          final pData = Map<String, dynamic>.from(fbp as Map);
+          if (pData['tokens'] != null) {
+            final tokensList = (pData['tokens'] as List).map((e) {
+                final tokenMap = Map<String, dynamic>.from(e as Map);
+                tokenMap['slot'] ??= p.slot.name;
+                return Token.fromJson(tokenMap);
+            }).toList();
+            return p.copyWith(
+                tokens: tokensList, 
+                skipCount: pData['skipCount'] ?? p.skipCount,
+                status: pData['status'] == 'left' ? PlayerStatus.left : PlayerStatus.active,
+            );
+          }
+        }
+        return p;
+      }).toList();
+      state = state.copyWith(players: updatedPlayers);
     }
 
+    _lastAppliedEventId = (data['eventCounter'] as int?) ?? 0;
+    
     _startPrefRollListener();
-
-    // Fetch missing events
-    final lastIdPad = _lastAppliedEventId.toString().padLeft(5, '0');
-    final eventsQuery = await _db
-        .ref()
-        .child(FirebasePaths.events(gameType, gameId))
-        .orderByKey()
-        .startAt(lastIdPad)
-        .once();
-
-    if (eventsQuery.snapshot.exists) {
-      final eventsData = Map<dynamic, dynamic>.from(
-        eventsQuery.snapshot.value as Map,
-      );
-      final sortedKeys = eventsData.keys.cast<String>().toList()..sort();
-
-      for (var key in sortedKeys) {
-        if (key == lastIdPad && _lastAppliedEventId != 0) continue;
-
-        final eventMap = Map<String, dynamic>.from(eventsData[key]);
-        final event = GameEvent.fromJson(eventMap);
-        await _applyEventLocally(event, isInitialSync: true);
-        _lastAppliedEventId = int.parse(key);
-      }
-    }
 
     // Now start listening for new events
     if (eventProvider is FirebaseEventProvider) {
