@@ -77,8 +77,17 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
 
-        // Detect "Waiting for Result" state
-        if (state.isWaitingForResult && !_isWaitingForResult) {
+        final prevState = previous?.value;
+
+        bool startedWaiting =
+            state.isWaitingForResult && (prevState?.isWaitingForResult != true);
+        bool stoppedWaiting =
+            !state.isWaitingForResult && (prevState?.isWaitingForResult == true);
+        bool suddenRoll = state.isRolling &&
+            (prevState?.isRolling != true) &&
+            !state.isWaitingForResult;
+
+        if (startedWaiting) {
           setState(() {
             _isWaitingForResult = true;
             _isAnimating = true;
@@ -90,12 +99,10 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
           );
           _controller.repeat();
           _startSlowdownTimer();
-        }
-
-        // Detect Transition from "Waiting" to "Landing"
-        if (!state.isWaitingForResult && _isWaitingForResult) {
+        } else if (stoppedWaiting) {
           setState(() {
             _isWaitingForResult = false;
+            _isAnimating = true;
           });
           _controller.duration = const Duration(milliseconds: 450);
           _controller.forward(from: 0).then((_) {
@@ -106,13 +113,12 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
               _controller.reset();
             }
           });
-        }
-
-        // Fallback for non-multiplayer or sudden state changes
-        if (state.isRolling && !state.isWaitingForResult && !_isAnimating) {
+        } else if (suddenRoll) {
           setState(() {
+            _isWaitingForResult = false;
             _isAnimating = true;
           });
+          _controller.duration = const Duration(milliseconds: 450);
           _controller.forward(from: 0).then((_) {
             if (mounted) {
               setState(() {

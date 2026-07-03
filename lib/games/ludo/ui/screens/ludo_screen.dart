@@ -137,6 +137,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
         _showExitDialog();
       },
       child: const AppBackground(
+        showParticles: false,
         child: Scaffold(
           backgroundColor: Colors.transparent,
           appBar: _GameAppBar(),
