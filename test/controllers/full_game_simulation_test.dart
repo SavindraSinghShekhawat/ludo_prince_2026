@@ -28,14 +28,14 @@ void main() {
             slot: PlayerSlot.slot1,
             name: "Player 1",
             type: PlayerType.localBot,
-            sixPity: 2,
+            sixPity: 0,
             tokens: List.generate(4, (i) => Token(id: i, slot: PlayerSlot.slot1, state: TokenState.home, position: 0)),
           ),
           Player(
             slot: PlayerSlot.slot3,
             name: "Player 2",
             type: PlayerType.localBot,
-            sixPity: 2,
+            sixPity: 0,
             tokens: List.generate(4, (i) => Token(id: i, slot: PlayerSlot.slot3, state: TokenState.home, position: 0)),
           ),
         ],
@@ -56,7 +56,14 @@ void main() {
 
         // A. Roll the dice
         final seed = LudoController.generateRandomSeed();
-        final diceValue = LudoController.generatePRDDice(seed, currentPlayer.sixPity);
+        final isBonus = state.consecutiveSixes > 0 || state.lastAction == GameAction.capture;
+        final needsPity = LudoController.playerNeedsBasePity(currentPlayer);
+        final diceValue = LudoController.generatePRDDice(
+          seed,
+          currentPlayer.sixPity,
+          isBonusRoll: isBonus,
+          needsBasePity: needsPity,
+        );
         totalRolls++;
 
         final rollResult = engine.rollDice(state, diceValue);
@@ -127,7 +134,7 @@ void main() {
           slot: slot,
           name: slot.name.toUpperCase(),
           type: PlayerType.localBot,
-          sixPity: 2,
+          sixPity: 0,
           tokens: List.generate(4, (i) => Token(id: i, slot: slot, state: TokenState.home, position: 0)),
         )).toList(),
       );
@@ -142,7 +149,14 @@ void main() {
         final currentPlayer = state.players.firstWhere((p) => p.slot == state.currentTurn);
 
         final seed = LudoController.generateRandomSeed();
-        final diceValue = LudoController.generatePRDDice(seed, currentPlayer.sixPity);
+        final isBonus = state.consecutiveSixes > 0 || state.lastAction == GameAction.capture;
+        final needsPity = LudoController.playerNeedsBasePity(currentPlayer);
+        final diceValue = LudoController.generatePRDDice(
+          seed,
+          currentPlayer.sixPity,
+          isBonusRoll: isBonus,
+          needsBasePity: needsPity,
+        );
         totalRolls++;
 
         final rollResult = engine.rollDice(state, diceValue);

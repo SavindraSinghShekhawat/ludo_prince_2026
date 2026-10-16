@@ -66,7 +66,7 @@ void main() {
             'uid': 'userA',
             'name': 'HostPlayer',
             'skipCount': 0,
-            'sixPity': 2,
+            'sixPity': 0,
             'tokens': [
               for (int i = 0; i < 4; i++)
                 {'id': i, 'slot': 'slot1', 'position': 0, 'state': 'home'}
@@ -76,7 +76,7 @@ void main() {
             'uid': 'userB',
             'name': 'FriendPlayer',
             'skipCount': 0,
-            'sixPity': 2,
+            'sixPity': 0,
             'tokens': [
               for (int i = 0; i < 4; i++)
                 {'id': i, 'slot': 'slot3', 'position': 0, 'state': 'home'}

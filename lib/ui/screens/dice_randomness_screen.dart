@@ -13,7 +13,7 @@ class DiceRandomnessScreen extends StatefulWidget {
 
 class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
   final Map<int, int> _distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
-  int _currentPity = 2;
+  int _currentPity = 0;
 
   int _totalRolls = 0;
   bool _isRunning = false;
@@ -24,7 +24,7 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
     setState(() {
       _isRunning = true;
       _totalRolls = 0;
-      _currentPity = 2;
+      _currentPity = 0;
       for (var i = 1; i <= 6; i++) {
         _distribution[i] = 0;
       }

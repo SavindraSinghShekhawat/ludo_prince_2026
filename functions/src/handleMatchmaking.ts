@@ -124,7 +124,7 @@ export const handleMatchmaking = onValueCreated(
           joinedAt: ServerValue.TIMESTAMP,
           status: "active",
           skipCount: 0,
-          sixPity: 2,
+          sixPity: 0,
           tokens: [
             { id: 0, slot, position: 0, state: "home" },
             { id: 1, slot, position: 0, state: "home" },

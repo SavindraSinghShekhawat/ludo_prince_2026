@@ -15,25 +15,49 @@ function randomInt(min: number, max: number) {
   return val;
 }
 
-const CHANCES_FOR_SIX = [0.00, 0.02, 0.05, 0.133077, 0.21, 0.34, 0.55, 0.82, 1.00];
+function playerNeedsBasePity(player: PlayerEntry): boolean {
+  const tokens = player.tokens || [];
+  const hasTokensInBase = tokens.some((t: any) => t.state === "home");
+  if (!hasTokensInBase) return false;
+
+  // If player has any active token on the main board track, they are actively playing
+  const hasTokensOnBoard = tokens.some((t: any) => t.state === "board");
+  if (hasTokensOnBoard) return false;
+
+  // If all active tokens are in homeStretch, check if any can still advance
+  const hasMovableHomeStretch = tokens.some(
+    (t: any) => t.state === "homeStretch" && t.position < 55
+  );
+  if (hasMovableHomeStretch) return false;
+
+  // Player has 0 active board tokens and no movable home stretch tokens.
+  // They are genuinely stranded and need a 6 to bring out a piece.
+  return true;
+}
 
 function generatePRDDice(
   seed: number,
   pity: number,
   isBonusRoll: boolean = false,
-  hasTokensInBase: boolean = true
+  needsBasePity: boolean = false
 ): number {
-  if (isBonusRoll || !hasTokensInBase) {
+  if (isBonusRoll || !needsBasePity) {
     return (seed % 6) + 1;
   }
-  const safePity = Math.max(0, Math.min(pity, CHANCES_FOR_SIX.length - 1));
-  const chanceOfSix = CHANCES_FOR_SIX[safePity];
-  const threshold = Math.floor(chanceOfSix * 10000000);
 
-  if (seed < threshold) {
-    return 6;
+  // Emergency Airbag Base-Exit Curve:
+  // Turns 1..6 (pity 0..5): Pure natural 1/6 luck (~66.5% exit naturally)
+  // Turn 7 (pity 6): 25% assist
+  // Turn 8 (pity 7): 50% assist
+  // Turn 9+ (pity >= 8): 100% guaranteed safety ceiling
+  if (pity < 6) {
+    return (seed % 6) + 1;
+  } else if (pity === 6) {
+    return (seed % 100 < 25) ? 6 : (seed % 5) + 1;
+  } else if (pity === 7) {
+    return (seed % 100 < 50) ? 6 : (seed % 5) + 1;
   } else {
-    return (seed % 5) + 1;
+    return 6;
   }
 }
 
@@ -139,15 +163,14 @@ export const handleGameAction = onValueCreated(
             return game;
           }
 
-          const pityCount = players[currentTurn].sixPity ?? 2;
+          const pityCount = players[currentTurn].sixPity ?? 0;
           const seed = game.prefetchedSeed ?? randomInt(0, 10000000);
           const isBonusRoll = (game.consecutiveSixes ?? 0) > 0 || game.lastAction === "capture";
-          const currentTokens = players[currentTurn]?.tokens ?? [];
-          const hasTokensInBase = currentTokens.length === 0 || currentTokens.some((t: any) => t.state === "home");
+          const needsBasePity = playerNeedsBasePity(players[currentTurn]);
 
           let dice: number;
           if (gameType === "ludo") {
-            dice = generatePRDDice(seed, pityCount, isBonusRoll, hasTokensInBase);
+            dice = generatePRDDice(seed, pityCount, isBonusRoll, needsBasePity);
           } else {
             dice = (seed % 6) + 1; // Generic roll
           }

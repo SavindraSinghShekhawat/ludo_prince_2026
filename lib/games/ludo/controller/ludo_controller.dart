@@ -236,40 +236,60 @@ class LudoController implements GameController {
     }
   }
 
-  static const List<double> _prdChances = [
-    0.00,
-    0.02,
-    0.05,
-    0.133077,
-    0.21,
-    0.34,
-    0.55,
-    0.82,
-    1.00
-  ];
+  /// Determines if a player is stranded and genuinely needs base-exit pity.
+  /// Edge cases handled:
+  /// 1. Start of game (all tokens in base) -> true (needs pity)
+  /// 2. Finished tokens + tokens in base, but 0 on the board -> true (needs pity)
+  /// 3. Tokens on board but all are blocked in home stretch (pos >= 55) -> true (needs pity)
+  /// 4. Tokens active on main board (pos 0..50) -> false (100% fair dice)
+  /// 5. All tokens out of base -> false (100% fair dice)
+  static bool playerNeedsBasePity(Player player) {
+    final hasTokensInBase =
+        player.tokens.any((t) => t.state == TokenState.home);
+    if (!hasTokensInBase) return false;
+
+    // If player has any active token on the main board track, they are in active play
+    final hasTokensOnBoard =
+        player.tokens.any((t) => t.state == TokenState.board);
+    if (hasTokensOnBoard) return false;
+
+    // If all active tokens are in homeStretch, check if any can still advance
+    final hasMovableHomeStretch = player.tokens.any(
+      (t) => t.state == TokenState.homeStretch && t.position < 55,
+    );
+    if (hasMovableHomeStretch) return false;
+
+    // Player has 0 active board tokens and no movable home stretch tokens.
+    // They are genuinely stranded and need a 6 to bring out a piece.
+    return true;
+  }
 
   static int generatePRDDice(
     int seed,
     int pity, {
     bool isBonusRoll = false,
-    bool hasTokensInBase = true,
+    bool needsBasePity = false,
   }) {
-    // If on a bonus roll (after a 6 or capture), or if player already has all
-    // tokens active on the board, use a pure, unbiased 1-in-6 die to guarantee fairness.
-    if (isBonusRoll || !hasTokensInBase) {
+    // Pity is applied ONLY when a player is stranded and needs to exit base.
+    // In active board play or on any bonus roll (consecutive 6 / capture),
+    // the die is 100% pure, mathematically fair 1-in-6 ((seed % 6) + 1).
+    if (isBonusRoll || !needsBasePity) {
       return (seed % 6) + 1;
     }
 
-    if (pity < 0) pity = 0;
-    if (pity >= _prdChances.length) pity = _prdChances.length - 1;
-
-    double chanceOfSix = _prdChances[pity];
-    int threshold = (chanceOfSix * 10000000).toInt();
-
-    if (seed < threshold) {
-      return 6;
+    // Emergency Airbag Base-Exit Curve:
+    // Turns 1..6 (pity 0..5): Pure natural 1/6 luck (~66.5% exit naturally)
+    // Turn 7 (pity 6): 25% assist
+    // Turn 8 (pity 7): 50% assist
+    // Turn 9+ (pity >= 8): 100% guaranteed safety ceiling
+    if (pity < 6) {
+      return (seed % 6) + 1;
+    } else if (pity == 6) {
+      return (seed % 100 < 25) ? 6 : (seed % 5) + 1;
+    } else if (pity == 7) {
+      return (seed % 100 < 50) ? 6 : (seed % 5) + 1;
     } else {
-      return (seed % 5) + 1;
+      return 6;
     }
   }
 
@@ -292,8 +312,7 @@ class LudoController implements GameController {
         _state.players.firstWhere((p) => p.slot == _state.currentTurn);
     final isBonusRoll =
         _state.consecutiveSixes > 0 || _state.lastAction == GameAction.capture;
-    final hasTokensInBase =
-        currentPlayer.tokens.any((t) => t.state == TokenState.home);
+    final needsPity = playerNeedsBasePity(currentPlayer);
 
     if (prefetchedSeed != null && state.gameType == GameType.online) {
       // OPTIMISTIC PREFETCH FLOW
@@ -301,7 +320,7 @@ class LudoController implements GameController {
         prefetchedSeed,
         currentPlayer.sixPity,
         isBonusRoll: isBonusRoll,
-        hasTokensInBase: hasTokensInBase,
+        needsBasePity: needsPity,
       );
 
       _state = _state.copyWith(
@@ -336,7 +355,7 @@ class LudoController implements GameController {
           generateRandomSeed(),
           currentPlayer.sixPity,
           isBonusRoll: isBonusRoll,
-          hasTokensInBase: hasTokensInBase,
+          needsBasePity: needsPity,
         );
       }
 

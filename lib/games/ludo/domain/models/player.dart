@@ -22,7 +22,7 @@ class Player {
     this.type = PlayerType.localHuman,
     this.status = PlayerStatus.active,
     this.skipCount = 0,
-    this.sixPity = 2,
+    this.sixPity = 0,
     required this.tokens,
   }) : uid = uid ??
             "local_${slot.name}_${DateTime.now().microsecondsSinceEpoch}";
@@ -94,7 +94,7 @@ class Player {
         (e) => e.name == (json["status"] ?? "active"),
       ),
       skipCount: json["skipCount"] ?? 0,
-      sixPity: json["sixPity"] ?? 2,
+      sixPity: json["sixPity"] ?? 0,
       tokens: (json["tokens"] as List).map((e) {
         final tokenMap = Map<String, dynamic>.from(e as Map);
         tokenMap['slot'] ??= json["slot"];

@@ -63,7 +63,7 @@ class MatchmakingService {
             'uid': user.uid,
             'name': effectiveName,
             'skipCount': 0,
-            'sixPity': 2,
+            'sixPity': 0,
             'connected': true,
             'joinedAt': ServerValue.timestamp,
             'lastActive': ServerValue.timestamp,
@@ -149,7 +149,7 @@ class MatchmakingService {
         'name': nameToUse,
         'skipCount': 0,
         'missedTurns': 0,
-        'sixPity': 2,
+        'sixPity': 0,
         'connected': true,
         'joinedAt': ServerValue.timestamp,
         'lastActive': ServerValue.timestamp,
@@ -251,7 +251,7 @@ class MatchmakingService {
         ];
       }
       if (pData['sixPity'] == null) {
-        updates['players/$slot/sixPity'] = 2;
+        updates['players/$slot/sixPity'] = 0;
       }
       if (pData['skipCount'] == null) {
         updates['players/$slot/skipCount'] = 0;
