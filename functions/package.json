@@ -9,7 +9,10 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "node test/online_game_e2e.test.mjs",
+    "test:e2e": "firebase emulators:exec --only database,firestore,functions --log-verbosity QUIET \"node test/online_game_e2e.test.mjs\"",
+    "test:verbose": "firebase emulators:exec --only database,firestore,functions \"node test/online_game_e2e.test.mjs --verbose\""
   },
   "engines": {
     "node": "24"

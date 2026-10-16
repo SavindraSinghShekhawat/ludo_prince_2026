@@ -60,14 +60,16 @@ export class LudoEngine {
     tokenId: number,
     dice: number,
     gameMode: string
-  ): { players: Record<string, PlayerEntry>, hasCaptured: boolean } {
+  ): { players: Record<string, PlayerEntry>, hasCaptured: boolean, hasFinished: boolean } {
     
     const newPlayers = JSON.parse(JSON.stringify(players)) as Record<string, PlayerEntry>;
     const player = newPlayers[slot];
-    if (!player || !player.tokens) return { players: newPlayers, hasCaptured: false };
+    if (!player || !player.tokens) return { players: newPlayers, hasCaptured: false, hasFinished: false };
 
     const token = player.tokens.find(t => t.id === tokenId);
-    if (!token) return { players: newPlayers, hasCaptured: false };
+    if (!token) return { players: newPlayers, hasCaptured: false, hasFinished: false };
+
+    const oldState = token.state;
 
     // Move token out of home
     if (token.state === "home" && dice === 6) {
@@ -82,6 +84,7 @@ export class LudoEngine {
       }
     }
 
+    const hasFinished = token.state === "finished" && oldState !== "finished";
     let hasCaptured = false;
 
     // Check Capture
@@ -116,6 +119,6 @@ export class LudoEngine {
       }
     }
 
-    return { players: newPlayers, hasCaptured };
+    return { players: newPlayers, hasCaptured, hasFinished };
   }
 }

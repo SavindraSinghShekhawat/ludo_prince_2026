@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -62,10 +63,15 @@ class MatchmakingService {
             'uid': user.uid,
             'name': effectiveName,
             'skipCount': 0,
+            'sixPity': 2,
             'connected': true,
             'joinedAt': ServerValue.timestamp,
             'lastActive': ServerValue.timestamp,
             'status': 'active',
+            'tokens': [
+              for (int i = 0; i < 4; i++)
+                {'id': i, 'slot': 'slot1', 'position': 0, 'state': 'home'}
+            ],
           },
         },
       }).timeout(const Duration(seconds: 10));
@@ -141,11 +147,17 @@ class MatchmakingService {
       players[availableSlot] = {
         'uid': user.uid,
         'name': nameToUse,
+        'skipCount': 0,
         'missedTurns': 0,
+        'sixPity': 2,
         'connected': true,
         'joinedAt': ServerValue.timestamp,
         'lastActive': ServerValue.timestamp,
         'status': 'active',
+        'tokens': [
+          for (int i = 0; i < 4; i++)
+            {'id': i, 'slot': availableSlot, 'position': 0, 'state': 'home'}
+        ],
       };
 
       game['players'] = players;
@@ -187,21 +199,70 @@ class MatchmakingService {
     final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
     final gameSnap = await gameRef.get();
 
-    if (gameSnap.exists) {
-      final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
-      final joiningCode = gameData['joiningCode'];
-      if (joiningCode != null) {
-        await _db
-            .ref()
-            .child(FirebasePaths.privateRoomCode(joiningCode))
-            .remove();
+    if (!gameSnap.exists) {
+      throw Exception("Game not found.");
+    }
+
+    final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
+    final joiningCode = gameData['joiningCode'];
+    if (joiningCode != null) {
+      await _db
+          .ref()
+          .child(FirebasePaths.privateRoomCode(joiningCode))
+          .remove();
+    }
+
+    final rawPlayers = Map<String, dynamic>.from(gameData['players'] ?? {});
+    final maxPlayers =
+        (gameData['maxPlayers'] as num?)?.toInt() ?? rawPlayers.length;
+    final gameModeStr = gameData['gameMode'] as String? ?? 'classic';
+
+    // Establish turn order based on valid slots for this player count
+    final orderedSlots = PlayerSlotExtension.getSlotsFor(maxPlayers);
+    final turnOrder = <String>[];
+    for (final slotEnum in orderedSlots) {
+      if (rawPlayers.containsKey(slotEnum.name)) {
+        turnOrder.add(slotEnum.name);
+      }
+    }
+    // Fallback if some slots are custom
+    if (turnOrder.isEmpty) {
+      turnOrder.addAll(rawPlayers.keys);
+    }
+
+    final updates = <String, dynamic>{
+      'status': 'playing',
+      'currentTurn': turnOrder.first,
+      'turnNumber': 1,
+      'turnStartedAt': ServerValue.timestamp,
+      'turnOrder': turnOrder,
+      'isDiceRolled': false,
+      'eventCounter': 0,
+      'prefetchedSeed': Random.secure().nextInt(10000000),
+    };
+
+    // Guarantee all players have tokens, sixPity, skipCount, and team assignments
+    for (final slot in rawPlayers.keys) {
+      final pData = Map<String, dynamic>.from(rawPlayers[slot] as Map);
+      if (pData['tokens'] == null) {
+        updates['players/$slot/tokens'] = [
+          for (int i = 0; i < 4; i++)
+            {'id': i, 'slot': slot, 'position': 0, 'state': 'home'}
+        ];
+      }
+      if (pData['sixPity'] == null) {
+        updates['players/$slot/sixPity'] = 2;
+      }
+      if (pData['skipCount'] == null) {
+        updates['players/$slot/skipCount'] = 0;
+      }
+      if (gameModeStr == 'team') {
+        final isTeamA = (slot == 'slot1' || slot == 'slot3');
+        updates['players/$slot/team'] = isTeamA ? 'A' : 'B';
       }
     }
 
-    await gameRef.update({
-      'status': 'playing',
-      'turnStartedAt': ServerValue.timestamp
-    }).timeout(const Duration(seconds: 10));
+    await gameRef.update(updates).timeout(const Duration(seconds: 10));
   }
 
   Future<String?> getGameIdFromCode(String code) async {

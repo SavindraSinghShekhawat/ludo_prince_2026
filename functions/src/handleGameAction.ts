@@ -171,9 +171,13 @@ export const handleGameAction = onValueCreated(
           const eventCounter = (game.eventCounter || 0) + 1;
 
           // Apply move to server authoritative state
+          let hasCaptured = false;
+          let hasFinished = false;
           if (game.diceValue) {
             const moveResult = LudoEngine.applyMove(players, currentTurn, data.tokenId, game.diceValue, game.gameMode);
             game.players = moveResult.players;
+            hasCaptured = moveResult.hasCaptured;
+            hasFinished = moveResult.hasFinished;
           }
 
           game._latestEvent = {
@@ -184,6 +188,56 @@ export const handleGameAction = onValueCreated(
             timestamp: ServerValue.TIMESTAMP,
           } as MoveEvent;
           game.eventCounter = eventCounter;
+
+          // Check if this player finished all tokens
+          const updatedPlayer = game.players[currentTurn];
+          const allTokensFinished = updatedPlayer?.tokens?.every((t) => t.state === "finished");
+          if (allTokensFinished) {
+            game.winners = game.winners || [];
+            if (!game.winners.includes(currentTurn)) {
+              game.winners.push(currentTurn);
+            }
+          }
+
+          // In Ludo, extra turn is granted on rolling a 6, capturing an opponent, or finishing a token
+          const isExtraTurn = (game.diceValue === 6 || hasCaptured || hasFinished) && !allTokensFinished;
+
+          if (isExtraTurn) {
+            AppLogger.debug(`[handleGameAction] EXTRA TURN granted for ${currentTurn} (6=${game.diceValue === 6}, capture=${hasCaptured}, finish=${hasFinished})`);
+            game.turnStartedAt = ServerValue.TIMESTAMP;
+          } else {
+            // Find next player in turnOrder
+            const turnOrder = game.turnOrder || ["slot1", "slot4", "slot3", "slot2"];
+            const winners = game.winners || [];
+            let idx = turnOrder.indexOf(currentTurn);
+            let nextTurn = currentTurn;
+
+            for (let i = 0; i < turnOrder.length; i++) {
+              idx = (idx + 1) % turnOrder.length;
+              const candidate = turnOrder[idx];
+              if (winners.includes(candidate)) continue;
+              if (!players[candidate] || players[candidate].status === "left") continue;
+              nextTurn = candidate;
+              break;
+            }
+
+            AppLogger.debug(`[handleGameAction] Turn advancing from ${currentTurn} to ${nextTurn}`);
+            game.currentTurn = nextTurn;
+            game.turnStartedAt = ServerValue.TIMESTAMP;
+            game.turnNumber = (game.turnNumber || 0) + 1;
+          }
+
+          // Check if game is finished (all or all but 1 player finished/left)
+          const winners = game.winners || [];
+          const activeRemaining = Object.entries(game.players)
+            .filter(([slot, p]) => (p as PlayerEntry).status === "active" && !winners.includes(slot));
+          if (activeRemaining.length <= (game.gameMode === "team" ? 0 : 1)) {
+            game.status = "finished";
+            if (activeRemaining.length === 1 && !winners.includes(activeRemaining[0][0])) {
+              winners.push(activeRemaining[0][0]);
+              game.winners = winners;
+            }
+          }
 
           game.isDiceRolled = false;
           game.prefetchedSeed = randomInt(0, 10000000);
