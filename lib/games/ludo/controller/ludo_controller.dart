@@ -248,7 +248,18 @@ class LudoController implements GameController {
     1.00
   ];
 
-  static int generatePRDDice(int seed, int pity) {
+  static int generatePRDDice(
+    int seed,
+    int pity, {
+    bool isBonusRoll = false,
+    bool hasTokensInBase = true,
+  }) {
+    // If on a bonus roll (after a 6 or capture), or if player already has all
+    // tokens active on the board, use a pure, unbiased 1-in-6 die to guarantee fairness.
+    if (isBonusRoll || !hasTokensInBase) {
+      return (seed % 6) + 1;
+    }
+
     if (pity < 0) pity = 0;
     if (pity >= _prdChances.length) pity = _prdChances.length - 1;
 
@@ -277,12 +288,21 @@ class LudoController implements GameController {
     }
 
     final prefetchedSeed = _state.prefetchedSeed;
+    final currentPlayer =
+        _state.players.firstWhere((p) => p.slot == _state.currentTurn);
+    final isBonusRoll =
+        _state.consecutiveSixes > 0 || _state.lastAction == GameAction.capture;
+    final hasTokensInBase =
+        currentPlayer.tokens.any((t) => t.state == TokenState.home);
 
     if (prefetchedSeed != null && state.gameType == GameType.online) {
       // OPTIMISTIC PREFETCH FLOW
-      final currentPlayer =
-          _state.players.firstWhere((p) => p.slot == _state.currentTurn);
-      final diceValue = generatePRDDice(prefetchedSeed, currentPlayer.sixPity);
+      final diceValue = generatePRDDice(
+        prefetchedSeed,
+        currentPlayer.sixPity,
+        isBonusRoll: isBonusRoll,
+        hasTokensInBase: hasTokensInBase,
+      );
 
       _state = _state.copyWith(
         isRolling: true,
@@ -312,10 +332,12 @@ class LudoController implements GameController {
 
       int? localDice;
       if (state.gameType == GameType.local) {
-        final currentPlayer =
-            _state.players.firstWhere((p) => p.slot == _state.currentTurn);
-        localDice =
-            generatePRDDice(generateRandomSeed(), currentPlayer.sixPity);
+        localDice = generatePRDDice(
+          generateRandomSeed(),
+          currentPlayer.sixPity,
+          isBonusRoll: isBonusRoll,
+          hasTokensInBase: hasTokensInBase,
+        );
       }
 
       eventProvider.onRollRequested(diceValue: localDice);

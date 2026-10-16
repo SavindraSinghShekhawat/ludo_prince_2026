@@ -21,6 +21,9 @@ ios/fastlane/test_output
 
 # Play Store API key (SECRET)
 android/fastlane/play-store-key.json
+.secrets/
+*.p8
+
 
 # Env files
 .env

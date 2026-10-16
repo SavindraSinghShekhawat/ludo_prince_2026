@@ -17,7 +17,15 @@ function randomInt(min: number, max: number) {
 
 const CHANCES_FOR_SIX = [0.00, 0.02, 0.05, 0.133077, 0.21, 0.34, 0.55, 0.82, 1.00];
 
-function generatePRDDice(seed: number, pity: number): number {
+function generatePRDDice(
+  seed: number,
+  pity: number,
+  isBonusRoll: boolean = false,
+  hasTokensInBase: boolean = true
+): number {
+  if (isBonusRoll || !hasTokensInBase) {
+    return (seed % 6) + 1;
+  }
   const safePity = Math.max(0, Math.min(pity, CHANCES_FOR_SIX.length - 1));
   const chanceOfSix = CHANCES_FOR_SIX[safePity];
   const threshold = Math.floor(chanceOfSix * 10000000);
@@ -133,10 +141,13 @@ export const handleGameAction = onValueCreated(
 
           const pityCount = players[currentTurn].sixPity ?? 2;
           const seed = game.prefetchedSeed ?? randomInt(0, 10000000);
+          const isBonusRoll = (game.consecutiveSixes ?? 0) > 0 || game.lastAction === "capture";
+          const currentTokens = players[currentTurn]?.tokens ?? [];
+          const hasTokensInBase = currentTokens.length === 0 || currentTokens.some((t: any) => t.state === "home");
 
           let dice: number;
           if (gameType === "ludo") {
-            dice = generatePRDDice(seed, pityCount);
+            dice = generatePRDDice(seed, pityCount, isBonusRoll, hasTokensInBase);
           } else {
             dice = (seed % 6) + 1; // Generic roll
           }
@@ -144,8 +155,10 @@ export const handleGameAction = onValueCreated(
           if (gameType === "ludo") {
             if (dice === 6) {
               players[currentTurn].sixPity = 0;
+              game.consecutiveSixes = (game.consecutiveSixes ?? 0) + 1;
             } else {
               players[currentTurn].sixPity = pityCount + 1;
+              game.consecutiveSixes = 0;
             }
           }
 
@@ -207,9 +220,14 @@ export const handleGameAction = onValueCreated(
               `[handleGameAction] EXTRA TURN granted for ${currentTurn} ` +
               `(6=${game.diceValue === 6}, capture=${hasCaptured}, finish=${hasFinished})`
             );
+            if (hasCaptured) {
+              game.lastAction = "capture";
+            }
             game.turnStartedAt = ServerValue.TIMESTAMP;
           } else {
             // Find next player in turnOrder
+            game.consecutiveSixes = 0;
+            game.lastAction = "move";
             const turnOrder = game.turnOrder || ["slot1", "slot4", "slot3", "slot2"];
             const winners = game.winners || [];
             let idx = turnOrder.indexOf(currentTurn);

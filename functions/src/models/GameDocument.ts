@@ -13,6 +13,7 @@ export interface GameDocument {
   isDiceRolled?: boolean;
   prefetchedSeed?: number;
   consecutiveSixes?: number;
+  lastAction?: string;
   winners?: string[];
   eventCounter: number;
   players: Record<string, PlayerEntry>;

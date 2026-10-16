@@ -171,13 +171,16 @@ class BotAI {
       int attackersAfter = _countAttackersInRange(simulatedToken, state);
 
       if (attackersBefore > 0) {
-        score += 3800;
-
         if (attackersAfter == 0) {
-          score += 500;
+          score += 4200; // Successfully escaped danger or reached safe spot
+        } else if (attackersAfter < attackersBefore) {
+          score += 2200; // Significantly reduced incoming threats
+        } else {
+          score += 500; // Moved but still in strike range
         }
       } else if (attackersAfter > attackersBefore) {
-        score -= 160 * (attackersAfter - attackersBefore);
+        // Discourage reckless steps directly into an opponent's strike range
+        score -= 900 * (attackersAfter - attackersBefore);
       }
 
       // Offensive evaluation

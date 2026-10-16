@@ -2,6 +2,27 @@ default_platform(:ios)
 
 platform :ios do
 
+  before_all do
+    key_path = File.expand_path("../../.secrets/fastlane/ios/AuthKey_PSUDP28BN6.p8", __dir__)
+    unless File.exist?(key_path)
+      key_path = "/Volumes/Vault/Personal/workspace/evlome/.secrets/fastlane/ios/AuthKey_PSUDP28BN6.p8"
+    end
+
+    app_store_connect_api_key(
+      key_id: "PSUDP28BN6",
+      issuer_id: "de606a4c-f4e8-4a3b-9406-de2c3d3cc284",
+      key_filepath: key_path,
+      in_house: false
+    )
+  end
+
+  desc "Test App Store Connect API Key Authentication"
+  lane :test_auth do
+    app_store_build_number(
+      app_identifier: "com.paisphere.ludoprince"
+    )
+  end
+
   desc "Build iOS app"
   lane :build do
     sh("flutter clean")
