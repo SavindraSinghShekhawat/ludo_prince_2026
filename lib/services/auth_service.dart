@@ -20,6 +20,14 @@ class AuthService {
           await _googleSignIn.authenticate();
 
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      if (googleAuth.idToken == null) {
+        throw FirebaseAuthException(
+          code: 'invalid-credential',
+          message:
+              'Google Sign-In failed to retrieve an ID token from authentication provider.',
+        );
+      }
+
       final OAuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );

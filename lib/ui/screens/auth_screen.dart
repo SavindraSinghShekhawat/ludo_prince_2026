@@ -24,12 +24,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       final result = await signInMethod();
       if (result == null) {
-        if (mounted) {
-          _showError(
-            'Sign-in cancelled',
-            debugDetails: 'User cancelled the sign-in flow',
-          );
-        }
+        // User voluntarily dismissed or cancelled the account picker
         return;
       }
 

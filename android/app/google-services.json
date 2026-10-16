@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "264745171932",
+    "firebase_url": "https://ludo-prince-cf74a-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "ludo-prince-cf74a",
     "storage_bucket": "ludo-prince-cf74a.firebasestorage.app"
   },
@@ -12,7 +13,36 @@
           "package_name": "com.paisphere.ludoprince"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "264745171932-b5pumn99a1vtdunbi42edeav5e6o4g2t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paisphere.ludoprince",
+            "certificate_hash": "b6fdff512ae5a7174ae20141c9d9875177c55722"
+          }
+        },
+        {
+          "client_id": "264745171932-eecoauuublig1qt3g1lkcmil11e4qqks.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paisphere.ludoprince",
+            "certificate_hash": "1b92ff4f165dd7d9ef4b93c78c40de786e7aa7e0"
+          }
+        },
+        {
+          "client_id": "264745171932-vqogv7dkn3m509edc77fnmvb97j6okgb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paisphere.ludoprince",
+            "certificate_hash": "418fd8362bac3abf9f68b17330643e02bff7a807"
+          }
+        },
+        {
+          "client_id": "264745171932-8i2apv189ojnm1i4eee4ghe3s18hs9b9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMJKZAgHJFnx7BhuCkYgt_dY5tX5wO454"
@@ -20,7 +50,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264745171932-8i2apv189ojnm1i4eee4ghe3s18hs9b9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "264745171932-8cb0f3leuo7lhheqder6attdgmoekp31.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.paisphere.ludoprince"
+              }
+            }
+          ]
         }
       }
     }

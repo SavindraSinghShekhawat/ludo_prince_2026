@@ -28,7 +28,10 @@ class AppInitializer {
     await firebaseService.initialize();
 
     try {
-      await GoogleSignIn.instance.initialize();
+      await GoogleSignIn.instance.initialize(
+        serverClientId:
+            '264745171932-8i2apv189ojnm1i4eee4ghe3s18hs9b9.apps.googleusercontent.com',
+      );
     } catch (e) {
       AppLogger.debug('GoogleSignIn init deferred or offline: $e');
     }
