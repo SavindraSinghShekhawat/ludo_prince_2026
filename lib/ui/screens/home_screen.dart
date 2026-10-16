@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 import 'dart:ui';
@@ -181,76 +182,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
                 clipBehavior: Clip.none,
-                padding: const EdgeInsets.only(
-                  top: 350,
+                padding: EdgeInsets.only(
+                  top: math.max(280.0, math.min(350.0, MediaQuery.of(context).size.height * 0.4)),
                   bottom: 40,
                   left: 24,
                   right: 24,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Primary Action
-                    GlassCard(
-                      title: "BATTLE ONLINE",
-                      subtitle: "Matchmaking & Live Battles",
-                      icon: Icons.public,
-                      accentColor: AppColors.primaryCyan,
-                      isPrimary: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        ScaleFadePageRoute(
-                          page: const LobbyScreen(isQuickMatch: true),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Secondary Actions Grid
-                    Row(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 540),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: GlassCard(
-                            title: "FRIENDS",
-                            subtitle: "Private Room Challenges",
-                            icon: Icons.people,
-                            accentColor: AppColors.imperialJade,
-                            height: 120,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const FriendsScreen(),
-                              ),
+                        // Primary Action
+                        GlassCard(
+                          title: "BATTLE ONLINE",
+                          subtitle: "Matchmaking & Live Battles",
+                          icon: Icons.public,
+                          accentColor: AppColors.primaryCyan,
+                          isPrimary: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            ScaleFadePageRoute(
+                              page: const LobbyScreen(isQuickMatch: true),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: GlassCard(
-                            title: "OFFLINE",
-                            subtitle: "Local & AI Challenges",
-                            icon: Icons.videogame_asset,
-                            accentColor: AppColors.slateIndigo,
-                            height: 120,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LocalSetupScreen(),
+                        const SizedBox(height: 20),
+
+                        // Secondary Actions Grid
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GlassCard(
+                                title: "FRIENDS",
+                                subtitle: "Private Room Challenges",
+                                icon: Icons.people,
+                                accentColor: AppColors.imperialJade,
+                                height: 120,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const FriendsScreen(),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: GlassCard(
+                                title: "OFFLINE",
+                                subtitle: "Local & AI Challenges",
+                                icon: Icons.videogame_asset,
+                                accentColor: AppColors.slateIndigo,
+                                height: 120,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LocalSetupScreen(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+
+                        const SizedBox(height: 48),
+
+                        // Footer Navigation
+                        _buildFooter(context),
+                        const SizedBox(height: 16),
+                        _buildCommunityNote(),
+                        const SizedBox(height: 40),
                       ],
                     ),
-
-                    const SizedBox(height: 48),
-
-                    // Footer Navigation
-                    _buildFooter(context),
-                    const SizedBox(height: 16),
-                    _buildCommunityNote(),
-                    const SizedBox(height: 40),
-                  ],
+                  ),
                 ),
               ),
             ),

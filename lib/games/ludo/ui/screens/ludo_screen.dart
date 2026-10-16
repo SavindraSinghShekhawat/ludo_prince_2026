@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -235,7 +236,11 @@ class _GameBody extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isLandscape = constraints.maxWidth > constraints.maxHeight;
+        // Switch to landscape only when aspect ratio provides ample horizontal width
+        // For near-square unfolded foldables (aspect ratio ~0.85 to 1.2), portrait layout
+        // with adaptive square board sizing provides optimal ergonomics.
+        final aspectRatio = constraints.maxWidth / constraints.maxHeight;
+        final isLandscape = aspectRatio > 1.25;
         if (isLandscape) {
           return const _LandscapeLayout();
         } else {
@@ -253,32 +258,54 @@ class _PortraitLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Reserve guaranteed space for top panels (~95), bottom panels (~95), status message (~45), margins (~25).
+        const reservedVertical = 260.0;
+        final maxBoardHeight = math.max(0.0, constraints.maxHeight - reservedVertical);
+        final maxBoardWidth = constraints.maxWidth - 20.0;
+        final boardSize = math.min(maxBoardWidth, maxBoardHeight).clamp(180.0, constraints.maxWidth);
+
         return Column(
-          children: const [
+          children: [
             Expanded(
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 12.0),
-                  child: _TopPanels(),
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: boardSize + 20),
+                      child: const _TopPanels(),
+                    ),
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.0),
-              child: AspectRatio(aspectRatio: 1, child: _BoardArea()),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: SizedBox(
+                  width: boardSize,
+                  height: boardSize,
+                  child: const _BoardArea(),
+                ),
+              ),
             ),
             Expanded(
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Padding(
-                  padding: EdgeInsets.only(top: 12.0),
-                  child: _BottomPanels(),
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: boardSize + 20),
+                      child: const _BottomPanels(),
+                    ),
+                  ),
                 ),
               ),
             ),
-            _StatusMessage(),
-            SizedBox(height: 10),
+            const _StatusMessage(),
+            const SizedBox(height: 10),
           ],
         );
       },
@@ -293,17 +320,33 @@ class _LandscapeLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final boardSize = constraints.maxHeight;
+        // Reserve horizontal space for side panels (at least 130 each = 260) + margin (20) = 280.
+        const reservedHorizontal = 280.0;
+        final maxBoardWidth = math.max(0.0, constraints.maxWidth - reservedHorizontal);
+        final maxBoardHeight = constraints.maxHeight - 16.0;
+        final boardSize = math.min(maxBoardWidth, maxBoardHeight).clamp(180.0, constraints.maxHeight);
+        final sidePanelWidth = math.max(100.0, (constraints.maxWidth - boardSize) / 2);
 
         return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Expanded(child: _LandscapeSidePanels(isLeft: true)),
             SizedBox(
-              width: boardSize,
-              height: boardSize,
-              child: const _BoardArea(),
+              width: sidePanelWidth,
+              height: constraints.maxHeight,
+              child: const _LandscapeSidePanels(isLeft: true),
             ),
-            const Expanded(child: _LandscapeSidePanels(isLeft: false)),
+            Center(
+              child: SizedBox(
+                width: boardSize,
+                height: boardSize,
+                child: const _BoardArea(),
+              ),
+            ),
+            SizedBox(
+              width: sidePanelWidth,
+              height: constraints.maxHeight,
+              child: const _LandscapeSidePanels(isLeft: false),
+            ),
           ],
         );
       },
@@ -706,7 +749,6 @@ class _LandscapeSidePanels extends ConsumerWidget {
     );
 
     return Container(
-      width: 140,
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

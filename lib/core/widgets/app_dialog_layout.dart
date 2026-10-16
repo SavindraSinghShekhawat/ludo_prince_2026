@@ -67,11 +67,8 @@ class AppDialogLayout extends StatelessWidget {
         glowColor: AppColors.primaryCyan,
         color: AppColors.systemBackground.withValues(alpha: 0.65),
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.of(context).orientation == Orientation.landscape
-                    ? 500
-                    : double.infinity,
+          constraints: const BoxConstraints(
+            maxWidth: 480,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
