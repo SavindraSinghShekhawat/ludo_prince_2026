@@ -1,4 +1,5 @@
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +30,9 @@ class AppInitializer {
 
     try {
       await GoogleSignIn.instance.initialize(
+        clientId: defaultTargetPlatform == TargetPlatform.iOS
+            ? '264745171932-8cb0f3leuo7lhheqder6attdgmoekp31.apps.googleusercontent.com'
+            : null,
         serverClientId:
             '264745171932-8i2apv189ojnm1i4eee4ghe3s18hs9b9.apps.googleusercontent.com',
       );

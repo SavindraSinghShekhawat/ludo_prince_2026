@@ -88,6 +88,10 @@
 				</array>
 			</dict>
 		</array>
+		<key>GIDClientID</key>
+		<string>264745171932-8cb0f3leuo7lhheqder6attdgmoekp31.apps.googleusercontent.com</string>
+		<key>GIDServerClientID</key>
+		<string>264745171932-8i2apv189ojnm1i4eee4ghe3s18hs9b9.apps.googleusercontent.com</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
