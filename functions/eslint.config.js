@@ -4,7 +4,7 @@ const globals = require('globals');
 
 module.exports = tseslint.config(
   {
-    ignores: ["lib/**/*", "generated/**/*", ".eslintrc.js", "eslint.config.js", "coverage/**/*", "**/*.d.ts"]
+    ignores: ["lib/**/*", "generated/**/*", "test/**/*", ".eslintrc.js", "eslint.config.js", "coverage/**/*", "**/*.d.ts"]
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -15,7 +15,7 @@ module.exports = tseslint.config(
         ...globals.es2015
       },
       parserOptions: {
-        project: ["tsconfig.json", "tsconfig.dev.json"],
+        project: ["tsconfig.json"],
         tsconfigRootDir: __dirname,
       }
     },

@@ -134,7 +134,7 @@ export const handleGameAction = onValueCreated(
           const pityCount = players[currentTurn].sixPity ?? 2;
           const seed = game.prefetchedSeed ?? randomInt(0, 10000000);
 
-          let dice = 1;
+          let dice: number;
           if (gameType === "ludo") {
             dice = generatePRDDice(seed, pityCount);
           } else {
@@ -203,7 +203,10 @@ export const handleGameAction = onValueCreated(
           const isExtraTurn = (game.diceValue === 6 || hasCaptured || hasFinished) && !allTokensFinished;
 
           if (isExtraTurn) {
-            AppLogger.debug(`[handleGameAction] EXTRA TURN granted for ${currentTurn} (6=${game.diceValue === 6}, capture=${hasCaptured}, finish=${hasFinished})`);
+            AppLogger.debug(
+              `[handleGameAction] EXTRA TURN granted for ${currentTurn} ` +
+              `(6=${game.diceValue === 6}, capture=${hasCaptured}, finish=${hasFinished})`
+            );
             game.turnStartedAt = ServerValue.TIMESTAMP;
           } else {
             // Find next player in turnOrder

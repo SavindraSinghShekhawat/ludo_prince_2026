@@ -24,7 +24,7 @@ export const handleMatchmaking = onValueCreated(
     const queueRef = admin.database().ref(`matchmaking/${gameType}/${mode}/queue`);
 
     // 1. Get required player count for the mode
-    let requiredPlayers = 0;
+    let requiredPlayers: number;
     // Common Ludo modes
     if (gameType === "ludo") {
       switch (mode) {

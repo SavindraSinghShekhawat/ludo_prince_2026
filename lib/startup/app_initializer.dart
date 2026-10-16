@@ -2,9 +2,11 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/services/presence_service.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 
 /// Handles all one-time app initialisation before [runApp].
 class AppInitializer {
@@ -24,6 +26,12 @@ class AppInitializer {
     );
 
     await firebaseService.initialize();
+
+    try {
+      await GoogleSignIn.instance.initialize();
+    } catch (e) {
+      AppLogger.debug('GoogleSignIn init deferred or offline: $e');
+    }
 
     await FlameAudio.audioCache.loadAll([
       'roll.wav',
