@@ -98,6 +98,8 @@ class AppLogo extends StatelessWidget {
                   'assets/crown.png',
                   width: fontSize * 1.5,
                   height: fontSize * 1.5,
+                  cacheWidth: (fontSize * 4.5).round(),
+                  cacheHeight: (fontSize * 4.5).round(),
                   fit: BoxFit.contain,
                 )
                     .animate(onPlay: (c) => c.repeat(reverse: true))

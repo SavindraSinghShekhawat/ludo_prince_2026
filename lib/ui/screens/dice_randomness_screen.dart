@@ -341,10 +341,40 @@ class _DiceRandomnessScreenState extends State<DiceRandomnessScreen> {
       children: [
         SizedBox(
           width: double.infinity,
-          child: AppButton(
-            text: _isRunning ? 'Stop Simulation' : 'Run Simulation',
-            isPrimary: true,
-            onTap: _isRunning ? _stopSimulation : _runSimulation,
+          child: ElevatedButton(
+            onPressed: _isRunning ? _stopSimulation : _runSimulation,
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFE5E4E2), // Platinum
+                    Color(0xFFB0B4B8), // Silver
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                alignment: Alignment.center,
+                child: Text(
+                  _isRunning ? "STOP SIMULATION" : "RUN SIMULATION",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         if (!_isRunning && _totalRolls >= _targetRolls) ...[

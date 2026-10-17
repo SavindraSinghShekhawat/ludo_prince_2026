@@ -198,6 +198,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           'assets/crown.png',
                           width: 100,
                           height: 100,
+                          cacheWidth: 300,
+                          cacheHeight: 300,
                           fit: BoxFit.contain,
                         )
                             .animate(onPlay: (c) => c.repeat(reverse: true))
