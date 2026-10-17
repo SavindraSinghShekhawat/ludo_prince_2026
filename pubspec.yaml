@@ -130,11 +130,12 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_native_splash:
-  # backgrount gradient #051932 to #35475F 315 degree. #1E40AF
-  color: "#051932"
+  # Neutral Midnight Obsidian Void to match AppColors.systemBackground / AppBackground
+  color: "#090A0F"
   image: "assets/icon_foreground_padded.png"
   android_12:
-    color: "#051932"
+    color: "#090A0F"
     image: "assets/icon_foreground_padded.png"
   android: true
   ios: true
+
