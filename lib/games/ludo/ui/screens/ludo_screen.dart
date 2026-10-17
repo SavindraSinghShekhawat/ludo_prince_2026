@@ -8,6 +8,8 @@ import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/robot_icon.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import '../../domain/engine/game_engine.dart';
+import '../../domain/models/game_rules.dart';
 import '../../domain/models/game_state.dart';
 import '../../domain/models/token.dart';
 import '../../domain/models/board_path.dart';
@@ -175,7 +177,10 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onPressed: () {
             AppDialogLayout.show(
               context: context,
-              child: const LudoRulesDialog(),
+              child: LudoRulesDialog(
+                rules: ref.read(gameStreamProvider).value?.rules ??
+                    const GameRules(),
+              ),
             );
           },
           tooltip: 'Game Rules',
@@ -425,11 +430,11 @@ class _BoardInteractionLayer extends ConsumerWidget {
         if (gameState == null || !gameState.isDiceRolled) return;
 
         bool isMoveValid(Token t, GameState state) {
-          if (t.state == TokenState.home) {
-            return state.diceValue == 6;
-          }
-          if (t.state == TokenState.finished) return false;
-          return t.position + state.diceValue <= 56;
+          return GameEngine().isValidMove(
+            t,
+            state.diceValue,
+            rules: state.rules,
+          );
         }
 
         double tapX = details.localPosition.dx / cellSize;
@@ -547,11 +552,11 @@ class _TokenLayer extends ConsumerWidget {
         final visualToken = token.copyWith(slot: visualSlot);
         bool isMovable = false;
         if (isTurn && isDiceRolled) {
-          if (token.state == TokenState.home) {
-            isMovable = diceValue == 6;
-          } else if (token.state != TokenState.finished) {
-            isMovable = token.position + diceValue <= 56;
-          }
+          isMovable = GameEngine().isValidMove(
+            token,
+            diceValue,
+            rules: gameState.rules,
+          );
         }
 
         Offset overlapOffset = Offset.zero;

@@ -1,4 +1,5 @@
 import 'package:ludo_prince/services/firebase_service.dart';
+import 'game_rules.dart';
 import 'player.dart';
 import 'token.dart';
 
@@ -14,6 +15,7 @@ class GameState {
   final List<PlayerSlot> turnOrder;
   final PlayerSlot currentTurn;
   final GameMode gameMode;
+  final GameRules rules;
   final int diceValue;
   final bool isDiceRolled;
   final bool isRolling;
@@ -40,6 +42,7 @@ class GameState {
     required this.turnOrder,
     required this.currentTurn,
     this.gameMode = GameMode.classic,
+    this.rules = const GameRules(),
     this.diceValue = 1,
     this.isDiceRolled = false,
     this.isRolling = false,
@@ -61,6 +64,7 @@ class GameState {
     List<PlayerSlot>? turnOrder,
     PlayerSlot? currentTurn,
     GameMode? gameMode,
+    GameRules? rules,
     int? diceValue,
     bool? isDiceRolled,
     bool? isRolling,
@@ -81,6 +85,7 @@ class GameState {
       turnOrder: turnOrder ?? this.turnOrder,
       currentTurn: currentTurn ?? this.currentTurn,
       gameMode: gameMode ?? this.gameMode,
+      rules: rules ?? this.rules,
       diceValue: diceValue ?? this.diceValue,
       isDiceRolled: isDiceRolled ?? this.isDiceRolled,
       isRolling: isRolling ?? this.isRolling,
@@ -103,6 +108,7 @@ class GameState {
         "turnOrder": turnOrder.map((e) => e.name).toList(),
         "currentTurn": currentTurn.name,
         "gameMode": gameMode.name,
+        "rules": rules.toJson(),
         "diceValue": diceValue,
         "isDiceRolled": isDiceRolled,
         "isRolling": isRolling,
@@ -132,6 +138,9 @@ class GameState {
       gameMode: GameMode.values.firstWhere(
         (e) => e.name == (json["gameMode"] ?? GameMode.classic.name),
       ),
+      rules: json["rules"] != null
+          ? GameRules.fromJson(Map<String, dynamic>.from(json["rules"]))
+          : const GameRules(),
       diceValue: json["diceValue"],
       isDiceRolled: json["isDiceRolled"],
       isRolling: json["isRolling"] ?? false,

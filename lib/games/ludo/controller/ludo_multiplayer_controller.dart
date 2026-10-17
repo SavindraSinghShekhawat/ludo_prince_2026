@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_rules.dart';
 import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
 import 'package:ludo_prince/games/ludo/domain/engine/bot_ai.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
@@ -28,9 +29,16 @@ class LudoMultiplayerController extends LudoController {
     required this.gameId,
     required PlayerSlot super.localPlayerSlot,
     this.gameType = 'ludo',
-  }) : super(eventProvider: FirebaseEventProvider(gameId: gameId)) {
+  }) : super(
+          eventProvider: FirebaseEventProvider(gameId: gameId),
+          rules: const GameRules(),
+        ) {
     // Mark the game as online immediately so LudoGameOverDialog navigates correctly.
-    state = state.copyWith(gameType: GameType.online);
+    // Explicitly enforce standard classic rules for all online multiplayer games.
+    state = state.copyWith(
+      gameType: GameType.online,
+      rules: const GameRules(),
+    );
     socialService.updatePresence(UserStatus.inGame, gameId: gameId);
   }
 
@@ -57,6 +65,7 @@ class LudoMultiplayerController extends LudoController {
     state = state.copyWith(
       gameType: GameType.online,
       gameMode: mode,
+      rules: const GameRules(),
       turnStartedAt: _turnStartedAt,
       turnTimeSeconds: turnTime,
       prefetchedSeed: data['prefetchedSeed'] as int?,

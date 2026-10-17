@@ -21,8 +21,9 @@ class BotAI {
 
     final dice = state.diceValue;
 
-    final validTokens =
-        player.tokens.where((t) => _engine.isValidMove(t, dice)).toList();
+    final validTokens = player.tokens
+        .where((t) => _engine.isValidMove(t, dice, rules: state.rules))
+        .toList();
 
     if (validTokens.isEmpty) return null;
     if (validTokens.length == 1) return validTokens.first;
@@ -65,12 +66,13 @@ class BotAI {
 
     // Opening strategy
     bool anyOnBoard = player.tokens.any((t) => t.state == TokenState.board);
-    if (!anyOnBoard && dice == 6) {
+    bool canOpen = dice == 6 || (state.rules.openOnOneAndSix && dice == 1);
+    if (!anyOnBoard && canOpen) {
       score += 1000;
     }
 
     // Escape base
-    if (simulatedToken.state == TokenState.home && steps == 6) {
+    if (simulatedToken.state == TokenState.home && canOpen) {
       score += 600;
       simulatedToken = simulatedToken.copyWith(
         state: TokenState.board,

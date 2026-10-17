@@ -18,45 +18,38 @@ class AppToggle extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: AnimatedContainer(
-        duration: 300.ms,
-        width: 48,
-        height: 26,
-        padding: const EdgeInsets.all(4),
+        duration: 250.ms,
+        width: 46,
+        height: 25,
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: value
-              ? accentColor.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.05),
+              ? accentColor.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.06),
           border: Border.all(
-            color: value ? accentColor.withValues(alpha: 0.3) : Colors.white24,
-            width: 1.5,
+            color: value
+                ? accentColor.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.15),
+            width: 1.0,
           ),
-          boxShadow: [
-            if (value)
-              BoxShadow(
-                color: accentColor.withValues(alpha: 0.1),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-          ],
         ),
         child: AnimatedAlign(
-          duration: 300.ms,
+          duration: 250.ms,
           curve: Curves.easeOutBack,
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            width: 18,
-            height: 18,
+            width: 17,
+            height: 17,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: value ? accentColor : Colors.white54,
-              boxShadow: [
-                if (value)
-                  BoxShadow(
-                    color: accentColor.withValues(alpha: 0.4),
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                  ),
+              color: value ? accentColor : const Color(0xFF9E9EAF),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
               ],
             ),
           ),

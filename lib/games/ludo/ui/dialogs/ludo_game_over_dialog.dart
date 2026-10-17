@@ -288,7 +288,11 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                             page: ProviderScope(
                               overrides: [
                                 gameControllerProvider.overrideWithValue(
-                                  LudoController(config),
+                                  LudoController(
+                                    config,
+                                    gameMode: widget.state.gameMode,
+                                    rules: widget.state.rules,
+                                  ),
                                 ),
                               ],
                               child: const LudoScreen(),

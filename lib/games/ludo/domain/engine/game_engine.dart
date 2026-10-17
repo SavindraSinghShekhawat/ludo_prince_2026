@@ -1,3 +1,4 @@
+import '../models/game_rules.dart';
 import '../models/game_state.dart';
 import '../models/token.dart';
 import '../models/player.dart';
@@ -31,7 +32,7 @@ class GameEngine {
 
     int newConsecutive = diceValue == 6 ? state.consecutiveSixes + 1 : 0;
 
-    if (newConsecutive == 3) {
+    if (state.rules.penalizeThreeSixes && newConsecutive == 3) {
       final skipResult = _nextTurn(
         state.copyWith(consecutiveSixes: 0, diceValue: diceValue),
         "Rolled three 6s! Turn skipped.",
@@ -45,18 +46,21 @@ class GameEngine {
 
     final player = _getPlayer(state, state.currentTurn);
 
-    // Update sixPity on successful roll
+    // Update sixPity on successful roll (6 or 1 if openOnOneAndSix)
+    final isExitRoll = diceValue == 6 ||
+        (state.rules.openOnOneAndSix && diceValue == 1);
     final updatedPlayers = state.players.map((p) {
       if (p.slot == state.currentTurn) {
         return p.copyWith(
-          sixPity: diceValue == 6 ? 0 : p.sixPity + 1,
+          sixPity: isExitRoll ? 0 : p.sixPity + 1,
         );
       }
       return p;
     }).toList();
 
-    final validTokens =
-        player.tokens.where((t) => isValidMove(t, diceValue)).toList();
+    final validTokens = player.tokens
+        .where((t) => isValidMove(t, diceValue, rules: state.rules))
+        .toList();
 
     if (validTokens.isEmpty) {
       final skipResult = _nextTurn(
@@ -154,8 +158,15 @@ class GameEngine {
     }
   }
 
-  bool isValidMove(Token token, int dice) {
+  bool isValidMove(
+    Token token,
+    int dice, {
+    GameRules rules = const GameRules(),
+  }) {
     if (token.state == TokenState.home) {
+      if (rules.openOnOneAndSix) {
+        return dice == 6 || dice == 1;
+      }
       return dice == 6;
     }
     if (token.state == TokenState.finished) {

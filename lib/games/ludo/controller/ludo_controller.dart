@@ -3,6 +3,7 @@ import 'dart:math';
 
 import '../domain/engine/bot_ai.dart';
 import '../domain/engine/game_engine.dart';
+import '../domain/models/game_rules.dart';
 import '../domain/models/game_state.dart';
 import '../domain/models/player.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
@@ -80,21 +81,25 @@ class LudoController implements GameController {
   @override
   final PlayerSlot? localPlayerSlot;
   final GameMode gameMode;
+  final GameRules rules;
 
   LudoController(
     Map<PlayerSlot, PlayerSetupConfig> config, {
     this.initialState = InitialGameState.normal,
     this.localPlayerSlot,
     this.gameMode = GameMode.classic,
+    this.rules = const GameRules(),
     GameEventProvider? eventProvider,
   })  : _state = GameState(
           gameId: "",
           players: [],
           turnOrder: [],
           currentTurn: PlayerSlot.slot1,
+          gameMode: gameMode,
+          rules: rules,
         ),
         eventProvider = eventProvider ?? LocalEventProvider() {
-    _state = _createInitialState(config, initialState, gameMode);
+    _state = _createInitialState(config, initialState, gameMode, rules: rules);
     _audioListener = AudioControllerListener(this);
     _audioListener.start();
 
@@ -443,7 +448,11 @@ class LudoController implements GameController {
       );
 
       final validTokens = player.tokens
-          .where((t) => _engine.isValidMove(t, resultState.diceValue))
+          .where((t) => _engine.isValidMove(
+                t,
+                resultState.diceValue,
+                rules: resultState.rules,
+              ))
           .toList();
 
       if (validTokens.isNotEmpty) {
@@ -567,10 +576,14 @@ class LudoController implements GameController {
   GameState _createInitialState(
     Map<PlayerSlot, PlayerSetupConfig> config,
     InitialGameState initialState,
-    GameMode gameMode,
-  ) {
+    GameMode gameMode, {
+    GameRules rules = const GameRules(),
+  }) {
     List<Player> players = config.entries.map((e) {
-      List<Token> tokens = List.generate(4, (i) => Token(id: i, slot: e.key));
+      List<Token> tokens = List.generate(
+        rules.tokensPerPlayer,
+        (i) => Token(id: i, slot: e.key),
+      );
 
       tokens = TestInitialization.applyTestState(tokens, initialState);
 
@@ -589,6 +602,7 @@ class LudoController implements GameController {
       turnOrder: config.keys.toList(),
       currentTurn: config.keys.first,
       gameMode: gameMode,
+      rules: rules,
       lastAction: GameAction.none,
       winners: const [],
       gameType: GameType.local,

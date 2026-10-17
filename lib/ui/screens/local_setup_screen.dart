@@ -13,6 +13,8 @@ import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/games/ludo/domain/models/game_rules.dart';
+import 'package:ludo_prince/games/ludo/ui/widgets/house_rules_selector.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/player_count_selector.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/game_mode_selector.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
@@ -31,6 +33,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
   final Map<PlayerSlot, bool> _isBotConfig = {};
   InitialGameState _initialState = InitialGameState.normal;
   GameMode _gameMode = GameMode.classic;
+  GameRules _gameRules = const GameRules();
 
   @override
   void initState() {
@@ -83,7 +86,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
               onPressed: () {
                 AppDialogLayout.show(
                   context: context,
-                  child: const LudoRulesDialog(),
+                  child: LudoRulesDialog(rules: _gameRules),
                 );
               },
               tooltip: 'Game Rules',
@@ -109,14 +112,18 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                       ? 800
                       : double.infinity,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: GlassContainer(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 20.0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -131,7 +138,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 14),
                           PlayerCountSelector(
                             currentCount: _numPlayers,
                             onCountChanged: (n) {
@@ -145,7 +152,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               });
                             },
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 22),
                           const Text(
                             'SELECT GAME MODE',
                             style: TextStyle(
@@ -156,7 +163,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           GameModeSelector(
                             currentMode: _gameMode,
                             isTeamModeEnabled: _numPlayers == 4,
@@ -166,7 +173,16 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               });
                             },
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 20),
+                          HouseRulesSelector(
+                            rules: _gameRules,
+                            onRulesChanged: (rules) {
+                              setState(() {
+                                _gameRules = rules;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 22),
                           const Text(
                             'PLAYER NAMES',
                             style: TextStyle(
@@ -177,7 +193,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 14),
                           ...(() {
                             List<PlayerSlot> displaySlots = List.from(
                               activeSlots,
@@ -334,7 +350,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: AppButton(
                     text: 'START GAME',
                     isPrimary: true,
@@ -366,6 +382,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                   config,
                                   initialState: _initialState,
                                   gameMode: _gameMode,
+                                  rules: _gameRules,
                                 ),
                               ),
                             ],

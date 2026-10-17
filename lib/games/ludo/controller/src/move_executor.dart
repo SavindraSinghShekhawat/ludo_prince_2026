@@ -29,7 +29,9 @@ class MoveExecutor {
       GameState currentState = state;
 
       // 1. Home exit case
-      if (token.state == TokenState.home && steps == 6) {
+      final bool canExitHome = token.state == TokenState.home &&
+          (steps == 6 || (state.rules.openOnOneAndSix && steps == 1));
+      if (canExitHome) {
         if (!fastForward) onMoveStart(1);
 
         Token updated = token.copyWith(state: TokenState.board, position: 0);

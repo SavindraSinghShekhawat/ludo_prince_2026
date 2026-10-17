@@ -1,20 +1,26 @@
+import 'package:ludo_prince/games/ludo/domain/models/game_rules.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 
 import 'package:flutter/material.dart';
 
 class LudoRulesDialog extends StatelessWidget {
-  const LudoRulesDialog({super.key});
+  final GameRules rules;
+
+  const LudoRulesDialog({
+    super.key,
+    this.rules = const GameRules(),
+  });
 
   @override
   Widget build(BuildContext context) {
     return AppDialogLayout(
-      header: const Row(
+      header: Row(
         children: [
-          Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),
-          SizedBox(width: 12),
+          const Icon(Icons.menu_book, color: Color(0xFFE5E4E2), size: 28),
+          const SizedBox(width: 12),
           Text(
-            'Game Rules',
-            style: TextStyle(
+            rules.isCustom ? 'Active House Rules' : 'Game Rules',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -24,10 +30,12 @@ class LudoRulesDialog extends StatelessWidget {
       ),
       body: [
         _buildRule(
-          Icons.looks_6,
+          rules.openOnOneAndSix ? Icons.casino : Icons.looks_6,
           Colors.amberAccent,
-          'Roll a 6',
-          'You must roll a 6 to move a token out of your base.',
+          rules.openOnOneAndSix ? 'Open on 1 or 6' : 'Roll a 6 to Open',
+          rules.openOnOneAndSix
+              ? 'You can roll a 6 or 1 to move a token out of your base (rolling a 6 also grants an extra turn).'
+              : 'You must roll a 6 to move a token out of your base.',
         ),
         _buildRule(
           Icons.replay,
@@ -35,12 +43,13 @@ class LudoRulesDialog extends StatelessWidget {
           'Extra Turn',
           'Rolling a 6 gives you an additional turn.',
         ),
-        _buildRule(
-          Icons.block,
-          Colors.redAccent,
-          'Consecutive 6s',
-          'Rolling three consecutive 6s skips your turn and passes it to the next player.',
-        ),
+        if (rules.penalizeThreeSixes)
+          _buildRule(
+            Icons.block,
+            Colors.redAccent,
+            'Consecutive 6s',
+            'Rolling three consecutive 6s skips your turn and passes it to the next player.',
+          ),
         _buildRule(
           Icons.stars,
           Colors.greenAccent,
@@ -50,14 +59,14 @@ class LudoRulesDialog extends StatelessWidget {
         _buildRule(
           Icons.sports_kabaddi,
           Colors.orangeAccent,
-          'Capture',
+          'Capture Opponents',
           'Landing exactly on an opponent\'s token captures it, sending it back to their base. This also grants you an extra turn.',
         ),
         _buildRule(
           Icons.flag,
           const Color(0xFFE5E4E2),
           'Winning',
-          'The first player to move all 4 of their tokens to the home area at the center of the board wins.',
+          'The first player to move all ${rules.tokensPerPlayer} of their tokens to the home area at the center of the board wins.',
         ),
       ],
       footer: ElevatedButton(
