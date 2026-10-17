@@ -2,7 +2,7 @@ import {onValueCreated} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 import {ServerValue} from "firebase-admin/database";
 import {GameDocument} from "./models/GameDocument";
-import {PlayerEntry} from "./models/Player";
+import {PlayerEntry, Token} from "./models/Player";
 import {RollEvent, MoveEvent} from "./models/GameEvent";
 import {AppLogger} from "./utils/logger";
 import * as crypto from "node:crypto";
@@ -17,16 +17,16 @@ function randomInt(min: number, max: number) {
 
 function playerNeedsBasePity(player: PlayerEntry): boolean {
   const tokens = player.tokens || [];
-  const hasTokensInBase = tokens.some((t: any) => t.state === "home");
+  const hasTokensInBase = tokens.some((t: Token) => t.state === "home");
   if (!hasTokensInBase) return false;
 
   // If player has any active token on the main board track, they are actively playing
-  const hasTokensOnBoard = tokens.some((t: any) => t.state === "board");
+  const hasTokensOnBoard = tokens.some((t: Token) => t.state === "board");
   if (hasTokensOnBoard) return false;
 
   // If all active tokens are in homeStretch, check if any can still advance
   const hasMovableHomeStretch = tokens.some(
-    (t: any) => t.state === "homeStretch" && t.position < 55
+    (t: Token) => t.state === "homeStretch" && t.position < 55
   );
   if (hasMovableHomeStretch) return false;
 
