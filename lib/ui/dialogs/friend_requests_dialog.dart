@@ -18,14 +18,18 @@ class FriendRequestsDialog extends ConsumerWidget {
 
     final requestsAsync = ref.watch(friendRequestsProvider(user.uid));
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(24),
-        borderRadius: 32,
-        showGlow: false,
-        child: Column(
+    return SafeArea(
+      minimum: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(24),
+            borderRadius: 32,
+            showGlow: false,
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
@@ -98,7 +102,9 @@ class FriendRequestsDialog extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildRequestItem(

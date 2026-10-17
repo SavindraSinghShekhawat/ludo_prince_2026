@@ -22,12 +22,17 @@ class InviteDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: GlassContainer(
-        padding: const EdgeInsets.all(32),
-        borderRadius: 30,
-        child: Column(
+    return SafeArea(
+      minimum: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(32),
+            borderRadius: 30,
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
@@ -115,6 +120,8 @@ class InviteDialog extends StatelessWidget {
               ],
             ),
           ],
+            ),
+          ),
         ),
       ),
     );

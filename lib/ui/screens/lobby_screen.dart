@@ -9,6 +9,7 @@ import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/services/matchmaking_service.dart';
 import 'package:ludo_prince/services/audio_service.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
@@ -118,9 +119,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     _timeoutTimer?.cancel();
     _uiTimer?.cancel();
     _matchmakingSubscription?.cancel();
-    // Only leave queue if no game was found yet
-    if (_activeGameId == null) {
-      matchmakingService.leaveQueue(_maxPlayers, _gameMode);
+    // Only leave queue if no game was found yet and we were actually searching
+    if (_activeGameId == null && (_matchmakingSubscription != null || _isLoading)) {
+      matchmakingService.leaveQueue(_maxPlayers, _gameMode).catchError((e) {
+        AppLogger.debug("Error leaving queue on dispose: $e");
+      });
     }
     super.dispose();
   }
@@ -209,7 +212,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             ),
           ],
         ),
-        body: _activeGameId == null ? _buildSelectionView() : _buildLobbyView(),
+        body: SafeArea(
+          top: false,
+          child:
+              _activeGameId == null ? _buildSelectionView() : _buildLobbyView(),
+        ),
       ),
     );
   }
@@ -499,7 +506,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 currentPlayers >= maxRequired &&
                 status == 'lobby') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                matchmakingService.startGame(_activeGameId!);
+                matchmakingService.startGame(_activeGameId!).catchError((e) {
+                  AppLogger.error("Failed to auto-start game: $e");
+                });
               });
             }
 
@@ -591,9 +600,15 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                         ? AppColors.starPlatinum
                                         : Colors.white24,
                                     onTap: currentPlayers >= 2
-                                        ? () => matchmakingService.startGame(
-                                              _activeGameId!,
-                                            )
+                                        ? () {
+                                            matchmakingService
+                                                .startGame(_activeGameId!)
+                                                .catchError((e) {
+                                              if (mounted) {
+                                                _showError("Failed to start game: $e");
+                                              }
+                                            });
+                                          }
                                         : null,
                                   ),
                                 ),
@@ -1102,7 +1117,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             } else {
               _uiTimer?.cancel();
               _matchmakingSubscription?.cancel();
-              matchmakingService.leaveQueue(maxPlayers, gameMode);
+              matchmakingService.leaveQueue(maxPlayers, gameMode).catchError((e) {
+                AppLogger.debug("Error leaving queue on timeout: $e");
+              });
               setState(() {
                 _isLoading = false;
                 _activeGameId = null;

@@ -17,6 +17,18 @@ class AppInitializer {
   static Future<bool> init() async {
     WidgetsFlutterBinding.ensureInitialized();
 
+    // Catch framework errors and present them
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      AppLogger.error('[FlutterError] ${details.exception}', details.stack);
+    };
+
+    // Catch unhandled async errors to prevent crashes/lost connection
+    PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      AppLogger.error('[PlatformDispatcher] Unhandled async error: $error', stack);
+      return true; // Mark handled to prevent app termination
+    };
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     SystemChrome.setSystemUIOverlayStyle(

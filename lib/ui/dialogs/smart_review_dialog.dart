@@ -145,10 +145,12 @@ class _SmartReviewDialogState extends State<SmartReviewDialog> {
     final storeName = isIOS ? 'App Store' : 'Google Play';
     final activeRating = _hoveredRating > 0 ? _hoveredRating : _selectedRating;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+    return SafeArea(
+      minimum: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: EdgeInsets.zero,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
@@ -391,8 +393,9 @@ class _SmartReviewDialogState extends State<SmartReviewDialog> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Progressive Action Area for High Ratings (4 or 5 stars)
   Widget _buildPositiveActionArea(String storeName) {

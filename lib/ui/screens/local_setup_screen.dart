@@ -104,8 +104,10 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           ],
           centerTitle: true,
         ),
-        body: Center(
-          child: Container(
+        body: SafeArea(
+          top: false,
+          child: Center(
+            child: Container(
             constraints: BoxConstraints(
               maxWidth:
                   MediaQuery.of(context).orientation == Orientation.landscape
@@ -416,8 +418,9 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTeamHeader(String title) {
     final Color teamColor =

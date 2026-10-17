@@ -75,7 +75,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         body: AppBackground(
           showParticles: true,
           child: SafeArea(
-            bottom: false,
             child: Column(
               children: [
                 // Top Area: Full-width Header
@@ -264,7 +263,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         _buildFooter(context),
                         const SizedBox(height: 16),
                         _buildCommunityNote(),
-                        const SizedBox(height: 40),
+                        SizedBox(
+                          height: 24 + MediaQuery.paddingOf(context).bottom,
+                        ),
                       ],
                     ),
                   ),

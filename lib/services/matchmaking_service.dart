@@ -13,7 +13,15 @@ class MatchmakingService {
 
   Future<void> _ensureAuthenticated() async {
     if (_auth.currentUser == null) {
-      await _auth.signInAnonymously().timeout(const Duration(seconds: 10));
+      try {
+        await _auth.signInAnonymously().timeout(const Duration(seconds: 10));
+      } catch (e) {
+        AppLogger.error("[MatchmakingService] Anonymous auth failed: $e");
+        throw Exception("Unable to connect to game service. Please check your network connection.");
+      }
+    }
+    if (_auth.currentUser == null) {
+      throw Exception("User is not authenticated.");
     }
   }
 
@@ -266,13 +274,21 @@ class MatchmakingService {
   }
 
   Future<String?> getGameIdFromCode(String code) async {
-    final snapshot =
-        await _db.ref().child(FirebasePaths.privateRoomCode(code)).get();
-    if (snapshot.exists) {
-      final data = Map<String, dynamic>.from(snapshot.value as Map);
-      return data['gameId'] as String?;
+    try {
+      final snapshot = await _db
+          .ref()
+          .child(FirebasePaths.privateRoomCode(code))
+          .get()
+          .timeout(const Duration(seconds: 10));
+      if (snapshot.exists) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        return data['gameId'] as String?;
+      }
+      return null;
+    } catch (e) {
+      AppLogger.error("[MatchmakingService] getGameIdFromCode error: $e");
+      return null;
     }
-    return null;
   }
 
   String _getModeQueueName(int maxPlayers, GameMode gameMode) {
@@ -327,22 +343,38 @@ class MatchmakingService {
 
   Future<void> leaveQueue(int maxPlayers, GameMode gameMode,
       {String gameType = 'ludo'}) async {
-    await _ensureAuthenticated();
-    final uid = _auth.currentUser!.uid;
-    final modeQueue = _getModeQueueName(maxPlayers, gameMode);
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return; // User was never authenticated, so could not be in a queue
+      }
+      final uid = user.uid;
+      final modeQueue = _getModeQueueName(maxPlayers, gameMode);
 
-    await _db
-        .ref()
-        .child(FirebasePaths.matchmakingSlot(gameType, modeQueue, uid))
-        .remove();
-    await _db.ref().child(FirebasePaths.matchmakingAssignment(uid)).remove();
+      await _db
+          .ref()
+          .child(FirebasePaths.matchmakingSlot(gameType, modeQueue, uid))
+          .remove()
+          .timeout(const Duration(seconds: 5));
+      await _db
+          .ref()
+          .child(FirebasePaths.matchmakingAssignment(uid))
+          .remove()
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      AppLogger.debug("[MatchmakingService] leaveQueue skipped/failed: $e");
+    }
   }
 
   Future<void> updateHostHeartbeat(String gameId,
       {String gameType = 'ludo'}) async {
-    await _db.ref().child(FirebasePaths.session(gameType, gameId)).update({
-      'hostLastActive': ServerValue.timestamp,
-    });
+    try {
+      await _db.ref().child(FirebasePaths.session(gameType, gameId)).update({
+        'hostLastActive': ServerValue.timestamp,
+      });
+    } catch (e) {
+      AppLogger.debug("[MatchmakingService] updateHostHeartbeat failed: $e");
+    }
   }
 
   Future<void> deleteLobby(String gameId, {String gameType = 'ludo'}) async {

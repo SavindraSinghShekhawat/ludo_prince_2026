@@ -32,7 +32,7 @@ class AppDialogLayout extends StatelessWidget {
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.8),
       transitionDuration: const Duration(milliseconds: 400),
-      pageBuilder: (context, anim1, anim2) => child,
+      pageBuilder: (context, anim1, anim2) => SafeArea(child: child),
       transitionBuilder: (context, anim1, anim2, transformChild) {
         return ScaleTransition(
           scale: anim1.drive(
@@ -49,18 +49,24 @@ class AppDialogLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      insetPadding: MediaQuery.of(context).orientation == Orientation.portrait
-          ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
-          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(borderRadius),
-        side: BorderSide.none,
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    return SafeArea(
+      minimum: EdgeInsets.symmetric(
+        horizontal: isLandscape ? 36 : 20,
+        vertical: 24,
       ),
-      child: GlassContainer(
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+          side: BorderSide.none,
+        ),
+        child: GlassContainer(
         padding: const EdgeInsets.all(24),
         borderRadius: borderRadius,
         showGlow: false,
@@ -112,6 +118,7 @@ class AppDialogLayout extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
