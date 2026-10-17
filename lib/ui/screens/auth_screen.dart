@@ -32,7 +32,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'credential-already-in-use') {
+      if (e.code == 'credential-already-in-use' && e.credential != null) {
         _showSwitchAccountDialog(e.credential!);
       } else {
         _showError(

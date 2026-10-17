@@ -67,12 +67,19 @@ class AuthService {
 
     if (user != null && user.isAnonymous) {
       try {
-        // Try linking first
+        // Try linking anonymous session to permanent credential
         return await user.linkWithCredential(credential);
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'credential-already-in-use') {
-          // Rethrow to let UI handle the confirmation
-          rethrow;
+        // If credential already belongs to an existing account, rethrow with the
+        // credential attached so the UI can prompt the user with the Switch Account warning dialog!
+        if (e.code == 'credential-already-in-use' ||
+            e.code == 'email-already-in-use' ||
+            e.code == 'account-exists-with-different-credential') {
+          throw FirebaseAuthException(
+            code: 'credential-already-in-use',
+            message: e.message,
+            credential: credential,
+          );
         }
         rethrow;
       }
