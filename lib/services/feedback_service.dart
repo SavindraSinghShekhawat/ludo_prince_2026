@@ -9,6 +9,8 @@ class FeedbackService {
   Future<void> submitFeedback(
     String message, {
     Map<String, dynamic>? deviceMetadata,
+    int? rating,
+    List<String>? tags,
   }) async {
     final user = _auth.currentUser;
     final userId = user?.uid ?? 'anonymous';
@@ -25,13 +27,17 @@ class FeedbackService {
       }
     }
 
-    await _firestore.collection('feedbacks').add({
+    final data = <String, dynamic>{
       'userId': userId,
       'userName': displayName,
       'message': message,
       'deviceMetadata': deviceMetadata,
       'timestamp': FieldValue.serverTimestamp(),
-    });
+    };
+    if (rating != null) data['rating'] = rating;
+    if (tags != null && tags.isNotEmpty) data['tags'] = tags;
+
+    await _firestore.collection('feedbacks').add(data);
   }
 }
 

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/services/device_info_service.dart';
 import 'package:ludo_prince/services/feedback_service.dart';
+import 'package:ludo_prince/services/smart_review_service.dart';
 import '../widgets/shared_ui.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
-  const FeedbackScreen({super.key});
+  final int? initialRating;
+
+  const FeedbackScreen({super.key, this.initialRating});
 
   @override
   ConsumerState<FeedbackScreen> createState() => _FeedbackScreenState();
@@ -29,14 +32,21 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
 
     try {
       final deviceMetadata = await ref.read(deviceMetadataProvider.future);
-      await ref
-          .read(feedbackServiceProvider)
-          .submitFeedback(message, deviceMetadata: deviceMetadata);
+      if (widget.initialRating != null) {
+        await SmartReviewService.instance.recordConstructiveFeedback(
+          rating: widget.initialRating!,
+          message: message,
+        );
+      } else {
+        await ref
+            .read(feedbackServiceProvider)
+            .submitFeedback(message, deviceMetadata: deviceMetadata);
+      }
       if (mounted) {
         _feedbackController.clear();
         AppSnackBar.show(
           context,
-          message: 'Thank you for your feedback!',
+          message: 'Thank you for your feedback! We will improve your experience.',
           isSuccess: true,
         );
         Navigator.pop(context);
@@ -90,6 +100,39 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (widget.initialRating != null)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5E4E2).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFFE5E4E2).withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.star_half_rounded,
+                                color: Color(0xFFE5E4E2),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "We'd love to make Ludo Prince a 5-star experience for you. What can we improve?",
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Row(

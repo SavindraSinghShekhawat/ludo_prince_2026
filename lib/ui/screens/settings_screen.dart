@@ -11,7 +11,7 @@ import 'package:ludo_prince/ui/dialogs/profile_dialog.dart';
 import 'package:ludo_prince/utils/share_helper.dart';
 import 'feedback_screen.dart';
 import 'package:ludo_prince/services/remote_config_service.dart';
-import 'package:ludo_prince/core/widgets/app_page_routes.dart';
+import 'package:ludo_prince/services/smart_review_service.dart';
 import 'package:ludo_prince/ui/dialogs/update_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -174,6 +174,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   accentColor: AppColors.primaryCyan,
                   onTap: () => ShareHelper.shareApp(context),
                 ),
+                if (!kReleaseMode) ...[
+                  const SizedBox(height: 12),
+                  _buildSettingButton(
+                    title: "Rate Ludo Prince",
+                    subtitle: "Share your rating & love for the game",
+                    icon: Icons.star_rate_rounded,
+                    accentColor: const Color(0xFFE5E4E2), // Platinum
+                    onTap: () => SmartReviewService.instance.showSmartReviewDialog(context),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 _buildSettingButton(
                   title: "Share Feedback",

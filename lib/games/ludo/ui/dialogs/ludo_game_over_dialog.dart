@@ -14,6 +14,7 @@ import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/services/audio_service.dart';
+import 'package:ludo_prince/services/smart_review_service.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
@@ -56,6 +57,44 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
     );
     _confettiController.play();
     audioService.playVictory();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkSmartReview();
+    });
+  }
+
+  void _checkSmartReview() {
+    final bool isTeamMode = widget.state.gameMode == GameMode.team;
+    bool isWinner = false;
+    if (isTeamMode) {
+      if (widget.state.winners.isNotEmpty) {
+        final winningSlot = widget.state.winners.first;
+        final bool isTeamAWinner =
+            winningSlot == PlayerSlot.slot1 || winningSlot == PlayerSlot.slot3;
+        final humanSlots = widget.state.players
+            .where((p) =>
+                p.type == PlayerType.localHuman ||
+                p.type == PlayerType.remoteHuman)
+            .map((p) => p.slot);
+        isWinner = isTeamAWinner
+            ? humanSlots.any((s) => s == PlayerSlot.slot1 || s == PlayerSlot.slot3)
+            : humanSlots.any((s) => s == PlayerSlot.slot2 || s == PlayerSlot.slot4);
+      }
+    } else {
+      final humanWinners = widget.state.winners.where((slot) {
+        final p = widget.state.players.firstWhere((p) => p.slot == slot);
+        return p.type == PlayerType.localHuman ||
+            p.type == PlayerType.remoteHuman;
+      }).toList();
+      isWinner = humanWinners.isNotEmpty &&
+          widget.state.winners.indexOf(humanWinners.first) == 0;
+    }
+
+    SmartReviewService.instance.recordGameCompleted(isWinner: isWinner);
+
+    if (isWinner) {
+      SmartReviewService.instance.setPendingVictoryPrompt(true);
+    }
   }
 
   @override

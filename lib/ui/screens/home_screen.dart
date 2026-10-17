@@ -19,6 +19,7 @@ import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
 import 'package:ludo_prince/providers/presence_provider.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/providers/connectivity_provider.dart';
+import 'package:ludo_prince/services/smart_review_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -36,6 +37,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (SmartReviewService.instance.consumePendingVictoryPrompt()) {
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (mounted) {
+            SmartReviewService.instance.checkAndPrompt(context, isPostWin: true);
+          }
+        });
+      }
+    });
   }
 
   @override
