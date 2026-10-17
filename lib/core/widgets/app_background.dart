@@ -20,51 +20,84 @@ class AppBackground extends StatelessWidget {
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Base dark gradient (Deep void)
+          // 1. Base Gradient (Midnight Obsidian Charcoal Void)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF03030F), Color(0xFF0B0B1A)],
+                stops: [0.0, 0.5, 1.0],
+                colors: [
+                  Color(0xFF0A0C10), // Neutral Midnight Obsidian
+                  Color(0xFF0F1117), // Charcoal Depth (neutral, no blue/purple)
+                  Color(0xFF08090D), // Anchored deep obsidian
+                ],
               ),
             ),
           ),
 
-          // Secondary depth gradient
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 1.5,
-                  colors: [
-                    AppColors.primaryCyan.withValues(alpha: 0.1),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Tabletop Texture Layer
-          Positioned.fill(
+          // 2. Top Ambient Halo (Subtle cool slate illumination)
+          Positioned(
+            top: -120,
+            left: 0,
+            right: 0,
+            height: 440,
             child: RepaintBoundary(
-              child: CustomPaint(
-                painter: TabletopTexturePainter(opacity: 0.05),
-              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0.0, -0.6),
+                    radius: 1.25,
+                    colors: [
+                      const Color(0xFF1E2430).withValues(alpha: 0.12),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(
+                    begin: 0.75,
+                    end: 1.0,
+                    duration: 8.seconds,
+                    curve: Curves.easeInOut,
+                  ),
             ),
           ),
 
-          // Central Spotlight
+          // 3. Bottom-Right Ambient Slate Accent (Harmonious diagonal depth)
+          Positioned(
+            bottom: -140,
+            right: -80,
+            width: 440,
+            height: 440,
+            child: RepaintBoundary(
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF161922).withValues(alpha: 0.10),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                    begin: const Offset(1.0, 1.0),
+                    end: const Offset(1.08, 1.08),
+                    duration: 11.seconds,
+                    curve: Curves.easeInOut,
+                  ),
+            ),
+          ),
+
+          // 4. Subtle Central Stage Bloom (Soft diffuse luminescence)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment.center,
-                  radius: 1.0,
+                  radius: 0.95,
                   colors: [
-                    Colors.white.withValues(alpha: 0.08),
+                    const Color(0xFF94A3B8).withValues(alpha: 0.035),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],
@@ -73,35 +106,16 @@ class AppBackground extends StatelessWidget {
             ),
           ),
 
-          // Animated ambient soft glows (Sapphire accent)
-          Positioned(
-            top: -150,
-            left: -100,
+          // 5. Velvety Tabletop Micro-Texture Layer
+          Positioned.fill(
             child: RepaintBoundary(
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.midnightSapphire.withValues(
-                        alpha: 0.25,
-                      ),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ).animate(onPlay: (c) => c.repeat(reverse: true)).move(
-                    begin: const Offset(0, 0),
-                    end: const Offset(50, 50),
-                    duration: 15.seconds,
-                    curve: Curves.easeInOut,
-                  ),
+              child: CustomPaint(
+                painter: TabletopTexturePainter(opacity: 0.02),
+              ),
             ),
           ),
 
-          // Subtle Particle Layer
+          // 6. Subtle Particle Layer (Stardust)
           if (showParticles)
             Positioned.fill(
               child: RepaintBoundary(child: const ParticlesWidget()),
@@ -227,41 +241,25 @@ class TabletopTexturePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: opacity)
       ..strokeWidth = 1.0;
 
     final random = math.Random(123); // Seeded for consistency
 
-    // Draw fine grain/noise
-    final List<Offset> points = [];
-    for (int i = 0; i < (size.width * size.height * 0.01).toInt(); i++) {
-      points.add(
-        Offset(
-          random.nextDouble() * size.width,
-          random.nextDouble() * size.height,
-        ),
-      );
-    }
+    // Soft, velvety micro-grain without scratch lines or harsh noise
+    final int pointCount =
+        (size.width * size.height * 0.0015).toInt().clamp(150, 600);
+    final List<Offset> points = List.generate(
+      pointCount,
+      (_) => Offset(
+        random.nextDouble() * size.width,
+        random.nextDouble() * size.height,
+      ),
+    );
     canvas.drawPoints(PointMode.points, points, paint);
-
-    // Draw subtle "wood/felt" fibers
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: opacity * 0.5)
-      ..strokeWidth = 0.5;
-
-    for (int i = 0; i < 100; i++) {
-      double x = random.nextDouble() * size.width;
-      double y = random.nextDouble() * size.height;
-      double len = random.nextDouble() * 20 + 5;
-      double angle = random.nextDouble() * math.pi;
-
-      canvas.drawLine(
-        Offset(x, y),
-        Offset(x + math.cos(angle) * len, y + math.sin(angle) * len),
-        linePaint,
-      );
-    }
   }
 
   @override

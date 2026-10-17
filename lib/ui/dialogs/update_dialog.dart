@@ -120,10 +120,6 @@ class UpdateDialog extends StatelessWidget {
                 end: const Offset(1.12, 1.12),
                 duration: 1500.ms,
                 curve: Curves.easeInOutSine,
-              )
-              .shimmer(
-                duration: 3000.ms,
-                color: Colors.white.withValues(alpha: 0.2),
               ),
         ),
         const SizedBox(height: 24),

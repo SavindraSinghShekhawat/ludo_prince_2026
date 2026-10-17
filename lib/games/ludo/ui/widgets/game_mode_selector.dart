@@ -118,15 +118,15 @@ class GameModeSelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           decoration: BoxDecoration(
             color:
-                (isSelected ? const Color(0xFFE5E4E2) : const Color(0xFF2A2A3D))
+                (isSelected ? const Color(0xFFE5E4E2) : const Color(0xFF16181F))
                     .withValues(alpha: isEnabled ? 1.0 : 0.4),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: (isSelected
                       ? const Color(0xFFB0B4B8).withValues(alpha: 0.6)
-                      : Colors.white10)
+                      : Colors.white.withValues(alpha: 0.08))
                   .withValues(alpha: isEnabled ? 1.0 : 0.4),
-              width: 2,
+              width: 1.5,
             ),
             boxShadow: isSelected && isEnabled
                 ? [
@@ -147,7 +147,7 @@ class GameModeSelector extends StatelessWidget {
                 children: [
                   Icon(
                     icon,
-                    color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                    color: (isSelected ? const Color(0xFF0F1117) : color)
                         .withValues(alpha: isEnabled ? 1.0 : 0.4),
                     size: 28,
                   ),
@@ -155,7 +155,7 @@ class GameModeSelector extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                      color: (isSelected ? const Color(0xFF0F1117) : color)
                           .withValues(alpha: isEnabled ? 1.0 : 0.4),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -165,7 +165,7 @@ class GameModeSelector extends StatelessWidget {
                   Text(
                     isEnabled ? description : 'Locked',
                     style: TextStyle(
-                      color: (isSelected ? const Color(0xFF1E1E2C) : color)
+                      color: (isSelected ? const Color(0xFF0F1117) : color)
                           .withValues(alpha: isEnabled ? 0.7 : 0.28),
                       fontSize: 10,
                     ),
@@ -181,7 +181,7 @@ class GameModeSelector extends StatelessWidget {
                     Icons.help_outline,
                     size: 22,
                     color: (isSelected
-                            ? const Color(0xFF1E1E2C).withValues(alpha: 0.6)
+                            ? const Color(0xFF0F1117).withValues(alpha: 0.6)
                             : Colors.white38)
                         .withValues(alpha: isEnabled ? 1.0 : 0.4),
                   ),

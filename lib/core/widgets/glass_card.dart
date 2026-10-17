@@ -66,10 +66,10 @@ class _GlassCardState extends State<GlassCard> {
                 height: widget.height,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: const Color(0xFF13151B).withValues(alpha: 0.80),
                   border: Border.all(
                     color: widget.accentColor.withValues(
-                      alpha: widget.isPrimary ? 0.18 : 0.06,
+                      alpha: widget.isPrimary ? 0.20 : 0.08,
                     ),
                     width: 1.0,
                   ),
@@ -209,13 +209,6 @@ class _GlassCardState extends State<GlassCard> {
         ),
       ),
     );
-
-    // Add a single, clean white shimmer for an elegant light-reflection effect
-    card = card.animate(onPlay: (c) => c.repeat()).shimmer(
-          duration: 3.seconds,
-          delay: 1.seconds,
-          color: Colors.white.withValues(alpha: 0.15),
-        );
 
     // Add a very subtle pulse for the primary card to make it feel alive
     if (widget.isPrimary) {

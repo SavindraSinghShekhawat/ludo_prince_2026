@@ -24,8 +24,8 @@ class LudoCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF2A2A3D),
-            const Color(0xFF1E1E2C).withValues(alpha: 0.8),
+            const Color(0xFF16181F),
+            const Color(0xFF111318).withValues(alpha: 0.9),
           ],
         ),
         borderRadius: BorderRadius.circular(20),

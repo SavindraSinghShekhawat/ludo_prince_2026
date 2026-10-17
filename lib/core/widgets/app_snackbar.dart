@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/providers/snackbar_provider.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 
@@ -100,10 +102,10 @@ class _SnackBarContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snackBarColor = isError
-        ? Colors.redAccent
+        ? const Color(0xFFFF5252)
         : isSuccess
-            ? const Color(0xFF00FFA3)
-            : color ?? Colors.cyanAccent;
+            ? const Color(0xFF00E676)
+            : color ?? AppColors.primaryCyan;
 
     return SafeArea(
       top: false,
@@ -120,53 +122,64 @@ class _SnackBarContent extends StatelessWidget {
                 dismissThresholds: const {DismissDirection.horizontal: 0.1},
                 onDismissed: (_) => onDismissed(),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E2C).withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: snackBarColor.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        blurRadius: 15,
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                         decoration: BoxDecoration(
-                          color: snackBarColor.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isError
-                              ? Icons.error_outline
-                              : isSuccess
-                                  ? Icons.check_circle_outline
-                                  : icon,
-                          color: snackBarColor,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                            letterSpacing: 0.5,
+                          color: const Color(0xFF13151B).withValues(alpha: 0.90),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            width: 1.0,
                           ),
                         ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: snackBarColor.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isError
+                                    ? Icons.error_outline
+                                    : isSuccess
+                                        ? Icons.check_circle_outline
+                                        : icon,
+                                color: snackBarColor,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                message,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

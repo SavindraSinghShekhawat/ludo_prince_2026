@@ -225,9 +225,11 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                 slot,
                               );
 
+                              final bool isBot = _isBotConfig[slot] ?? false;
+
                               widgets.add(
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  padding: const EdgeInsets.only(bottom: 14.0),
                                   child: Row(
                                     children: [
                                       Expanded(
@@ -235,20 +237,23 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                           controller: _controllers[slot],
                                           style: const TextStyle(
                                             color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 15,
                                           ),
                                           decoration: InputDecoration(
                                             labelText: 'Player Name',
                                             labelStyle: TextStyle(
                                               color: displayColor,
+                                              fontSize: 14,
                                             ),
                                             enabledBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: displayColor.withValues(
-                                                  alpha: 0.5,
+                                                  alpha: 0.35,
                                                 ),
                                               ),
                                               borderRadius:
-                                                  BorderRadius.circular(15),
+                                                  BorderRadius.circular(14),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
@@ -256,28 +261,33 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                                 width: 2,
                                               ),
                                               borderRadius:
-                                                  BorderRadius.circular(15),
+                                                  BorderRadius.circular(14),
                                             ),
                                             prefixIcon: Padding(
                                               padding: const EdgeInsets.all(12),
-                                              child:
-                                                  (_isBotConfig[slot] ?? false)
-                                                      ? RobotIcon(
-                                                          size: 22,
-                                                          color: displayColor,
-                                                        )
-                                                      : Icon(
-                                                          Icons.person,
-                                                          color: displayColor,
-                                                        ),
+                                              child: isBot
+                                                  ? RobotIcon(
+                                                      size: 22,
+                                                      color: displayColor,
+                                                    )
+                                                  : Icon(
+                                                      Icons.person,
+                                                      color: displayColor,
+                                                    ),
                                             ),
                                             filled: true,
-                                            fillColor: const Color(0xFF2A2A3D),
+                                            fillColor: const Color(0xFF16181F),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 14,
+                                            ),
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Column(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           const Text(
                                             'Bot',
@@ -287,7 +297,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                                             ),
                                           ),
                                           Switch(
-                                            value: _isBotConfig[slot] ?? false,
+                                            value: isBot,
                                             activeThumbColor: displayColor,
                                             onChanged: (val) {
                                               setState(() {
@@ -321,13 +331,21 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                               initialValue: _initialState,
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: const Color(0xFF2A2A3D),
+                                fillColor: const Color(0xFF16181F),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                  ),
                                 ),
                               ),
-                              dropdownColor: const Color(0xFF2A2A3D),
+                              dropdownColor: const Color(0xFF16181F),
                               style: const TextStyle(color: Colors.white),
                               items: InitialGameState.values.map((state) {
                                 return DropdownMenuItem(

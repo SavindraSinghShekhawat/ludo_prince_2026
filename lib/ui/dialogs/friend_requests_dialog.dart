@@ -24,8 +24,7 @@ class FriendRequestsDialog extends ConsumerWidget {
       child: GlassContainer(
         padding: const EdgeInsets.all(24),
         borderRadius: 32,
-        showGlow: true,
-        glowColor: AppColors.primaryCyan,
+        showGlow: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -33,7 +33,7 @@ class _SmartReviewDialogState extends State<SmartReviewDialog> {
   static const Color platinumLight = Color(0xFFFFFFFF);
   static const Color platinumBase = Color(0xFFE5E4E2);
   static const Color platinumSilver = Color(0xFFB0B4B8);
-  static const Color charcoalDark = Color(0xFF1E1E2C);
+  static const Color charcoalDark = Color(0xFF0F1117);
 
   @override
   void initState() {
@@ -156,8 +156,7 @@ class _SmartReviewDialogState extends State<SmartReviewDialog> {
           GlassContainer(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
             borderRadius: 24,
-            showGlow: true,
-            glowColor: platinumBase,
+            showGlow: false,
             color: AppColors.systemBackground.withValues(alpha: 0.92),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),

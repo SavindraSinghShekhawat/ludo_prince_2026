@@ -27,16 +27,19 @@ class GlassContainer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: showGlow
-            ? [
-                BoxShadow(
-                  color: (glowColor ?? AppColors.primaryCyan)
-                      .withValues(alpha: 0.15),
-                  blurRadius: 40,
-                  spreadRadius: 5,
-                ),
-              ]
-            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.45),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+          if (showGlow)
+            BoxShadow(
+              color: (glowColor ?? AppColors.primaryCyan).withValues(alpha: 0.10),
+              blurRadius: 36,
+              spreadRadius: 2,
+            ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -46,9 +49,9 @@ class GlassContainer extends StatelessWidget {
             padding: padding,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(borderRadius),
-              color: color ?? Colors.white.withValues(alpha: 0.05),
+              color: color ?? const Color(0xFF13151B).withValues(alpha: 0.82),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: Colors.white.withValues(alpha: 0.08),
                 width: 1.0,
               ),
             ),

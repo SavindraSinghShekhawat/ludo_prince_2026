@@ -26,15 +26,7 @@ class NotificationInboxDialog extends ConsumerWidget {
             Icons.notifications_active_outlined,
             color: AppColors.primaryCyan,
             size: 28,
-          )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scale(
-                begin: const Offset(1, 1),
-                end: const Offset(1.1, 1.1),
-                duration: 2.seconds,
-                curve: Curves.easeInOut,
-              )
-              .shimmer(duration: 3.seconds, color: Colors.white24),
+          ),
           const SizedBox(width: 16),
           Text(
             'NOTIFICATIONS',
@@ -173,12 +165,7 @@ class NotificationInboxDialog extends ConsumerWidget {
                   width: 1,
                 ),
               ),
-              child: Icon(_getNotificationIcon(n), color: color, size: 22)
-                  .animate(onPlay: (c) => c.repeat())
-                  .shimmer(
-                    duration: 3.seconds,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
+              child: Icon(_getNotificationIcon(n), color: color, size: 22),
             ),
             const SizedBox(width: 16),
             Expanded(

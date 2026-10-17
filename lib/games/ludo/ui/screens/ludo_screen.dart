@@ -72,7 +72,6 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
               size: 48,
             )
                 .animate(onPlay: (c) => c.repeat(reverse: true))
-                .shimmer(duration: 2.seconds, color: Colors.white24)
                 .scale(
                   begin: const Offset(1, 1),
                   end: const Offset(1.1, 1.1),
@@ -367,19 +366,73 @@ class _StatusMessage extends ConsumerWidget {
     final message = ref.watch(
       gameStreamProvider.select((s) => s.value?.message ?? ""),
     );
+    final currentTurn = ref.watch(
+      gameStreamProvider.select((s) => s.value?.currentTurn),
+    );
+
+    if (message.isEmpty) {
+      return const SizedBox(height: 12);
+    }
+
+    final turnColor = currentTurn != null
+        ? AppColors.getUiColorForSlot(currentTurn)
+        : AppColors.primaryCyan;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Text(
-        message,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: turnColor.withValues(alpha: 0.4),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: turnColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: turnColor.withValues(alpha: 0.6),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
-        textAlign: TextAlign.center,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -906,9 +959,9 @@ class _PlayerPanelContent extends StatelessWidget {
         boxShadow: [
           if (isTurn)
             BoxShadow(
-              color: displayColor.withValues(alpha: 0.8),
-              blurRadius: 15,
-              spreadRadius: 2,
+              color: displayColor.withValues(alpha: 0.35),
+              blurRadius: 10,
+              spreadRadius: 1,
             )
           else
             BoxShadow(

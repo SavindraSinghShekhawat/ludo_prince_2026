@@ -29,13 +29,15 @@ class PlayerCountSelector extends StatelessWidget {
             }
           },
           selectedColor: const Color(0xFFE5E4E2),
-          checkmarkColor: Colors.black,
-          backgroundColor: Colors.white.withValues(alpha: 0.05),
+          checkmarkColor: const Color(0xFF0F1117),
+          backgroundColor: const Color(0xFF16181F),
           side: BorderSide(
-            color: isSelected ? Colors.transparent : Colors.white24,
+            color: isSelected
+                ? Colors.transparent
+                : Colors.white.withValues(alpha: 0.12),
           ),
           labelStyle: TextStyle(
-            color: isSelected ? Colors.black : Colors.white70,
+            color: isSelected ? const Color(0xFF0F1117) : Colors.white70,
             fontWeight: FontWeight.bold,
           ),
         );

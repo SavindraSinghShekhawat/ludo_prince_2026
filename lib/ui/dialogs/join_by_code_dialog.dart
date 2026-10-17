@@ -97,9 +97,7 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.vpn_key, color: Colors.amberAccent, size: 48)
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .shimmer(duration: 2.seconds),
+            const Icon(Icons.vpn_key, color: Colors.amberAccent, size: 48),
             const SizedBox(height: 24),
             const Text(
               'ENTER ROOM CODE',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/services/social_service.dart';
 import '../widgets/shared_ui.dart';
 import '../screens/lobby_screen.dart';
@@ -31,11 +32,9 @@ class InviteDialog extends StatelessWidget {
           children: [
             const Icon(
               Icons.videogame_asset_outlined,
-              color: Colors.cyanAccent,
+              color: AppColors.primaryCyan,
               size: 60,
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .shimmer(duration: 2.seconds),
+            ),
             const SizedBox(height: 24),
             Text(
               'ROOM INVITATION',

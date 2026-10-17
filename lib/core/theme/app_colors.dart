@@ -54,8 +54,8 @@ class AppColors {
   ); // 12% Black for visibility
 
   // System & Layout (Non-Board Colors)
-  static const Color systemBackground = Color(0xFF0B0B1A); // Deep Royal Void
-  static const Color systemSurface = Color(0xFF16162C); // Deep Charcoal Surface
+  static const Color systemBackground = Color(0xFF090A0F); // Deep Neutral Obsidian
+  static const Color systemSurface = Color(0xFF141720); // Neutral Charcoal Obsidian
 
   // Imperial UI Palette (Interactive Elements)
   static const Color primaryCyan = Color(0xFF00D1FF); // New Primary

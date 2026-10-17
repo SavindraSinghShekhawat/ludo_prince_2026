@@ -44,7 +44,7 @@ class GameModeInfoDialog extends StatelessWidget {
       footer: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFE5E4E2),
-          foregroundColor: const Color(0xFF1E1E2C),
+          foregroundColor: const Color(0xFF0F1117),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -54,7 +54,7 @@ class GameModeInfoDialog extends StatelessWidget {
         child: const Text(
           'Got it!',
           style: TextStyle(
-            color: Color(0xFF1E1E2C),
+            color: Color(0xFF0F1117),
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

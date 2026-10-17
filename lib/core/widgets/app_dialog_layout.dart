@@ -63,9 +63,8 @@ class AppDialogLayout extends StatelessWidget {
       child: GlassContainer(
         padding: const EdgeInsets.all(24),
         borderRadius: borderRadius,
-        showGlow: true,
-        glowColor: AppColors.primaryCyan,
-        color: AppColors.systemBackground.withValues(alpha: 0.65),
+        showGlow: false,
+        color: const Color(0xFF13151B).withValues(alpha: 0.90),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
             maxWidth: 480,

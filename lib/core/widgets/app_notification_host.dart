@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -72,26 +73,31 @@ class TopNotificationToast extends ConsumerWidget {
             _handleNotificationClick(context, ref, notification);
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E2C).withValues(alpha: 0.98),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: _getNotificationColor(
-                  notification,
-                ).withValues(alpha: 0.3),
-                width: 1.5,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: Colors.black.withValues(alpha: 0.45),
                   blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 10),
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Row(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF13151B).withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
               children: [
                 _buildIcon(),
                 const SizedBox(width: 12),
@@ -130,6 +136,9 @@ class TopNotificationToast extends ConsumerWidget {
                   size: 14,
                 ),
               ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),

@@ -188,7 +188,6 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
               children: [
                 Icon(headerIcon, color: headerColor, size: 80)
                     .animate(onPlay: (controller) => controller.repeat())
-                    .shimmer(duration: 2000.ms)
                     .scale(
                       begin: const Offset(0.8, 0.8),
                       end: const Offset(1.05, 1.05),
@@ -254,7 +253,7 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE5E4E2),
-                    foregroundColor: const Color(0xFF1E1E2C),
+                    foregroundColor: const Color(0xFF0F1117),
                     elevation: 6,
                     padding: const EdgeInsets.all(18),
                     shape: RoundedRectangleBorder(
@@ -575,8 +574,7 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
               size: 24,
             )
                 .animate(target: isWinner ? 1 : 0)
-                .scale(duration: 800.ms, curve: Curves.elasticOut)
-                .shimmer(duration: 1500.ms, delay: 800.ms),
+                .scale(duration: 800.ms, curve: Curves.elasticOut),
           ],
         ],
       ),
