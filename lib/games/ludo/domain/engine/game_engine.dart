@@ -27,8 +27,13 @@ class GameEngine {
   EngineResult rollDice(GameState state, int diceValue) {
     if (state.isDiceRolled) return EngineResult(state);
 
+    final player = _getPlayer(state, state.currentTurn);
+    final bool canUseOneAsSix = state.rules.openOnOneAndSix &&
+        diceValue == 1 &&
+        player.tokens.any((t) => t.state == TokenState.home);
+
     List<EngineEvent> events = [EngineEvent.diceRoll];
-    if (diceValue == 6) events.add(EngineEvent.rolledSix);
+    if (diceValue == 6 || canUseOneAsSix) events.add(EngineEvent.rolledSix);
 
     int newConsecutive = diceValue == 6 ? state.consecutiveSixes + 1 : 0;
 
@@ -43,8 +48,6 @@ class GameEngine {
         ...skipResult.events,
       ]);
     }
-
-    final player = _getPlayer(state, state.currentTurn);
 
     // Update sixPity on successful roll (6 or 1 if openOnOneAndSix)
     final isExitRoll = diceValue == 6 ||

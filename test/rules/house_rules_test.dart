@@ -48,6 +48,69 @@ void main() {
       );
     });
 
+    test('Rolling 1 emits rolledSix event when player has tokens in home to exit', () {
+      final playerWithHome = Player(
+        slot: PlayerSlot.slot1,
+        name: 'Player 1',
+        tokens: [
+          Token(id: 0, slot: PlayerSlot.slot1, state: TokenState.home),
+        ],
+      );
+
+      final state = GameState(
+        gameId: 'test_roll_1_sound',
+        players: [playerWithHome],
+        turnOrder: [PlayerSlot.slot1],
+        currentTurn: PlayerSlot.slot1,
+        rules: const GameRules(openOnOneAndSix: true),
+      );
+
+      final result = engine.rollDice(state, 1);
+      expect(result.events.contains(EngineEvent.rolledSix), isTrue);
+    });
+
+    test('Rolling 1 does not emit rolledSix event when player has no tokens in home', () {
+      final playerOnBoard = Player(
+        slot: PlayerSlot.slot1,
+        name: 'Player 1',
+        tokens: [
+          Token(id: 0, slot: PlayerSlot.slot1, state: TokenState.board, position: 5),
+        ],
+      );
+
+      final state = GameState(
+        gameId: 'test_roll_1_no_home',
+        players: [playerOnBoard],
+        turnOrder: [PlayerSlot.slot1],
+        currentTurn: PlayerSlot.slot1,
+        rules: const GameRules(openOnOneAndSix: true),
+      );
+
+      final result = engine.rollDice(state, 1);
+      expect(result.events.contains(EngineEvent.rolledSix), isFalse);
+    });
+
+    test('Rolling 1 in default rules does not emit rolledSix event even with tokens in home', () {
+      final playerWithHome = Player(
+        slot: PlayerSlot.slot1,
+        name: 'Player 1',
+        tokens: [
+          Token(id: 0, slot: PlayerSlot.slot1, state: TokenState.home),
+        ],
+      );
+
+      final state = GameState(
+        gameId: 'test_roll_1_default_rules',
+        players: [playerWithHome],
+        turnOrder: [PlayerSlot.slot1],
+        currentTurn: PlayerSlot.slot1,
+        rules: const GameRules(openOnOneAndSix: false),
+      );
+
+      final result = engine.rollDice(state, 1);
+      expect(result.events.contains(EngineEvent.rolledSix), isFalse);
+    });
+
     test('Rolling 6 gives extra turn, but rolling 1 to exit does not give extra turn', () {
       final player = Player(
         slot: PlayerSlot.slot1,
