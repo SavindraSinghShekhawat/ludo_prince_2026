@@ -6,12 +6,13 @@ import 'package:flutter/services.dart';
 import 'presence_service.dart';
 import 'social_service.dart';
 import 'profile_service.dart';
+import '../models/user_profile.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  Stream<User?> get authStateChanges => _auth.userChanges();
   User? get currentUser => _auth.currentUser;
 
   Future<UserCredential?> signInWithGoogle() async {
@@ -68,7 +69,13 @@ class AuthService {
     if (user != null && user.isAnonymous) {
       try {
         // Try linking anonymous session to permanent credential
-        return await user.linkWithCredential(credential);
+        final cred = await user.linkWithCredential(credential);
+        await _auth.currentUser?.reload();
+        final linkedUser = _auth.currentUser ?? cred.user;
+        if (linkedUser != null) {
+          await _syncProfileAfterLinking(linkedUser);
+        }
+        return cred;
       } on FirebaseAuthException catch (e) {
         // If credential already belongs to an existing account, rethrow with the
         // credential attached so the UI can prompt the user with the Switch Account warning dialog!
@@ -84,7 +91,65 @@ class AuthService {
         rethrow;
       }
     } else {
-      return await _auth.signInWithCredential(credential);
+      return await signInWithCredential(credential);
+    }
+  }
+
+  Future<UserCredential> signInWithCredential(AuthCredential credential) async {
+    final cred = await _auth.signInWithCredential(credential);
+    final signedInUser = _auth.currentUser ?? cred.user;
+    if (signedInUser != null) {
+      await _syncProfileAfterLinking(signedInUser);
+    }
+    return cred;
+  }
+
+  Future<void> _syncProfileAfterLinking(User user) async {
+    try {
+      final currentProfile = await profileService.getUserProfile(user.uid);
+      final newName = user.displayName;
+      final newEmail = user.email;
+      final newPhoto = user.photoURL;
+
+      if (currentProfile == null) {
+        final newProfile = UserProfile(
+          uid: user.uid,
+          displayName: newName ?? 'Player ${user.uid.substring(0, 4)}',
+          email: newEmail,
+          photoURL: newPhoto,
+          createdAt: DateTime.now(),
+        );
+        await profileService.createOrUpdateProfile(newProfile);
+      } else {
+        bool needsUpdate = false;
+        String? updatedName = currentProfile.displayName;
+        if ((updatedName == null ||
+                updatedName.startsWith('Player ') ||
+                updatedName.startsWith('Guest #')) &&
+            newName != null &&
+            newName.isNotEmpty) {
+          updatedName = newName;
+          needsUpdate = true;
+        }
+        String? updatedEmail = currentProfile.email ?? newEmail;
+        if (updatedEmail != currentProfile.email) needsUpdate = true;
+        String? updatedPhoto = currentProfile.photoURL ?? newPhoto;
+        if (updatedPhoto != currentProfile.photoURL) needsUpdate = true;
+
+        if (needsUpdate) {
+          await profileService.createOrUpdateProfile(
+            currentProfile.copyWith(
+              displayName: updatedName,
+              email: updatedEmail,
+              photoURL: updatedPhoto,
+              lastActive: DateTime.now(),
+            ),
+          );
+        }
+      }
+      await socialService.init();
+    } catch (e) {
+      AppLogger.error('Error syncing profile after linking: $e');
     }
   }
 

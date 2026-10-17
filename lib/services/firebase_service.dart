@@ -124,7 +124,7 @@ class FirebaseService {
     _initialized = true;
 
     // Listen for auth changes and sync profile
-    auth.authStateChanges().listen((user) async {
+    auth.userChanges().listen((user) async {
       if (user != null) {
         final profile = await profileService.getUserProfile(user.uid);
         if (profile == null) {
@@ -139,7 +139,42 @@ class FirebaseService {
           );
           await profileService.createOrUpdateProfile(newProfile);
         } else {
-          await profileService.updateLastActive(user.uid);
+          bool needsUpdate = false;
+          String? updatedName = profile.displayName;
+          String? updatedEmail = profile.email;
+          String? updatedPhoto = profile.photoURL;
+
+          if (!user.isAnonymous) {
+            if ((updatedName == null ||
+                    updatedName.startsWith('Player ') ||
+                    updatedName.startsWith('Guest #')) &&
+                user.displayName != null &&
+                user.displayName!.isNotEmpty) {
+              updatedName = user.displayName;
+              needsUpdate = true;
+            }
+            if (updatedEmail == null && user.email != null) {
+              updatedEmail = user.email;
+              needsUpdate = true;
+            }
+            if (updatedPhoto == null && user.photoURL != null) {
+              updatedPhoto = user.photoURL;
+              needsUpdate = true;
+            }
+          }
+
+          if (needsUpdate) {
+            await profileService.createOrUpdateProfile(
+              profile.copyWith(
+                displayName: updatedName,
+                email: updatedEmail,
+                photoURL: updatedPhoto,
+                lastActive: DateTime.now(),
+              ),
+            );
+          } else {
+            await profileService.updateLastActive(user.uid);
+          }
         }
         // Initialize Social Presence
         await socialService.init();

@@ -34,18 +34,31 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   List<UserProfile> _allFriends = [];
   List<UserProfile> _filteredFriends = [];
   List<UserProfile> _searchResults = [];
+  final Set<String> _sentRequests = {};
   bool _isSearching = false;
   Timer? _debounce;
   StreamSubscription? _friendsSubscription;
+  String? _subscribedUid;
 
   @override
   void initState() {
     super.initState();
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      _friendsSubscription = profileService.getFriends(currentUser.uid).listen((
-        friends,
-      ) {
+    if (currentUser != null && !currentUser.isAnonymous) {
+      _setupFriendsSubscription(currentUser.uid);
+    }
+  }
+
+  void _setupFriendsSubscription(String? uid, {bool force = false}) {
+    if (!force && uid == _subscribedUid && _friendsSubscription != null) {
+      return;
+    }
+    _subscribedUid = uid;
+    _friendsSubscription?.cancel();
+    _friendsSubscription = null;
+
+    if (uid != null) {
+      _friendsSubscription = profileService.getFriends(uid).listen((friends) {
         if (mounted) {
           setState(() {
             _allFriends = friends;
@@ -53,6 +66,13 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           });
         }
       });
+    } else {
+      if (mounted) {
+        setState(() {
+          _allFriends = [];
+          _filteredFriends = [];
+        });
+      }
     }
   }
 
@@ -113,7 +133,17 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    ref.listen<AsyncValue<User?>>(authStateProvider, (previous, next) {
+      final newUser = next.value ?? FirebaseAuth.instance.currentUser;
+      if (newUser != null && !newUser.isAnonymous) {
+        _setupFriendsSubscription(newUser.uid, force: true);
+      } else {
+        _setupFriendsSubscription(null);
+      }
+    });
+
+    final authUser = ref.watch(authStateProvider).value;
+    final user = authUser ?? FirebaseAuth.instance.currentUser;
     final isGuest = user == null || user.isAnonymous;
     final unreadCount =
         ref.watch(notificationProvider).inbox.where((n) => !n.isRead).length;
@@ -230,16 +260,16 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     Color color,
     VoidCallback onTap,
   ) {
+    bool isPressed = false;
     return StatefulBuilder(
-      builder: (context, setState) {
-        bool isPressed = false;
+      builder: (context, setCardState) {
         return GestureDetector(
-          onTapDown: (_) => setState(() => isPressed = true),
+          onTapDown: (_) => setCardState(() => isPressed = true),
           onTapUp: (_) {
-            setState(() => isPressed = false);
+            setCardState(() => isPressed = false);
             onTap();
           },
-          onTapCancel: () => setState(() => isPressed = false),
+          onTapCancel: () => setCardState(() => isPressed = false),
           child: AnimatedContainer(
             duration: 150.ms,
             curve: Curves.easeOut,
@@ -318,10 +348,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             AppButton(
               text: 'LINK NOW',
               isSmall: true,
-              onTap: () {
-                Navigator.of(context).push(
+              onTap: () async {
+                await Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const AuthScreen()),
                 );
+                if (mounted) {
+                  await FirebaseAuth.instance.currentUser?.reload();
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null && !user.isAnonymous) {
+                    _setupFriendsSubscription(user.uid, force: true);
+                  }
+                  setState(() {});
+                }
               },
             ),
           ],
@@ -547,8 +585,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         stream: socialService.watchUserStatus(user.uid),
                         builder: (context, snapshot) {
                           final status = snapshot.data?['status'] ?? 'offline';
-                          if (status == 'offline')
+                          if (status == 'offline') {
                             return const SizedBox.shrink();
+                          }
 
                           final isInGame = status == 'inGame';
                           final isInLobby = status == 'inLobby';
@@ -607,22 +646,30 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 () => _handleChallenge(user),
               ),
             ] else ...[
-              _buildSmallPlatinumButton('ADD', () async {
-                final currentUser = FirebaseAuth.instance.currentUser;
-                if (currentUser != null) {
-                  await profileService.sendFriendRequest(
-                    currentUser.uid,
-                    user.uid,
-                  );
-                  if (mounted) {
-                    AppSnackBar.show(
-                      context,
-                      message: 'Friend request sent to ${user.displayName}!',
-                      isSuccess: true,
-                    );
-                  }
-                }
-              }),
+              _buildSmallPlatinumButton(
+                _sentRequests.contains(user.uid) ? 'SENT' : 'ADD',
+                _sentRequests.contains(user.uid)
+                    ? () {}
+                    : () async {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser != null) {
+                          setState(() => _sentRequests.add(user.uid));
+                          await profileService.sendFriendRequest(
+                            currentUser.uid,
+                            user.uid,
+                          );
+                          if (mounted) {
+                            AppSnackBar.show(
+                              context,
+                              message:
+                                  'Friend request sent to ${user.displayName}!',
+                              isSuccess: true,
+                            );
+                          }
+                        }
+                      },
+                isEnabled: !_sentRequests.contains(user.uid),
+              ),
             ],
           ],
         ),
@@ -703,28 +750,42 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     }
   }
 
-  Widget _buildSmallPlatinumButton(String label, VoidCallback onTap) {
+  Widget _buildSmallPlatinumButton(
+    String label,
+    VoidCallback onTap, {
+    bool isEnabled = true,
+  }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isEnabled ? onTap : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.starPlatinum,
+          color: isEnabled
+              ? AppColors.starPlatinum
+              : AppColors.starPlatinum.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              offset: const Offset(0, 2),
-              blurRadius: 4,
-            ),
-          ],
+          border: Border.all(
+            color: isEnabled
+                ? Colors.black.withValues(alpha: 0.1)
+                : Colors.white12,
+          ),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label.toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.systemBackground,
+          style: TextStyle(
+            color: isEnabled
+                ? AppColors.systemBackground
+                : Colors.white38,
             fontSize: 11,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.0,

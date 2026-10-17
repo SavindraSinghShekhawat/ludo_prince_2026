@@ -5,7 +5,6 @@ import 'package:ludo_prince/services/audio_service.dart';
 import '../widgets/shared_ui.dart';
 import '../screens/lobby_screen.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class JoinByCodeDialog extends StatefulWidget {
   const JoinByCodeDialog({super.key});

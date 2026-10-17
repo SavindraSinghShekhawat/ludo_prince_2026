@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
 import '../widgets/shared_ui.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
-import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

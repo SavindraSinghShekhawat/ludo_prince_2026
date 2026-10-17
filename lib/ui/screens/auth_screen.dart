@@ -112,7 +112,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 Navigator.pop(context);
                 setState(() => _isLoading = true);
                 try {
-                  await FirebaseAuth.instance.signInWithCredential(credential);
+                  await authService.signInWithCredential(credential);
                   if (mounted) Navigator.pop(context);
                 } catch (e) {
                   _showError(
