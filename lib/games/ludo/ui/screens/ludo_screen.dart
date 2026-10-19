@@ -512,52 +512,122 @@ class _BoardInteractionLayer extends ConsumerWidget {
         double tapX = details.localPosition.dx / cellSize;
         double tapY = details.localPosition.dy / cellSize;
 
-        Token? targetToken;
-
-        // 1. Home Yard Quadrant Check:
-        // If the tap is anywhere inside the active player's 6x6 base yard and they have movable home tokens
-        final homeMovableTokens = validTokens
-            .where((t) => t.state == TokenState.home)
-            .toList();
-
-        if (homeMovableTokens.isNotEmpty) {
-          bool insideBaseYard = false;
-          switch (visualSlot) {
-            case PlayerSlot.slot4: // Top-left base
-              insideBaseYard = tapX >= 0 && tapX < 6 && tapY >= 0 && tapY < 6;
-              break;
-            case PlayerSlot.slot3: // Top-right base
-              insideBaseYard = tapX >= 9 && tapX < 15 && tapY >= 0 && tapY < 6;
-              break;
-            case PlayerSlot.slot2: // Bottom-right base
-              insideBaseYard = tapX >= 9 && tapX < 15 && tapY >= 9 && tapY < 15;
-              break;
-            case PlayerSlot.slot1: // Bottom-left base
-              insideBaseYard = tapX >= 0 && tapX < 6 && tapY >= 9 && tapY < 15;
-              break;
-          }
-          if (insideBaseYard) {
-            targetToken = homeMovableTokens.first;
+        // Build overlap mapping to account for visual token offsets on shared cells
+        final Map<String, List<Token>> boardOverlaps = {};
+        final Map<String, List<Token>> homeOverlaps = {};
+        for (var player in gameState.players) {
+          final vSlot = gameState.getVisualSlot(player.slot);
+          for (var t in player.tokens) {
+            final vt = t.copyWith(slot: vSlot);
+            if (vt.state == TokenState.board) {
+              int absPos = BoardPath.getAbsolutePosition(vt.slot, vt.position);
+              boardOverlaps.putIfAbsent("abs_$absPos", () => []).add(vt);
+            } else if (vt.state == TokenState.homeStretch ||
+                vt.state == TokenState.finished) {
+              String key = "${vt.slot.name}_${vt.position}";
+              homeOverlaps.putIfAbsent(key, () => []).add(vt);
+            }
           }
         }
 
-        // 2. Proximity-Based Match for Board & Home Stretch Tokens:
-        if (targetToken == null) {
-          double closestDist = double.infinity;
-          // Generous threshold: 1.4 cells (~35px on typical mobile screen)
-          const double maxThreshold = 1.4;
+        // Check if tap is inside the active player's 6x6 base yard
+        bool isInsideBaseYard(PlayerSlot vSlot, double x, double y) {
+          switch (vSlot) {
+            case PlayerSlot.slot4:
+              return x >= 0 && x < 6 && y >= 0 && y < 6;
+            case PlayerSlot.slot3:
+              return x >= 9 && x < 15 && y >= 0 && y < 6;
+            case PlayerSlot.slot2:
+              return x >= 9 && x < 15 && y >= 9 && y < 15;
+            case PlayerSlot.slot1:
+              return x >= 0 && x < 6 && y >= 9 && y < 15;
+          }
+        }
 
-          for (var token in validTokens) {
-            final visualToken = token.copyWith(slot: visualSlot);
-            Offset gridPos = BoardPath.getTokenOffset(visualToken);
-            double centerX = gridPos.dx + 0.5;
-            double centerY = gridPos.dy + 0.5;
+        final inBase = isInsideBaseYard(visualSlot, tapX, tapY);
 
-            double dist = math.sqrt(
-              math.pow(tapX - centerX, 2) + math.pow(tapY - centerY, 2),
+        Token? targetToken;
+        double closestDist = double.infinity;
+
+        for (var token in validTokens) {
+          final visualToken = token.copyWith(slot: visualSlot);
+          Offset gridPos = BoardPath.getTokenOffset(visualToken);
+          double centerX = gridPos.dx + 0.5;
+          double centerY = gridPos.dy + 0.5;
+
+          // If token has visual overlap offset on a shared cell, factor it in
+          List<Token>? overlapping;
+          if (visualToken.state == TokenState.board) {
+            int absPos = BoardPath.getAbsolutePosition(
+              visualToken.slot,
+              visualToken.position,
             );
+            overlapping = boardOverlaps["abs_$absPos"];
+          } else if (visualToken.state == TokenState.homeStretch ||
+              visualToken.state == TokenState.finished) {
+            overlapping =
+                homeOverlaps["${visualToken.slot.name}_${visualToken.position}"];
+          }
 
-            if (dist < closestDist && dist <= maxThreshold) {
+          if (overlapping != null && overlapping.length > 1) {
+            int index = overlapping.indexWhere(
+              (t) => t.slot == visualToken.slot && t.id == visualToken.id,
+            );
+            double tokenSize = cellSize * 0.85;
+            double spread = tokenSize * 0.3;
+            Offset overlapOffset = Offset.zero;
+            if (overlapping.length == 2) {
+              overlapOffset = Offset(
+                (index == 0) ? -spread / 1.5 : spread / 1.5,
+                0,
+              );
+            } else if (overlapping.length == 3) {
+              if (index == 0) {
+                overlapOffset = Offset(0, -spread);
+              } else if (index == 1) {
+                overlapOffset = Offset(-spread, spread);
+              } else {
+                overlapOffset = Offset(spread, spread);
+              }
+            } else if (overlapping.length == 4) {
+              overlapOffset = Offset(
+                (index % 2 == 1) ? spread : -spread,
+                (index % 4 >= 2) ? spread : -spread,
+              );
+            } else {
+              double multiSpread = spread * 0.8;
+              int cols =
+                  (overlapping.length > 4 && overlapping.length <= 6) ? 3 : 4;
+              int row = index ~/ cols;
+              int col = index % cols;
+              overlapOffset = Offset(
+                (col - (cols - 1) / 2) * multiSpread,
+                (row - (overlapping.length / cols).ceil() / 2 + 0.5) *
+                    multiSpread,
+              );
+            }
+            centerX += overlapOffset.dx / cellSize;
+            centerY += overlapOffset.dy / cellSize;
+          }
+
+          double dist = math.sqrt(
+            math.pow(tapX - centerX, 2) + math.pow(tapY - centerY, 2),
+          );
+
+          // Natural thumb contact threshold:
+          // The token itself has a radius of ~0.425 cells.
+          // A threshold of 0.85 cells (~42px) covers the token body, padding, and cell
+          // to match natural thumb placement, without bleeding into adjacent cells (center dist = 1.0).
+          // For base tokens, spacing between centers is 2.0 cells, so 1.0 cell cleanly covers the token circle.
+          final double maxRadius = (token.state == TokenState.home) ? 1.0 : 0.85;
+
+          if (token.state == TokenState.home) {
+            if (inBase && dist <= maxRadius && dist < closestDist) {
+              closestDist = dist;
+              targetToken = token;
+            }
+          } else {
+            if (dist <= maxRadius && dist < closestDist) {
               closestDist = dist;
               targetToken = token;
             }
