@@ -188,6 +188,11 @@ class AudioService extends ChangeNotifier {
     // Use HapticFeedback for vibration
     await HapticFeedback.mediumImpact();
   }
+
+  void playTapVibrate() {
+    if (!_isVibrationEnabled) return;
+    HapticFeedback.lightImpact();
+  }
 }
 
 final audioService = AudioService();

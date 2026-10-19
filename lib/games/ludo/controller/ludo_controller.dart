@@ -139,8 +139,14 @@ class LudoController implements GameController {
     Future.delayed(Duration.zero, _checkBotTurn);
   }
 
-  bool get isMyTurn =>
-      localPlayerSlot == null || state.currentTurn == localPlayerSlot;
+  bool get isMyTurn {
+    if (localPlayerSlot == null || state.currentTurn == localPlayerSlot) {
+      return true;
+    }
+    return state.players.any(
+      (p) => p.slot == state.currentTurn && p.type == PlayerType.localBot,
+    );
+  }
 
   void _onEventReceived(GameEvent event) {
     _eventQueue.add(event);
@@ -216,8 +222,11 @@ class LudoController implements GameController {
     // Use Future.delayed (Timer-based) instead of Future.microtask to ensure
     // the UI event loop gets a chance to process frames between bot turns.
     // This prevents the freeze when multiple bots trade rapid-fire turns.
-    await Future.delayed(const Duration(milliseconds: 200));
-    _isActionInProgress = false;
+    try {
+      await Future.delayed(const Duration(milliseconds: 200));
+    } finally {
+      _isActionInProgress = false;
+    }
 
     if (_isDisposed ||
         _isPaused ||
@@ -411,6 +420,8 @@ class LudoController implements GameController {
     
     // Store whether it was our turn before we evaluate the roll
     bool wasMyTurn = localPlayerSlot == _state.currentTurn;
+    int? autoMoveId;
+    bool isTurnSkipped = false;
 
     _isActionInProgress = true;
 
@@ -458,8 +469,7 @@ class LudoController implements GameController {
       final result = _engine.rollDice(_state, value);
       final resultState = result.state;
 
-      int? autoMoveId;
-      bool isTurnSkipped = result.events.contains(EngineEvent.turnSkipped);
+      isTurnSkipped = result.events.contains(EngineEvent.turnSkipped);
 
       // Auto move if only 1 valid token or all valid tokens at same place
       if (resultState.isDiceRolled) {
@@ -526,24 +536,26 @@ class LudoController implements GameController {
         await Future.delayed(const Duration(milliseconds: 150));
         if (_isDisposed) return;
       }
-
-      if (autoMoveId != null) {
-        final player = _state.players.firstWhere(
-          (p) => p.slot == _state.currentTurn,
-        );
-        final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
-        // Yield to the event loop before auto-move to allow UI to render
-        if (!fastForward) await Future.delayed(const Duration(milliseconds: 50));
-        await sendMoveIntent(token);
-      } else if (isTurnSkipped && wasMyTurn && _state.gameType == GameType.online) {
-        eventProvider.onSkipRequested();
-        Future.delayed(Duration.zero, _checkBotTurn);
-      } else {
-        // Schedule on event loop (not microtask) so UI can paint between bot turns
-        Future.delayed(Duration.zero, _checkBotTurn);
-      }
     } finally {
       _isActionInProgress = false;
+    }
+
+    if (_isDisposed) return;
+
+    if (autoMoveId != null) {
+      final player = _state.players.firstWhere(
+        (p) => p.slot == _state.currentTurn,
+      );
+      final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
+      // Yield to the event loop before auto-move to allow UI to render
+      if (!fastForward) await Future.delayed(const Duration(milliseconds: 50));
+      await sendMoveIntent(token);
+    } else if (isTurnSkipped && wasMyTurn && _state.gameType == GameType.online) {
+      eventProvider.onSkipRequested();
+      Future.delayed(Duration.zero, _checkBotTurn);
+    } else {
+      // Schedule on event loop (not microtask) so UI can paint between bot turns
+      Future.delayed(Duration.zero, _checkBotTurn);
     }
   }
 
@@ -551,9 +563,12 @@ class LudoController implements GameController {
   Future<void> executeMove(int tokenId, {bool fastForward = false}) async {
     if (_isDisposed || _isActionInProgress) return;
     _isActionInProgress = true;
-    await _executor.execute(_state, tokenId, _state.diceValue,
-        fastForward: fastForward);
-    _isActionInProgress = false;
+    try {
+      await _executor.execute(_state, tokenId, _state.diceValue,
+          fastForward: fastForward);
+    } finally {
+      _isActionInProgress = false;
+    }
     if (!_isDisposed) {
       // Always set new timestamp for whoever's turn it is now (Bonus turn or next player)
       _state = _state.copyWith(

@@ -1,7 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 
 import '../../domain/models/game_state.dart';
 
@@ -65,6 +68,7 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     if (gameState == null) return;
     if (gameState.isDiceRolled || _isAnimating) return;
 
+    audioService.playTapVibrate();
     ref.read(gameControllerProvider).sendRollIntent();
   }
 
@@ -134,8 +138,12 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
     final diceValue = ref.watch(
       gameStreamProvider.select((s) => s.value?.diceValue ?? 1),
     );
+    final isDiceRolled = ref.watch(
+      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
+    );
 
-    return GestureDetector(
+    Widget diceWidget = GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: _rollDice,
       child: AnimatedBuilder(
         animation: _controller,
@@ -221,6 +229,8 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
         },
       ),
     );
+
+    return diceWidget;
   }
 
   void _startSlowdownTimer() async {

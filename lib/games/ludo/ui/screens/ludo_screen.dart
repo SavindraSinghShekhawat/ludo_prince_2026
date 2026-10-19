@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
@@ -478,6 +480,7 @@ class _BoardInteractionLayer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapUp: (details) {
         final gameState = ref.read(gameStreamProvider).value;
         if (gameState == null || !gameState.isDiceRolled) return;
@@ -490,39 +493,79 @@ class _BoardInteractionLayer extends ConsumerWidget {
           );
         }
 
+        final currentPlayer = gameState.players
+            .where((p) => p.slot == gameState.currentTurn)
+            .firstOrNull;
+        if (currentPlayer == null) return;
+        if (currentPlayer.type == PlayerType.localBot ||
+            currentPlayer.type == PlayerType.remoteBot) {
+          return;
+        }
+
+        final visualSlot = gameState.getVisualSlot(currentPlayer.slot);
+        final validTokens = currentPlayer.tokens
+            .where((t) => isMoveValid(t, gameState))
+            .toList();
+
+        if (validTokens.isEmpty) return;
+
         double tapX = details.localPosition.dx / cellSize;
         double tapY = details.localPosition.dy / cellSize;
 
         Token? targetToken;
-        for (var player in gameState.players) {
-          if (player.slot != gameState.currentTurn) continue;
-          if (player.type == PlayerType.localBot ||
-              player.type == PlayerType.remoteBot) {
-            break;
+
+        // 1. Home Yard Quadrant Check:
+        // If the tap is anywhere inside the active player's 6x6 base yard and they have movable home tokens
+        final homeMovableTokens = validTokens
+            .where((t) => t.state == TokenState.home)
+            .toList();
+
+        if (homeMovableTokens.isNotEmpty) {
+          bool insideBaseYard = false;
+          switch (visualSlot) {
+            case PlayerSlot.slot4: // Top-left base
+              insideBaseYard = tapX >= 0 && tapX < 6 && tapY >= 0 && tapY < 6;
+              break;
+            case PlayerSlot.slot3: // Top-right base
+              insideBaseYard = tapX >= 9 && tapX < 15 && tapY >= 0 && tapY < 6;
+              break;
+            case PlayerSlot.slot2: // Bottom-right base
+              insideBaseYard = tapX >= 9 && tapX < 15 && tapY >= 9 && tapY < 15;
+              break;
+            case PlayerSlot.slot1: // Bottom-left base
+              insideBaseYard = tapX >= 0 && tapX < 6 && tapY >= 9 && tapY < 15;
+              break;
           }
+          if (insideBaseYard) {
+            targetToken = homeMovableTokens.first;
+          }
+        }
 
-          final visualSlot = gameState.getVisualSlot(player.slot);
+        // 2. Proximity-Based Match for Board & Home Stretch Tokens:
+        if (targetToken == null) {
+          double closestDist = double.infinity;
+          // Generous threshold: 1.4 cells (~35px on typical mobile screen)
+          const double maxThreshold = 1.4;
 
-          for (var token in player.tokens) {
+          for (var token in validTokens) {
             final visualToken = token.copyWith(slot: visualSlot);
             Offset gridPos = BoardPath.getTokenOffset(visualToken);
-            double gridX = gridPos.dx;
-            double gridY = gridPos.dy;
+            double centerX = gridPos.dx + 0.5;
+            double centerY = gridPos.dy + 0.5;
 
-            if (tapX >= gridX &&
-                tapX < gridX + 1 &&
-                tapY >= gridY &&
-                tapY < gridY + 1) {
-              if (isMoveValid(token, gameState)) {
-                targetToken = token;
-                break;
-              }
+            double dist = math.sqrt(
+              math.pow(tapX - centerX, 2) + math.pow(tapY - centerY, 2),
+            );
+
+            if (dist < closestDist && dist <= maxThreshold) {
+              closestDist = dist;
+              targetToken = token;
             }
           }
-          if (targetToken != null) break;
         }
 
         if (targetToken != null) {
+          audioService.playTapVibrate();
           ref.read(gameControllerProvider).sendMoveIntent(targetToken);
         }
       },
@@ -563,9 +606,6 @@ class _TokenLayer extends ConsumerWidget {
     );
     final diceValue = ref.watch(
       gameStreamProvider.select((s) => s.value?.diceValue ?? 1),
-    );
-    final gameType = ref.watch(
-      gameStreamProvider.select((s) => s.value?.gameType),
     );
 
     if (players == null) return const SizedBox.shrink();
@@ -904,7 +944,7 @@ class _PlayerPanelWrapper extends ConsumerWidget {
   }
 }
 
-class _PlayerPanelContent extends StatelessWidget {
+class _PlayerPanelContent extends ConsumerWidget {
   const _PlayerPanelContent({
     required this.slot,
     required this.player,
@@ -934,7 +974,7 @@ class _PlayerPanelContent extends StatelessWidget {
   final GameType gameType;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isTurn = slot == currentTurn;
     final Color displayColor = AppColors.getUiColorForSlot(slot);
     final playerName = player.name;
@@ -1008,14 +1048,14 @@ class _PlayerPanelContent extends StatelessWidget {
       diceBox = _RankBadge(rank: winnerRank);
     } else if (isTurn) {
       diceBox = const SizedBox(
-        width: 50,
-        height: 50,
+        width: 56,
+        height: 56,
         child: Padding(padding: EdgeInsets.all(2), child: DiceWidget()),
       );
     } else {
       diceBox = Container(
-        width: 50,
-        height: 50,
+        width: 56,
+        height: 56,
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: Colors.white12,
@@ -1078,6 +1118,8 @@ class _PlayerPanelContent extends StatelessWidget {
             ],
     );
 
+    final canRoll = isTurn && !isDiceRolled && !isBot;
+
     Widget panelContent = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
@@ -1088,6 +1130,14 @@ class _PlayerPanelContent extends StatelessWidget {
           color: isTurn ? Colors.white : Colors.white24,
           width: 2,
         ),
+        boxShadow: [
+          if (canRoll)
+            BoxShadow(
+              color: displayColor.withValues(alpha: 0.35),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1097,6 +1147,24 @@ class _PlayerPanelContent extends StatelessWidget {
             : [avatarBox, const SizedBox(width: 8), diceBox],
       ),
     );
+
+    if (canRoll) {
+      panelContent = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          audioService.playTapVibrate();
+          ref.read(gameControllerProvider).sendRollIntent();
+        },
+        child: panelContent
+            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+            .scaleXY(
+              begin: 1.0,
+              end: 1.04,
+              duration: 800.ms,
+              curve: Curves.easeInOut,
+            ),
+      );
+    }
 
     return Expanded(
       child: Align(

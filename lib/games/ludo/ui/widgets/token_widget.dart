@@ -1,6 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
+import 'package:ludo_prince/services/audio_service.dart';
 import '../../domain/models/token.dart';
 import '../../domain/models/board_path.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
@@ -56,11 +60,7 @@ class TokenWidget extends StatelessWidget {
             ignoring: !isMovable,
             child: Consumer(
               builder: (context, ref, child) {
-                return GestureDetector(
-                  onTap: () {
-                    ref.read(gameControllerProvider).sendMoveIntent(token);
-                  },
-                  child: AnimatedContainer(
+                Widget tokenBody = AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -80,7 +80,7 @@ class TokenWidget extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.45),
+                          color: Colors.black.withValues(alpha: 0.45),
                           blurRadius: 3,
                           offset: const Offset(0, 1.5),
                         ),
@@ -148,7 +148,15 @@ class TokenWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
+                  );
+
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    audioService.playTapVibrate();
+                    ref.read(gameControllerProvider).sendMoveIntent(token);
+                  },
+                  child: tokenBody,
                 );
               },
             ),
