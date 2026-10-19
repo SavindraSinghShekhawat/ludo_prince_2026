@@ -267,6 +267,9 @@ class GameEngine {
 
     return EngineResult(state.copyWith(players: players), events);
   }
+  EngineResult passTurn(GameState state, [String msg = "Turn passed."]) {
+    return _nextTurn(state, msg);
+  }
 
   EngineResult skipTurn(GameState state) {
     final player = _getPlayer(state, state.currentTurn);

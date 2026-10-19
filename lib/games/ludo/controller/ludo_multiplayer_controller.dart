@@ -62,6 +62,13 @@ class LudoMultiplayerController extends LudoController {
         ? PlayerSlot.values.firstWhere((e) => e.name == currentTurnName, orElse: () => state.currentTurn)
         : null;
 
+    final turnOrderData = data['turnOrder'] as List?;
+    final List<PlayerSlot>? turnOrder = turnOrderData != null
+        ? turnOrderData
+            .map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
+            .toList()
+        : null;
+
     state = state.copyWith(
       gameType: GameType.online,
       gameMode: mode,
@@ -70,6 +77,7 @@ class LudoMultiplayerController extends LudoController {
       turnTimeSeconds: turnTime,
       prefetchedSeed: data['prefetchedSeed'] as int?,
       currentTurn: currentTurn,
+      turnOrder: turnOrder ?? state.turnOrder,
       diceValue: (data['diceValue'] as int?) ?? state.diceValue,
       isDiceRolled: (data['isDiceRolled'] as bool?) ?? state.isDiceRolled,
     );
@@ -163,14 +171,18 @@ class LudoMultiplayerController extends LudoController {
       '[LudoMultiplayerController] Sending timeout request to Firebase for game $gameId',
     );
 
-    // Only send if it's NOT our turn (let others claim the turn)
-    // or if we've been offline and just came back.
-    // Actually, any active client can send it.
+    // Target the player whose turn actually timed out, so we don't pollute the local player's actionRequests node
+    final timedOutPlayer = state.players.firstWhere(
+      (p) => p.slot == state.currentTurn,
+      orElse: () => state.players.first,
+    );
+    final targetUid = timedOutPlayer.uid ?? currentUser.uid;
+
     await _db
         .ref()
         .child(FirebasePaths.session(gameType, gameId))
         .child('actionRequests')
-        .child(currentUser.uid)
+        .child(targetUid)
         .set({'type': 'timeout', 'requestedAt': ServerValue.timestamp});
   }
 
@@ -256,21 +268,23 @@ class LudoMultiplayerController extends LudoController {
 
     if (event is SkipEvent) {
       if (event.playerSlot == state.currentTurn) {
-        state = engine.skipTurn(state).state;
+        if (event.isTimeout) {
+          state = engine.skipTurn(state).state;
+        } else {
+          state = engine.passTurn(state).state;
+        }
         // Increment action count for SkipEvent since super.handleGameEvent isn't called
-        state = state.copyWith(turnActionCount: state.turnActionCount + 1);
+        state = state.copyWith(
+          turnActionCount: state.turnActionCount + 1,
+          isRolling: false,
+          isWaitingForResult: false,
+        );
       } else {
         AppLogger.debug('Ignoring stale SkipEvent for ${event.playerSlot}');
       }
     } else {
       await super.handleGameEvent(event, fastForward: fastForward);
     }
-
-    final newTurn = state.currentTurn;
-    final shouldRestartTimer =
-        oldTurn != newTurn || event is RollEvent || event is MoveEvent;
-    // ignore: unused_local_variable
-    final turnChangedLocally = oldTurn != newTurn;
 
     final timestamp = firebaseService.serverTimeMillis;
     _turnStartedAt = timestamp;
@@ -279,39 +293,7 @@ class LudoMultiplayerController extends LudoController {
     // CRITICAL: Always emit the final state after updating the timestamp
     if (!isDisposed) streamController.add(state);
 
-    // Push new turn to Firebase so Cloud Function timer restarts
-    if (shouldRestartTimer && !state.isGameOver) {
-      final isLocalTurnEnding = oldTurn == localPlayerSlot;
-      final isHost = localPlayerSlot == PlayerSlot.slot1;
-
-      // Determine if this client should be the one to update the DB
-      // We prioritize the player whose turn just ended, but fallback to host if they are absent
-      bool shouldIUpdate = isLocalTurnEnding;
-      if (!shouldIUpdate && isHost) {
-        final oldPlayer = state.players.firstWhere((p) => p.slot == oldTurn);
-        if (oldPlayer.status == PlayerStatus.left) {
-          shouldIUpdate = true;
-        }
-      }
-
-      if (shouldIUpdate) {
-        final updates = <String, dynamic>{
-          'currentTurn': newTurn.name,
-          'turnStartedAt': ServerValue.timestamp,
-          'turnActionCount': state.turnActionCount,
-        };
-
-        if (turnChangedLocally) {
-          updates['turnNumber'] = ServerValue.increment(1);
-          updates['isDiceRolled'] = false;
-        }
-
-        _db
-            .ref()
-            .child(FirebasePaths.session(gameType, gameId))
-            .update(updates);
-      }
-    } else if (state.isGameOver && localPlayerSlot == PlayerSlot.slot1) {
+    if (state.isGameOver && localPlayerSlot == PlayerSlot.slot1) {
       final winnerUids = state.winners.map((slot) {
         return state.players.firstWhere((p) => p.slot == slot).uid;
       }).toList();

@@ -90,6 +90,7 @@ sealed class GameEvent {
       return SkipEvent(
         PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
         timestamp: timestamp,
+        isTimeout: json['isTimeout'] as bool? ?? false,
       );
     }
     throw Exception('Unknown GameEvent type: $type');
@@ -136,12 +137,15 @@ class QuitEvent extends GameEvent {
 
 class SkipEvent extends GameEvent {
   final PlayerSlot playerSlot;
-  SkipEvent(this.playerSlot, {required super.timestamp});
+  final bool isTimeout;
+  SkipEvent(this.playerSlot,
+      {required super.timestamp, this.isTimeout = false});
 
   @override
   Map<String, dynamic> toJson() => {
         'type': 'skip',
         'playerSlot': playerSlot.name,
         'timestamp': timestamp,
+        'isTimeout': isTimeout,
       };
 }

@@ -1,9 +1,9 @@
-import {onValueCreated} from "firebase-functions/v2/database";
+import {onValueWritten} from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 import {ServerValue} from "firebase-admin/database";
 import {GameDocument} from "./models/GameDocument";
 import {PlayerEntry, Token} from "./models/Player";
-import {RollEvent, MoveEvent} from "./models/GameEvent";
+import {RollEvent, MoveEvent, SkipEvent} from "./models/GameEvent";
 import {AppLogger} from "./utils/logger";
 import * as crypto from "node:crypto";
 import {LudoEngine} from "./engine/LudoEngine";
@@ -61,15 +61,18 @@ function generatePRDDice(
   }
 }
 
-export const handleGameAction = onValueCreated(
+export const handleGameAction = onValueWritten(
   {
     ref: "/games/{gameType}/{gameId}/actionRequests/{uid}",
   },
   async (event) => {
+    if (!event.data.after.exists()) {
+      return; // Deletion event, ignore
+    }
     const gameType = event.params.gameType;
     const gameId = event.params.gameId;
     const uid = event.params.uid;
-    const data = event.data.val();
+    const data = event.data.after.val();
 
     AppLogger.debug("[handleGameAction] ==================== START ====================");
     AppLogger.debug(`[handleGameAction] Triggered for game=${gameType}, gameId=${gameId}, uid=${uid}`);
@@ -343,7 +346,8 @@ export const handleGameAction = onValueCreated(
             playerSlot: currentTurn,
             turnNumber: eventTurnNumber,
             timestamp: ServerValue.TIMESTAMP,
-          };
+            isTimeout: true,
+          } as SkipEvent;
           game.eventCounter = eventCounter;
 
           // Check forfeit winner
@@ -392,7 +396,8 @@ export const handleGameAction = onValueCreated(
             playerSlot: currentTurn,
             turnNumber: eventTurnNumber,
             timestamp: ServerValue.TIMESTAMP,
-          };
+            isTimeout: false,
+          } as SkipEvent;
           game.eventCounter = eventCounter;
 
           return game;
@@ -474,11 +479,15 @@ export const handleGameAction = onValueCreated(
           await admin.database().ref().update(updates);
         }
       }
-
-      // Clear the request node
-      await requestRef.remove();
     } catch (err) {
       AppLogger.error("[handleGameAction] Error:", err);
+    } finally {
+      // Clear the request node guaranteed
+      try {
+        await requestRef.remove();
+      } catch (cleanupErr) {
+        AppLogger.error("[handleGameAction] Error removing requestRef:", cleanupErr);
+      }
     }
   }
 );

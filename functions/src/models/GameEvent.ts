@@ -20,3 +20,8 @@ export interface MoveEvent extends GameEvent {
 export interface QuitEvent extends GameEvent {
   type: "quit";
 }
+
+export interface SkipEvent extends GameEvent {
+  type: "skip";
+  isTimeout?: boolean;
+}

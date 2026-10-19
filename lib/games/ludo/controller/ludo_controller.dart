@@ -13,6 +13,7 @@ import 'package:ludo_prince/services/audio_service.dart';
 import 'src/audio_listener.dart';
 import 'src/move_executor.dart';
 import 'src/game_event_provider.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 
 abstract class GameController {
   Stream<GameState> watchGame();
@@ -77,6 +78,25 @@ class LudoController implements GameController {
 
   final List<GameEvent> _eventQueue = [];
   bool _isProcessingQueue = false;
+  Timer? _rollSafetyTimer;
+
+  void _startRollSafetyTimer() {
+    _rollSafetyTimer?.cancel();
+    _rollSafetyTimer = Timer(const Duration(milliseconds: 3000), () {
+      if (_isDisposed) return;
+      if (_state.isRolling || _state.isWaitingForResult) {
+        AppLogger.debug(
+          '[LudoController] Roll response timed out after 3s. Unlocking dice.',
+        );
+        _state = _state.copyWith(
+          isRolling: false,
+          isWaitingForResult: false,
+        );
+        _isActionInProgress = false;
+        if (!_isDisposed) _streamController.add(_state);
+      }
+    });
+  }
 
   @override
   final PlayerSlot? localPlayerSlot;
@@ -336,6 +356,8 @@ class LudoController implements GameController {
       );
       if (!_isDisposed) _streamController.add(_state);
 
+      _startRollSafetyTimer();
+
       // Start the intent request immediately
       eventProvider.onRollRequested();
 
@@ -353,6 +375,8 @@ class LudoController implements GameController {
       // CLASSIC FLOW (Local, Bot, or fallback)
       _state = _state.copyWith(isRolling: true, isWaitingForResult: true);
       if (!_isDisposed) _streamController.add(_state);
+
+      _startRollSafetyTimer();
 
       int? localDice;
       if (state.gameType == GameType.local) {
@@ -382,6 +406,7 @@ class LudoController implements GameController {
   @override
   Future<void> executeRoll(int value,
       {bool skipSounds = false, bool fastForward = false}) async {
+    _rollSafetyTimer?.cancel();
     if (_isDisposed || _isActionInProgress) return;
     
     // Store whether it was our turn before we evaluate the roll
@@ -389,127 +414,136 @@ class LudoController implements GameController {
 
     _isActionInProgress = true;
 
-    // For local human, pause execution if the previous action was a roll
-    if (!fastForward && _state.lastAction == GameAction.roll) {
-      // Pause slightly between sequential rolls
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (_isDisposed) {
-        _isActionInProgress = false;
-        return;
-      }
-    }
-
-    bool alreadyLanded = _state.diceValue == value && !_state.isRolling;
-
-    if (!alreadyLanded && !fastForward) {
-      _state = _state.copyWith(
-        isRolling: true,
-        isWaitingForResult: true,
-      );
-      if (!_isDisposed) _streamController.add(_state);
-
-      // Minimum "anticipation" duration to ensure the loop is heard/seen
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (_isDisposed) {
-        _isActionInProgress = false;
-        return;
+    try {
+      // For local human, pause execution if the previous action was a roll
+      if (!fastForward && _state.lastAction == GameAction.roll) {
+        // Pause slightly between sequential rolls
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (_isDisposed) return;
       }
 
-      // Transition from "waiting" to "showing result"
-      _state = _state.copyWith(
-        isRolling: true,
-        isWaitingForResult: false,
-        diceValue: value,
-      );
+      bool alreadyLanded = _state.diceValue == value && !_state.isRolling;
+
+      if (!alreadyLanded && !fastForward) {
+        _state = _state.copyWith(
+          isRolling: true,
+          isWaitingForResult: true,
+        );
+        if (!_isDisposed) _streamController.add(_state);
+
+        // Minimum "anticipation" duration to ensure the loop is heard/seen
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (_isDisposed) return;
+
+        // Transition from "waiting" to "showing result"
+        _state = _state.copyWith(
+          isRolling: true,
+          isWaitingForResult: false,
+          diceValue: value,
+        );
+        if (!_isDisposed) _streamController.add(_state);
+
+        // Fixed duration for the "landing" animation
+        await Future.delayed(const Duration(milliseconds: 450));
+      } else if (!alreadyLanded && fastForward) {
+        _state = _state.copyWith(
+          isRolling: false,
+          isWaitingForResult: false,
+          diceValue: value,
+        );
+      }
       if (!_isDisposed) _streamController.add(_state);
 
-      // Fixed duration for the "landing" animation
-      await Future.delayed(const Duration(milliseconds: 450));
-    } else if (!alreadyLanded && fastForward) {
-      _state = _state.copyWith(
-        isRolling: false,
-        isWaitingForResult: false,
-        diceValue: value,
-      );
-    }
-    if (!_isDisposed) _streamController.add(_state);
+      // Now calculate the engine result to determine if an auto-action is pending
+      final result = _engine.rollDice(_state, value);
+      final resultState = result.state;
 
-    // Now calculate the engine result to determine if an auto-action is pending
-    final result = _engine.rollDice(_state, value);
-    final resultState = result.state;
+      int? autoMoveId;
+      bool isTurnSkipped = result.events.contains(EngineEvent.turnSkipped);
 
-    int? autoMoveId;
-    bool isTurnSkipped = result.events.contains(EngineEvent.turnSkipped);
-
-    // Auto move if only 1 valid token or all valid tokens at same place
-    if (resultState.isDiceRolled) {
-      final player = resultState.players.firstWhere(
-        (p) => p.slot == resultState.currentTurn,
-      );
-
-      final validTokens = player.tokens
-          .where((t) => _engine.isValidMove(
-                t,
-                resultState.diceValue,
-                rules: resultState.rules,
-              ))
-          .toList();
-
-      if (validTokens.isNotEmpty) {
-        bool allSamePosition = validTokens.every(
-          (t) =>
-              t.state == validTokens.first.state &&
-              t.position == validTokens.first.position,
+      // Auto move if only 1 valid token or all valid tokens at same place
+      if (resultState.isDiceRolled) {
+        final player = resultState.players.firstWhere(
+          (p) => p.slot == resultState.currentTurn,
         );
 
-        bool allInHome = validTokens.every((t) => t.state == TokenState.home);
+        final validTokens = player.tokens
+            .where((t) => _engine.isValidMove(
+                  t,
+                  resultState.diceValue,
+                  rules: resultState.rules,
+                ))
+            .toList();
 
-        if (validTokens.length == 1 || (allSamePosition && !allInHome)) {
-          autoMoveId = validTokens.first.id;
+        if (validTokens.isNotEmpty) {
+          bool allSamePosition = validTokens.every(
+            (t) =>
+                t.state == validTokens.first.state &&
+                t.position == validTokens.first.position,
+          );
+
+          bool allInHome = validTokens.every((t) => t.state == TokenState.home);
+
+          if (validTokens.length == 1 || (allSamePosition && !allInHome)) {
+            autoMoveId = validTokens.first.id;
+          }
         }
       }
-    }
 
-    _state = resultState.copyWith(
-      isRolling: false,
-      lastAction: GameAction.roll,
-      turnStartedAt: firebaseService.serverTimeMillis,
-      turnActionCount: _state.turnActionCount + 1,
-    );
+      // In online mode with a skipped turn, do NOT advance currentTurn eagerly on the client.
+      // Wait for the server authoritative SkipEvent so the next player's dice doesn't activate
+      // before the server has accepted the previous player's skip.
+      final nextState = (_state.gameType == GameType.online && isTurnSkipped)
+          ? resultState.copyWith(
+              currentTurn: _state.currentTurn,
+              isRolling: false,
+              isWaitingForResult: false,
+              isDiceRolled: true,
+              lastAction: GameAction.roll,
+              turnStartedAt: firebaseService.serverTimeMillis,
+              turnActionCount: _state.turnActionCount + 1,
+            )
+          : resultState.copyWith(
+              isRolling: false,
+              isWaitingForResult: false,
+              lastAction: GameAction.roll,
+              turnStartedAt: firebaseService.serverTimeMillis,
+              turnActionCount: _state.turnActionCount + 1,
+            );
 
-    if (!skipSounds && !fastForward && !_isDisposed) {
-      _audioListener.handleEngineEvents(result.events);
-    }
+      _state = nextState;
 
-    if (!_isDisposed) _streamController.add(_state);
-
-    bool isAutoAction = autoMoveId != null || isTurnSkipped;
-
-    if (isAutoAction && !fastForward) {
-      // Pause so user can digest the roll before the auto-move/skip
-      await Future.delayed(const Duration(milliseconds: 150));
-      if (_isDisposed) {
-        _isActionInProgress = false;
-        return;
+      if (!skipSounds && !fastForward && !_isDisposed) {
+        _audioListener.handleEngineEvents(result.events);
       }
-    }
 
-    _isActionInProgress = false;
+      if (!_isDisposed) _streamController.add(_state);
 
-    if (autoMoveId != null) {
-      final player = _state.players.firstWhere(
-        (p) => p.slot == _state.currentTurn,
-      );
-      final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
-      // Yield to the event loop before auto-move to allow UI to render
-      if (!fastForward) await Future.delayed(const Duration(milliseconds: 50));
-      await sendMoveIntent(token);
-    } else if (isTurnSkipped && wasMyTurn && _state.gameType == GameType.online) {
-      eventProvider.onSkipRequested();
-      Future.delayed(Duration.zero, _checkBotTurn);
-    } else {
-      // Schedule on event loop (not microtask) so UI can paint between bot turns
-      Future.delayed(Duration.zero, _checkBotTurn);
+      bool isAutoAction = autoMoveId != null || isTurnSkipped;
+
+      if (isAutoAction && !fastForward) {
+        // Pause so user can digest the roll before the auto-move/skip
+        await Future.delayed(const Duration(milliseconds: 150));
+        if (_isDisposed) return;
+      }
+
+      if (autoMoveId != null) {
+        final player = _state.players.firstWhere(
+          (p) => p.slot == _state.currentTurn,
+        );
+        final token = player.tokens.firstWhere((t) => t.id == autoMoveId);
+        // Yield to the event loop before auto-move to allow UI to render
+        if (!fastForward) await Future.delayed(const Duration(milliseconds: 50));
+        await sendMoveIntent(token);
+      } else if (isTurnSkipped && wasMyTurn && _state.gameType == GameType.online) {
+        eventProvider.onSkipRequested();
+        Future.delayed(Duration.zero, _checkBotTurn);
+      } else {
+        // Schedule on event loop (not microtask) so UI can paint between bot turns
+        Future.delayed(Duration.zero, _checkBotTurn);
+      }
+    } finally {
+      _isActionInProgress = false;
     }
   }
 
@@ -560,6 +594,7 @@ class LudoController implements GameController {
 
   @override
   Future<void> dispose() async {
+    _rollSafetyTimer?.cancel();
     if (_isDisposed && _streamController.isClosed) return;
 
     _isDisposed = true;

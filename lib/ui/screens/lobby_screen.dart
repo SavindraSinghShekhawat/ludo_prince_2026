@@ -1177,10 +1177,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         final playersData = Map<String, dynamic>.from(
           playersEvent.snapshot.value as Map,
         );
-        for (var entry in playersData.entries) {
-          final slotStr = entry.key;
-          final slot = PlayerSlot.values.firstWhere((e) => e.name == slotStr);
-          final data = Map<String, dynamic>.from(entry.value as Map);
+        final orderedSlots =
+            PlayerSlotExtension.getSlotsFor(playersData.length);
+        for (final slot in orderedSlots) {
+          if (!playersData.containsKey(slot.name)) continue;
+          final data = Map<String, dynamic>.from(playersData[slot.name] as Map);
           if (data['uid'] == currentUserUid) localSlot = slot;
           // All remote players and bots are treated as remoteHuman by local UI, server handles bot turns
           config[slot] = PlayerSetupConfig(
