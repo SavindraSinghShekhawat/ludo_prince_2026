@@ -119,12 +119,20 @@ def synth_warm_bass(midi, duration, velocity=0.85, punch=True):
     samples = int(duration * SAMPLE_RATE)
     buf_l = [0.0] * samples
     buf_r = [0.0] * samples
+    fade_len = int(0.015 * SAMPLE_RATE)  # 15ms smooth release at note-off removes speaker tick
 
     for i in range(samples):
         t = i / SAMPLE_RATE
         att = min(1.0, t / (0.008 if punch else 0.02))
         rel = math.exp((-3.5 if punch else -2.2) * t)
-        env = att * rel
+        
+        # Smooth cosine release only at the very end of the note duration
+        if i >= samples - fade_len:
+            end_factor = 0.5 * (1.0 + math.cos(math.pi * (fade_len - (samples - 1 - i)) / fade_len))
+        else:
+            end_factor = 1.0
+            
+        env = att * rel * end_factor
         
         sub = math.sin(2.0 * math.pi * freq * t)
         harm2 = (0.5 if punch else 0.3) * math.sin(2.0 * math.pi * freq * 2.0 * t) * math.exp(-4.5 * t)
