@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/audio_provider.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/providers/package_info_provider.dart';
+import 'notifications_settings_screen.dart';
 import 'dice_randomness_screen.dart';
 import '../widgets/shared_ui.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
@@ -161,6 +162,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   value: audio.isVibrationEnabled,
                   onChanged: (_) => audio.toggleVibration(),
                   accentColor: const Color(0xFF00FF88), // Spring Jade
+                ),
+                const SizedBox(height: 12),
+                _buildSettingButton(
+                  title: "Notifications & Reminders",
+                  subtitle: "Match invites, daily battle call & nudges",
+                  icon: Icons.notifications_active_outlined,
+                  accentColor: AppColors.primaryCyan,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const NotificationsSettingsScreen(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
 

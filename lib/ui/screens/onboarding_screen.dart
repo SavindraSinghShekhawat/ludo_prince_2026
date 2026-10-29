@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
+import 'package:ludo_prince/services/notification_service.dart';
 import '../widgets/shared_ui.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
 
@@ -141,19 +142,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ? "START PLAYING"
                           : "CONTINUE",
                       isPrimary: true,
-                      onTap: () async {
+                      onTap: () {
                         if (_currentPage == _onboardingData.length - 1) {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('hasSeenOnboarding', true);
-
-                          if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const HomeScreen(),
-                              ),
-                            );
-                          }
+                          _completeOnboarding();
                         } else {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 300),
@@ -171,17 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   top: 16,
                   right: 16,
                   child: TextButton(
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('hasSeenOnboarding', true);
-                      if (context.mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const HomeScreen()),
-                        );
-                      }
-                    },
+                    onPressed: _completeOnboarding,
                     child: const Text(
                       'SKIP',
                       style: TextStyle(
@@ -197,6 +178,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    // Gracefully request notification permissions as user enters the game
+    notificationService.requestPermissions();
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    }
   }
 
   Widget buildDot(int index, BuildContext context) {

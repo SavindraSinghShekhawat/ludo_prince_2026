@@ -6,6 +6,9 @@ import 'package:ludo_prince/services/profile_service.dart';
 import 'package:ludo_prince/services/remote_config_service.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/models/app_notification.dart';
+import 'package:ludo_prince/providers/game_reminder_provider.dart';
+import 'package:ludo_prince/services/game_reminder_sync_service.dart';
+import 'package:ludo_prince/services/notification_service.dart';
 import '../ui/dialogs/update_dialog.dart';
 
 /// Sets up global listeners for invites, friend requests, and update checks.
@@ -14,6 +17,9 @@ class GlobalListeners {
   StreamSubscription? _requestsSubscription;
 
   void init(BuildContext context) {
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(gameReminderSyncServiceProvider).recordAppActivity();
+
     // Check for App Updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (remoteConfigService.updateStatus != UpdateStatus.none) {
@@ -29,31 +35,51 @@ class GlobalListeners {
 
     // Global listener for game invites
     _inviteSubscription = socialService.watchInvites().listen((event) {
+      if (!context.mounted) return;
       if (event.snapshot.exists && event.snapshot.value != null) {
         final invites = Map<String, dynamic>.from(event.snapshot.value as Map);
         final container = ProviderScope.containerOf(context, listen: false);
+        final reminderSettings = container.read(gameReminderProvider);
+
+        if (!reminderSettings.gameInvitesEnabled) return;
 
         for (final entry in invites.entries) {
           final inviteId = entry.key;
           final data = Map<String, dynamic>.from(entry.value as Map);
 
           if (data['status'] == 'pending') {
+            final fromName = data['fromName'] ?? 'Someone';
+            final gameId = data['gameId'] ?? '';
+            final joiningCode = data['joiningCode'] ?? '';
+
+            final isNew = !container.read(notificationProvider).inbox.any(
+                  (n) => n.id == inviteId,
+                );
+
             container.read(notificationProvider.notifier).addNotification(
                   AppNotification(
                     id: inviteId,
                     type: NotificationType.gameInvite,
                     title: 'GAME INVITATION',
-                    message:
-                        '${data['fromName'] ?? 'Someone'} invited you to play Ludo!',
+                    message: '$fromName invited you to play Ludo!',
                     data: {
                       'inviteId': inviteId,
-                      'fromName': data['fromName'] ?? 'Someone',
-                      'gameId': data['gameId'] ?? '',
-                      'joiningCode': data['joiningCode'] ?? '',
+                      'fromName': fromName,
+                      'gameId': gameId,
+                      'joiningCode': joiningCode,
                     },
                     timestamp: DateTime.now(),
                   ),
                 );
+
+            if (isNew) {
+              notificationService.showImmediateNotification(
+                id: inviteId.hashCode,
+                title: '⚔️ Game Invitation',
+                body: '$fromName invited you to play Ludo!',
+                payload: 'game_invite|$inviteId|$fromName|$gameId|$joiningCode',
+              );
+            }
           }
         }
       }
@@ -65,19 +91,37 @@ class GlobalListeners {
     ) {
       if (user != null) {
         profileService.getIncomingFriendRequests(user.uid).listen((reqs) {
+          if (!context.mounted) return;
           final container = ProviderScope.containerOf(context, listen: false);
+          final reminderSettings = container.read(gameReminderProvider);
+
+          if (!reminderSettings.friendRequestsEnabled) return;
+
           for (final req in reqs) {
+            final senderName = req.fromProfile?.displayName ?? 'Someone';
+            final isNew = !container.read(notificationProvider).inbox.any(
+                  (n) => n.id == req.id,
+                );
+
             container.read(notificationProvider.notifier).addNotification(
                   AppNotification(
                     id: req.id,
                     type: NotificationType.friendRequest,
                     title: 'FRIEND REQUEST',
-                    message:
-                        '${req.fromProfile?.displayName ?? 'Someone'} wants to be your friend',
+                    message: '$senderName wants to be your friend',
                     data: {'fromUid': req.fromUid},
                     timestamp: req.timestamp,
                   ),
                 );
+
+            if (isNew) {
+              notificationService.showImmediateNotification(
+                id: req.id.hashCode,
+                title: '👑 Friend Request',
+                body: '$senderName wants to be your friend!',
+                payload: 'friend_request|${req.id}|$senderName',
+              );
+            }
           }
         });
       }

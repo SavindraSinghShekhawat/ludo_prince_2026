@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class ScaleFadePageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
 
-  ScaleFadePageRoute({required this.page})
+  ScaleFadePageRoute({required this.page, super.settings})
       : super(
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
@@ -34,7 +34,7 @@ class ScaleFadePageRoute<T> extends PageRouteBuilder<T> {
 class SlideUpPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
 
-  SlideUpPageRoute({required this.page})
+  SlideUpPageRoute({required this.page, super.settings})
       : super(
           transitionDuration: const Duration(milliseconds: 350),
           reverseTransitionDuration: const Duration(milliseconds: 280),
@@ -65,7 +65,7 @@ class SlideUpPageRoute<T> extends PageRouteBuilder<T> {
 class FadeThroughPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
 
-  FadeThroughPageRoute({required this.page})
+  FadeThroughPageRoute({required this.page, super.settings})
       : super(
           transitionDuration: const Duration(milliseconds: 300),
           reverseTransitionDuration: const Duration(milliseconds: 250),
