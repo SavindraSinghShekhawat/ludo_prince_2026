@@ -15,3 +15,4 @@ export {handleGameEnd} from "./handleGameEnd.js";
 export {handlePresence} from "./handlePresence.js";
 export {onFriendRequestUpdated} from "./handleSocial.js";
 export {mergeGuestAccount} from "./handleAuth.js";
+export {onInviteCreated, onFriendRequestCreated} from "./handlePushNotifications.js";

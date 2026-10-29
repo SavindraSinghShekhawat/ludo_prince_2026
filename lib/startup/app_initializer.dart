@@ -9,6 +9,7 @@ import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/services/presence_service.dart';
 import 'package:ludo_prince/services/notification_service.dart';
+import 'package:ludo_prince/services/push_notification_service.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 
 /// Handles all one-time app initialisation before [runApp].
@@ -78,6 +79,7 @@ class AppInitializer {
 
     try {
       await notificationService.init();
+      await pushNotificationService.initialize();
     } catch (e) {
       AppLogger.error('NotificationService init error: $e');
     }

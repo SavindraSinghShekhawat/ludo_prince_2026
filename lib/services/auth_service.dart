@@ -11,6 +11,7 @@ import 'presence_service.dart';
 import 'social_service.dart';
 import 'profile_service.dart';
 import 'firebase_service.dart';
+import 'push_notification_service.dart';
 import '../models/user_profile.dart';
 
 class AuthService {
@@ -417,10 +418,7 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      // We no longer manually update presence here. 
-      // The Firebase onDisconnect trigger will automatically and instantly 
-      // mark the user as offline when _auth.signOut() severs the connection.
-
+      await pushNotificationService.onSignOut();
       await _auth.signOut();
 
       // Re-sign in anonymously as requested
