@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ludo_prince/services/auth_service.dart';
@@ -18,6 +20,21 @@ class AuthScreen extends ConsumerStatefulWidget {
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
+  bool _isAppleAvailable = defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAppleSignInAvailability();
+  }
+
+  Future<void> _checkAppleSignInAvailability() async {
+    try {
+      final available = await SignInWithApple.isAvailable();
+      if (mounted) setState(() => _isAppleAvailable = available);
+    } catch (_) {}
+  }
 
   Future<void> _handleSignIn(Future<dynamic> Function() signInMethod) async {
     setState(() => _isLoading = true);
@@ -40,6 +57,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           debugDetails: 'Firebase Auth Error (${e.code}): ${e.message}',
         );
       }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      _showError(
+        'Apple sign in could not be completed (${e.code.name}).',
+        debugDetails: 'Apple Auth Error (${e.code}): ${e.message}',
+      );
     } catch (e) {
       _showError(
         'An unexpected error occurred. Please try again.',
@@ -243,12 +265,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ).animate().fadeIn(delay: 400.ms),
                   const SizedBox(height: 48),
-                  SizedBox(
-                    height: 128, // Height of 2 buttons (56x2) + spacing (16)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: _isAppleAvailable ? 128 : 56,
+                    ),
                     child: Center(
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 _AuthButton(
                                   label: 'Continue with Google',
@@ -274,26 +299,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       duration: 400.ms,
                                       curve: Curves.easeOut,
                                     ),
-                                const SizedBox(height: 16),
-                                _AuthButton(
-                                  label: 'Continue with Apple',
-                                  icon: Transform.translate(
-                                    offset: const Offset(
-                                      0,
-                                      -3,
-                                    ), // Pushed up further for Apple
-                                    child: const Icon(Icons.apple, size: 24),
-                                  ),
-                                  onPressed: () => _handleSignIn(
-                                    authService.signInWithApple,
-                                  ),
-                                  color: Colors.white,
-                                  textColor: Colors.black87,
-                                ).animate().slideY(
-                                      begin: 0.5,
-                                      duration: 500.ms,
-                                      curve: Curves.easeOut,
+                                if (_isAppleAvailable) ...[
+                                  const SizedBox(height: 16),
+                                  _AuthButton(
+                                    label: 'Continue with Apple',
+                                    icon: Transform.translate(
+                                      offset: const Offset(
+                                        0,
+                                        -3,
+                                      ), // Pushed up further for Apple
+                                      child: const Icon(Icons.apple, size: 24),
                                     ),
+                                    onPressed: () => _handleSignIn(
+                                      authService.signInWithApple,
+                                    ),
+                                    color: Colors.white,
+                                    textColor: Colors.black87,
+                                  ).animate().slideY(
+                                        begin: 0.5,
+                                        duration: 500.ms,
+                                        curve: Curves.easeOut,
+                                      ),
+                                ],
                               ],
                             ),
                     ),

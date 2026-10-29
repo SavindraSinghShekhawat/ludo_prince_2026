@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -41,21 +44,66 @@ class AuthService {
     }
   }
 
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
+  }
+
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
   Future<UserCredential?> signInWithApple() async {
     try {
+      final rawNonce = _generateNonce();
+      final hashedNonce = _sha256ofString(rawNonce);
+
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        nonce: hashedNonce,
       );
 
       final OAuthCredential credential = OAuthProvider('apple.com').credential(
         idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
         accessToken: appleCredential.authorizationCode,
       );
 
-      return await _linkOrSignIn(credential);
+      final userCredential = await _linkOrSignIn(credential);
+
+      // Apple only provides givenName and familyName on the FIRST sign-in.
+      // Update the user's displayName in Firebase and Firestore if provided.
+      final user = userCredential.user;
+      if (user != null) {
+        final givenName = appleCredential.givenName;
+        final familyName = appleCredential.familyName;
+        final parts = [givenName, familyName]
+            .where((p) => p != null && p.trim().isNotEmpty)
+            .cast<String>();
+        if (parts.isNotEmpty) {
+          final fullName = parts.join(' ');
+          final currentName = user.displayName;
+          if (currentName == null ||
+              currentName.isEmpty ||
+              currentName.startsWith('Player ') ||
+              currentName.startsWith('Guest #')) {
+            await user.updateDisplayName(fullName);
+            await _syncProfileAfterLinking(user);
+          }
+        }
+      }
+
+      return userCredential;
     } catch (e) {
       if (_isCancellation(e)) return null;
       AppLogger.error('Error signing in with Apple: $e');
@@ -219,10 +267,13 @@ class AuthService {
         e.code == GoogleSignInExceptionCode.canceled) {
       return true;
     }
+    if (e is SignInWithAppleAuthorizationException &&
+        e.code == AuthorizationErrorCode.canceled) {
+      return true;
+    }
     final s = e.toString().toLowerCase();
     return s.contains('canceled') ||
         s.contains('cancelled') ||
-        s.contains('1000') ||
         s.contains('1001') ||
         s.contains('12501') ||
         (e is PlatformException &&
