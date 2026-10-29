@@ -85,10 +85,13 @@ class MatchmakingService {
       }).timeout(const Duration(seconds: 10));
 
       if (isPrivate && joiningCode != null) {
-        await _db.ref().child(FirebasePaths.privateRoomCode(joiningCode)).set({
+        final codeRef = _db.ref().child(FirebasePaths.privateRoomCode(joiningCode));
+        await codeRef.set({
           'gameId': gameId,
           'createdAt': ServerValue.timestamp,
         });
+        // Auto-remove private code if host abruptly disconnects
+        codeRef.onDisconnect().remove();
       }
     } catch (e) {
       throw Exception("Failed to create game lobby.");
@@ -377,11 +380,80 @@ class MatchmakingService {
     }
   }
 
-  Future<void> deleteLobby(String gameId, {String gameType = 'ludo'}) async {
+  Future<void> deleteLobby(String gameId,
+      {String? joiningCode, String gameType = 'ludo'}) async {
     try {
+      if (joiningCode != null && joiningCode.isNotEmpty) {
+        await _db
+            .ref()
+            .child(FirebasePaths.privateRoomCode(joiningCode))
+            .remove();
+      }
       await _db.ref().child(FirebasePaths.session(gameType, gameId)).remove();
     } catch (e) {
       AppLogger.error("Error deleting lobby $gameId: $e");
+    }
+  }
+
+  /// Disband an active lobby as host:
+  /// Marks room as 'disbanded' so guests can display a polite dialog and exit gracefully,
+  /// immediately deletes the room code, and purges the session.
+  Future<void> disbandLobby(String gameId,
+      {String? joiningCode, String gameType = 'ludo'}) async {
+    try {
+      final updates = <String, dynamic>{
+        '${FirebasePaths.session(gameType, gameId)}/status': 'disbanded',
+      };
+      if (joiningCode != null && joiningCode.isNotEmpty) {
+        updates[FirebasePaths.privateRoomCode(joiningCode)] = null;
+      }
+      await _db.ref().update(updates);
+
+      // Give guests 1.5s to receive the 'disbanded' event before full deletion
+      Future.delayed(const Duration(milliseconds: 1500), () async {
+        try {
+          await _db.ref().child(FirebasePaths.session(gameType, gameId)).remove();
+        } catch (_) {}
+      });
+    } catch (e) {
+      AppLogger.error("[MatchmakingService] Error disbanding lobby $gameId: $e");
+    }
+  }
+
+  /// Leave an active lobby as a guest:
+  /// Atomically removes current player from the players list and decrements player count,
+  /// freeing up the slot for others to join.
+  Future<void> leaveLobby(String gameId, {String gameType = 'ludo'}) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+      final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
+
+      await gameRef.runTransaction((Object? gameData) {
+        if (gameData == null) return Transaction.success(gameData);
+        final game = Map<String, dynamic>.from(gameData as Map);
+        final players = Map<String, dynamic>.from(game['players'] ?? {});
+
+        String? userSlot;
+        for (final entry in players.entries) {
+          final p = Map<String, dynamic>.from(entry.value as Map);
+          if (p['uid'] == user.uid) {
+            userSlot = entry.key;
+            break;
+          }
+        }
+
+        if (userSlot != null) {
+          players.remove(userSlot);
+          game['players'] = players;
+          final current = (game['currentPlayers'] ?? 1) as num;
+          game['currentPlayers'] = (current - 1).clamp(0, 4);
+        }
+
+        return Transaction.success(game);
+      });
+    } catch (e) {
+      AppLogger.error("[MatchmakingService] Error leaving lobby $gameId: $e");
     }
   }
 

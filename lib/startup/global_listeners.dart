@@ -47,6 +47,17 @@ class GlobalListeners {
           final inviteId = entry.key;
           final data = Map<String, dynamic>.from(entry.value as Map);
 
+          // Auto-purge stale invites older than 10 minutes
+          final timestamp = data['timestamp'];
+          if (timestamp is num) {
+            final ageMs =
+                DateTime.now().millisecondsSinceEpoch - timestamp.toInt();
+            if (ageMs > 600000) {
+              socialService.clearInvite(inviteId);
+              continue;
+            }
+          }
+
           if (data['status'] == 'pending') {
             final fromName = data['fromName'] ?? 'Someone';
             final gameId = data['gameId'] ?? '';

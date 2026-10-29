@@ -96,25 +96,44 @@ class SocialService {
     });
   }
 
-  /// Accept/Decline/Clear an invite
+  /// Accept/Decline/Clear an invite.
+  /// Removes the invite from RTDB immediately upon resolution to prevent stale data accumulation.
   Future<void> respondToInvite(String inviteId, bool accepted) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    if (accepted) {
-      await _database.ref('invites/${user.uid}/$inviteId').update({
-        'status': 'accepted',
-      });
-    } else {
-      await _database.ref('invites/${user.uid}/$inviteId').remove();
-    }
+    // Remove immediately to prevent stale invite buildup
+    await _database.ref('invites/${user.uid}/$inviteId').remove();
   }
 
-  /// Accept/Decline/Clear an invite
+  /// Clear an invite
   Future<void> clearInvite(String inviteId) async {
     final user = _auth.currentUser;
     if (user == null) return;
     await _database.ref('invites/${user.uid}/$inviteId').remove();
+  }
+
+  /// Purge all expired invites (> 10 minutes old or accepted) for the current user
+  Future<void> cleanStaleInvites() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      final snap = await _database.ref('invites/${user.uid}').get();
+      if (!snap.exists || snap.value == null) return;
+      final map = Map<String, dynamic>.from(snap.value as Map);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      for (final entry in map.entries) {
+        final data = Map<String, dynamic>.from(entry.value as Map);
+        final timestamp = data['timestamp'];
+        if (data['status'] == 'accepted' ||
+            (timestamp is num && (now - timestamp.toInt()) > 600000)) {
+          await _database
+              .ref('invites/${user.uid}/${entry.key}')
+              .remove()
+              .catchError((_) {});
+        }
+      }
+    } catch (_) {}
   }
 
   /// Get status of a user by UID

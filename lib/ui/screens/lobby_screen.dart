@@ -50,7 +50,9 @@ class LobbyScreen extends ConsumerStatefulWidget {
 
 class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   String? _activeGameId;
+  String? _currentJoiningCode;
   bool _isLoading = false;
+  bool _isDisbandedDialogShown = false;
   int _maxPlayers = 2;
   GameMode _gameMode = GameMode.classic;
   Timer? _heartbeatTimer;
@@ -113,6 +115,181 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     }
   }
 
+  void _handleBack({bool isHost = false, String? joiningCode}) {
+    if (_activeGameId == null) {
+      if (_isLoading) {
+        _matchmakingSubscription?.cancel();
+        _uiTimer?.cancel();
+        matchmakingService.leaveQueue(_maxPlayers, _gameMode).catchError((e) {
+          AppLogger.debug("Error leaving queue on back: $e");
+        });
+      }
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+      return;
+    }
+
+    _showLeaveConfirmDialog(
+      isHost: isHost,
+      joiningCode: joiningCode ?? _currentJoiningCode,
+    );
+  }
+
+  void _showLeaveConfirmDialog({bool isHost = false, String? joiningCode}) {
+    AppDialogLayout.show(
+      context: context,
+      child: AppDialogLayout(
+        header: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.crimsonVelvet,
+              size: 48,
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.1, 1.1),
+                  duration: 1.seconds,
+                  curve: Curves.easeInOut,
+                ),
+            const SizedBox(height: 16),
+            Text(
+              isHost ? 'DISBAND ROOM?' : 'LEAVE ROOM?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.8,
+              ),
+            ),
+          ],
+        ),
+        body: [
+          Text(
+            isHost
+                ? 'Are you sure you want to disband this room? All joined players will return to the main menu.'
+                : 'Are you sure you want to leave this room?',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70, fontSize: 15),
+          ),
+        ],
+        footer: Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                text: 'STAY',
+                height: 48,
+                fontSize: 15,
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AppButton(
+                text: isHost ? 'DISBAND' : 'LEAVE',
+                color: AppColors.crimsonVelvet,
+                height: 48,
+                fontSize: 15,
+                onTap: () async {
+                  final nav = Navigator.of(context);
+                  nav.pop(); // close dialog
+
+                  final gameId = _activeGameId;
+                  _heartbeatTimer?.cancel();
+                  _timeoutTimer?.cancel();
+                  socialService.updatePresence(UserStatus.online);
+
+                  if (gameId != null) {
+                    if (isHost) {
+                      await matchmakingService.disbandLobby(
+                        gameId,
+                        joiningCode: joiningCode ?? _currentJoiningCode,
+                      );
+                    } else {
+                      await matchmakingService.leaveLobby(gameId);
+                    }
+                  }
+
+                  if (mounted) {
+                    nav.pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDisbandedDialog() {
+    if (_isDisbandedDialogShown || !mounted) return;
+    _isDisbandedDialogShown = true;
+
+    _heartbeatTimer?.cancel();
+    _timeoutTimer?.cancel();
+    socialService.updatePresence(UserStatus.online);
+
+    AppDialogLayout.show(
+      context: context,
+      barrierDismissible: false,
+      child: AppDialogLayout(
+        header: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.door_back_door_outlined,
+              color: AppColors.crimsonVelvet,
+              size: 48,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'ROOM DISBANDED',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+        body: const [
+          Text(
+            'The host has left and closed this room. You have been returned to the main menu.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70, fontSize: 15),
+          ),
+        ],
+        footer: SizedBox(
+          width: double.infinity,
+          child: AppButton(
+            text: 'RETURN HOME',
+            height: 48,
+            onTap: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                (route) => false,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _heartbeatTimer?.cancel();
@@ -170,26 +347,31 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   @override
   Widget build(BuildContext context) {
     return AppBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: Text(
-            _activeGameId == null
-                ? (widget.isQuickMatch ? 'BATTLE ONLINE' : 'CREATE ROOM')
-                : 'GAME LOBBY',
-          ),
-          leading: BackButton(
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const HomeScreen()),
-                );
-              }
-            },
-          ),
-          actions: [
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) {
+            _handleBack(
+              isHost: widget.isHost,
+              joiningCode: _currentJoiningCode,
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: Text(
+              _activeGameId == null
+                  ? (widget.isQuickMatch ? 'BATTLE ONLINE' : 'CREATE ROOM')
+                  : 'GAME LOBBY',
+            ),
+            leading: BackButton(
+              onPressed: () => _handleBack(
+                isHost: widget.isHost,
+                joiningCode: _currentJoiningCode,
+              ),
+            ),
+            actions: [
             IconButton(
               icon: const Icon(Icons.person_outline),
               onPressed: () {
@@ -218,8 +400,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               _activeGameId == null ? _buildSelectionView() : _buildLobbyView(),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSelectionView() {
     return Center(
@@ -449,10 +632,22 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           if (gameSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: MatchmakingLoader(size: 60));
           }
+          if (widget.isHost) {
+            return const Center(
+              child: Text(
+                "Room closed",
+                style: TextStyle(color: Colors.white70),
+              ),
+            );
+          }
+          // For guests: host disbanded the room
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showDisbandedDialog();
+          });
           return const Center(
             child: Text(
-              "Game not found",
-              style: TextStyle(color: Colors.white),
+              "Room disbanded...",
+              style: TextStyle(color: Colors.white70),
             ),
           );
         }
@@ -461,6 +656,22 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           gameSnapshot.data!.snapshot.value as Map,
         );
         final status = gameData['status'];
+
+        if (status == 'disbanded') {
+          _heartbeatTimer?.cancel();
+          _timeoutTimer?.cancel();
+          if (!widget.isHost) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _showDisbandedDialog();
+            });
+          }
+          return const Center(
+            child: Text(
+              "Room disbanded...",
+              style: TextStyle(color: Colors.white70),
+            ),
+          );
+        }
 
         if (status == 'playing') {
           _heartbeatTimer?.cancel();
@@ -491,6 +702,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             final currentUid = firebaseService.auth.currentUser?.uid;
             final hostUid = gameData['hostUid'];
             final isActuallyHost = currentUid == hostUid;
+            final code = gameData['joiningCode']?.toString() ?? _activeGameId!;
+            _currentJoiningCode = code;
             final maxRequired = gameData['maxPlayers'] ?? _maxPlayers;
             final currentPlayers = gameData['currentPlayers'] ?? players.length;
             final isLandscape =
@@ -587,7 +800,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                 ),
                               ),
                             ),
-                            if (isActuallyHost && isPrivate)
+                            if (isActuallyHost && isPrivate) ...[
                               Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: SizedBox(
@@ -613,6 +826,38 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                   ),
                                 ),
                               ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10.0),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: AppButton(
+                                    text: 'DISBAND ROOM',
+                                    color: AppColors.crimsonVelvet,
+                                    height: 48,
+                                    onTap: () => _showLeaveConfirmDialog(
+                                      isHost: true,
+                                      joiningCode: code,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ] else if (!isActuallyHost) ...[
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16.0),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: AppButton(
+                                    text: 'LEAVE ROOM',
+                                    color: AppColors.crimsonVelvet,
+                                    height: 48,
+                                    onTap: () => _showLeaveConfirmDialog(
+                                      isHost: false,
+                                      joiningCode: code,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),

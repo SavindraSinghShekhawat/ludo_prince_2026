@@ -79,5 +79,15 @@ export const handleGameEnd = onValueUpdated(
 
     await batch.commit();
     AppLogger.info(`[handleGameEnd] Stats updated successfully for ${playerUids.length} players in game: ${gameId}`);
+
+    // Immediately remove ephemeral game events (rolls, moves, animations) to stop storage accumulation
+    await admin.database().ref(`gameEvents/${gameType}/${gameId}`).remove().catch((e) => {
+      AppLogger.debug(`[handleGameEnd] Events cleanup notice: ${e}`);
+    });
+
+    // Tag the session with endedAt so the scheduled garbage collector can delete it after the victory screen
+    await gameRef.update({
+      endedAt: admin.database.ServerValue.TIMESTAMP,
+    }).catch(() => {});
   }
 );
