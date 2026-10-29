@@ -39,7 +39,7 @@
     "matchmakingAssignments": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null"
+        ".write": "auth != null && auth.uid === $uid"
       }
     },
     "privateRoomCodes": {

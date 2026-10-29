@@ -6,6 +6,9 @@ import 'app_dialog_layout.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/models/app_notification.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
+import 'package:ludo_prince/ui/screens/friends_screen.dart';
+import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import '../../ui/dialogs/friend_requests_dialog.dart';
 import '../../ui/dialogs/invite_dialog.dart';
 
@@ -188,10 +191,20 @@ class TopNotificationToast extends ConsumerWidget {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {
-      AppDialogLayout.show(
-        context: context,
-        child: const FriendRequestsDialog(),
-      );
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      if (currentRoute != '/friends') {
+        Navigator.of(context).push(
+          SlideUpPageRoute(
+            page: const FriendsScreen(),
+            settings: const RouteSettings(name: '/friends'),
+          ),
+        );
+      } else {
+        AppDialogLayout.show(
+          context: context,
+          child: const FriendRequestsDialog(),
+        );
+      }
     } else if (n.type == NotificationType.gameInvite) {
       AppDialogLayout.show(
         context: context,
@@ -203,6 +216,16 @@ class TopNotificationToast extends ConsumerWidget {
           joiningCode: n.data['joiningCode'] ?? '',
         ),
       );
+    } else if (n.type == NotificationType.system) {
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      if (currentRoute != '/lobby') {
+        Navigator.of(context).push(
+          ScaleFadePageRoute(
+            page: const LobbyScreen(isQuickMatch: true),
+            settings: const RouteSettings(name: '/lobby'),
+          ),
+        );
+      }
     }
   }
 }

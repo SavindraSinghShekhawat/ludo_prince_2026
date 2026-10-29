@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'presence_service.dart';
 import 'social_service.dart';
 import 'profile_service.dart';
+import 'firebase_service.dart';
 import '../models/user_profile.dart';
 
 class AuthService {
@@ -219,18 +220,17 @@ class AuthService {
     String? overrideDisplayName,
   }) async {
     final User? previousUser = _auth.currentUser;
-    UserProfile? guestProfileToMerge;
+    String? guestIdToken;
 
-    // 1. If previous session was an anonymous guest with gameplay stats,
-    // preserve the stats so we can merge them into the target account without losing progress.
+    // 1. If previous session was an anonymous guest, capture their ID token
+    // so our backend Cloud Function can cryptographically verify ownership
+    // and securely merge server-recorded stats into the permanent account.
     if (previousUser != null && previousUser.isAnonymous) {
       try {
-        final profile = await profileService.getUserProfile(previousUser.uid);
-        if (profile != null &&
-            (profile.gamesPlayed > 0 || profile.gamesWon > 0)) {
-          guestProfileToMerge = profile;
-        }
-      } catch (_) {}
+        guestIdToken = await previousUser.getIdToken();
+      } catch (e) {
+        AppLogger.debug('Could not get guest ID token: $e');
+      }
     }
 
     // 2. Directly sign in with the credential!
@@ -246,24 +246,19 @@ class AuthService {
         overrideDisplayName: overrideDisplayName,
       );
 
-      // 4. If there were guest games to merge, seamlessly add them to the account!
-      if (guestProfileToMerge != null && previousUser != null) {
+      // 4. Securely merge guest stats via authoritative server-side Cloud Function
+      if (guestIdToken != null &&
+          previousUser != null &&
+          previousUser.uid != signedInUser.uid) {
         try {
-          final targetProfile =
-              await profileService.getUserProfile(signedInUser.uid);
-          if (targetProfile != null) {
-            final merged = targetProfile.copyWith(
-              gamesPlayed:
-                  targetProfile.gamesPlayed + guestProfileToMerge.gamesPlayed,
-              gamesWon: targetProfile.gamesWon + guestProfileToMerge.gamesWon,
-            );
-            await profileService.createOrUpdateProfile(merged);
-          }
-          // Clean up the orphaned anonymous guest document from Firestore
-          await profileService.deleteProfile(previousUser.uid);
+          final callable =
+              firebaseService.functions.httpsCallable('mergeGuestAccount');
+          final response = await callable.call({'guestIdToken': guestIdToken});
+          AppLogger.info('Server guest merge result: ${response.data}');
+          // Force refresh local profile cache so authoritative merged stats appear immediately
+          await profileService.getUserProfile(signedInUser.uid, forceRefresh: true);
         } catch (e) {
-          AppLogger.error(
-              'Failed to merge guest stats into permanent account: $e');
+          AppLogger.error('Failed to merge guest stats server-side: $e');
         }
       }
     }
@@ -332,8 +327,10 @@ class AuthService {
     String? overrideDisplayName,
   }) async {
     try {
-      final currentProfile = await profileService.getUserProfile(user.uid);
-      String? effectiveName = sanitizeName(overrideDisplayName ?? user.displayName);
+      final currentProfile =
+          await profileService.getUserProfile(user.uid, forceRefresh: true);
+      String? effectiveName =
+          sanitizeName(overrideDisplayName ?? user.displayName);
 
       // If current name is missing or a placeholder ("Player 1234" / "Guest #1234"),
       // attempt resolution from email, Apple ID cache, etc.
@@ -363,9 +360,11 @@ class AuthService {
           displayName: effectiveName ?? 'Player ${user.uid.substring(0, 4)}',
           email: newEmail,
           photoURL: newPhoto,
+          gamesPlayed: 0,
+          gamesWon: 0,
           createdAt: DateTime.now(),
         );
-        await profileService.createOrUpdateProfile(newProfile);
+        await profileService.createOrUpdateProfile(newProfile, isCreate: true);
       } else {
         bool needsUpdate = false;
         String? updatedName = currentProfile.displayName;
@@ -398,6 +397,18 @@ class AuthService {
           );
         }
       }
+
+      // Sync local SharedPreferences counters from authoritative profile
+      try {
+        final finalProfile = await profileService.getUserProfile(user.uid);
+        if (finalProfile != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt(
+              'smart_review_games_completed', finalProfile.gamesPlayed);
+          await prefs.setInt('smart_review_games_won', finalProfile.gamesWon);
+        }
+      } catch (_) {}
+
       await socialService.init();
     } catch (e) {
       AppLogger.error('Error syncing profile after linking: $e');

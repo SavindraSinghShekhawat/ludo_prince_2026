@@ -60,6 +60,17 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     _friendsSubscription = null;
 
     if (uid != null) {
+      // 1. Instantly display cached friends with 0ms latency!
+      profileService.getCachedFriends(uid).then((cached) {
+        if (mounted && cached.isNotEmpty && _allFriends.isEmpty) {
+          setState(() {
+            _allFriends = cached;
+            _filterFriends(_searchController.text);
+          });
+        }
+      });
+
+      // 2. Stream live updates in parallel from Firestore
       _friendsSubscription = profileService.getFriends(uid).listen((friends) {
         if (mounted) {
           setState(() {
@@ -273,7 +284,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                   ),
                   _buildIncomingRequestsList(incomingRequests),
                 ],
-                _buildSectionHeader('YOUR FRIENDS', Icons.people_outline),
+                _buildSectionHeader(
+                  'YOUR FRIENDS (${_allFriends.length}/${ProfileService.maxFriendsLimit})',
+                  Icons.people_outline,
+                ),
                 _buildFriendsList(),
                 if (_searchController.text.length >= 2) ...[
                   _buildSectionHeader('GLOBAL SEARCH', Icons.public),
@@ -569,6 +583,15 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               icon: Icons.check,
               color: AppColors.imperialJade,
               onTap: () async {
+                if (_allFriends.length >= ProfileService.maxFriendsLimit) {
+                  AppSnackBar.show(
+                    context,
+                    message:
+                        'Maximum limit of ${ProfileService.maxFriendsLimit} friends reached. Remove a friend to accept.',
+                    isError: true,
+                  );
+                  return;
+                }
                 try {
                   await profileService.acceptFriendRequest(request);
                   ref
@@ -585,7 +608,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                   if (mounted) {
                     AppSnackBar.show(
                       context,
-                      message: 'Failed to accept: $e',
+                      message: e.toString().replaceAll('Exception: ', ''),
                       isError: true,
                     );
                   }
@@ -852,12 +875,31 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 'CHALLENGE',
                 () => _handleChallenge(user),
               ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(
+                  Icons.person_remove_outlined,
+                  color: Colors.white30,
+                  size: 20,
+                ),
+                tooltip: 'Remove Friend',
+                onPressed: () => _handleRemoveFriend(user),
+              ),
             ] else if (incomingRequest != null) ...[
               _buildSmallActionButton(
                 label: 'ACCEPT',
                 icon: Icons.check,
                 color: AppColors.imperialJade,
                 onTap: () async {
+                  if (_allFriends.length >= ProfileService.maxFriendsLimit) {
+                    AppSnackBar.show(
+                      context,
+                      message:
+                          'Maximum limit of ${ProfileService.maxFriendsLimit} friends reached. Remove a friend to accept.',
+                      isError: true,
+                    );
+                    return;
+                  }
                   try {
                     await profileService.acceptFriendRequest(incomingRequest);
                     ref
@@ -875,7 +917,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                     if (mounted) {
                       AppSnackBar.show(
                         context,
-                        message: 'Failed to accept: $e',
+                        message: e.toString().replaceAll('Exception: ', ''),
                         isError: true,
                       );
                     }
@@ -888,20 +930,42 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 _sentRequests.contains(user.uid)
                     ? () {}
                     : () async {
+                        if (_allFriends.length >=
+                            ProfileService.maxFriendsLimit) {
+                          AppSnackBar.show(
+                            context,
+                            message:
+                                'You have reached the maximum limit of ${ProfileService.maxFriendsLimit} friends.',
+                            isError: true,
+                          );
+                          return;
+                        }
                         final currentUser = FirebaseAuth.instance.currentUser;
                         if (currentUser != null) {
-                          setState(() => _sentRequests.add(user.uid));
-                          await profileService.sendFriendRequest(
-                            currentUser.uid,
-                            user.uid,
-                          );
-                          if (mounted) {
-                            AppSnackBar.show(
-                              context,
-                              message:
-                                  'Friend request sent to ${user.displayName}!',
-                              isSuccess: true,
+                          try {
+                            setState(() => _sentRequests.add(user.uid));
+                            await profileService.sendFriendRequest(
+                              currentUser.uid,
+                              user.uid,
                             );
+                            if (mounted) {
+                              AppSnackBar.show(
+                                context,
+                                message:
+                                    'Friend request sent to ${user.displayName}!',
+                                isSuccess: true,
+                              );
+                            }
+                          } catch (e) {
+                            setState(() => _sentRequests.remove(user.uid));
+                            if (mounted) {
+                              AppSnackBar.show(
+                                context,
+                                message:
+                                    e.toString().replaceAll('Exception: ', ''),
+                                isError: true,
+                              );
+                            }
                           }
                         }
                       },
@@ -951,6 +1015,63 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleRemoveFriend(UserProfile target) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Remove Friend',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to remove ${target.displayName ?? "this player"} from your friends list?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('CANCEL', style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'REMOVE',
+              style: TextStyle(
+                color: AppColors.crimsonVelvet,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        try {
+          await profileService.removeFriend(currentUser.uid, target.uid);
+          if (mounted) {
+            AppSnackBar.show(
+              context,
+              message: '${target.displayName ?? "Player"} removed from friends.',
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            AppSnackBar.show(
+              context,
+              message: 'Failed to remove friend: $e',
+              isError: true,
+            );
+          }
+        }
+      }
+    }
   }
 
   Future<void> _handleChallenge(UserProfile target) async {

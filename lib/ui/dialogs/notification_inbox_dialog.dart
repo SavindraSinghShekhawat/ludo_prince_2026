@@ -12,6 +12,10 @@ import 'package:ludo_prince/models/friend_request.dart';
 import 'package:ludo_prince/services/profile_service.dart';
 import 'package:ludo_prince/core/widgets/app_snackbar.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/core/widgets/app_page_routes.dart';
+import 'package:ludo_prince/services/notification_router.dart';
+import 'package:ludo_prince/ui/screens/friends_screen.dart';
+import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import 'friend_requests_dialog.dart';
 import 'invite_dialog.dart';
 
@@ -20,6 +24,10 @@ class NotificationInboxDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(notificationProvider.notifier).markInboxAsViewed();
+    });
+
     final state = ref.watch(notificationProvider);
     final inbox = state.inbox;
 
@@ -132,7 +140,10 @@ class NotificationInboxDialog extends ConsumerWidget {
     return InkWell(
       onTap: () {
         Navigator.pop(context);
-        _handleNotificationClick(context, ref, n);
+        final rootContext = NotificationRouter.navigatorKey.currentContext;
+        if (rootContext != null) {
+          _handleNotificationClick(rootContext, ref, n);
+        }
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -402,10 +413,20 @@ class NotificationInboxDialog extends ConsumerWidget {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
 
     if (n.type == NotificationType.friendRequest) {
-      AppDialogLayout.show(
-        context: context,
-        child: const FriendRequestsDialog(), // Handled by service listener
-      );
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      if (currentRoute != '/friends') {
+        Navigator.of(context).push(
+          SlideUpPageRoute(
+            page: const FriendsScreen(),
+            settings: const RouteSettings(name: '/friends'),
+          ),
+        );
+      } else {
+        AppDialogLayout.show(
+          context: context,
+          child: const FriendRequestsDialog(),
+        );
+      }
     } else if (n.type == NotificationType.gameInvite) {
       AppDialogLayout.show(
         context: context,
@@ -417,6 +438,16 @@ class NotificationInboxDialog extends ConsumerWidget {
           joiningCode: n.data['joiningCode'] ?? '',
         ),
       );
+    } else if (n.type == NotificationType.system) {
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      if (currentRoute != '/lobby') {
+        Navigator.of(context).push(
+          ScaleFadePageRoute(
+            page: const LobbyScreen(isQuickMatch: true),
+            settings: const RouteSettings(name: '/lobby'),
+          ),
+        );
+      }
     }
   }
 }

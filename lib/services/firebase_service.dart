@@ -47,7 +47,9 @@ class FirebaseService {
     auth = FirebaseAuth.instance;
     firestore = FirebaseFirestore.instance;
     firestore.settings = const Settings(persistenceEnabled: false);
-    functions = FirebaseFunctions.instance;
+    functions = kReleaseMode
+        ? FirebaseFunctions.instanceFor(region: 'europe-west1')
+        : FirebaseFunctions.instance;
 
     if (!kReleaseMode) {
       final host = Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';
@@ -137,7 +139,7 @@ class FirebaseService {
             photoURL: user.photoURL,
             createdAt: DateTime.now(),
           );
-          await profileService.createOrUpdateProfile(newProfile);
+          await profileService.createOrUpdateProfile(newProfile, isCreate: true);
         } else {
           bool needsUpdate = false;
           String? updatedName = profile.displayName;
