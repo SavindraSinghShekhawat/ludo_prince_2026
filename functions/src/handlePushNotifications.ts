@@ -46,26 +46,46 @@ async function sendPushToUser(
 
     const messaging = admin.messaging();
 
+    const messageConfig = {
+      notification: {
+        title: payload.title,
+        body: payload.body,
+      },
+      data: payload.data,
+      android: {
+        priority: "high" as const,
+        notification: {
+          sound: "default",
+          priority: "max" as const,
+        },
+      },
+      apns: {
+        headers: {
+          "apns-push-type": "alert",
+          "apns-priority": "10",
+        },
+        payload: {
+          aps: {
+            alert: {
+              title: payload.title,
+              body: payload.body,
+            },
+            sound: "default",
+            badge: 1,
+            contentAvailable: true,
+          },
+        },
+      },
+    };
+
     if (tokens.length === 1) {
       try {
         await messaging.send({
           token: tokens[0],
-          notification: {
-            title: payload.title,
-            body: payload.body,
-          },
-          data: payload.data,
-          apns: {
-            payload: {
-              aps: {
-                sound: "default",
-                badge: 1,
-              },
-            },
-          },
+          ...messageConfig,
         });
       } catch (err: unknown) {
-        const error = err as { code?: string };
+        const error = err as { code?: string; message?: string };
         if (
           error.code === "messaging/registration-token-not-registered" ||
           error.code === "messaging/invalid-registration-token"
@@ -81,19 +101,7 @@ async function sendPushToUser(
     } else {
       const response = await messaging.sendEachForMulticast({
         tokens,
-        notification: {
-          title: payload.title,
-          body: payload.body,
-        },
-        data: payload.data,
-        apns: {
-          payload: {
-            aps: {
-              sound: "default",
-              badge: 1,
-            },
-          },
-        },
+        ...messageConfig,
       });
 
       // Cleanup stale tokens
