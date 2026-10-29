@@ -28,14 +28,41 @@ export const handleGameEnd = onValueUpdated(
     const firestore = admin.firestore();
     const batch = firestore.batch();
 
-    const winnerUids = game.winners || [];
-    const playerUids = Object.values(game.players).map((p) => p.uid);
+    const rawWinners = game.winners || [];
+    const winnerUids = new Set<string>();
+
+    if (rawWinners.length > 0) {
+      if (game.gameMode === "team") {
+        // 2v2 Team Mode (4 players): The 2 players on the winning team both win
+        const firstWinnerSlot = rawWinners[0];
+        const isTeamA = firstWinnerSlot === "slot1" || firstWinnerSlot === "slot3";
+        const winningSlots = isTeamA ? ["slot1", "slot3"] : ["slot2", "slot4"];
+
+        for (const slot of winningSlots) {
+          const slotPlayer = game.players[slot];
+          if (slotPlayer?.uid) {
+            winnerUids.add(slotPlayer.uid);
+          }
+        }
+      } else {
+        // Free-for-All (Classic, Quick, Master, etc.): Exactly 1 winner (1st place)
+        const firstWinner = rawWinners[0];
+        const slotPlayer = game.players[firstWinner];
+        if (slotPlayer?.uid) {
+          winnerUids.add(slotPlayer.uid);
+        } else {
+          winnerUids.add(firstWinner);
+        }
+      }
+    }
+
+    const playerUids = Object.values(game.players)
+      .map((p) => p.uid)
+      .filter((uid): uid is string => Boolean(uid));
 
     for (const uid of playerUids) {
-      if (!uid) continue;
-
       const userRef = firestore.collection("users").doc(uid);
-      const isWinner = winnerUids.includes(uid);
+      const isWinner = winnerUids.has(uid);
 
       batch.set(
         userRef,
