@@ -35,6 +35,8 @@ android/fastlane/play-store-key.json
 *.pyc
 *.swp
 .DS_Store
+.kotlin/
+android/.kotlin/
 .atom/
 .build/
 .buildlog/
