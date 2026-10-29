@@ -37,8 +37,8 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
   }
 
   Future<void> _handleSave(UserProfile? currentProfile) async {
-    final newName = _nameController.text.trim();
-    if (newName.isEmpty) {
+    final newName = authService.sanitizeName(_nameController.text);
+    if (newName == null || newName.isEmpty) {
       AppSnackBar.show(
         context,
         message: 'Name cannot be empty!',
@@ -208,6 +208,12 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                     child: TextField(
                       controller: _nameController,
                       autofocus: true,
+                      maxLength: 18,
+                      buildCounter: (_,
+                              {required currentLength,
+                              required isFocused,
+                              maxLength}) =>
+                          null,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -262,12 +268,16 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    displayName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

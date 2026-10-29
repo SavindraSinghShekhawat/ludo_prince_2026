@@ -139,6 +139,8 @@ class FriendRequestsDialog extends ConsumerWidget {
               children: [
                 Text(
                   profile?.displayName ?? 'Unknown Player',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

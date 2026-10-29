@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:ludo_prince/services/auth_service.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/services/audio_service.dart';
 import 'package:ludo_prince/services/presence_service.dart';
@@ -40,6 +41,11 @@ class AppInitializer {
     );
 
     await firebaseService.initialize();
+
+    // Auto-upgrade placeholder names ("Player ...") if real name is resolvable
+    authService.syncCurrentProfileIfPlaceholder().catchError((e) {
+      AppLogger.debug('syncCurrentProfileIfPlaceholder error: $e');
+    });
 
     try {
       await GoogleSignIn.instance.initialize(

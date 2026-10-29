@@ -1139,6 +1139,7 @@ class _PlayerPanelContent extends ConsumerWidget {
     final nameText = Text(
       playerName,
       textAlign: TextAlign.center,
+      maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
         color: isTurn ? Colors.black87 : Colors.white70,

@@ -556,6 +556,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 children: [
                   Text(
                     user.displayName ?? 'Player',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,

@@ -134,8 +134,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 Navigator.pop(context);
                 setState(() => _isLoading = true);
                 try {
-                  await authService.signInWithCredential(credential);
-                  if (mounted) Navigator.pop(context);
+                  if (credential.providerId == 'apple.com' ||
+                      credential.signInMethod == 'apple.com') {
+                    // Apple authorization codes are strictly single-use.
+                    // Because linkWithCredential already attempted to redeem this token,
+                    // the code was consumed by Apple. We must sign out the temporary
+                    // anonymous guest session and prompt Apple directly to sign in to the existing account.
+                    final result = await authService.switchAccountWithApple();
+                    if (result != null && mounted) {
+                      Navigator.pop(context);
+                    }
+                  } else {
+                    try {
+                      await authService.signInWithCredential(credential);
+                      if (mounted) Navigator.pop(context);
+                    } catch (_) {
+                      final result = await authService.switchAccountWithGoogle();
+                      if (result != null && mounted) {
+                        Navigator.pop(context);
+                      }
+                    }
+                  }
                 } catch (e) {
                   _showError(
                     'Failed to switch account. Please try again.',

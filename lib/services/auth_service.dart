@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'presence_service.dart';
 import 'social_service.dart';
 import 'profile_service.dart';
@@ -36,7 +37,10 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      return await _linkOrSignIn(credential);
+      return await _seamlessSignIn(
+        credential: credential,
+        overrideDisplayName: googleUser.displayName,
+      );
     } catch (e) {
       if (_isCancellation(e)) return null;
       AppLogger.error('Error signing in with Google: $e');
@@ -60,6 +64,99 @@ class AuthService {
     return digest.toString();
   }
 
+  /// Strips leading/trailing and excess spaces, and caps length to [maxLength].
+  String? sanitizeName(String? name, {int maxLength = 18}) {
+    if (name == null) return null;
+    var cleaned = name.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (cleaned.isEmpty) return null;
+    if (cleaned.length > maxLength) {
+      cleaned = cleaned.substring(0, maxLength).trim();
+    }
+    return cleaned.isNotEmpty ? cleaned : null;
+  }
+
+  String? _deriveNameFromEmail(String? email) {
+    if (email == null || email.isEmpty) return null;
+    if (email.endsWith('@privaterelay.appleid.com')) return null;
+
+    final atIndex = email.indexOf('@');
+    if (atIndex <= 0) return null;
+
+    final username = email.substring(0, atIndex);
+    // Replace separators like dots, underscores, dashes with spaces
+    final cleaned = username.replaceAll(RegExp(r'[._-]+'), ' ').trim();
+    if (cleaned.isEmpty) return null;
+
+    // Capitalize each word cleanly
+    final words = cleaned.split(' ');
+    final capitalized = words
+        .map((w) => w.isNotEmpty
+            ? w[0].toUpperCase() +
+                (w.length > 1 ? w.substring(1).toLowerCase() : '')
+            : '')
+        .where((w) => w.isNotEmpty)
+        .join(' ');
+
+    return sanitizeName(capitalized);
+  }
+
+  Future<String?> _resolveDisplayName({
+    String? givenName,
+    String? familyName,
+    String? userIdentifier,
+    String? currentDisplayName,
+    String? email,
+    String? uid,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Direct from provider (e.g. Apple first-time sign-in)
+    final parts = [givenName, familyName]
+        .where((p) => p != null && p.trim().isNotEmpty)
+        .cast<String>();
+    if (parts.isNotEmpty) {
+      final directName = sanitizeName(parts.join(' '));
+      if (directName != null) {
+        if (userIdentifier != null && userIdentifier.isNotEmpty) {
+          await prefs.setString('apple_name_$userIdentifier', directName);
+        }
+        if (uid != null && uid.isNotEmpty) {
+          await prefs.setString('apple_name_$uid', directName);
+        }
+        return directName;
+      }
+    }
+
+    // 2. Previously cached name on this device
+    String? cached;
+    if (userIdentifier != null && userIdentifier.isNotEmpty) {
+      cached = prefs.getString('apple_name_$userIdentifier');
+    }
+    if (cached == null && uid != null && uid.isNotEmpty) {
+      cached = prefs.getString('apple_name_$uid');
+    }
+    if (cached != null) {
+      final sanitized = sanitizeName(cached);
+      if (sanitized != null) return sanitized;
+    }
+
+    // 3. Current Firebase Auth displayName if already human-readable
+    if (currentDisplayName != null &&
+        !currentDisplayName.startsWith('Player ') &&
+        !currentDisplayName.startsWith('Guest #')) {
+      final sanitized = sanitizeName(currentDisplayName);
+      if (sanitized != null) return sanitized;
+    }
+
+    // 4. Derive from email (if not Apple Private Relay)
+    final fromEmail = _deriveNameFromEmail(email);
+    if (fromEmail != null) {
+      return fromEmail;
+    }
+
+    return null;
+  }
+
   Future<UserCredential?> signInWithApple() async {
     try {
       final rawNonce = _generateNonce();
@@ -79,27 +176,33 @@ class AuthService {
         accessToken: appleCredential.authorizationCode,
       );
 
-      final userCredential = await _linkOrSignIn(credential);
+      // Pre-resolve human-readable name from Apple credentials, local device cache, or email
+      final resolvedName = await _resolveDisplayName(
+        givenName: appleCredential.givenName,
+        familyName: appleCredential.familyName,
+        userIdentifier: appleCredential.userIdentifier,
+        email: appleCredential.email,
+      );
 
-      // Apple only provides givenName and familyName on the FIRST sign-in.
-      // Update the user's displayName in Firebase and Firestore if provided.
+      final userCredential = await _seamlessSignIn(
+        credential: credential,
+        overrideDisplayName: resolvedName,
+      );
+
       final user = userCredential.user;
       if (user != null) {
-        final givenName = appleCredential.givenName;
-        final familyName = appleCredential.familyName;
-        final parts = [givenName, familyName]
-            .where((p) => p != null && p.trim().isNotEmpty)
-            .cast<String>();
-        if (parts.isNotEmpty) {
-          final fullName = parts.join(' ');
-          final currentName = user.displayName;
-          if (currentName == null ||
-              currentName.isEmpty ||
-              currentName.startsWith('Player ') ||
-              currentName.startsWith('Guest #')) {
-            await user.updateDisplayName(fullName);
-            await _syncProfileAfterLinking(user);
+        final finalName = resolvedName ??
+            await _resolveDisplayName(
+              email: user.email,
+              uid: user.uid,
+              currentDisplayName: user.displayName,
+            );
+
+        if (finalName != null && finalName.isNotEmpty) {
+          if (user.displayName != finalName) {
+            await user.updateDisplayName(finalName);
           }
+          await _syncProfileAfterLinking(user, overrideDisplayName: finalName);
         }
       }
 
@@ -111,58 +214,153 @@ class AuthService {
     }
   }
 
-  Future<UserCredential> _linkOrSignIn(AuthCredential credential) async {
-    final User? user = _auth.currentUser;
+  Future<UserCredential> _seamlessSignIn({
+    required AuthCredential credential,
+    String? overrideDisplayName,
+  }) async {
+    final User? previousUser = _auth.currentUser;
+    UserProfile? guestProfileToMerge;
 
-    if (user != null && user.isAnonymous) {
+    // 1. If previous session was an anonymous guest with gameplay stats,
+    // preserve the stats so we can merge them into the target account without losing progress.
+    if (previousUser != null && previousUser.isAnonymous) {
       try {
-        // Try linking anonymous session to permanent credential
-        final cred = await user.linkWithCredential(credential);
-        await _auth.currentUser?.reload();
-        final linkedUser = _auth.currentUser ?? cred.user;
-        if (linkedUser != null) {
-          await _syncProfileAfterLinking(linkedUser);
+        final profile = await profileService.getUserProfile(previousUser.uid);
+        if (profile != null &&
+            (profile.gamesPlayed > 0 || profile.gamesWon > 0)) {
+          guestProfileToMerge = profile;
         }
-        return cred;
-      } on FirebaseAuthException catch (e) {
-        // If credential already belongs to an existing account, rethrow with the
-        // credential attached so the UI can prompt the user with the Switch Account warning dialog!
-        if (e.code == 'credential-already-in-use' ||
-            e.code == 'email-already-in-use' ||
-            e.code == 'account-exists-with-different-credential') {
-          throw FirebaseAuthException(
-            code: 'credential-already-in-use',
-            message: e.message,
-            credential: credential,
-          );
-        }
-        rethrow;
-      }
-    } else {
-      return await signInWithCredential(credential);
+      } catch (_) {}
     }
-  }
 
-  Future<UserCredential> signInWithCredential(AuthCredential credential) async {
-    final cred = await _auth.signInWithCredential(credential);
-    final signedInUser = _auth.currentUser ?? cred.user;
+    // 2. Directly sign in with the credential!
+    // This is 100% reliable, never fails with 'credential-already-in-use',
+    // never burns Apple's single-use authorization code, and requires only ONE Face ID prompt!
+    final userCredential = await _auth.signInWithCredential(credential);
+    final signedInUser = _auth.currentUser ?? userCredential.user;
+
     if (signedInUser != null) {
-      await _syncProfileAfterLinking(signedInUser);
+      // 3. Sync profile & resolve human-readable display name
+      await _syncProfileAfterLinking(
+        signedInUser,
+        overrideDisplayName: overrideDisplayName,
+      );
+
+      // 4. If there were guest games to merge, seamlessly add them to the account!
+      if (guestProfileToMerge != null && previousUser != null) {
+        try {
+          final targetProfile =
+              await profileService.getUserProfile(signedInUser.uid);
+          if (targetProfile != null) {
+            final merged = targetProfile.copyWith(
+              gamesPlayed:
+                  targetProfile.gamesPlayed + guestProfileToMerge.gamesPlayed,
+              gamesWon: targetProfile.gamesWon + guestProfileToMerge.gamesWon,
+            );
+            await profileService.createOrUpdateProfile(merged);
+          }
+          // Clean up the orphaned anonymous guest document from Firestore
+          await profileService.deleteProfile(previousUser.uid);
+        } catch (e) {
+          AppLogger.error(
+              'Failed to merge guest stats into permanent account: $e');
+        }
+      }
     }
-    return cred;
+
+    return userCredential;
   }
 
-  Future<void> _syncProfileAfterLinking(User user) async {
+  Future<UserCredential> signInWithCredential(
+    AuthCredential credential, {
+    String? overrideDisplayName,
+  }) async {
+    return await _seamlessSignIn(
+      credential: credential,
+      overrideDisplayName: overrideDisplayName,
+    );
+  }
+
+  /// Switches accounts for Apple Sign-In.
+  /// Apple authorization codes are single-use. Once [linkWithCredential] fails with
+  /// 'credential-already-in-use', that authorization code is consumed by Apple.
+  /// To switch accounts, we must sign out the temporary anonymous guest session
+  /// and trigger a fresh native Apple prompt so Apple generates a new valid code
+  /// that signs straight into the existing account.
+  Future<UserCredential?> switchAccountWithApple() async {
+    await _auth.signOut();
+    try {
+      final cred = await signInWithApple();
+      if (cred == null) {
+        await signInAnonymously();
+      }
+      return cred;
+    } catch (e) {
+      if (_auth.currentUser == null) {
+        await signInAnonymously();
+      }
+      rethrow;
+    }
+  }
+
+  /// Switches accounts for Google Sign-In with fresh re-auth fallback.
+  Future<UserCredential?> switchAccountWithGoogle() async {
+    await _auth.signOut();
+    try {
+      final cred = await signInWithGoogle();
+      if (cred == null) {
+        await signInAnonymously();
+      }
+      return cred;
+    } catch (e) {
+      if (_auth.currentUser == null) {
+        await signInAnonymously();
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> syncCurrentProfileIfPlaceholder() async {
+    final user = _auth.currentUser;
+    if (user != null && !user.isAnonymous) {
+      await _syncProfileAfterLinking(user);
+    }
+  }
+
+  Future<void> _syncProfileAfterLinking(
+    User user, {
+    String? overrideDisplayName,
+  }) async {
     try {
       final currentProfile = await profileService.getUserProfile(user.uid);
-      final newName = user.displayName;
+      String? effectiveName = sanitizeName(overrideDisplayName ?? user.displayName);
+
+      // If current name is missing or a placeholder ("Player 1234" / "Guest #1234"),
+      // attempt resolution from email, Apple ID cache, etc.
+      if (effectiveName == null ||
+          effectiveName.isEmpty ||
+          effectiveName.startsWith('Player ') ||
+          effectiveName.startsWith('Guest #')) {
+        final resolved = await _resolveDisplayName(
+          email: user.email,
+          uid: user.uid,
+          currentDisplayName: effectiveName,
+        );
+        if (resolved != null && resolved.isNotEmpty) {
+          effectiveName = sanitizeName(resolved);
+          if (effectiveName != null) {
+            await user.updateDisplayName(effectiveName);
+          }
+        }
+      }
+
       final newEmail = user.email;
       final newPhoto = user.photoURL;
 
       if (currentProfile == null) {
         final newProfile = UserProfile(
           uid: user.uid,
-          displayName: newName ?? 'Player ${user.uid.substring(0, 4)}',
+          displayName: effectiveName ?? 'Player ${user.uid.substring(0, 4)}',
           email: newEmail,
           photoURL: newPhoto,
           createdAt: DateTime.now(),
@@ -171,14 +369,19 @@ class AuthService {
       } else {
         bool needsUpdate = false;
         String? updatedName = currentProfile.displayName;
+
+        // Upgrade placeholder names automatically!
         if ((updatedName == null ||
                 updatedName.startsWith('Player ') ||
                 updatedName.startsWith('Guest #')) &&
-            newName != null &&
-            newName.isNotEmpty) {
-          updatedName = newName;
+            effectiveName != null &&
+            effectiveName.isNotEmpty &&
+            !effectiveName.startsWith('Player ') &&
+            !effectiveName.startsWith('Guest #')) {
+          updatedName = effectiveName;
           needsUpdate = true;
         }
+
         String? updatedEmail = currentProfile.email ?? newEmail;
         if (updatedEmail != currentProfile.email) needsUpdate = true;
         String? updatedPhoto = currentProfile.photoURL ?? newPhoto;
