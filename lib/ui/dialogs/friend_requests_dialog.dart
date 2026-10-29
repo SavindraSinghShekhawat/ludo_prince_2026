@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/friend_request.dart';
 import 'package:ludo_prince/services/profile_service.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/providers/notification_provider.dart';
 import '../widgets/shared_ui.dart';
 
 class FriendRequestsDialog extends ConsumerWidget {
@@ -163,6 +164,7 @@ class FriendRequestsDialog extends ConsumerWidget {
             color: AppColors.imperialJade,
             onTap: () async {
               await profileService.acceptFriendRequest(request);
+              ref.read(notificationProvider.notifier).markAsRead(request.id);
               if (context.mounted) {
                 AppSnackBar.show(
                   context,
@@ -178,6 +180,7 @@ class FriendRequestsDialog extends ConsumerWidget {
             color: AppColors.crimsonVelvet,
             onTap: () async {
               await profileService.declineFriendRequest(request.id);
+              ref.read(notificationProvider.notifier).markAsRead(request.id);
             },
           ),
         ],

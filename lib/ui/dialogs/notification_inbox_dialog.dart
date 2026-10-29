@@ -5,8 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/models/app_notification.dart';
+import 'package:ludo_prince/models/friend_request.dart';
+import 'package:ludo_prince/services/profile_service.dart';
+import 'package:ludo_prince/core/widgets/app_snackbar.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'friend_requests_dialog.dart';
 import 'invite_dialog.dart';
@@ -211,6 +215,132 @@ class NotificationInboxDialog extends ConsumerWidget {
                       height: 1.3,
                     ),
                   ),
+                  if (n.type == NotificationType.friendRequest) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () async {
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            final req = FriendRequest(
+                              id: n.id,
+                              fromUid: n.data['fromUid'] ?? '',
+                              toUid: n.data['toUid'] ?? currentUser?.uid ?? '',
+                              status: 'pending',
+                              timestamp: n.timestamp,
+                            );
+                            try {
+                              await profileService.acceptFriendRequest(req);
+                              ref
+                                  .read(notificationProvider.notifier)
+                                  .markAsRead(n.id);
+                              if (context.mounted) {
+                                AppSnackBar.show(
+                                  context,
+                                  message: 'Friend request accepted!',
+                                  isSuccess: true,
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                AppSnackBar.show(
+                                  context,
+                                  message: 'Failed to accept: $e',
+                                  isError: true,
+                                );
+                              }
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.imperialJade.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color:
+                                    AppColors.imperialJade.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: AppColors.imperialJade,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'ACCEPT',
+                                  style: TextStyle(
+                                    color: AppColors.imperialJade,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () async {
+                            try {
+                              await profileService.declineFriendRequest(n.id);
+                              ref
+                                  .read(notificationProvider.notifier)
+                                  .markAsRead(n.id);
+                              if (context.mounted) {
+                                AppSnackBar.show(
+                                  context,
+                                  message: 'Friend request declined.',
+                                );
+                              }
+                            } catch (_) {}
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white70,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'DECLINE',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

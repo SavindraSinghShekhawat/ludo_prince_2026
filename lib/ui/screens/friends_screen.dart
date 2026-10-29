@@ -19,6 +19,8 @@ import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/friend_requests_dialog.dart';
+import 'package:ludo_prince/models/friend_request.dart';
 import 'package:ludo_prince/core/constants/firebase_paths.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -148,12 +150,65 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final unreadCount =
         ref.watch(notificationProvider).inbox.where((n) => !n.isRead).length;
 
+    final requestsAsync = user != null && !isGuest
+        ? ref.watch(friendRequestsProvider(user.uid))
+        : null;
+    final incomingRequests = requestsAsync?.value ?? <FriendRequest>[];
+
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text('FRIENDS'),
           actions: [
+            if (incomingRequests.isNotEmpty)
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    tooltip: 'Pending Requests',
+                    icon: const Icon(
+                      Icons.person_add_alt_1_outlined,
+                      color: AppColors.primaryCyan,
+                    ),
+                    onPressed: () {
+                      AppDialogLayout.show(
+                        context: context,
+                        child: const FriendRequestsDialog(),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: AppColors.crimsonVelvet,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        incomingRequests.length > 9
+                            ? '9+'
+                            : incomingRequests.length.toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             Stack(
               alignment: Alignment.center,
               children: [
@@ -210,11 +265,19 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                       color: AppColors.imperialJade,
                     ),
                   ),
+                if (incomingRequests.isNotEmpty) ...[
+                  _buildSectionHeader(
+                    'PENDING REQUESTS (${incomingRequests.length})',
+                    Icons.person_add_alt_1,
+                    highlightColor: AppColors.primaryCyan,
+                  ),
+                  _buildIncomingRequestsList(incomingRequests),
+                ],
                 _buildSectionHeader('YOUR FRIENDS', Icons.people_outline),
                 _buildFriendsList(),
                 if (_searchController.text.length >= 2) ...[
                   _buildSectionHeader('GLOBAL SEARCH', Icons.public),
-                  _buildGlobalResults(),
+                  _buildGlobalResults(incomingRequests),
                 ],
               ],
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -407,18 +470,22 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(
+    String title,
+    IconData icon, {
+    Color? highlightColor,
+  }) {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
       sliver: SliverToBoxAdapter(
         child: Row(
           children: [
-            Icon(icon, color: Colors.white38, size: 18),
+            Icon(icon, color: highlightColor ?? Colors.white38, size: 18),
             const SizedBox(width: 8),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white38,
+              style: TextStyle(
+                color: highlightColor ?? Colors.white38,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
@@ -428,6 +495,127 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildIncomingRequestsList(List<FriendRequest> requests) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => _buildIncomingRequestCard(requests[index]),
+          childCount: requests.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncomingRequestCard(FriendRequest request) {
+    final profile = request.fromProfile;
+    final displayName = profile?.displayName ??
+        (request.fromUid.length >= 4
+            ? 'Player ${request.fromUid.substring(0, 4)}'
+            : 'Player');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: GlassContainer(
+        padding: const EdgeInsets.all(14),
+        borderRadius: 20,
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.primaryCyan.withValues(alpha: 0.15),
+              backgroundImage: profile?.photoURL != null
+                  ? NetworkImage(profile!.photoURL!)
+                  : null,
+              child: profile?.photoURL == null
+                  ? const Icon(
+                      Icons.person,
+                      color: AppColors.primaryCyan,
+                      size: 26,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'wants to be your friend',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildSmallActionButton(
+              label: 'ACCEPT',
+              icon: Icons.check,
+              color: AppColors.imperialJade,
+              onTap: () async {
+                try {
+                  await profileService.acceptFriendRequest(request);
+                  ref
+                      .read(notificationProvider.notifier)
+                      .markAsRead(request.id);
+                  if (mounted) {
+                    AppSnackBar.show(
+                      context,
+                      message: 'Friend request accepted!',
+                      isSuccess: true,
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    AppSnackBar.show(
+                      context,
+                      message: 'Failed to accept: $e',
+                      isError: true,
+                    );
+                  }
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            _buildSmallActionButton(
+              label: 'DECLINE',
+              icon: Icons.close,
+              color: AppColors.crimsonVelvet,
+              onTap: () async {
+                try {
+                  await profileService.declineFriendRequest(request.id);
+                  ref
+                      .read(notificationProvider.notifier)
+                      .markAsRead(request.id);
+                  if (mounted) {
+                    AppSnackBar.show(
+                      context,
+                      message: 'Friend request declined.',
+                    );
+                  }
+                } catch (_) {}
+              },
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.08, end: 0);
   }
 
   Widget _buildFriendsList() {
@@ -496,7 +684,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     );
   }
 
-  Widget _buildGlobalResults() {
+  Widget _buildGlobalResults(List<FriendRequest> incomingRequests) {
     if (_searchResults.isEmpty && !_isSearching) {
       return const SliverToBoxAdapter(
         child: Padding(
@@ -513,15 +701,32 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, index) =>
-              _buildUserCard(_searchResults[index], isFriend: false),
+          (context, index) {
+            final targetUser = _searchResults[index];
+            FriendRequest? incomingReq;
+            for (final r in incomingRequests) {
+              if (r.fromUid == targetUser.uid) {
+                incomingReq = r;
+                break;
+              }
+            }
+            return _buildUserCard(
+              targetUser,
+              isFriend: false,
+              incomingRequest: incomingReq,
+            );
+          },
           childCount: _searchResults.length,
         ),
       ),
     );
   }
 
-  Widget _buildUserCard(UserProfile user, {required bool isFriend}) {
+  Widget _buildUserCard(
+    UserProfile user, {
+    required bool isFriend,
+    FriendRequest? incomingRequest,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: GlassContainer(
@@ -647,6 +852,36 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 'CHALLENGE',
                 () => _handleChallenge(user),
               ),
+            ] else if (incomingRequest != null) ...[
+              _buildSmallActionButton(
+                label: 'ACCEPT',
+                icon: Icons.check,
+                color: AppColors.imperialJade,
+                onTap: () async {
+                  try {
+                    await profileService.acceptFriendRequest(incomingRequest);
+                    ref
+                        .read(notificationProvider.notifier)
+                        .markAsRead(incomingRequest.id);
+                    if (mounted) {
+                      AppSnackBar.show(
+                        context,
+                        message:
+                            'Friend request from ${user.displayName ?? "Player"} accepted!',
+                        isSuccess: true,
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      AppSnackBar.show(
+                        context,
+                        message: 'Failed to accept: $e',
+                        isError: true,
+                      );
+                    }
+                  }
+                },
+              ),
             ] else ...[
               _buildSmallPlatinumButton(
                 _sentRequests.contains(user.uid) ? 'SENT' : 'ADD',
@@ -677,6 +912,45 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
       ),
     ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1, end: 0);
+  }
+
+  Widget _buildSmallActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withValues(alpha: 0.45),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _handleChallenge(UserProfile target) async {

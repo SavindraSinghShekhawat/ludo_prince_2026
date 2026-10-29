@@ -101,7 +101,14 @@ class ProfileService {
       List<FriendRequest> requests = [];
       for (var doc in snapshot.docs) {
         final fromUid = doc.data()['from'];
-        final profile = await getUserProfile(fromUid);
+        final profile = await getUserProfile(fromUid) ??
+            UserProfile(
+              uid: fromUid,
+              displayName: fromUid.length >= 4
+                  ? 'Player ${fromUid.substring(0, 4)}'
+                  : 'Player',
+              createdAt: DateTime.now(),
+            );
         requests.add(
           FriendRequest.fromFirestore(doc, fromProfile: profile),
         );
@@ -112,14 +119,23 @@ class ProfileService {
 
   Future<void> acceptFriendRequest(FriendRequest request) async {
     try {
-      // We only update the status to 'accepted'.
-      // A Cloud Function trigger will handle the necessary side effects:
-      // 1. Adding both users to each other's friends subcollections.
-      // 2. Incrementing friendsCount for both users.
-      // This solves the permission-denied issues with cross-user writes.
+      // 1. Update friend request status to 'accepted'
       await _firestore.collection('friend_requests').doc(request.id).update({
         'status': 'accepted',
       });
+
+      // 2. Optimistic client write to own friends subcollection
+      // Permitted by firestore rules: request.auth.uid == userId
+      if (request.toUid.isNotEmpty && request.fromUid.isNotEmpty) {
+        await _firestore
+            .collection('users')
+            .doc(request.toUid)
+            .collection('friends')
+            .doc(request.fromUid)
+            .set({
+          'addedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
     } catch (e) {
       AppLogger.error('Error accepting friend request: $e');
       rethrow;

@@ -109,7 +109,12 @@ class GlobalListeners {
                     type: NotificationType.friendRequest,
                     title: 'FRIEND REQUEST',
                     message: '$senderName wants to be your friend',
-                    data: {'fromUid': req.fromUid},
+                    data: {
+                      'fromUid': req.fromUid,
+                      'toUid': req.toUid,
+                      'fromName': senderName,
+                      'requestId': req.id,
+                    },
                     timestamp: req.timestamp,
                   ),
                 );
