@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import {AppLogger} from "./utils/logger";
 
 /**
- * Scheduled garbage collector that runs every 15 minutes to sweep stale/orphaned cloud data:
+ * Scheduled garbage collector that runs once a week to sweep stale/orphaned cloud data:
  * 1. Finished or disbanded games older than 3 minutes (after victory screen is viewed).
  * 2. Abandoned lobbies older than 15 minutes.
  * 3. Orphaned private room codes whose linked game no longer exists.
@@ -12,7 +12,7 @@ import {AppLogger} from "./utils/logger";
  */
 export const cleanupStaleData = onSchedule(
   {
-    schedule: "every 15 minutes",
+    schedule: "every sunday 00:00",
     timeoutSeconds: 300,
     memory: "256MiB",
   },
