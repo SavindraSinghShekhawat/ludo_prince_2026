@@ -17,8 +17,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  group('JoinByCodeDialog High-Contrast & Clipboard Tests', () {
-    testWidgets('Renders 6 high-contrast digit cards and paste button', (tester) async {
+  group('JoinByCodeDialog Amber Theme & Clipboard Tests', () {
+    testWidgets('Renders 6 amber digit inputs and paste button', (tester) async {
       tester.view.physicalSize = const Size(1200, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -108,6 +108,28 @@ void main() {
 
       expect(find.text('5'), findsOneWidget);
       expect(find.text('8'), findsOneWidget);
+    });
+
+    testWidgets('All 6 digit inputs are enabled by default for editing', (tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: JoinByCodeDialog(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(textFields.length, 6);
+      for (final tf in textFields) {
+        expect(tf.enabled, isTrue);
+      }
     });
   });
 
