@@ -38,6 +38,25 @@ void main() {
       expect(find.byType(TextField), findsNWidgets(6));
     });
 
+    testWidgets('First digit input is autofocused by default when dialog appears', (tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: JoinByCodeDialog(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final firstTextField = tester.widget<TextField>(find.byType(TextField).first);
+      expect(firstTextField.focusNode?.hasFocus, isTrue);
+    });
+
     testWidgets('Tapping PASTE CODE populates digit inputs from clipboard', (tester) async {
       tester.view.physicalSize = const Size(1200, 1600);
       tester.view.devicePixelRatio = 1.0;

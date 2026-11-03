@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ludo_prince/services/matchmaking_service.dart';
 import 'package:ludo_prince/services/audio_service.dart';
+import 'package:ludo_prince/core/widgets/app_loading_dots.dart';
 import '../widgets/shared_ui.dart';
 import '../screens/lobby_screen.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
@@ -30,6 +31,11 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
         if (mounted) setState(() {});
       });
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNodes[0].requestFocus();
+      }
+    });
   }
 
   @override
@@ -183,6 +189,7 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
                       return SizedBox(
                         width: 44,
                         child: TextField(
+                          autofocus: index == 0,
                           enabled: !_isLoading,
                           controller: _controllers[index],
                           focusNode: _focusNodes[index],
@@ -289,7 +296,10 @@ class _JoinByCodeDialogState extends State<JoinByCodeDialog> {
 
                   const SizedBox(height: 28),
                   if (_isLoading)
-                    const CircularProgressIndicator(color: Colors.amberAccent)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Center(child: AppLoadingDots(size: 32)),
+                    )
                   else
                     Row(
                       children: [
