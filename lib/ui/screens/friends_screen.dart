@@ -10,8 +10,6 @@ import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import 'package:ludo_prince/ui/dialogs/join_by_code_dialog.dart';
 import '../widgets/shared_ui.dart';
 import 'package:ludo_prince/services/social_service.dart';
-import 'package:ludo_prince/services/matchmaking_service.dart';
-import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart'
     show GameMode;
 import 'package:ludo_prince/core/theme/app_colors.dart';
@@ -21,7 +19,7 @@ import 'package:ludo_prince/providers/auth_provider.dart';
 import 'package:ludo_prince/ui/dialogs/notification_inbox_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/friend_requests_dialog.dart';
 import 'package:ludo_prince/models/friend_request.dart';
-import 'package:ludo_prince/core/constants/firebase_paths.dart';
+import 'package:ludo_prince/ui/dialogs/friend_game_setup_dialog.dart';
 
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -1151,77 +1149,23 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     }
   }
 
-  Future<void> _handleChallenge(UserProfile target) async {
+  void _handleChallenge(UserProfile target) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // Show loading indicator
-    AppSnackBar.show(
-      context,
-      message: 'Creating private room...',
-      icon: Icons.hourglass_empty,
+    final displayName = target.displayName ?? 'Friend';
+    AppDialogLayout.show(
+      context: context,
+      child: FriendGameSetupDialog(
+        title: 'CHALLENGE FRIEND',
+        subtitle: 'Challenging $displayName',
+        targetUids: [target.uid],
+        targetNames: [displayName],
+        initialMaxPlayers: 2,
+        initialGameMode: GameMode.classic,
+        actionButtonLabel: 'SEND CHALLENGE',
+      ),
     );
-
-    try {
-      // 1. Create a private game
-      final playerName = ref.read(displayNameProvider);
-      final gameId = await matchmakingService.createGame(
-        maxPlayers: 2,
-        isPrivate: true,
-        gameMode: GameMode.classic,
-        playerName: playerName,
-      );
-
-      // 2. Look up the joining code
-      final gameSnap = await firebaseService.database
-          .ref()
-          .child(FirebasePaths.session('ludo', gameId))
-          .get();
-
-      if (!gameSnap.exists) throw Exception("Failed to create game node");
-
-      final gameData = Map<String, dynamic>.from(gameSnap.value as Map);
-      final joiningCode = gameData['joiningCode'] as String?;
-
-      if (joiningCode == null) throw Exception("No joining code generated");
-
-      // 3. Send the invite
-      await socialService.sendInvite(
-        targetUid: target.uid,
-        gameId: gameId,
-        joiningCode: joiningCode,
-      );
-
-      // 4. Update own presence
-      await socialService.updatePresence(UserStatus.inLobby, gameId: gameId);
-
-      if (!mounted) return;
-
-      // 5. Navigate to Lobby
-      Navigator.push(
-        context,
-        ScaleFadePageRoute(
-          page: LobbyScreen(
-            initialGameId: gameId,
-            isHost: true,
-            isQuickMatch: false,
-          ),
-        ),
-      );
-
-      AppSnackBar.show(
-        context,
-        message: 'Challenge sent to ${target.displayName}!',
-        isSuccess: true,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      AppSnackBar.show(
-        context,
-        message: 'Error sending challenge: $e',
-        isError: true,
-      );
-    }
   }
 
   Widget _buildSmallPlatinumButton(

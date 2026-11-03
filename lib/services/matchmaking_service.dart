@@ -235,6 +235,15 @@ class MatchmakingService {
         (gameData['maxPlayers'] as num?)?.toInt() ?? rawPlayers.length;
     final gameModeStr = gameData['gameMode'] as String? ?? 'classic';
 
+    if (rawPlayers.length < maxPlayers) {
+      throw Exception(
+        "Cannot start game: waiting for $maxPlayers players (currently ${rawPlayers.length} joined).",
+      );
+    }
+    if (gameModeStr == 'team' && rawPlayers.length < 4) {
+      throw Exception("Team mode requires exactly 4 players.");
+    }
+
     // Establish turn order based on valid slots for this player count
     final orderedSlots = PlayerSlotExtension.getSlotsFor(maxPlayers);
     final turnOrder = <String>[];
@@ -243,13 +252,17 @@ class MatchmakingService {
         turnOrder.add(slotEnum.name);
       }
     }
-    // Fallback if some slots are custom
-    if (turnOrder.isEmpty) {
-      turnOrder.addAll(rawPlayers.keys);
+    // Guarantee all joined players are in turnOrder regardless of slot distribution
+    for (final slot in rawPlayers.keys) {
+      if (!turnOrder.contains(slot)) {
+        turnOrder.add(slot);
+      }
     }
 
     final updates = <String, dynamic>{
       'status': 'playing',
+      'maxPlayers': maxPlayers,
+      'currentPlayers': rawPlayers.length,
       'currentTurn': turnOrder.first,
       'turnNumber': 1,
       'turnStartedAt': ServerValue.timestamp,

@@ -54,6 +54,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   bool _isLoading = false;
   bool _isDisbandedDialogShown = false;
   bool _hasReceivedValidGameData = false;
+  bool _hasRedirectedToGame = false;
   int _maxPlayers = 2;
   GameMode _gameMode = GameMode.classic;
   Timer? _heartbeatTimer;
@@ -304,6 +305,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         AppLogger.debug("Error leaving queue on dispose: $e");
       });
     }
+    socialService.updatePresence(UserStatus.online);
     super.dispose();
   }
 
@@ -710,7 +712,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         if (status == 'playing') {
           _heartbeatTimer?.cancel();
           _timeoutTimer?.cancel();
-          _redirectToGame();
+          if (!_hasRedirectedToGame) {
+            _redirectToGame();
+          }
           return const Center(
             child: Text(
               "Starting game...",
@@ -840,13 +844,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                 child: SizedBox(
                                   width: double.infinity,
                                   child: AppButton(
-                                    text: currentPlayers >= 2
+                                    text: currentPlayers >= maxRequired
                                         ? 'START BATTLE'
-                                        : 'WAITING FOR PLAYERS...',
-                                    color: currentPlayers >= 2
+                                        : 'WAITING FOR PLAYERS ($currentPlayers/$maxRequired)...',
+                                    color: currentPlayers >= maxRequired
                                         ? AppColors.starPlatinum
                                         : Colors.white24,
-                                    onTap: currentPlayers >= 2
+                                    onTap: currentPlayers >= maxRequired
                                         ? () {
                                             matchmakingService
                                                 .startGame(_activeGameId!)
@@ -1447,6 +1451,12 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 
   void _redirectToGame() {
+    if (_hasRedirectedToGame) return;
+    _hasRedirectedToGame = true;
+    _heartbeatTimer?.cancel();
+    _timeoutTimer?.cancel();
+    _uiTimer?.cancel();
+
     Future.microtask(() async {
       final playersEvent = await firebaseService.database
           .ref()
@@ -1458,22 +1468,46 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       PlayerSlot localSlot = PlayerSlot.slot1;
       Map<PlayerSlot, PlayerSetupConfig> config = {};
 
-      if (playersEvent.snapshot.exists) {
+      if (playersEvent.snapshot.exists && playersEvent.snapshot.value != null) {
         final playersData = Map<String, dynamic>.from(
           playersEvent.snapshot.value as Map,
         );
-        final orderedSlots =
-            PlayerSlotExtension.getSlotsFor(playersData.length);
-        for (final slot in orderedSlots) {
-          if (!playersData.containsKey(slot.name)) continue;
-          final data = Map<String, dynamic>.from(playersData[slot.name] as Map);
-          if (data['uid'] == currentUserUid) localSlot = slot;
+        for (final entry in playersData.entries) {
+          final slotName = entry.key;
+          final slot = PlayerSlot.values.firstWhere(
+            (s) => s.name == slotName,
+            
+            orElse: () => PlayerSlot.slot1,
+          );
+          final data = Map<String, dynamic>.from(entry.value as Map);
+          if (data['uid'] == currentUserUid) {
+            localSlot = slot;
+          }
           // All remote players and bots are treated as remoteHuman by local UI, server handles bot turns
           config[slot] = PlayerSetupConfig(
-            name: data['name'],
+            name: data['name'] ?? 'Player',
             type: PlayerType.remoteHuman,
             uid: data['uid'],
           );
+        }
+      }
+
+      final sessionEvent = await firebaseService.database
+          .ref()
+          .child(FirebasePaths.session('ludo', _activeGameId!))
+          .once();
+      GameMode sessionMode = _gameMode;
+      bool sessionIsPrivate = !widget.isQuickMatch;
+      if (sessionEvent.snapshot.exists && sessionEvent.snapshot.value != null) {
+        final sData = Map<String, dynamic>.from(sessionEvent.snapshot.value as Map);
+        if (sData['gameMode'] != null) {
+          sessionMode = GameMode.values.firstWhere(
+            (e) => e.name == sData['gameMode'],
+            orElse: () => _gameMode,
+          );
+        }
+        if (sData['isPrivate'] != null) {
+          sessionIsPrivate = sData['isPrivate'] as bool;
         }
       }
 
@@ -1481,11 +1515,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         config,
         gameId: _activeGameId!,
         localPlayerSlot: localSlot,
+        gameMode: sessionMode,
+        initialIsPrivate: sessionIsPrivate,
       );
       await controller.initializeFromSnapshot();
 
-      if (!mounted) return;
       await audioService.playStart();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         ScaleFadePageRoute(
@@ -1493,6 +1529,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             overrides: [gameControllerProvider.overrideWithValue(controller)],
             child: const LudoScreen(),
           ),
+          settings: const RouteSettings(name: '/game'),
         ),
       );
     });

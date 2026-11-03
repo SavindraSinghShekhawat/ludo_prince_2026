@@ -24,11 +24,12 @@ class UpdateDialog extends StatelessWidget {
     final String packageName = 'com.paisphere.ludoprince';
     final String appId = '6760012267';
 
+    final platform = Theme.of(context).platform;
     Uri? url;
-    if (Theme.of(context).platform == TargetPlatform.android) {
+    if (platform == TargetPlatform.android) {
       url = Uri.parse('market://details?id=$packageName');
       AppLogger.debug('[UpdateDialog] Attempting Android Market scheme: $url');
-    } else if (Theme.of(context).platform == TargetPlatform.iOS) {
+    } else if (platform == TargetPlatform.iOS) {
       url = Uri.parse('itms-apps://itunes.apple.com/app/id$appId');
       AppLogger.debug('[UpdateDialog] Attempting iOS App Store scheme: $url');
     }
@@ -39,7 +40,7 @@ class UpdateDialog extends StatelessWidget {
     } else {
       // Fallback to web URL
       final webUrl = Uri.parse(
-        Theme.of(context).platform == TargetPlatform.iOS
+        platform == TargetPlatform.iOS
             ? 'https://apps.apple.com/app/id$appId'
             : 'https://play.google.com/store/apps/details?id=$packageName',
       );

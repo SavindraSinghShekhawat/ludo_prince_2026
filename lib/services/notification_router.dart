@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:ludo_prince/core/widgets/app_dialog_layout.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/ui/dialogs/invite_dialog.dart';
+import 'package:ludo_prince/ui/dialogs/friend_requests_dialog.dart';
 import 'package:ludo_prince/ui/screens/friends_screen.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import 'package:ludo_prince/services/social_service.dart';
+import 'package:ludo_prince/services/app_route_observer.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 
 /// Routes notification clicks (both local tray and background/cold launch) to their ideal destination screens.
@@ -86,7 +88,7 @@ class NotificationRouter {
     }
   }
 
-  /// Directs player to the Room Invitation or enters the lobby directly.
+  /// Directs player to the Room Invitation or enters the lobby cleanly.
   static void _routeToGameInvite(BuildContext context, String payload) {
     String inviteId = 'test_invite';
     String fromName = 'PrinceAlex';
@@ -112,22 +114,11 @@ class NotificationRouter {
       } catch (_) {}
     }
 
-    if (gameId.isNotEmpty && gameId != 'demo_game') {
-      // Mark invite responded/accepted in RTDB
-      socialService.respondToInvite(inviteId, true);
+    final currentRoute = AppRouteObserver.currentRouteName;
 
-      // Navigate directly into the game lobby
-      Navigator.of(context).push(
-        ScaleFadePageRoute(
-          page: LobbyScreen(
-            initialGameId: gameId,
-            isHost: false,
-            isQuickMatch: false,
-          ),
-          settings: const RouteSettings(name: '/lobby'),
-        ),
-      );
-    } else {
+    // If currently inside an active game, ALWAYS show the InviteDialog confirmation
+    // so the player does not accidentally abandon their ongoing match!
+    if (currentRoute == '/game' || gameId.isEmpty || gameId == 'demo_game') {
       AppDialogLayout.show(
         context: context,
         barrierDismissible: false,
@@ -138,13 +129,45 @@ class NotificationRouter {
           joiningCode: joiningCode.isEmpty ? 'PRINCE7' : joiningCode,
         ),
       );
+      return;
     }
+
+    // Otherwise, accept invite and navigate cleanly into the lobby without stacking
+    socialService.respondToInvite(inviteId, true);
+
+    Navigator.of(context).pushAndRemoveUntil(
+      ScaleFadePageRoute(
+        page: LobbyScreen(
+          initialGameId: gameId,
+          isHost: false,
+          isQuickMatch: false,
+        ),
+        settings: const RouteSettings(name: '/lobby'),
+      ),
+      (route) => route.isFirst,
+    );
   }
 
-  /// Directs player to the Friends screen to manage friendships and pending requests.
+  /// Directs player to manage friend requests in-place or via Friends screen.
   static void _routeToFriendRequest(BuildContext context) {
-    final currentRoute = ModalRoute.of(context)?.settings.name;
-    if (currentRoute == '/friends') return;
+    final currentRoute = AppRouteObserver.currentRouteName;
+
+    // If inside an active game, show the dialog directly to prevent forfeiting turn
+    if (currentRoute == '/game') {
+      AppDialogLayout.show(
+        context: context,
+        child: const FriendRequestsDialog(),
+      );
+      return;
+    }
+
+    if (currentRoute == '/friends') {
+      AppDialogLayout.show(
+        context: context,
+        child: const FriendRequestsDialog(),
+      );
+      return;
+    }
 
     Navigator.of(context).push(
       SlideUpPageRoute(
@@ -152,12 +175,23 @@ class NotificationRouter {
         settings: const RouteSettings(name: '/friends'),
       ),
     );
+
+    // Present the requests dialog automatically on arrival
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentCtx = navigatorKey.currentContext;
+      if (currentCtx != null) {
+        AppDialogLayout.show(
+          context: currentCtx,
+          child: const FriendRequestsDialog(),
+        );
+      }
+    });
   }
 
   /// Directs player straight into Battle Online (Matchmaking Arena) for daily/weekend/comeback calls.
   static void _routeToBattleArena(BuildContext context) {
-    final currentRoute = ModalRoute.of(context)?.settings.name;
-    if (currentRoute == '/lobby') return;
+    final currentRoute = AppRouteObserver.currentRouteName;
+    if (currentRoute == '/lobby' || currentRoute == '/game') return;
 
     Navigator.of(context).push(
       ScaleFadePageRoute(

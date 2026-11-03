@@ -1,7 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';
@@ -137,9 +135,6 @@ class _DiceWidgetState extends ConsumerState<DiceWidget>
 
     final diceValue = ref.watch(
       gameStreamProvider.select((s) => s.value?.diceValue ?? 1),
-    );
-    final isDiceRolled = ref.watch(
-      gameStreamProvider.select((s) => s.value?.isDiceRolled ?? false),
     );
 
     Widget diceWidget = GestureDetector(

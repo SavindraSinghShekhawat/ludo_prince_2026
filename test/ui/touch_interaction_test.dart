@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/games/ludo/domain/models/board_path.dart';
-import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/token_widget.dart';
 import 'package:ludo_prince/providers/game_provider.dart';

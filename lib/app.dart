@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/services/game_reminder_sync_service.dart';
 import 'package:ludo_prince/services/notification_router.dart';
+import 'package:ludo_prince/services/app_route_observer.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/app_snackbar.dart';
 import 'core/widgets/app_notification_host.dart';
@@ -61,6 +62,7 @@ class _LudoPrinceAppState extends State<LudoPrinceApp>
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: NotificationRouter.navigatorKey,
+      navigatorObservers: [AppRouteObserver.instance],
       title: 'Ludo Prince',
       debugShowCheckedModeBanner: false,
       builder: (context, child) {

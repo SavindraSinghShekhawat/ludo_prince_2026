@@ -11,9 +11,11 @@ class SocialService {
   factory SocialService() => _instance;
   SocialService._internal();
 
-  final FirebaseDatabase _database = firebaseService.database;
-  final FirebaseAuth _auth = firebaseService.auth;
-  FirebaseAuth get auth => _auth;
+  FirebaseDatabase? get _database =>
+      firebaseService.isInitialized ? firebaseService.database : null;
+  FirebaseAuth? get _auth =>
+      firebaseService.isInitialized ? firebaseService.auth : null;
+  FirebaseAuth? get auth => _auth;
   StreamSubscription<DatabaseEvent>? _connectedSubscription;
 
   /// Initialize presence tracking
@@ -21,14 +23,15 @@ class SocialService {
     _connectedSubscription?.cancel();
     _connectedSubscription = null;
 
-    final user = _auth.currentUser;
-    if (user == null) return;
+    final user = _auth?.currentUser;
+    final db = _database;
+    if (user == null || db == null) return;
 
     AppLogger.debug(
       "SocialService: Initializing presence for ${user.isAnonymous ? 'GUEST' : 'USER'} ${user.uid}",
     );
-    final presenceRef = _database.ref('presence/${user.uid}');
-    final connectedRef = _database.ref('.info/connected');
+    final presenceRef = db.ref('presence/${user.uid}');
+    final connectedRef = db.ref('.info/connected');
 
     _connectedSubscription = connectedRef.onValue.listen((event) {
       final connected = event.snapshot.value as bool? ?? false;
@@ -57,10 +60,11 @@ class SocialService {
 
   /// Update presence to a specific state
   Future<void> updatePresence(UserStatus status, {String? gameId}) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    final user = _auth?.currentUser;
+    final db = _database;
+    if (user == null || db == null) return;
 
-    await _database.ref('presence/${user.uid}').update({
+    await db.ref('presence/${user.uid}').update({
       'online': status != UserStatus.offline,
       'gameId': gameId,
       'lastActive': ServerValue.timestamp,
@@ -73,10 +77,11 @@ class SocialService {
     required String gameId,
     required String joiningCode,
   }) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    final user = _auth?.currentUser;
+    final db = _database;
+    if (user == null || db == null) return;
 
-    final inviteRef = _database.ref('invites/$targetUid').push();
+    final inviteRef = db.ref('invites/$targetUid').push();
     await inviteRef.set({
       'fromUid': user.uid,
       'fromName': user.displayName ?? 'Guest',
@@ -89,36 +94,43 @@ class SocialService {
 
   /// Listen for incoming invites
   Stream<DatabaseEvent> watchInvites() {
-    return _auth.authStateChanges().asyncExpand((user) {
+    final authInstance = _auth;
+    final db = _database;
+    if (authInstance == null || db == null) return const Stream.empty();
+
+    return authInstance.authStateChanges().asyncExpand((user) {
       if (user == null) return const Stream.empty();
       // Return the whole collection stream for better management (deletes/updates)
-      return _database.ref('invites/${user.uid}').onValue;
+      return db.ref('invites/${user.uid}').onValue;
     });
   }
 
   /// Accept/Decline/Clear an invite.
   /// Removes the invite from RTDB immediately upon resolution to prevent stale data accumulation.
   Future<void> respondToInvite(String inviteId, bool accepted) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    final user = _auth?.currentUser;
+    final db = _database;
+    if (user == null || db == null) return;
 
     // Remove immediately to prevent stale invite buildup
-    await _database.ref('invites/${user.uid}/$inviteId').remove();
+    await db.ref('invites/${user.uid}/$inviteId').remove();
   }
 
   /// Clear an invite
   Future<void> clearInvite(String inviteId) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    await _database.ref('invites/${user.uid}/$inviteId').remove();
+    final user = _auth?.currentUser;
+    final db = _database;
+    if (user == null || db == null) return;
+    await db.ref('invites/${user.uid}/$inviteId').remove();
   }
 
   /// Purge all expired invites (> 10 minutes old or accepted) for the current user
   Future<void> cleanStaleInvites() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    final user = _auth?.currentUser;
+    final db = _database;
+    if (user == null || db == null) return;
     try {
-      final snap = await _database.ref('invites/${user.uid}').get();
+      final snap = await db.ref('invites/${user.uid}').get();
       if (!snap.exists || snap.value == null) return;
       final map = Map<String, dynamic>.from(snap.value as Map);
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -127,7 +139,7 @@ class SocialService {
         final timestamp = data['timestamp'];
         if (data['status'] == 'accepted' ||
             (timestamp is num && (now - timestamp.toInt()) > 600000)) {
-          await _database
+          await db
               .ref('invites/${user.uid}/${entry.key}')
               .remove()
               .catchError((_) {});
@@ -138,9 +150,14 @@ class SocialService {
 
   /// Get status of a user by UID
   Stream<Map<String, dynamic>> watchUserStatus(String uid) {
-    return _auth.authStateChanges().asyncExpand((user) {
+    final authInstance = _auth;
+    final db = _database;
+    if (authInstance == null || db == null) {
+      return Stream.value({'status': 'offline'});
+    }
+    return authInstance.authStateChanges().asyncExpand((user) {
       if (user == null) return Stream.value({'status': 'offline'});
-      return _database.ref('presence/$uid').onValue.map((event) {
+      return db.ref('presence/$uid').onValue.map((event) {
         if (event.snapshot.value == null) return {'status': 'offline'};
         return Map<String, dynamic>.from(event.snapshot.value as Map);
       });

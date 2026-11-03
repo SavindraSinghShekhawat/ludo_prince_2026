@@ -183,7 +183,7 @@ class LudoController implements GameController {
           await handleGameEvent(event, fastForward: fastForward);
         } catch (e, st) {
           // Log the error and forcefully release locks to prevent permanent freeze
-          print("Error processing game event: $e\n$st");
+          AppLogger.error("Error processing game event: $e", st);
           _isActionInProgress = false;
         }
       }
@@ -261,7 +261,7 @@ class LudoController implements GameController {
     } catch (e) {
       // Fallback only if Random.secure() is unsupported on the platform.
       // We use the current time and a few other entropy sources for the fallback seed.
-      print(
+      AppLogger.debug(
         "WARNING: Random.secure() not supported. Using seeded Random as fallback.",
       );
       return __rng ??= Random(
@@ -375,7 +375,10 @@ class LudoController implements GameController {
       if (_isDisposed) return;
 
       // "Land" the dice locally
-      _state = _state.copyWith(isWaitingForResult: false);
+      _state = _state.copyWith(
+        isRolling: false,
+        isWaitingForResult: false,
+      );
       if (!_isDisposed) _streamController.add(_state);
 
       // The actual execution (engine logic) will happen when the RollEvent
@@ -542,7 +545,7 @@ class LudoController implements GameController {
 
     if (_isDisposed) return;
 
-    if (autoMoveId != null) {
+    if (autoMoveId != null && wasMyTurn) {
       final player = _state.players.firstWhere(
         (p) => p.slot == _state.currentTurn,
       );

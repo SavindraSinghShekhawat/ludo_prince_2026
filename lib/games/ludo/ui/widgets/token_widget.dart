@@ -1,7 +1,4 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/providers/game_provider.dart';
 import 'package:ludo_prince/services/audio_service.dart';

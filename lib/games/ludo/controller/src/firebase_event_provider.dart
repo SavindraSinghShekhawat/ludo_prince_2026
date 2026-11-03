@@ -30,6 +30,7 @@ class FirebaseEventProvider extends GameEventProvider {
         }
 
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        data['id'] = event.snapshot.key;
         _controller.add(GameEvent.fromJson(data));
       }
     });

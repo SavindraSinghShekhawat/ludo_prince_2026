@@ -15,6 +15,7 @@ import '../ui/dialogs/update_dialog.dart';
 class GlobalListeners {
   StreamSubscription? _inviteSubscription;
   StreamSubscription? _requestsSubscription;
+  StreamSubscription? _incomingRequestsSubscription;
 
   void init(BuildContext context) {
     final container = ProviderScope.containerOf(context, listen: false);
@@ -120,15 +121,32 @@ class GlobalListeners {
     });
 
     // Global listener for friend requests
-    _requestsSubscription = socialService.auth.authStateChanges().listen((
+    _requestsSubscription = socialService.auth?.authStateChanges().listen((
       user,
     ) {
+      _incomingRequestsSubscription?.cancel();
+      _incomingRequestsSubscription = null;
+
       if (user != null) {
-        profileService.getIncomingFriendRequests(user.uid).listen((reqs) {
+        _incomingRequestsSubscription =
+            profileService.getIncomingFriendRequests(user.uid).listen((reqs) {
           if (!context.mounted) return;
           final container = ProviderScope.containerOf(context, listen: false);
-          final reminderSettings = container.read(gameReminderProvider);
 
+          final activeRequestIds = reqs.map((r) => r.id).toSet();
+          final currentInbox = container.read(notificationProvider).inbox;
+
+          // Prune any friendRequest from inbox that is no longer pending in Firestore
+          for (final n in currentInbox) {
+            if (n.type == NotificationType.friendRequest &&
+                !activeRequestIds.contains(n.id)) {
+              container
+                  .read(notificationProvider.notifier)
+                  .removeNotification(n.id);
+            }
+          }
+
+          final reminderSettings = container.read(gameReminderProvider);
           if (!reminderSettings.friendRequestsEnabled) return;
 
           for (final req in reqs) {
@@ -170,5 +188,6 @@ class GlobalListeners {
   void dispose() {
     _inviteSubscription?.cancel();
     _requestsSubscription?.cancel();
+    _incomingRequestsSubscription?.cancel();
   }
 }

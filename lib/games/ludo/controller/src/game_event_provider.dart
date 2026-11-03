@@ -58,8 +58,9 @@ class LocalEventProvider extends GameEventProvider {
 
 sealed class GameEvent {
   final int timestamp;
+  final String? id;
 
-  const GameEvent({required this.timestamp});
+  const GameEvent({required this.timestamp, this.id});
 
   Map<String, dynamic> toJson();
 
@@ -73,24 +74,39 @@ sealed class GameEvent {
       timestamp = json['timestamp'] as int;
     }
 
+    final String? eventId = json['id'] as String?;
+    final String? playerSlotStr = json['playerSlot'] as String?;
+    final PlayerSlot? slot = playerSlotStr != null
+        ? PlayerSlot.values.where((e) => e.name == playerSlotStr).firstOrNull
+        : null;
+
     if (type == 'roll') {
-      return RollEvent(json['diceValue'] as int, timestamp: timestamp);
+      return RollEvent(
+        json['diceValue'] as int,
+        timestamp: timestamp,
+        playerSlot: slot,
+        id: eventId,
+      );
     } else if (type == 'move') {
       return MoveEvent(
         json['tokenId'] as int,
         timestamp: timestamp,
         autoMove: json['autoMove'] as bool? ?? false,
+        playerSlot: slot,
+        id: eventId,
       );
     } else if (type == 'quit') {
       return QuitEvent(
-        PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
+        slot ?? PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
         timestamp: timestamp,
+        id: eventId,
       );
     } else if (type == 'skip') {
       return SkipEvent(
-        PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
+        slot ?? PlayerSlot.values.firstWhere((e) => e.name == json['playerSlot']),
         timestamp: timestamp,
         isTimeout: json['isTimeout'] as bool? ?? false,
+        id: eventId,
       );
     }
     throw Exception('Unknown GameEvent type: $type');
@@ -99,20 +115,30 @@ sealed class GameEvent {
 
 class RollEvent extends GameEvent {
   final int diceValue;
-  RollEvent(this.diceValue, {required super.timestamp});
+  final PlayerSlot? playerSlot;
+  RollEvent(this.diceValue, {required super.timestamp, this.playerSlot, super.id});
 
   @override
   Map<String, dynamic> toJson() => {
         'type': 'roll',
         'diceValue': diceValue,
         'timestamp': timestamp,
+        if (playerSlot != null) 'playerSlot': playerSlot!.name,
+        if (id != null) 'id': id,
       };
 }
 
 class MoveEvent extends GameEvent {
   final int tokenId;
   final bool autoMove;
-  MoveEvent(this.tokenId, {required super.timestamp, this.autoMove = false});
+  final PlayerSlot? playerSlot;
+  MoveEvent(
+    this.tokenId, {
+    required super.timestamp,
+    this.autoMove = false,
+    this.playerSlot,
+    super.id,
+  });
 
   @override
   Map<String, dynamic> toJson() => {
@@ -120,26 +146,33 @@ class MoveEvent extends GameEvent {
         'tokenId': tokenId,
         'timestamp': timestamp,
         'autoMove': autoMove,
+        if (playerSlot != null) 'playerSlot': playerSlot!.name,
+        if (id != null) 'id': id,
       };
 }
 
 class QuitEvent extends GameEvent {
   final PlayerSlot playerSlot;
-  QuitEvent(this.playerSlot, {required super.timestamp});
+  QuitEvent(this.playerSlot, {required super.timestamp, super.id});
 
   @override
   Map<String, dynamic> toJson() => {
         'type': 'quit',
         'playerSlot': playerSlot.name,
         'timestamp': timestamp,
+        if (id != null) 'id': id,
       };
 }
 
 class SkipEvent extends GameEvent {
   final PlayerSlot playerSlot;
   final bool isTimeout;
-  SkipEvent(this.playerSlot,
-      {required super.timestamp, this.isTimeout = false});
+  SkipEvent(
+    this.playerSlot, {
+    required super.timestamp,
+    this.isTimeout = false,
+    super.id,
+  });
 
   @override
   Map<String, dynamic> toJson() => {
@@ -147,5 +180,6 @@ class SkipEvent extends GameEvent {
         'playerSlot': playerSlot.name,
         'timestamp': timestamp,
         'isTimeout': isTimeout,
+        if (id != null) 'id': id,
       };
 }

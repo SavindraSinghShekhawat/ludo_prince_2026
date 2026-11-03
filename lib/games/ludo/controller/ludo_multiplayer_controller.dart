@@ -4,8 +4,6 @@ import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_rules.dart';
-import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
-import 'package:ludo_prince/games/ludo/domain/engine/bot_ai.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/games/ludo/controller/src/firebase_event_provider.dart';
@@ -18,16 +16,22 @@ import 'package:ludo_prince/services/social_service.dart';
 class LudoMultiplayerController extends LudoController {
   final String gameId;
   final String gameType;
+  final bool initialIsPrivate;
   final FirebaseDatabase _db = firebaseService.database;
   int _lastAppliedEventId = 0;
   Timer? _timeoutMonitor;
   int? _turnStartedAt;
   StreamSubscription? _prefRollSubscription;
 
+  @override
+  GameMode get gameMode => state.gameMode;
+
   LudoMultiplayerController(
     super.config, {
     required this.gameId,
     required PlayerSlot super.localPlayerSlot,
+    super.gameMode,
+    this.initialIsPrivate = false,
     this.gameType = 'ludo',
   }) : super(
           eventProvider: FirebaseEventProvider(gameId: gameId),
@@ -37,6 +41,7 @@ class LudoMultiplayerController extends LudoController {
     // Explicitly enforce standard classic rules for all online multiplayer games.
     state = state.copyWith(
       gameType: GameType.online,
+      isPrivate: initialIsPrivate,
       rules: const GameRules(),
     );
     socialService.updatePresence(UserStatus.inGame, gameId: gameId);
@@ -48,7 +53,16 @@ class LudoMultiplayerController extends LudoController {
     if (!gameEvent.snapshot.exists) return;
 
     final data = Map<String, dynamic>.from(gameEvent.snapshot.value as Map);
-    _turnStartedAt = data['turnStartedAt'] as int?;
+    final turnTime = (data['settings']?['turnTimeSeconds'] as int?) ?? 15;
+    final dbTurnStartedAt = (data['turnStartedAt'] as num?)?.toInt();
+    final now = firebaseService.serverTimeMillis;
+    // If the timestamp in DB is from more than turnTimeSeconds ago (e.g. stale lobby creation timestamp),
+    // clamp it to the current server time so timeout monitor does not fire prematurely on startup!
+    if (dbTurnStartedAt == null || (now - dbTurnStartedAt) > (turnTime * 1000)) {
+      _turnStartedAt = now;
+    } else {
+      _turnStartedAt = dbTurnStartedAt;
+    }
 
     // Instant Reconnection via Server-Authoritative Token State
     final dbMode = data['gameMode'];
@@ -56,22 +70,22 @@ class LudoMultiplayerController extends LudoController {
         ? GameMode.values.firstWhere((e) => e.name == dbMode, orElse: () => GameMode.classic)
         : GameMode.classic;
         
-    final turnTime = (data['settings']?['turnTimeSeconds'] as int?) ?? 15;
     final currentTurnName = data['currentTurn'] as String?;
     PlayerSlot? currentTurn = currentTurnName != null
         ? PlayerSlot.values.firstWhere((e) => e.name == currentTurnName, orElse: () => state.currentTurn)
         : null;
 
     final turnOrderData = data['turnOrder'] as List?;
-    final List<PlayerSlot>? turnOrder = turnOrderData != null
-        ? turnOrderData
-            .map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
-            .toList()
-        : null;
+    final List<PlayerSlot>? turnOrder = turnOrderData
+        ?.map((e) => PlayerSlot.values.firstWhere((p) => p.name == e))
+        .toList();
+
+    final isPrivate = (data['isPrivate'] as bool?) ?? state.isPrivate;
 
     state = state.copyWith(
       gameType: GameType.online,
       gameMode: mode,
+      isPrivate: isPrivate,
       rules: const GameRules(),
       turnStartedAt: _turnStartedAt,
       turnTimeSeconds: turnTime,
@@ -153,8 +167,8 @@ class LudoMultiplayerController extends LudoController {
       if (isDisposed || state.isGameOver || _turnStartedAt == null) return;
 
       final now = firebaseService.serverTimeMillis;
-      // We add a 2 second buffer to account for network latency and clock skew. Turn time is 15s.
-      if (now > _turnStartedAt! + 17000) {
+      final turnBufferMs = (state.turnTimeSeconds * 1000) + 2000;
+      if (now > _turnStartedAt! + turnBufferMs) {
         if (now > _lastTimeoutRequestTime + 5000) {
           _lastTimeoutRequestTime = now;
           _sendTimeoutRequest();
@@ -176,7 +190,8 @@ class LudoMultiplayerController extends LudoController {
       (p) => p.slot == state.currentTurn,
       orElse: () => state.players.first,
     );
-    final targetUid = timedOutPlayer.uid ?? currentUser.uid;
+    final targetUid =
+        timedOutPlayer.uid.isNotEmpty ? timedOutPlayer.uid : currentUser.uid;
 
     await _db
         .ref()
@@ -190,34 +205,8 @@ class LudoMultiplayerController extends LudoController {
   Future<void> dispose() async {
     _timeoutMonitor?.cancel();
     _prefRollSubscription?.cancel();
+    socialService.updatePresence(UserStatus.online);
     await super.dispose();
-  }
-
-  Future<void> _applyEventLocally(
-    GameEvent event, {
-    bool isInitialSync = false,
-  }) async {
-    if (event is RollEvent) {
-      await executeRoll(event.diceValue, skipSounds: isInitialSync);
-    } else if (event is MoveEvent) {
-      if (event.autoMove) {
-        final currentPlayer = state.players.firstWhere(
-          (p) => p.slot == state.currentTurn,
-        );
-        final bestToken = BotAI.getBestMove(currentPlayer, state);
-        if (bestToken != null) {
-          await executeMove(bestToken.id);
-        }
-      } else {
-        await executeMove(event.tokenId);
-      }
-    } else if (event is QuitEvent) {
-      final engine = GameEngine();
-      final result = engine.quitPlayer(state, event.playerSlot);
-      state = result.state;
-    }
-
-    _checkSnapshotRequirement();
   }
 
   void _checkSnapshotRequirement() {
@@ -254,17 +243,27 @@ class LudoMultiplayerController extends LudoController {
       {bool fastForward = false}) async {
     if (isDisposed) return;
 
-    if (event is RollEvent) {
-      _lastAppliedEventId++;
-    } else if (event is MoveEvent) {
-      _lastAppliedEventId++;
-    } else if (event is SkipEvent) {
-      _lastAppliedEventId++;
-    } else if (event is QuitEvent) {
+    if (event.id != null) {
+      final parsedId = int.tryParse(event.id!);
+      if (parsedId != null) {
+        _lastAppliedEventId = parsedId;
+      } else {
+        _lastAppliedEventId++;
+      }
+    } else {
       _lastAppliedEventId++;
     }
 
-    final oldTurn = state.currentTurn;
+    // Align current turn if server-authoritative event carries explicit playerSlot
+    if (event is RollEvent &&
+        event.playerSlot != null &&
+        state.currentTurn != event.playerSlot) {
+      state = state.copyWith(currentTurn: event.playerSlot);
+    } else if (event is MoveEvent &&
+        event.playerSlot != null &&
+        state.currentTurn != event.playerSlot) {
+      state = state.copyWith(currentTurn: event.playerSlot);
+    }
 
     if (event is SkipEvent) {
       if (event.playerSlot == state.currentTurn) {
@@ -293,9 +292,12 @@ class LudoMultiplayerController extends LudoController {
     // CRITICAL: Always emit the final state after updating the timestamp
     if (!isDisposed) streamController.add(state);
 
-    if (state.isGameOver && localPlayerSlot == PlayerSlot.slot1) {
+    if (state.isGameOver &&
+        state.players.length >= 2 &&
+        localPlayerSlot == PlayerSlot.slot1) {
       final winnerUids = state.winners.map((slot) {
-        return state.players.firstWhere((p) => p.slot == slot).uid;
+        final p = state.players.where((p) => p.slot == slot).firstOrNull;
+        return p?.uid ?? slot.name;
       }).toList();
 
       _db.ref().child(FirebasePaths.session(gameType, gameId)).update({

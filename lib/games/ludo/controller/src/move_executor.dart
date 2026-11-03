@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
 import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 
 class MoveExecutor {
   final GameEngine engine;
@@ -19,11 +20,21 @@ class MoveExecutor {
   });
 
   Future<void> execute(GameState state, int tokenId, int diceValue,
-      {bool fastForward = false}) async {
-    final player = state.players.firstWhere((p) => p.slot == state.currentTurn);
-    final token = player.tokens.firstWhere((t) => t.id == tokenId);
-
+      {bool fastForward = false, PlayerSlot? playerSlot}) async {
     try {
+      final targetSlot = playerSlot ?? state.currentTurn;
+      final player = state.players.firstWhere(
+        (p) => p.slot == targetSlot,
+        orElse: () => state.players.firstWhere(
+          (p) => p.tokens.any((t) => t.id == tokenId),
+          orElse: () => state.players.first,
+        ),
+      );
+      final token = player.tokens.firstWhere(
+        (t) => t.id == tokenId,
+        orElse: () => player.tokens.first,
+      );
+
       int steps = diceValue;
       List<EngineEvent> accumulatedEvents = [];
       GameState currentState = state;
@@ -65,8 +76,9 @@ class MoveExecutor {
         onStateUpdate(currentState);
 
         if (isDisposed()) return;
-        if (!fastForward)
+        if (!fastForward) {
           await Future.delayed(const Duration(milliseconds: 150));
+        }
       }
 
       // 3. Final step
@@ -84,8 +96,11 @@ class MoveExecutor {
       onStateUpdate(currentState);
 
       _finalizeAfterMove(currentState, currentToken.id, accumulatedEvents);
-    } catch (e) {
-      // Log or handle error
+    } catch (e, st) {
+      AppLogger.error('[MoveExecutor] Error during move execution: $e', st);
+      // Failsafe recovery: unlock state to prevent freezing game loop
+      final safeState = state.copyWith(isDiceRolled: false);
+      onStateUpdate(safeState);
     }
   }
 

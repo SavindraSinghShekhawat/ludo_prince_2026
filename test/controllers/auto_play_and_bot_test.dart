@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';

@@ -40,9 +40,6 @@ class FakeGameController implements GameController {
   Future<void> sendMoveIntent(Token token) async {}
 
   @override
-  void sendRollDiceIntent() {}
-
-  @override
   Future<void> executeRoll(int value, {bool fastForward = false}) async {}
 
   @override

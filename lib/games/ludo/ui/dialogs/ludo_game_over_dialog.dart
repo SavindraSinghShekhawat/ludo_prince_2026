@@ -18,6 +18,8 @@ import 'package:ludo_prince/services/smart_review_service.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
+import 'package:ludo_prince/services/firebase_service.dart';
+import 'package:ludo_prince/ui/dialogs/friend_game_setup_dialog.dart';
 
 class LudoGameOverDialog extends ConsumerStatefulWidget {
   final GameState state;
@@ -81,13 +83,13 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
             : humanSlots.any((s) => s == PlayerSlot.slot2 || s == PlayerSlot.slot4);
       }
     } else {
-      final humanWinners = widget.state.winners.where((slot) {
-        final p = widget.state.players.firstWhere((p) => p.slot == slot);
-        return p.type == PlayerType.localHuman ||
-            p.type == PlayerType.remoteHuman;
-      }).toList();
+      final humanWinners = widget.state.winners.map((slot) {
+        return widget.state.players.where((p) => p.slot == slot).firstOrNull;
+      }).whereType<Player>().where((p) =>
+        p.type == PlayerType.localHuman || p.type == PlayerType.remoteHuman,
+      ).toList();
       isWinner = humanWinners.isNotEmpty &&
-          widget.state.winners.indexOf(humanWinners.first) == 0;
+          widget.state.winners.indexOf(humanWinners.first.slot) == 0;
     }
 
     SmartReviewService.instance.recordGameCompleted(isWinner: isWinner);
@@ -115,11 +117,11 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
           p.type == PlayerType.localHuman || p.type == PlayerType.remoteHuman,
     );
 
-    final List<PlayerSlot> humanWinners = widget.state.winners.where((slot) {
-      final p = widget.state.players.firstWhere((p) => p.slot == slot);
-      return p.type == PlayerType.localHuman ||
-          p.type == PlayerType.remoteHuman;
-    }).toList();
+    final List<PlayerSlot> humanWinners = widget.state.winners.map((slot) {
+      return widget.state.players.where((p) => p.slot == slot).firstOrNull;
+    }).whereType<Player>().where((p) =>
+      p.type == PlayerType.localHuman || p.type == PlayerType.remoteHuman,
+    ).map((p) => p.slot).toList();
 
     final bool isAllHuman = hasHumans && !hasBots;
     final bool isAllBots = hasBots && !hasHumans;
@@ -135,7 +137,11 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
     IconData headerIcon;
 
     if (isTeamMode) {
-      final winningSlot = widget.state.winners.first;
+      final winningSlot = widget.state.winners.isNotEmpty
+          ? widget.state.winners.first
+          : (widget.state.players.isNotEmpty
+              ? widget.state.players.first.slot
+              : PlayerSlot.slot1);
       final bool isTeamAWinner =
           winningSlot == PlayerSlot.slot1 || winningSlot == PlayerSlot.slot3;
       headerText = isTeamAWinner ? "TEAM A WINS!" : "TEAM B WINS!";
@@ -267,12 +273,54 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       if (widget.state.gameType == GameType.online) {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pushReplacement(
-                          ScaleFadePageRoute(
-                            page: const LobbyScreen(isQuickMatch: true),
-                          ),
-                        );
+                        if (widget.state.isPrivate) {
+                          // Friend/private match context: collect opponents to re-invite
+                          final currentUid = firebaseService.auth.currentUser?.uid;
+                          final friendPlayers = widget.state.players.where((p) =>
+                              p.uid != currentUid &&
+                              !p.uid.startsWith('local_') &&
+                              !p.uid.startsWith('bot_')
+                          ).toList();
+
+                          final targetUids = friendPlayers.map((p) => p.uid).toSet().toList();
+                          final targetNames = friendPlayers.map((p) => p.name).toSet().toList();
+
+                          AppDialogLayout.show(
+                            context: context,
+                            child: FriendGameSetupDialog(
+                              title: 'NEW GAME WITH FRIENDS',
+                              subtitle: targetNames.isNotEmpty
+                                  ? 'Re-inviting: ${targetNames.join(", ")}'
+                                  : 'Create a new room for your friends',
+                              targetUids: targetUids,
+                              targetNames: targetNames,
+                              initialMaxPlayers: widget.state.players.length.clamp(2, 4),
+                              initialGameMode: widget.state.gameMode,
+                              actionButtonLabel: 'CREATE & INVITE',
+                              onSuccess: (newGameId) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  ScaleFadePageRoute(
+                                    page: LobbyScreen(
+                                      initialGameId: newGameId,
+                                      isHost: true,
+                                      isQuickMatch: false,
+                                    ),
+                                    settings: const RouteSettings(name: '/lobby'),
+                                  ),
+                                  (route) => route.isFirst,
+                                );
+                              },
+                            ),
+                          );
+                        } else {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            ScaleFadePageRoute(
+                              page: const LobbyScreen(isQuickMatch: true),
+                              settings: const RouteSettings(name: '/lobby'),
+                            ),
+                            (route) => route.isFirst,
+                          );
+                        }
                       } else {
                         Map<PlayerSlot, PlayerSetupConfig> config = {};
                         for (var player in widget.state.players) {
@@ -301,14 +349,18 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                         );
                       }
                     },
-                    icon: const Icon(
-                      Icons.play_arrow_rounded,
+                    icon: Icon(
+                      (widget.state.gameType == GameType.online && widget.state.isPrivate)
+                          ? Icons.replay_rounded
+                          : Icons.play_arrow_rounded,
                       color: Colors.white,
                       size: 28,
                     ),
-                    label: const Text(
-                      'New Game',
-                      style: TextStyle(
+                    label: Text(
+                      (widget.state.gameType == GameType.online && widget.state.isPrivate)
+                          ? 'Rematch'
+                          : 'New Game',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -356,11 +408,14 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
   }
 
   List<Widget> _buildClassicBody() {
-    return List.generate(widget.state.winners.length, (index) {
+    final widgets = <Widget>[];
+    for (int index = 0; index < widget.state.winners.length; index++) {
       final playerSlot = widget.state.winners[index];
-      final player = widget.state.players.firstWhere(
-        (p) => p.slot == playerSlot,
-      );
+      final player = widget.state.players
+          .where((p) => p.slot == playerSlot)
+          .firstOrNull;
+      if (player == null) continue;
+
       final place = index + 1;
       final isLast = place == widget.state.winners.length;
 
@@ -388,22 +443,27 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
         placeIcon = Icons.sentiment_very_dissatisfied;
       }
 
-      return _buildPlayerRow(
+      widgets.add(_buildPlayerRow(
         player: player,
         index: index,
         isWinner: place == 1,
         placeText: placeText,
         placeColor: placeColor,
         placeIcon: placeIcon,
-      );
-    });
+      ));
+    }
+    return widgets;
   }
 
   List<Widget> _buildTeamBody() {
     final teamASlots = [PlayerSlot.slot1, PlayerSlot.slot3];
     final teamBSlots = [PlayerSlot.slot2, PlayerSlot.slot4];
 
-    final winningSlot = widget.state.winners.first;
+    final winningSlot = widget.state.winners.isNotEmpty
+        ? widget.state.winners.first
+        : (widget.state.players.isNotEmpty
+            ? widget.state.players.first.slot
+            : PlayerSlot.slot1);
     final bool isTeamAWinner = teamASlots.contains(winningSlot);
 
     final List<TeamResult> teams = [

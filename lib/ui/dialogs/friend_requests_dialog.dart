@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/friend_request.dart';
 import 'package:ludo_prince/services/profile_service.dart';
@@ -14,6 +15,7 @@ class FriendRequestsDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (Firebase.apps.isEmpty) return const SizedBox.shrink();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const SizedBox.shrink();
 

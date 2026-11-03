@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ludo_prince/games/ludo/domain/models/game_state.dart';
+import 'package:ludo_prince/games/ludo/controller/ludo_controller.dart';
 import 'package:ludo_prince/games/ludo/domain/models/player.dart';
 import 'package:ludo_prince/games/ludo/domain/models/token.dart';
 import 'package:ludo_prince/games/ludo/domain/engine/game_engine.dart';
@@ -112,6 +112,55 @@ void main() {
       expect(players[1].slot, PlayerSlot.slot3);
       expect(players[1].tokens.length, 4);
       expect(players[1].tokens.first.state, TokenState.home);
+    });
+
+    test('Arbitrary slot distribution (e.g. slot1 & slot4 from 4-player room) parses all players without dropping to 1-player forfeit', () {
+      final playersData = {
+        'slot1': {
+          'uid': 'host_uid',
+          'name': 'Host',
+          'tokens': [
+            for (int i = 0; i < 4; i++)
+              {'id': i, 'slot': 'slot1', 'position': 0, 'state': 'home'}
+          ],
+        },
+        'slot4': {
+          'uid': 'friend_uid',
+          'name': 'Friend',
+          'tokens': [
+            for (int i = 0; i < 4; i++)
+              {'id': i, 'slot': 'slot4', 'position': 0, 'state': 'home'}
+          ],
+        },
+      };
+
+      final config = <PlayerSlot, PlayerSetupConfig>{};
+      PlayerSlot? localSlot;
+      const currentUserUid = 'friend_uid';
+
+      for (final entry in playersData.entries) {
+        final slotName = entry.key;
+        final slot = PlayerSlot.values.firstWhere(
+          (s) => s.name == slotName,
+          orElse: () => PlayerSlot.slot1,
+        );
+        final data = Map<String, dynamic>.from(entry.value);
+        if (data['uid'] == currentUserUid) {
+          localSlot = slot;
+        }
+        config[slot] = PlayerSetupConfig(
+          name: data['name'] ?? 'Player',
+          type: PlayerType.remoteHuman,
+          uid: data['uid'],
+        );
+      }
+
+      // Both players must be present in config
+      expect(config.length, 2);
+      expect(config.containsKey(PlayerSlot.slot1), isTrue);
+      expect(config.containsKey(PlayerSlot.slot4), isTrue);
+      // Friend must be mapped to slot4, NOT defaulted to slot1
+      expect(localSlot, PlayerSlot.slot4);
     });
   });
 }

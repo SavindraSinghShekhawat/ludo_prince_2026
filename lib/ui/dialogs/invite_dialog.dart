@@ -68,6 +68,43 @@ class InviteDialog extends ConsumerWidget {
               'invited you to play a match!',
               style: TextStyle(color: Colors.white54, fontSize: 14),
             ),
+            if (joiningCode.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF141926),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'ROOM CODE: ',
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    Text(
+                      joiningCode,
+                      style: const TextStyle(
+                        color: AppColors.primaryCyan,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 3.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             Row(
               children: [
@@ -102,6 +139,7 @@ class InviteDialog extends ConsumerWidget {
                             isHost: false,
                             isQuickMatch: false,
                           ),
+                          settings: const RouteSettings(name: '/lobby'),
                         ),
                         (route) => route.isFirst,
                       );

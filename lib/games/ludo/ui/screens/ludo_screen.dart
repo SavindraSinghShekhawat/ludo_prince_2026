@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/services/audio_service.dart';
@@ -20,7 +19,6 @@ import 'package:ludo_prince/games/ludo/ui/widgets/token_widget.dart';
 import 'package:ludo_prince/games/ludo/ui/widgets/dice_widget.dart';
 import 'package:ludo_prince/ui/widgets/shared_ui.dart';
 import 'package:ludo_prince/ui/screens/home_screen.dart';
-import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_rules_dialog.dart';
 import 'package:ludo_prince/ui/dialogs/settings_dialog.dart';
 import 'package:ludo_prince/games/ludo/ui/dialogs/ludo_game_over_dialog.dart';
@@ -118,7 +116,6 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
                 fontSize: 16,
                 onTap: () {
                   ref.read(gameControllerProvider).quitGame();
-                  Navigator.of(context).pop();
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const HomeScreen()),
                     (route) => false,
@@ -136,7 +133,7 @@ class _LudoScreenState extends ConsumerState<LudoScreen>
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _showExitDialog();
       },
@@ -202,11 +199,32 @@ class _GameAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 }
 
-class _GameBody extends ConsumerWidget {
+class _GameBody extends ConsumerStatefulWidget {
   const _GameBody();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_GameBody> createState() => _GameBodyState();
+}
+
+class _GameBodyState extends ConsumerState<_GameBody> {
+  bool _hasShownGameOver = false;
+
+  void _maybeShowGameOver(GameState state) {
+    if (state.isGameOver && !_hasShownGameOver) {
+      _hasShownGameOver = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        AppDialogLayout.show(
+          context: context,
+          barrierDismissible: false,
+          child: LudoGameOverDialog(state: state),
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final hasData = ref.watch(
       gameStreamProvider.select((s) => s.hasValue && s.value != null),
     );
@@ -214,22 +232,17 @@ class _GameBody extends ConsumerWidget {
 
     ref.listen<AsyncValue<GameState>>(gameStreamProvider, (previous, next) {
       next.whenData((state) {
-        if (state.isGameOver) {
-          final prevWasOver = previous?.value?.isGameOver ?? false;
-          if (!prevWasOver) {
-            // Show dialog for everyone, including those who left/forfeited
-
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              AppDialogLayout.show(
-                context: context,
-                barrierDismissible: false,
-                child: LudoGameOverDialog(state: state),
-              );
-            });
-          }
-        }
+        _maybeShowGameOver(state);
       });
     });
+
+    final currentAsync = ref.watch(gameStreamProvider);
+    if (currentAsync.hasValue && currentAsync.value != null) {
+      final state = currentAsync.value!;
+      if (state.isGameOver && !_hasShownGameOver) {
+        _maybeShowGameOver(state);
+      }
+    }
 
     if (hasError) {
       final error = ref.watch(gameStreamProvider.select((s) => s.error));

@@ -316,7 +316,8 @@ class StaticBoardPainter extends CustomPainter {
       cellSize,
       cellSize,
     );
-    final bool isDefault = color.alpha == 38 || color == Colors.transparent;
+    final bool isDefault =
+        (color.a * 255.0).round() == 38 || color == Colors.transparent;
 
     if (!isDefault) {
       canvas.drawRect(

@@ -24,6 +24,7 @@ class FirebaseService {
   FirebaseService._internal();
 
   bool _initialized = false;
+  bool get isInitialized => _initialized;
 
   late final FirebaseAuth auth;
   late final FirebaseFirestore firestore;

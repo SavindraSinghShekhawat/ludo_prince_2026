@@ -381,7 +381,10 @@ class GameEngine {
 
       final newWinners = [...newState.winners];
       for (var s in winningSlots) {
-        if (!newWinners.contains(s)) newWinners.add(s);
+        if (!newWinners.contains(s) &&
+            newState.players.any((p) => p.slot == s)) {
+          newWinners.add(s);
+        }
       }
       // Add all other players to winners list to trigger isGameOver
       for (var p in newState.players) {

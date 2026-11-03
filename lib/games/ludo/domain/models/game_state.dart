@@ -26,6 +26,7 @@ class GameState {
   final List<PlayerSlot> winners;
   final GameType gameType;
   final int? prefetchedSeed;
+  final bool isPrivate;
 
   final int? turnStartedAt;
   final int turnTimeSeconds;
@@ -53,6 +54,7 @@ class GameState {
     this.winners = const [],
     this.gameType = GameType.local,
     this.prefetchedSeed,
+    this.isPrivate = false,
     this.turnStartedAt,
     this.turnTimeSeconds = 15,
     this.turnActionCount = 0,
@@ -76,6 +78,7 @@ class GameState {
     GameType? gameType,
     int? turnStartedAt,
     int? prefetchedSeed,
+    bool? isPrivate,
     int? turnTimeSeconds,
     int? turnActionCount,
   }) {
@@ -96,6 +99,7 @@ class GameState {
       winners: winners ?? this.winners,
       gameType: gameType ?? this.gameType,
       prefetchedSeed: prefetchedSeed ?? this.prefetchedSeed,
+      isPrivate: isPrivate ?? this.isPrivate,
       turnStartedAt: turnStartedAt ?? this.turnStartedAt,
       turnTimeSeconds: turnTimeSeconds ?? this.turnTimeSeconds,
       turnActionCount: turnActionCount ?? this.turnActionCount,
@@ -119,6 +123,7 @@ class GameState {
         "winners": winners.map((e) => e.name).toList(),
         "gameType": gameType.name,
         "prefetchedSeed": prefetchedSeed,
+        "isPrivate": isPrivate,
         "turnStartedAt": turnStartedAt,
         "turnTimeSeconds": turnTimeSeconds,
         "turnActionCount": turnActionCount,
@@ -158,6 +163,7 @@ class GameState {
         (e) => e.name == (json["gameType"] ?? GameType.local.name),
       ),
       prefetchedSeed: json["prefetchedSeed"],
+      isPrivate: json["isPrivate"] ?? false,
       turnStartedAt: json["turnStartedAt"] != null
           ? (json["turnStartedAt"] is int
               ? json["turnStartedAt"]

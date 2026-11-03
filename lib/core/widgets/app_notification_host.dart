@@ -2,12 +2,18 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'app_dialog_layout.dart';
+import 'app_snackbar.dart';
 import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/models/app_notification.dart';
+import 'package:ludo_prince/models/friend_request.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
-import 'package:ludo_prince/ui/screens/friends_screen.dart';
+import 'package:ludo_prince/services/notification_router.dart';
+import 'package:ludo_prince/services/profile_service.dart';
+import 'package:ludo_prince/services/social_service.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import '../../ui/dialogs/friend_requests_dialog.dart';
 import '../../ui/dialogs/invite_dialog.dart';
@@ -63,6 +69,8 @@ class TopNotificationToast extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final color = _getNotificationColor(notification);
+
     return Dismissible(
       key: ValueKey(notification.id),
       direction: DismissDirection.up,
@@ -73,7 +81,7 @@ class TopNotificationToast extends ConsumerWidget {
         child: GestureDetector(
           onTap: () {
             ref.read(notificationProvider.notifier).dismissToast();
-            _handleNotificationClick(context, ref, notification);
+            _handleNotificationClick(ref, notification);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -96,54 +104,225 @@ class TopNotificationToast extends ConsumerWidget {
                     color: const Color(0xFF13151B).withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: color.withValues(alpha: 0.3),
                       width: 1.0,
                     ),
                   ),
-                  child: Row(
-              children: [
-                _buildIcon(),
-                const SizedBox(width: 12),
-                Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        notification.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                        ),
+                      Row(
+                        children: [
+                          _buildIcon(),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  notification.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  notification.message,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white24,
+                            size: 14,
+                          ),
+                        ],
                       ),
-                      Text(
-                        notification.message,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                      // Quick Inline Actions
+                      if (notification.type == NotificationType.friendRequest) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _buildInlineButton(
+                              label: 'DECLINE',
+                              icon: Icons.close,
+                              color: Colors.white60,
+                              bgColor: Colors.white.withValues(alpha: 0.08),
+                              borderColor: Colors.white.withValues(alpha: 0.15),
+                              onTap: () async {
+                                ref.read(notificationProvider.notifier).dismissToast();
+                                try {
+                                  await profileService.declineFriendRequest(notification.id);
+                                  ref
+                                      .read(notificationProvider.notifier)
+                                      .removeNotification(notification.id);
+                                  final rootContext =
+                                      NotificationRouter.navigatorKey.currentContext;
+                                  if (rootContext != null && rootContext.mounted) {
+                                    AppSnackBar.show(
+                                      rootContext,
+                                      message: 'Friend request declined.',
+                                    );
+                                  }
+                                } catch (_) {}
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _buildInlineButton(
+                              label: 'ACCEPT',
+                              icon: Icons.check,
+                              color: AppColors.imperialJade,
+                              bgColor: AppColors.imperialJade.withValues(alpha: 0.15),
+                              borderColor: AppColors.imperialJade.withValues(alpha: 0.4),
+                              onTap: () async {
+                                ref.read(notificationProvider.notifier).dismissToast();
+                                final currentUser = Firebase.apps.isNotEmpty
+                                    ? FirebaseAuth.instance.currentUser
+                                    : null;
+                                final req = FriendRequest(
+                                  id: notification.id,
+                                  fromUid: notification.data['fromUid'] ?? '',
+                                  toUid: notification.data['toUid'] ??
+                                      currentUser?.uid ??
+                                      '',
+                                  status: 'pending',
+                                  timestamp: notification.timestamp,
+                                );
+                                try {
+                                  await profileService.acceptFriendRequest(req);
+                                  ref
+                                      .read(notificationProvider.notifier)
+                                      .removeNotification(notification.id);
+                                  final rootContext =
+                                      NotificationRouter.navigatorKey.currentContext;
+                                  if (rootContext != null && rootContext.mounted) {
+                                    AppSnackBar.show(
+                                      rootContext,
+                                      message: 'Friend request accepted!',
+                                      isSuccess: true,
+                                    );
+                                  }
+                                } catch (e) {
+                                  final rootContext =
+                                      NotificationRouter.navigatorKey.currentContext;
+                                  if (rootContext != null && rootContext.mounted) {
+                                    AppSnackBar.show(
+                                      rootContext,
+                                      message: 'Failed to accept: $e',
+                                      isError: true,
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                      ),
+                      ] else if (notification.type == NotificationType.gameInvite) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _buildInlineButton(
+                              label: 'DECLINE',
+                              icon: Icons.close,
+                              color: Colors.white60,
+                              bgColor: Colors.white.withValues(alpha: 0.08),
+                              borderColor: Colors.white.withValues(alpha: 0.15),
+                              onTap: () async {
+                                ref.read(notificationProvider.notifier).dismissToast();
+                                await socialService.respondToInvite(
+                                  notification.id,
+                                  false,
+                                );
+                                ref
+                                    .read(notificationProvider.notifier)
+                                    .removeNotification(notification.id);
+                                final rootContext =
+                                    NotificationRouter.navigatorKey.currentContext;
+                                if (rootContext != null && rootContext.mounted) {
+                                  AppSnackBar.show(
+                                    rootContext,
+                                    message: 'Game invite declined.',
+                                  );
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _buildInlineButton(
+                              label: 'JOIN',
+                              icon: Icons.play_arrow_rounded,
+                              color: AppColors.imperialAmber,
+                              bgColor: AppColors.imperialAmber.withValues(alpha: 0.18),
+                              borderColor:
+                                  AppColors.imperialAmber.withValues(alpha: 0.5),
+                              onTap: () {
+                                ref.read(notificationProvider.notifier).dismissToast();
+                                _handleNotificationClick(ref, notification);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white24,
-                  size: 14,
-                ),
-              ],
                   ),
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInlineButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required Color borderColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -184,30 +363,21 @@ class TopNotificationToast extends ConsumerWidget {
   }
 
   static void _handleNotificationClick(
-    BuildContext context,
     WidgetRef ref,
     AppNotification n,
   ) async {
     ref.read(notificationProvider.notifier).markAsRead(n.id);
+    final rootContext = NotificationRouter.navigatorKey.currentContext;
+    if (rootContext == null) return;
 
     if (n.type == NotificationType.friendRequest) {
-      final currentRoute = ModalRoute.of(context)?.settings.name;
-      if (currentRoute != '/friends') {
-        Navigator.of(context).push(
-          SlideUpPageRoute(
-            page: const FriendsScreen(),
-            settings: const RouteSettings(name: '/friends'),
-          ),
-        );
-      } else {
-        AppDialogLayout.show(
-          context: context,
-          child: const FriendRequestsDialog(),
-        );
-      }
+      AppDialogLayout.show(
+        context: rootContext,
+        child: const FriendRequestsDialog(),
+      );
     } else if (n.type == NotificationType.gameInvite) {
       AppDialogLayout.show(
-        context: context,
+        context: rootContext,
         barrierDismissible: false,
         child: InviteDialog(
           inviteId: n.id,
@@ -217,15 +387,12 @@ class TopNotificationToast extends ConsumerWidget {
         ),
       );
     } else if (n.type == NotificationType.system) {
-      final currentRoute = ModalRoute.of(context)?.settings.name;
-      if (currentRoute != '/lobby') {
-        Navigator.of(context).push(
-          ScaleFadePageRoute(
-            page: const LobbyScreen(isQuickMatch: true),
-            settings: const RouteSettings(name: '/lobby'),
-          ),
-        );
-      }
+      Navigator.of(rootContext).push(
+        ScaleFadePageRoute(
+          page: const LobbyScreen(isQuickMatch: true),
+          settings: const RouteSettings(name: '/lobby'),
+        ),
+      );
     }
   }
 }
