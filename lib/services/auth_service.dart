@@ -361,6 +361,7 @@ class AuthService {
           displayName: effectiveName ?? 'Player ${user.uid.substring(0, 4)}',
           email: newEmail,
           photoURL: newPhoto,
+          isAnonymous: user.isAnonymous,
           gamesPlayed: 0,
           gamesWon: 0,
           createdAt: DateTime.now(),
@@ -386,6 +387,7 @@ class AuthService {
         if (updatedEmail != currentProfile.email) needsUpdate = true;
         String? updatedPhoto = currentProfile.photoURL ?? newPhoto;
         if (updatedPhoto != currentProfile.photoURL) needsUpdate = true;
+        if (currentProfile.isAnonymous != user.isAnonymous) needsUpdate = true;
 
         if (needsUpdate) {
           await profileService.createOrUpdateProfile(
@@ -393,6 +395,7 @@ class AuthService {
               displayName: updatedName,
               email: updatedEmail,
               photoURL: updatedPhoto,
+              isAnonymous: user.isAnonymous,
               lastActive: DateTime.now(),
             ),
           );

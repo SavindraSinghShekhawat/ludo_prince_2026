@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ludo_prince/utils/app_logger.dart';
 import '../models/user_profile.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -35,5 +36,40 @@ final userProfileProvider = StreamProvider<UserProfile?>((ref) {
       .collection('users')
       .doc(user.uid)
       .snapshots()
-      .map((doc) => doc.exists ? UserProfile.fromFirestore(doc) : null);
+      .map((doc) {
+        if (!doc.exists) {
+          return UserProfile(
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            isAnonymous: user.isAnonymous,
+            createdAt: DateTime.now(),
+          );
+        }
+        try {
+          return UserProfile.fromFirestore(doc);
+        } catch (e, stack) {
+          AppLogger.error('Error parsing UserProfile from Firestore: $e\n$stack');
+          return UserProfile(
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            isAnonymous: user.isAnonymous,
+            createdAt: DateTime.now(),
+          );
+        }
+      })
+      .handleError((error, stack) {
+        AppLogger.error('Firestore userProfile stream error: $error\n$stack');
+        return UserProfile(
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          isAnonymous: user.isAnonymous,
+          createdAt: DateTime.now(),
+        );
+      });
 });

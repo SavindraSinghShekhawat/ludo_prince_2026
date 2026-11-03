@@ -56,7 +56,11 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
 
         // 2. Update Firestore profile
         final updatedProfile = (currentProfile ??
-                UserProfile(uid: user.uid, createdAt: DateTime.now()))
+                UserProfile(
+                  uid: user.uid,
+                  isAnonymous: user.isAnonymous,
+                  createdAt: DateTime.now(),
+                ))
             .copyWith(displayName: newName);
         await profileService.createOrUpdateProfile(updatedProfile);
 
@@ -155,20 +159,32 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         ],
       ),
       body: userProfileAsync.when(
-        data: (profile) {
-          final isAnonymous = user.isAnonymous;
-          final displayName = profile?.displayName ??
-              (user.displayName != null && user.displayName!.isNotEmpty
-                  ? user.displayName!
-                  : 'Anonymous King');
+        data: (profile) => _buildProfileContent(profile, user),
+        loading: () => [
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
+        ],
+        error: (err, stack) {
+          AppLogger.error('Error loading profile: $err\n$stack');
+          return _buildProfileContent(null, user);
+        },
+      ),
+    );
+  }
 
-          if (!_isEditing) {
-            _nameController.text = displayName;
-          }
+  List<Widget> _buildProfileContent(UserProfile? profile, User user) {
+    final isAnonymous = user.isAnonymous;
+    final displayName = profile?.displayName ??
+        (user.displayName != null && user.displayName!.isNotEmpty
+            ? user.displayName!
+            : 'Anonymous King');
 
-          return [
-            const SizedBox(height: 24),
-            Center(
+    if (!_isEditing) {
+      _nameController.text = displayName;
+    }
+
+    return [
+      const SizedBox(height: 24),
+      Center(
               child: GestureDetector(
                 onTap: () {
                   AppSnackBar.show(
@@ -421,20 +437,6 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
               ),
             ],
           ];
-        },
-        loading: () => [
-          const Center(child: CircularProgressIndicator(color: Colors.white)),
-        ],
-        error: (err, stack) => [
-          const Center(
-            child: Text(
-              'Error loading profile',
-              style: TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildMiniStat(

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
+import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/services/social_service.dart';
 import '../widgets/shared_ui.dart';
 import '../screens/lobby_screen.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 
-class InviteDialog extends StatelessWidget {
+class InviteDialog extends ConsumerWidget {
   final String inviteId;
   final String fromName;
   final String gameId;
@@ -20,7 +22,7 @@ class InviteDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       minimum: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Dialog(
@@ -73,6 +75,7 @@ class InviteDialog extends StatelessWidget {
                   child: TextButton(
                     onPressed: () {
                       socialService.respondToInvite(inviteId, false);
+                      ref.read(notificationProvider.notifier).removeNotification(inviteId);
                       Navigator.pop(context);
                     },
                     child: const Text(
@@ -86,6 +89,7 @@ class InviteDialog extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       await socialService.respondToInvite(inviteId, true);
+                      ref.read(notificationProvider.notifier).removeNotification(inviteId);
                       if (!context.mounted) return;
                       Navigator.pop(context);
 

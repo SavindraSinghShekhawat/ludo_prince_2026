@@ -8,6 +8,7 @@ class UserProfile {
   final int friendsCount;
   final int gamesPlayed;
   final int gamesWon;
+  final bool isAnonymous;
   final DateTime createdAt;
   final DateTime? lastActive;
 
@@ -19,42 +20,110 @@ class UserProfile {
     this.friendsCount = 0,
     this.gamesPlayed = 0,
     this.gamesWon = 0,
+    this.isAnonymous = false,
     required this.createdAt,
     this.lastActive,
   });
 
   factory UserProfile.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final rawData = doc.data();
+    final Map<String, dynamic> data =
+        rawData is Map ? Map<String, dynamic>.from(rawData) : <String, dynamic>{};
+
+    // Safe boolean parsing
+    bool isAnonymous = false;
+    final isAnonRaw = data['isAnonymous'];
+    if (isAnonRaw is bool) {
+      isAnonymous = isAnonRaw;
+    } else if (isAnonRaw is String) {
+      isAnonymous = isAnonRaw.toLowerCase() == 'true';
+    } else {
+      final email = data['email']?.toString();
+      final name = data['displayName']?.toString();
+      isAnonymous = (email == null || email.isEmpty) &&
+          (name == null ||
+              name.isEmpty ||
+              name.startsWith('Player ') ||
+              name.startsWith('Guest #'));
+    }
+
+    int parseInt(dynamic val) {
+      if (val is int) return val;
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
+    DateTime parseDate(dynamic val, {DateTime? fallback}) {
+      if (val is Timestamp) return val.toDate();
+      if (val is DateTime) return val;
+      if (val is String) {
+        final parsed = DateTime.tryParse(val);
+        if (parsed != null) return parsed;
+      }
+      if (val is num) {
+        try {
+          return DateTime.fromMillisecondsSinceEpoch(val.toInt());
+        } catch (_) {}
+      }
+      return fallback ?? DateTime.now();
+    }
+
     return UserProfile(
       uid: doc.id,
-      displayName: data['displayName'],
-      email: data['email'],
-      photoURL: data['photoURL'],
-      friendsCount: data['friendsCount'] ?? 0,
-      gamesPlayed: data['gamesPlayed'] ?? 0,
-      gamesWon: data['gamesWon'] ?? 0,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      lastActive: data['lastActive'] != null
-          ? (data['lastActive'] as Timestamp).toDate()
-          : null,
+      displayName: data['displayName']?.toString(),
+      email: data['email']?.toString(),
+      photoURL: data['photoURL']?.toString(),
+      friendsCount: parseInt(data['friendsCount']),
+      gamesPlayed: parseInt(data['gamesPlayed']),
+      gamesWon: parseInt(data['gamesWon']),
+      isAnonymous: isAnonymous,
+      createdAt: parseDate(data['createdAt']),
+      lastActive:
+          data['lastActive'] != null ? parseDate(data['lastActive']) : null,
     );
   }
 
   factory UserProfile.fromMap(Map<String, dynamic> data) {
+    int parseInt(dynamic val) {
+      if (val is int) return val;
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
+    DateTime parseDate(dynamic val, {DateTime? fallback}) {
+      if (val is Timestamp) return val.toDate();
+      if (val is DateTime) return val;
+      if (val is String) {
+        final parsed = DateTime.tryParse(val);
+        if (parsed != null) return parsed;
+      }
+      if (val is num) {
+        try {
+          return DateTime.fromMillisecondsSinceEpoch(val.toInt());
+        } catch (_) {}
+      }
+      return fallback ?? DateTime.now();
+    }
+
+    final isAnonRaw = data['isAnonymous'];
+    final bool isAnonymous = isAnonRaw is bool
+        ? isAnonRaw
+        : (isAnonRaw is String ? isAnonRaw.toLowerCase() == 'true' : false);
+
     return UserProfile(
-      uid: data['uid'] ?? '',
-      displayName: data['displayName'],
-      email: data['email'],
-      photoURL: data['photoURL'],
-      friendsCount: data['friendsCount'] ?? 0,
-      gamesPlayed: data['gamesPlayed'] ?? 0,
-      gamesWon: data['gamesWon'] ?? 0,
-      createdAt: data['createdAt'] != null
-          ? DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      lastActive: data['lastActive'] != null
-          ? DateTime.tryParse(data['lastActive'].toString())
-          : null,
+      uid: data['uid']?.toString() ?? '',
+      displayName: data['displayName']?.toString(),
+      email: data['email']?.toString(),
+      photoURL: data['photoURL']?.toString(),
+      friendsCount: parseInt(data['friendsCount']),
+      gamesPlayed: parseInt(data['gamesPlayed']),
+      gamesWon: parseInt(data['gamesWon']),
+      isAnonymous: isAnonymous,
+      createdAt: parseDate(data['createdAt']),
+      lastActive:
+          data['lastActive'] != null ? parseDate(data['lastActive']) : null,
     );
   }
 
@@ -67,6 +136,7 @@ class UserProfile {
       'friendsCount': friendsCount,
       'gamesPlayed': gamesPlayed,
       'gamesWon': gamesWon,
+      'isAnonymous': isAnonymous,
       'createdAt': createdAt.toIso8601String(),
       'lastActive': lastActive?.toIso8601String(),
     };
@@ -77,6 +147,7 @@ class UserProfile {
       'displayName': displayName,
       'email': email,
       'photoURL': photoURL,
+      'isAnonymous': isAnonymous,
       'lastActive': FieldValue.serverTimestamp(),
     };
     if (isCreate) {
@@ -92,6 +163,7 @@ class UserProfile {
     int? friendsCount,
     int? gamesPlayed,
     int? gamesWon,
+    bool? isAnonymous,
     DateTime? lastActive,
   }) {
     return UserProfile(
@@ -102,6 +174,7 @@ class UserProfile {
       friendsCount: friendsCount ?? this.friendsCount,
       gamesPlayed: gamesPlayed ?? this.gamesPlayed,
       gamesWon: gamesWon ?? this.gamesWon,
+      isAnonymous: isAnonymous ?? this.isAnonymous,
       createdAt: createdAt,
       lastActive: lastActive ?? this.lastActive,
     );

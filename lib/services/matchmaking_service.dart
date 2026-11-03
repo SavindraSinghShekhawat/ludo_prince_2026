@@ -114,9 +114,16 @@ class MatchmakingService {
 
     final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
 
+    // 1. Verify that the room actually exists on the server before attempting transaction
+    final gameSnap = await gameRef.get();
+    if (!gameSnap.exists || gameSnap.value == null) {
+      throw Exception("Game room no longer exists or was closed.");
+    }
+
     final transactionResult = await gameRef.runTransaction((Object? gameData) {
+      // NEVER return Transaction.success(null)! That deletes the node in Firebase RTDB!
       if (gameData == null) {
-        return Transaction.success(gameData);
+        return Transaction.abort();
       }
 
       final game = Map<String, dynamic>.from(gameData as Map);
@@ -430,7 +437,7 @@ class MatchmakingService {
       final gameRef = _db.ref().child(FirebasePaths.session(gameType, gameId));
 
       await gameRef.runTransaction((Object? gameData) {
-        if (gameData == null) return Transaction.success(gameData);
+        if (gameData == null) return Transaction.abort();
         final game = Map<String, dynamic>.from(gameData as Map);
         final players = Map<String, dynamic>.from(game['players'] ?? {});
 

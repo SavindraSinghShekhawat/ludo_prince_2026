@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_profile.dart';
@@ -92,19 +93,42 @@ class ProfileService {
   }
 
   Future<List<UserProfile>> searchUsers(String query) async {
-    if (query.isEmpty) return [];
+    final cleanQuery = query.trim();
+    if (cleanQuery.isEmpty) return [];
     try {
-      // Simple search by displayName prefix (case-sensitive in Firestore)
+      final List<UserProfile> results = [];
+
+      // 1. Direct search if query matches exact UID
+      try {
+        final exactDoc =
+            await _firestore.collection('users').doc(cleanQuery).get();
+        if (exactDoc.exists) {
+          final profile = UserProfile.fromFirestore(exactDoc);
+          if (!profile.isAnonymous) {
+            results.add(profile);
+          }
+        }
+      } catch (_) {}
+
+      // 2. Search by displayName prefix
       final snapshot = await _firestore
           .collection('users')
-          .where('displayName', isGreaterThanOrEqualTo: query)
-          .where('displayName', isLessThanOrEqualTo: '$query\uf8ff')
-          .limit(10)
+          .where('displayName', isGreaterThanOrEqualTo: cleanQuery)
+          .where('displayName', isLessThanOrEqualTo: '$cleanQuery\uf8ff')
+          .limit(20)
           .get();
 
-      return snapshot.docs
-          .map((doc) => UserProfile.fromFirestore(doc))
-          .toList();
+      for (final doc in snapshot.docs) {
+        if (!results.any((r) => r.uid == doc.id)) {
+          final profile = UserProfile.fromFirestore(doc);
+          // Never allow guest/anonymous accounts to appear in friend search results
+          if (!profile.isAnonymous) {
+            results.add(profile);
+          }
+        }
+      }
+
+      return results;
     } catch (e) {
       AppLogger.error('Error searching users: $e');
       return [];
@@ -141,6 +165,18 @@ class ProfileService {
   }
 
   Future<void> sendFriendRequest(String fromUid, String toUid) async {
+    // 1. Prevent guest accounts from sending friend requests
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null && currentUser.isAnonymous) {
+      throw Exception('Guest accounts cannot send friend requests. Please link your account!');
+    }
+
+    // 2. Prevent sending friend requests to guest accounts
+    final targetProfile = await getUserProfile(toUid);
+    if (targetProfile != null && targetProfile.isAnonymous) {
+      throw Exception('Cannot add guest accounts. This player must link their account first.');
+    }
+
     final senderCount = await getFriendsCount(fromUid);
     if (senderCount >= maxFriendsLimit) {
       throw Exception(
@@ -155,22 +191,87 @@ class ProfileService {
       );
     }
 
-    // Check if request already exists
+    // 3. Prevent duplicate if already friends
+    try {
+      final isFriendSnap = await _firestore
+          .collection('users')
+          .doc(fromUid)
+          .collection('friends')
+          .doc(toUid)
+          .get();
+      if (isFriendSnap.exists) {
+        throw Exception('You are already friends with this player!');
+      }
+    } catch (e) {
+      if (e.toString().contains('already friends')) rethrow;
+    }
+
+    // 4. If target player already sent an incoming request, auto-accept immediately!
+    final reverse = await _firestore
+        .collection('friend_requests')
+        .where('from', isEqualTo: toUid)
+        .where('to', isEqualTo: fromUid)
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    if (reverse.docs.isNotEmpty) {
+      final req = FriendRequest.fromFirestore(reverse.docs.first);
+      await acceptFriendRequest(req);
+      return;
+    }
+
+    // 5. Clean up any existing records between fromUid and toUid (e.g. previous declined requests)
     final existing = await _firestore
         .collection('friend_requests')
         .where('from', isEqualTo: fromUid)
         .where('to', isEqualTo: toUid)
-        .where('status', isEqualTo: 'pending')
         .get();
 
-    if (existing.docs.isNotEmpty) return;
+    for (final doc in existing.docs) {
+      if (doc.data()['status'] == 'pending') {
+        return; // Request already pending
+      }
+      try {
+        await doc.reference.delete();
+      } catch (_) {}
+    }
 
+    // 6. Create the fresh pending friend request
     await _firestore.collection('friend_requests').add({
       'from': fromUid,
       'to': toUid,
       'status': 'pending',
       'timestamp': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Cancels an active pending friend request sent by the current player
+  Future<void> cancelFriendRequest(String fromUid, String toUid) async {
+    try {
+      final snap = await _firestore
+          .collection('friend_requests')
+          .where('from', isEqualTo: fromUid)
+          .where('to', isEqualTo: toUid)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      for (final doc in snap.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      AppLogger.error('Error canceling friend request: $e');
+    }
+  }
+
+  /// Stream of active pending friend requests sent by the current player
+  Stream<List<FriendRequest>> getOutgoingFriendRequests(String uid) {
+    return _firestore
+        .collection('friend_requests')
+        .where('from', isEqualTo: uid)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => FriendRequest.fromFirestore(doc))
+            .toList());
   }
 
   Stream<List<FriendRequest>> getIncomingFriendRequests(String uid) {
@@ -195,11 +296,26 @@ class ProfileService {
           return FriendRequest.fromFirestore(doc, fromProfile: profile);
         }),
       );
-      return requests;
+      // Filter out any requests originating from anonymous accounts
+      return requests.where((r) => r.fromProfile?.isAnonymous != true).toList();
     });
   }
 
   Future<void> acceptFriendRequest(FriendRequest request) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null && currentUser.isAnonymous) {
+      throw Exception(
+        'Please link your account (Google/Apple) to accept friend requests.',
+      );
+    }
+
+    final senderProfile = await getUserProfile(request.fromUid);
+    if (senderProfile != null && senderProfile.isAnonymous) {
+      throw Exception(
+        'This request is from a guest account and cannot be accepted.',
+      );
+    }
+
     final myCount = await getFriendsCount(request.toUid);
     if (myCount >= maxFriendsLimit) {
       throw Exception(
@@ -258,9 +374,8 @@ class ProfileService {
 
   Future<void> declineFriendRequest(String requestId) async {
     try {
-      await _firestore.collection('friend_requests').doc(requestId).update({
-        'status': 'declined',
-      });
+      // Deleting the document cleans up cloud data and allows players to send new invites
+      await _firestore.collection('friend_requests').doc(requestId).delete();
     } catch (e) {
       AppLogger.error('Error declining friend request: $e');
     }
@@ -292,4 +407,9 @@ final profileService = ProfileService();
 final friendRequestsProvider =
     StreamProvider.family<List<FriendRequest>, String>((ref, uid) {
   return profileService.getIncomingFriendRequests(uid);
+});
+
+final outgoingFriendRequestsProvider =
+    StreamProvider.family<List<FriendRequest>, String>((ref, uid) {
+  return profileService.getOutgoingFriendRequests(uid);
 });

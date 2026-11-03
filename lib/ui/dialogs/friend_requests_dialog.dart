@@ -164,7 +164,7 @@ class FriendRequestsDialog extends ConsumerWidget {
             color: AppColors.imperialJade,
             onTap: () async {
               await profileService.acceptFriendRequest(request);
-              ref.read(notificationProvider.notifier).markAsRead(request.id);
+              ref.read(notificationProvider.notifier).removeNotification(request.id);
               if (context.mounted) {
                 AppSnackBar.show(
                   context,
@@ -180,7 +180,13 @@ class FriendRequestsDialog extends ConsumerWidget {
             color: AppColors.crimsonVelvet,
             onTap: () async {
               await profileService.declineFriendRequest(request.id);
-              ref.read(notificationProvider.notifier).markAsRead(request.id);
+              ref.read(notificationProvider.notifier).removeNotification(request.id);
+              if (context.mounted) {
+                AppSnackBar.show(
+                  context,
+                  message: 'Friend request declined.',
+                );
+              }
             },
           ),
         ],

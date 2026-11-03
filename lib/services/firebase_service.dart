@@ -137,6 +137,7 @@ class FirebaseService {
                 user.displayName ?? 'Player ${user.uid.substring(0, 4)}',
             email: user.email,
             photoURL: user.photoURL,
+            isAnonymous: user.isAnonymous,
             createdAt: DateTime.now(),
           );
           await profileService.createOrUpdateProfile(newProfile, isCreate: true);
@@ -165,12 +166,17 @@ class FirebaseService {
             }
           }
 
+          if (profile.isAnonymous != user.isAnonymous) {
+            needsUpdate = true;
+          }
+
           if (needsUpdate) {
             await profileService.createOrUpdateProfile(
               profile.copyWith(
                 displayName: updatedName,
                 email: updatedEmail,
                 photoURL: updatedPhoto,
+                isAnonymous: user.isAnonymous,
                 lastActive: DateTime.now(),
               ),
             );

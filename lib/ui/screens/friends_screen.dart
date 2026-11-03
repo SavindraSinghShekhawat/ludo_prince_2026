@@ -36,7 +36,6 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   List<UserProfile> _allFriends = [];
   List<UserProfile> _filteredFriends = [];
   List<UserProfile> _searchResults = [];
-  final Set<String> _sentRequests = {};
   bool _isSearching = false;
   Timer? _debounce;
   StreamSubscription? _friendsSubscription;
@@ -136,7 +135,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         final friendIds = _allFriends.map((f) => f.uid).toSet();
         _searchResults = results
             .where(
-              (r) => r.uid != currentUser?.uid && !friendIds.contains(r.uid),
+              (r) =>
+                  r.uid != currentUser?.uid &&
+                  !friendIds.contains(r.uid) &&
+                  !r.isAnonymous,
             )
             .toList();
         _isSearching = false;
@@ -165,6 +167,12 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ? ref.watch(friendRequestsProvider(user.uid))
         : null;
     final incomingRequests = requestsAsync?.value ?? <FriendRequest>[];
+
+    final outgoingRequestsAsync = user != null && !isGuest
+        ? ref.watch(outgoingFriendRequestsProvider(user.uid))
+        : null;
+    final outgoingRequests = outgoingRequestsAsync?.value ?? <FriendRequest>[];
+    final outgoingSentUids = outgoingRequests.map((r) => r.toUid).toSet();
 
     return AppBackground(
       child: Scaffold(
@@ -291,7 +299,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 _buildFriendsList(),
                 if (_searchController.text.length >= 2) ...[
                   _buildSectionHeader('GLOBAL SEARCH', Icons.public),
-                  _buildGlobalResults(incomingRequests),
+                  _buildGlobalResults(incomingRequests, outgoingSentUids),
                 ],
               ],
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -707,7 +715,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     );
   }
 
-  Widget _buildGlobalResults(List<FriendRequest> incomingRequests) {
+  Widget _buildGlobalResults(
+    List<FriendRequest> incomingRequests,
+    Set<String> outgoingSentUids,
+  ) {
     if (_searchResults.isEmpty && !_isSearching) {
       return const SliverToBoxAdapter(
         child: Padding(
@@ -733,10 +744,12 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 break;
               }
             }
+            final isPendingSent = outgoingSentUids.contains(targetUser.uid);
             return _buildUserCard(
               targetUser,
               isFriend: false,
               incomingRequest: incomingReq,
+              isOutgoingPending: isPendingSent,
             );
           },
           childCount: _searchResults.length,
@@ -749,6 +762,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     UserProfile user, {
     required bool isFriend,
     FriendRequest? incomingRequest,
+    bool isOutgoingPending = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -924,52 +938,115 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                   }
                 },
               ),
+            ] else if (user.isAnonymous) ...[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Text(
+                  'GUEST',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ] else if (isOutgoingPending) ...[
+              InkWell(
+                onTap: () async {
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser != null) {
+                    await profileService.cancelFriendRequest(
+                      currentUser.uid,
+                      user.uid,
+                    );
+                    if (mounted) {
+                      AppSnackBar.show(
+                        context,
+                        message: 'Friend request canceled.',
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.amberAccent.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.hourglass_top_rounded,
+                        color: Colors.amberAccent,
+                        size: 13,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'SENT',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ] else ...[
               _buildSmallPlatinumButton(
-                _sentRequests.contains(user.uid) ? 'SENT' : 'ADD',
-                _sentRequests.contains(user.uid)
-                    ? () {}
-                    : () async {
-                        if (_allFriends.length >=
-                            ProfileService.maxFriendsLimit) {
-                          AppSnackBar.show(
-                            context,
-                            message:
-                                'You have reached the maximum limit of ${ProfileService.maxFriendsLimit} friends.',
-                            isError: true,
-                          );
-                          return;
-                        }
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser != null) {
-                          try {
-                            setState(() => _sentRequests.add(user.uid));
-                            await profileService.sendFriendRequest(
-                              currentUser.uid,
-                              user.uid,
-                            );
-                            if (mounted) {
-                              AppSnackBar.show(
-                                context,
-                                message:
-                                    'Friend request sent to ${user.displayName}!',
-                                isSuccess: true,
-                              );
-                            }
-                          } catch (e) {
-                            setState(() => _sentRequests.remove(user.uid));
-                            if (mounted) {
-                              AppSnackBar.show(
-                                context,
-                                message:
-                                    e.toString().replaceAll('Exception: ', ''),
-                                isError: true,
-                              );
-                            }
-                          }
-                        }
-                      },
-                isEnabled: !_sentRequests.contains(user.uid),
+                'ADD',
+                () async {
+                  if (_allFriends.length >= ProfileService.maxFriendsLimit) {
+                    AppSnackBar.show(
+                      context,
+                      message:
+                          'You have reached the maximum limit of ${ProfileService.maxFriendsLimit} friends.',
+                      isError: true,
+                    );
+                    return;
+                  }
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser != null) {
+                    try {
+                      await profileService.sendFriendRequest(
+                        currentUser.uid,
+                        user.uid,
+                      );
+                      if (mounted) {
+                        AppSnackBar.show(
+                          context,
+                          message:
+                              'Friend request sent to ${user.displayName}!',
+                          isSuccess: true,
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        AppSnackBar.show(
+                          context,
+                          message:
+                              e.toString().replaceAll('Exception: ', ''),
+                          isError: true,
+                        );
+                      }
+                    }
+                  }
+                },
               ),
             ],
           ],

@@ -36,12 +36,36 @@ class GlobalListeners {
     // Global listener for game invites
     _inviteSubscription = socialService.watchInvites().listen((event) {
       if (!context.mounted) return;
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        final invites = Map<String, dynamic>.from(event.snapshot.value as Map);
-        final container = ProviderScope.containerOf(context, listen: false);
-        final reminderSettings = container.read(gameReminderProvider);
+      final container = ProviderScope.containerOf(context, listen: false);
+      final currentInbox = container.read(notificationProvider).inbox;
 
-        if (!reminderSettings.gameInvitesEnabled) return;
+      if (!event.snapshot.exists || event.snapshot.value == null) {
+        // All invites cleared in RTDB -> prune game invites from inbox
+        for (final n in currentInbox) {
+          if (n.type == NotificationType.gameInvite) {
+            container
+                .read(notificationProvider.notifier)
+                .removeNotification(n.id);
+          }
+        }
+        return;
+      }
+
+      final invites = Map<String, dynamic>.from(event.snapshot.value as Map);
+      final activeInviteIds = invites.keys.toSet();
+
+      // Prune any gameInvite from inbox that is no longer in RTDB
+      for (final n in currentInbox) {
+        if (n.type == NotificationType.gameInvite &&
+            !activeInviteIds.contains(n.id)) {
+          container
+              .read(notificationProvider.notifier)
+              .removeNotification(n.id);
+        }
+      }
+
+      final reminderSettings = container.read(gameReminderProvider);
+      if (!reminderSettings.gameInvitesEnabled) return;
 
         for (final entry in invites.entries) {
           final inviteId = entry.key;
@@ -93,7 +117,6 @@ class GlobalListeners {
             }
           }
         }
-      }
     });
 
     // Global listener for friend requests

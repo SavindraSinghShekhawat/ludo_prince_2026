@@ -114,6 +114,18 @@ class NotificationNotifier extends Notifier<NotificationState> {
     state = state.copyWith(inbox: newInbox);
   }
 
+  /// Permanently removes a notification from the inbox (e.g. when declined, accepted, or dismissed).
+  void removeNotification(String id) {
+    _viewedNotificationIds.add(id);
+    _saveViewedIds();
+    final newInbox = state.inbox.where((n) => n.id != id).toList();
+    final isToast = state.activeToast?.id == id;
+    state = state.copyWith(
+      inbox: newInbox,
+      clearActiveToast: isToast,
+    );
+  }
+
   void markAllAsRead() {
     for (final n in state.inbox) {
       _viewedNotificationIds.add(n.id);

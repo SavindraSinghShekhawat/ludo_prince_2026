@@ -10,7 +10,7 @@ import 'package:ludo_prince/providers/notification_provider.dart';
 import 'package:ludo_prince/models/app_notification.dart';
 import 'package:ludo_prince/models/friend_request.dart';
 import 'package:ludo_prince/services/profile_service.dart';
-import 'package:ludo_prince/core/widgets/app_snackbar.dart';
+import 'package:ludo_prince/services/social_service.dart';
 import 'package:ludo_prince/core/theme/app_colors.dart';
 import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/services/notification_router.dart';
@@ -244,7 +244,7 @@ class NotificationInboxDialog extends ConsumerWidget {
                               await profileService.acceptFriendRequest(req);
                               ref
                                   .read(notificationProvider.notifier)
-                                  .markAsRead(n.id);
+                                  .removeNotification(n.id);
                               if (context.mounted) {
                                 AppSnackBar.show(
                                   context,
@@ -305,7 +305,7 @@ class NotificationInboxDialog extends ConsumerWidget {
                               await profileService.declineFriendRequest(n.id);
                               ref
                                   .read(notificationProvider.notifier)
-                                  .markAsRead(n.id);
+                                  .removeNotification(n.id);
                               if (context.mounted) {
                                 AppSnackBar.show(
                                   context,
@@ -313,6 +313,120 @@ class NotificationInboxDialog extends ConsumerWidget {
                                 );
                               }
                             } catch (_) {}
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white70,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'DECLINE',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (n.type == NotificationType.gameInvite) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () async {
+                            final gameId = n.data['gameId'] ?? '';
+                            await socialService.respondToInvite(n.id, true);
+                            ref
+                                .read(notificationProvider.notifier)
+                                .removeNotification(n.id);
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                ScaleFadePageRoute(
+                                  page: LobbyScreen(
+                                    initialGameId: gameId,
+                                    isHost: false,
+                                    isQuickMatch: false,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppColors.imperialAmber.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppColors.imperialAmber
+                                    .withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 16,
+                                  color: AppColors.imperialAmber,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'JOIN',
+                                  style: TextStyle(
+                                    color: AppColors.imperialAmber,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () async {
+                            await socialService.respondToInvite(n.id, false);
+                            ref
+                                .read(notificationProvider.notifier)
+                                .removeNotification(n.id);
+                            if (context.mounted) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Game invite declined.',
+                              );
+                            }
                           },
                           borderRadius: BorderRadius.circular(10),
                           child: Container(

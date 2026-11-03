@@ -53,6 +53,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   String? _currentJoiningCode;
   bool _isLoading = false;
   bool _isDisbandedDialogShown = false;
+  bool _hasReceivedValidGameData = false;
   int _maxPlayers = 2;
   GameMode _gameMode = GameMode.classic;
   Timer? _heartbeatTimer;
@@ -161,7 +162,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 ),
             const SizedBox(height: 16),
             Text(
-              isHost ? 'DISBAND ROOM?' : 'LEAVE ROOM?',
+              isHost ? 'CLOSE ROOM?' : 'LEAVE ROOM?',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -174,7 +175,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         body: [
           Text(
             isHost
-                ? 'Are you sure you want to disband this room? All joined players will return to the main menu.'
+                ? 'Are you sure you want to close this room? All joined players will return to the main menu.'
                 : 'Are you sure you want to leave this room?',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, fontSize: 15),
@@ -187,13 +188,14 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                 text: 'STAY',
                 height: 48,
                 fontSize: 15,
+                color: Colors.white.withValues(alpha: 0.15),
                 onTap: () => Navigator.of(context).pop(),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: AppButton(
-                text: isHost ? 'DISBAND' : 'LEAVE',
+                text: isHost ? 'CLOSE ROOM' : 'LEAVE ROOM',
                 color: AppColors.crimsonVelvet,
                 height: 48,
                 fontSize: 15,
@@ -256,7 +258,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             ),
             SizedBox(height: 16),
             Text(
-              'ROOM DISBANDED',
+              'ROOM CLOSED',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -268,7 +270,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         ),
         body: const [
           Text(
-            'The host has left and closed this room. You have been returned to the main menu.',
+            'The host has closed this room. Returning to the main menu...',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70, fontSize: 15),
           ),
@@ -627,11 +629,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     return StreamBuilder<DatabaseEvent>(
       stream: matchmakingService.watchGame(_activeGameId!),
       builder: (context, gameSnapshot) {
-        if (!gameSnapshot.hasData ||
-            gameSnapshot.data?.snapshot.value == null) {
-          if (gameSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: MatchmakingLoader(size: 60));
-          }
+        if (_isLoading ||
+            !gameSnapshot.hasData ||
+            gameSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: MatchmakingLoader(size: 60));
+        }
+
+        if (gameSnapshot.data?.snapshot.value == null) {
           if (widget.isHost) {
             return const Center(
               child: Text(
@@ -640,14 +644,40 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               ),
             );
           }
-          // For guests: host disbanded the room
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showDisbandedDialog();
-          });
-          return const Center(
-            child: Text(
-              "Room disbanded...",
-              style: TextStyle(color: Colors.white70),
+          // Only show disbanded dialog if the guest was previously in a valid lobby session!
+          if (_hasReceivedValidGameData) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _showDisbandedDialog();
+            });
+            return const Center(
+              child: Text(
+                "Room closed...",
+                style: TextStyle(color: Colors.white70),
+              ),
+            );
+          }
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Room not found or expired",
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                AppButton(
+                  text: "RETURN HOME",
+                  height: 48,
+                  onTap: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                ),
+              ],
             ),
           );
         }
@@ -657,17 +687,21 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         );
         final status = gameData['status'];
 
+        if (status == 'lobby' || status == 'playing') {
+          _hasReceivedValidGameData = true;
+        }
+
         if (status == 'disbanded') {
           _heartbeatTimer?.cancel();
           _timeoutTimer?.cancel();
-          if (!widget.isHost) {
+          if (!widget.isHost && _hasReceivedValidGameData) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _showDisbandedDialog();
             });
           }
           return const Center(
             child: Text(
-              "Room disbanded...",
+              "Room closed...",
               style: TextStyle(color: Colors.white70),
             ),
           );
@@ -831,9 +865,12 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                 child: SizedBox(
                                   width: double.infinity,
                                   child: AppButton(
-                                    text: 'DISBAND ROOM',
-                                    color: AppColors.crimsonVelvet,
-                                    height: 48,
+                                    text: 'CLOSE ROOM',
+                                    icon: Icons.close_rounded,
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    isPrimary: true,
+                                    height: 46,
+                                    fontSize: 14,
                                     onTap: () => _showLeaveConfirmDialog(
                                       isHost: true,
                                       joiningCode: code,
@@ -848,8 +885,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                                   width: double.infinity,
                                   child: AppButton(
                                     text: 'LEAVE ROOM',
-                                    color: AppColors.crimsonVelvet,
-                                    height: 48,
+                                    icon: Icons.logout_rounded,
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    isPrimary: true,
+                                    height: 46,
+                                    fontSize: 14,
                                     onTap: () => _showLeaveConfirmDialog(
                                       isHost: false,
                                       joiningCode: code,

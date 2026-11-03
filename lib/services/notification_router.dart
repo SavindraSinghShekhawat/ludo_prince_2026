@@ -5,6 +5,7 @@ import 'package:ludo_prince/core/widgets/app_page_routes.dart';
 import 'package:ludo_prince/ui/dialogs/invite_dialog.dart';
 import 'package:ludo_prince/ui/screens/friends_screen.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
+import 'package:ludo_prince/services/social_service.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 
 /// Routes notification clicks (both local tray and background/cold launch) to their ideal destination screens.
@@ -53,10 +54,19 @@ class NotificationRouter {
     AppLogger.debug('NotificationRouter: Navigating for payload: $payload');
 
     try {
-      if (payload == 'test_game_invite' || payload.startsWith('game_invite')) {
+      final isGameInvite = payload == 'test_game_invite' ||
+          payload.startsWith('game_invite') ||
+          payload.contains('"type":"gameInvite"') ||
+          payload.contains('"gameId"') ||
+          payload.contains('gameId:');
+
+      final isFriendRequest = payload == 'test_friend_request' ||
+          payload.startsWith('friend_request') ||
+          payload.contains('"type":"friendRequest"');
+
+      if (isGameInvite) {
         _routeToGameInvite(context, payload);
-      } else if (payload == 'test_friend_request' ||
-          payload.startsWith('friend_request')) {
+      } else if (isFriendRequest) {
         _routeToFriendRequest(context);
       } else if (payload == 'daily_prime_time' ||
           payload == 'weekend_special' ||
@@ -76,12 +86,12 @@ class NotificationRouter {
     }
   }
 
-  /// Directs player to the Room Invitation dialog.
+  /// Directs player to the Room Invitation or enters the lobby directly.
   static void _routeToGameInvite(BuildContext context, String payload) {
     String inviteId = 'test_invite';
     String fromName = 'PrinceAlex';
-    String gameId = 'demo_game';
-    String joiningCode = 'PRINCE7';
+    String gameId = '';
+    String joiningCode = '';
 
     if (payload.contains('|')) {
       final parts = payload.split('|');
@@ -102,16 +112,33 @@ class NotificationRouter {
       } catch (_) {}
     }
 
-    AppDialogLayout.show(
-      context: context,
-      barrierDismissible: false,
-      child: InviteDialog(
-        inviteId: inviteId,
-        fromName: fromName,
-        gameId: gameId,
-        joiningCode: joiningCode,
-      ),
-    );
+    if (gameId.isNotEmpty && gameId != 'demo_game') {
+      // Mark invite responded/accepted in RTDB
+      socialService.respondToInvite(inviteId, true);
+
+      // Navigate directly into the game lobby
+      Navigator.of(context).push(
+        ScaleFadePageRoute(
+          page: LobbyScreen(
+            initialGameId: gameId,
+            isHost: false,
+            isQuickMatch: false,
+          ),
+          settings: const RouteSettings(name: '/lobby'),
+        ),
+      );
+    } else {
+      AppDialogLayout.show(
+        context: context,
+        barrierDismissible: false,
+        child: InviteDialog(
+          inviteId: inviteId,
+          fromName: fromName,
+          gameId: gameId.isEmpty ? 'demo_game' : gameId,
+          joiningCode: joiningCode.isEmpty ? 'PRINCE7' : joiningCode,
+        ),
+      );
+    }
   }
 
   /// Directs player to the Friends screen to manage friendships and pending requests.
