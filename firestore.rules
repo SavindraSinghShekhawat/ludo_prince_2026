@@ -44,8 +44,11 @@ service cloud.firestore {
         // Only the user themselves or the friend can view their friendship record
         allow read: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == friendId);
         
-        // Only the user can add or remove friends from their own friends subcollection
-        allow create, delete: if isOwner(userId);
+        // Only the user can create a friendship in their own subcollection
+        allow create: if isOwner(userId);
+
+        // Either party in the friendship can dissolve it
+        allow delete: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == friendId);
         
         // Friendship documents are immutable
         allow update: if false;

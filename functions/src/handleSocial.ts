@@ -1,4 +1,4 @@
-import {onDocumentUpdated} from "firebase-functions/v2/firestore";
+import {onDocumentUpdated, onDocumentDeleted} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import {AppLogger} from "./utils/logger";
@@ -63,6 +63,85 @@ export const onFriendRequestUpdated = onDocumentUpdated(
       } catch (error) {
         AppLogger.error("[onFriendRequestUpdated] Error committing friendship batch:", error);
       }
+    }
+  }
+);
+
+/**
+ * Triggered when a friendship record is deleted from users/{userId}/friends/{friendId}.
+ * Ensures mutual cleanup: deletes reciprocal document if still present,
+ * decrements friendsCount for the affected user, and removes stale friend_requests.
+ */
+export const onFriendDeleted = onDocumentDeleted(
+  "users/{userId}/friends/{friendId}",
+  async (event) => {
+    const userId = event.params.userId;
+    const friendId = event.params.friendId;
+
+    if (!userId || !friendId) return;
+
+    const firestore = admin.firestore();
+    AppLogger.info(`[onFriendDeleted] Friend deleted: ${userId} -> ${friendId}`);
+
+    // 1. Decrement friendsCount for userId (clamped to >= 0)
+    const userRef = firestore.collection("users").doc(userId);
+    try {
+      await firestore.runTransaction(async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (userDoc.exists) {
+          const currentCount = Number(userDoc.data()?.friendsCount) || 0;
+          transaction.update(userRef, {
+            friendsCount: Math.max(0, currentCount - 1),
+            lastActive: FieldValue.serverTimestamp(),
+          });
+        }
+      });
+    } catch (e) {
+      AppLogger.error(`[onFriendDeleted] Failed to decrement friendsCount for ${userId}:`, e);
+    }
+
+    // 2. Ensure reciprocal document is also deleted (if not already deleted)
+    const reciprocalRef = firestore
+      .collection("users")
+      .doc(friendId)
+      .collection("friends")
+      .doc(userId);
+
+    try {
+      const reciprocalSnap = await reciprocalRef.get();
+      if (reciprocalSnap.exists) {
+        AppLogger.info(`[onFriendDeleted] Deleting reciprocal friendship at users/${friendId}/friends/${userId}`);
+        await reciprocalRef.delete();
+      }
+    } catch (e) {
+      AppLogger.error("[onFriendDeleted] Failed checking reciprocal friendship:", e);
+    }
+
+    // 3. Clean up any historical friend_requests documents between them (in either direction)
+    try {
+      const requestsSnap = await firestore
+        .collection("friend_requests")
+        .where("from", "in", [userId, friendId])
+        .get();
+
+      const batch = firestore.batch();
+      let deleteCount = 0;
+      for (const doc of requestsSnap.docs) {
+        const data = doc.data();
+        if (
+          (data.from === userId && data.to === friendId) ||
+          (data.from === friendId && data.to === userId)
+        ) {
+          batch.delete(doc.ref);
+          deleteCount++;
+        }
+      }
+      if (deleteCount > 0) {
+        await batch.commit();
+        AppLogger.info(`[onFriendDeleted] Cleaned up ${deleteCount} friend request(s) between ${userId} and ${friendId}`);
+      }
+    } catch (e) {
+      AppLogger.error("[onFriendDeleted] Failed cleaning up friend requests:", e);
     }
   }
 );

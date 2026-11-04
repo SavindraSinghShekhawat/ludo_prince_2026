@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -82,7 +83,7 @@ class FriendRequestsDialog extends ConsumerWidget {
                         const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final request = requests[index];
-                      return _buildRequestItem(context, ref, request);
+                      return _RequestItemTile(request: request);
                     },
                   ),
                 );
@@ -109,12 +110,22 @@ class FriendRequestsDialog extends ConsumerWidget {
   ),
 );
   }
+}
 
-  Widget _buildRequestItem(
-    BuildContext context,
-    WidgetRef ref,
-    FriendRequest request,
-  ) {
+class _RequestItemTile extends ConsumerStatefulWidget {
+  final FriendRequest request;
+  const _RequestItemTile({required this.request});
+
+  @override
+  ConsumerState<_RequestItemTile> createState() => _RequestItemTileState();
+}
+
+class _RequestItemTileState extends ConsumerState<_RequestItemTile> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final request = widget.request;
     final profile = request.fromProfile;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -164,34 +175,65 @@ class FriendRequestsDialog extends ConsumerWidget {
           _buildActionButton(
             icon: Icons.check,
             color: AppColors.imperialJade,
-            onTap: () async {
-              final notifier = ref.read(notificationProvider.notifier);
-              await profileService.acceptFriendRequest(request);
-              notifier.removeNotification(request.id);
-              if (context.mounted) {
-                AppSnackBar.show(
-                  context,
-                  message: 'Friend request accepted!',
-                  isSuccess: true,
-                );
-              }
-            },
+            isLoading: _isLoading,
+            onTap: _isLoading
+                ? null
+                : () async {
+                    HapticFeedback.lightImpact();
+                    setState(() => _isLoading = true);
+                    try {
+                      final notifier = ref.read(notificationProvider.notifier);
+                      await profileService.acceptFriendRequest(request);
+                      notifier.removeNotification(request.id);
+                      if (context.mounted) {
+                        AppSnackBar.show(
+                          context,
+                          message: 'Friend request accepted!',
+                          isSuccess: true,
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        AppSnackBar.show(
+                          context,
+                          message: e.toString().replaceAll('Exception: ', ''),
+                          isError: true,
+                        );
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
+                  },
           ),
           const SizedBox(width: 8),
           _buildActionButton(
             icon: Icons.close,
             color: AppColors.crimsonVelvet,
-            onTap: () async {
-              final notifier = ref.read(notificationProvider.notifier);
-              await profileService.declineFriendRequest(request.id);
-              notifier.removeNotification(request.id);
-              if (context.mounted) {
-                AppSnackBar.show(
-                  context,
-                  message: 'Friend request declined.',
-                );
-              }
-            },
+            isLoading: _isLoading,
+            onTap: _isLoading
+                ? null
+                : () async {
+                    HapticFeedback.lightImpact();
+                    setState(() => _isLoading = true);
+                    try {
+                      final notifier = ref.read(notificationProvider.notifier);
+                      await profileService.declineFriendRequest(request.id);
+                      notifier.removeNotification(request.id);
+                      if (context.mounted) {
+                        AppSnackBar.show(
+                          context,
+                          message: 'Friend request declined.',
+                        );
+                      }
+                    } catch (_) {
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
+                  },
           ),
         ],
       ),
@@ -201,7 +243,8 @@ class FriendRequestsDialog extends ConsumerWidget {
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
+    bool isLoading = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -213,7 +256,16 @@ class FriendRequestsDialog extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Icon(icon, color: color, size: 20),
+        child: isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: color,
+                ),
+              )
+            : Icon(icon, color: color, size: 20),
       ),
     );
   }

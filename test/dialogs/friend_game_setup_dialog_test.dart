@@ -170,7 +170,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Room will open with 4 slots. You can invite more friends from the lobby.'),
+        find.text('Room will open with 4 slots. You can invite more friends or share your room code from the lobby.'),
         findsOneWidget,
       );
     });

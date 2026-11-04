@@ -19,6 +19,8 @@ import 'package:ludo_prince/ui/screens/home_screen.dart';
 import 'package:ludo_prince/games/ludo/ui/screens/ludo_screen.dart';
 import 'package:ludo_prince/ui/screens/lobby_screen.dart';
 import 'package:ludo_prince/services/firebase_service.dart';
+import 'package:ludo_prince/services/profile_service.dart';
+import 'package:ludo_prince/models/user_profile.dart';
 import 'package:ludo_prince/ui/dialogs/friend_game_setup_dialog.dart';
 
 class LudoGameOverDialog extends ConsumerStatefulWidget {
@@ -271,32 +273,60 @@ class _LudoGameOverDialogState extends ConsumerState<LudoGameOverDialog> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       if (widget.state.gameType == GameType.online) {
                         if (widget.state.isPrivate) {
-                          // Friend/private match context: collect opponents to re-invite
+                          // Friend/private match context: filter opponents to only re-invite confirmed friends
                           final currentUid = firebaseService.auth.currentUser?.uid;
-                          final friendPlayers = widget.state.players.where((p) =>
+                          final opponentPlayers = widget.state.players.where((p) =>
                               p.uid != currentUid &&
                               !p.uid.startsWith('local_') &&
                               !p.uid.startsWith('bot_')
                           ).toList();
 
-                          final targetUids = friendPlayers.map((p) => p.uid).toSet().toList();
-                          final targetNames = friendPlayers.map((p) => p.name).toSet().toList();
+                          final cachedFriends = currentUid != null
+                              ? await profileService.getCachedFriends(currentUid)
+                              : <UserProfile>[];
+                          final friendUidSet = cachedFriends.map((f) => f.uid).toSet();
+
+                          final actualFriends = opponentPlayers
+                              .where((p) => friendUidSet.contains(p.uid))
+                              .toList();
+                          final nonFriends = opponentPlayers
+                              .where((p) => !friendUidSet.contains(p.uid))
+                              .toList();
+
+                          final targetUids = actualFriends.map((p) => p.uid).toSet().toList();
+                          final targetNames = actualFriends.map((p) => p.name).toSet().toList();
+                          final nonFriendNames = nonFriends.map((p) => p.name).toSet().toList();
+
+                          String subtitle;
+                          if (targetNames.isNotEmpty && nonFriendNames.isNotEmpty) {
+                            subtitle = 'Inviting ${targetNames.join(", ")}. Share room code with ${nonFriendNames.join(", ")} to join.';
+                          } else if (targetNames.isNotEmpty) {
+                            subtitle = 'Re-inviting: ${targetNames.join(", ")}';
+                          } else if (nonFriendNames.isNotEmpty) {
+                            subtitle = 'Opponents are not on your friends list. Create the room and share your code to play again!';
+                          } else {
+                            subtitle = 'Create a new room for your friends';
+                          }
+
+                          if (!context.mounted) return;
 
                           AppDialogLayout.show(
                             context: context,
                             child: FriendGameSetupDialog(
-                              title: 'NEW GAME WITH FRIENDS',
-                              subtitle: targetNames.isNotEmpty
-                                  ? 'Re-inviting: ${targetNames.join(", ")}'
-                                  : 'Create a new room for your friends',
+                              title: targetUids.isNotEmpty
+                                  ? 'NEW GAME WITH FRIENDS'
+                                  : 'CREATE PRIVATE ROOM',
+                              subtitle: subtitle,
                               targetUids: targetUids,
                               targetNames: targetNames,
                               initialMaxPlayers: widget.state.players.length.clamp(2, 4),
                               initialGameMode: widget.state.gameMode,
-                              actionButtonLabel: 'CREATE & INVITE',
+                              actionButtonLabel: targetUids.isNotEmpty
+                                  ? 'CREATE & INVITE'
+                                  : 'CREATE ROOM',
                               onSuccess: (newGameId) {
                                 Navigator.of(context).pushAndRemoveUntil(
                                   ScaleFadePageRoute(

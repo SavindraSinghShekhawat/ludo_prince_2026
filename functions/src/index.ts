@@ -13,7 +13,7 @@ export {handleGameAction} from "./handleGameAction.js";
 export {handleMatchmaking} from "./handleMatchmaking.js";
 export {handleGameEnd} from "./handleGameEnd.js";
 export {handlePresence} from "./handlePresence.js";
-export {onFriendRequestUpdated} from "./handleSocial.js";
+export {onFriendRequestUpdated, onFriendDeleted} from "./handleSocial.js";
 export {mergeGuestAccount} from "./handleAuth.js";
 export {onInviteCreated, onFriendRequestCreated} from "./handlePushNotifications.js";
 export {cleanupStaleData} from "./cleanupStaleData.js";

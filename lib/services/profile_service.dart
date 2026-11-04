@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,11 @@ import '../models/friend_request.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 
 class ProfileService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore? _customFirestore;
+  ProfileService({FirebaseFirestore? firestore}) : _customFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _customFirestore ?? FirebaseFirestore.instance;
 
   /// In-memory fast cache to prevent duplicate Firestore reads
   final Map<String, UserProfile> _profileCache = {};
@@ -21,6 +26,7 @@ class ProfileService {
       return _profileCache[uid];
     }
     try {
+      if (_customFirestore == null && Firebase.apps.isEmpty) return null;
       final doc = await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
         final profile = UserProfile.fromFirestore(doc);
@@ -171,64 +177,70 @@ class ProfileService {
       throw Exception('Guest accounts cannot send friend requests. Please link your account!');
     }
 
-    // 2. Prevent sending friend requests to guest accounts
-    final targetProfile = await getUserProfile(toUid);
+    // 2. Fetch all validation data concurrently in parallel for 6x faster round trip
+    final results = await Future.wait([
+      getUserProfile(toUid),
+      getFriendsCount(fromUid),
+      getFriendsCount(toUid),
+      _firestore
+          .collection('users')
+          .doc(fromUid)
+          .collection('friends')
+          .doc(toUid)
+          .get(),
+      _firestore
+          .collection('friend_requests')
+          .where('from', isEqualTo: toUid)
+          .where('to', isEqualTo: fromUid)
+          .where('status', isEqualTo: 'pending')
+          .get(),
+      _firestore
+          .collection('friend_requests')
+          .where('from', isEqualTo: fromUid)
+          .where('to', isEqualTo: toUid)
+          .get(),
+    ]);
+
+    final targetProfile = results[0] as UserProfile?;
+    final senderCount = results[1] as int;
+    final targetCount = results[2] as int;
+    final isFriendSnap = results[3] as DocumentSnapshot;
+    final reverse = results[4] as QuerySnapshot;
+    final existing = results[5] as QuerySnapshot;
+
+    // 3. Prevent sending friend requests to guest accounts
     if (targetProfile != null && targetProfile.isAnonymous) {
       throw Exception('Cannot add guest accounts. This player must link their account first.');
     }
 
-    final senderCount = await getFriendsCount(fromUid);
     if (senderCount >= maxFriendsLimit) {
       throw Exception(
         'You have reached the maximum limit of $maxFriendsLimit friends.',
       );
     }
 
-    final targetCount = await getFriendsCount(toUid);
     if (targetCount >= maxFriendsLimit) {
       throw Exception(
         'This player has reached their limit of $maxFriendsLimit friends.',
       );
     }
 
-    // 3. Prevent duplicate if already friends
-    try {
-      final isFriendSnap = await _firestore
-          .collection('users')
-          .doc(fromUid)
-          .collection('friends')
-          .doc(toUid)
-          .get();
-      if (isFriendSnap.exists) {
-        throw Exception('You are already friends with this player!');
-      }
-    } catch (e) {
-      if (e.toString().contains('already friends')) rethrow;
+    // 4. Prevent duplicate if already friends
+    if (isFriendSnap.exists) {
+      throw Exception('You are already friends with this player!');
     }
 
-    // 4. If target player already sent an incoming request, auto-accept immediately!
-    final reverse = await _firestore
-        .collection('friend_requests')
-        .where('from', isEqualTo: toUid)
-        .where('to', isEqualTo: fromUid)
-        .where('status', isEqualTo: 'pending')
-        .get();
-
+    // 5. If target player already sent an incoming request, auto-accept immediately!
     if (reverse.docs.isNotEmpty) {
       final req = FriendRequest.fromFirestore(reverse.docs.first);
       await acceptFriendRequest(req);
       return;
     }
 
-    // 5. Clean up any existing records between fromUid and toUid (e.g. previous declined requests)
-    final existing = await _firestore
-        .collection('friend_requests')
-        .where('from', isEqualTo: fromUid)
-        .where('to', isEqualTo: toUid)
-        .get();
-
+    // 6. Clean up any existing records between fromUid and toUid (e.g. previous declined requests)
     for (final doc in existing.docs) {
-      if (doc.data()['status'] == 'pending') {
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data != null && data['status'] == 'pending') {
         return; // Request already pending
       }
       try {
@@ -236,7 +248,7 @@ class ProfileService {
       } catch (_) {}
     }
 
-    // 6. Create the fresh pending friend request
+    // 7. Create the fresh pending friend request
     await _firestore.collection('friend_requests').add({
       'from': fromUid,
       'to': toUid,
@@ -354,15 +366,47 @@ class ProfileService {
     }
   }
 
-  Future<void> removeFriend(String currentUid, String friendUid) async {
+  /// Checks if two users are currently friends
+  Future<bool> isFriend(String currentUid, String otherUid) async {
+    if (currentUid.isEmpty || otherUid.isEmpty) return false;
+    final cached = await getCachedFriends(currentUid);
+    if (cached.any((f) => f.uid == otherUid)) return true;
+
     try {
-      await _firestore
+      if (_customFirestore == null && Firebase.apps.isEmpty) return false;
+      final doc = await _firestore
           .collection('users')
           .doc(currentUid)
           .collection('friends')
-          .doc(friendUid)
-          .delete();
+          .doc(otherUid)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      AppLogger.error('Error checking isFriend: $e');
+      return false;
+    }
+  }
 
+  Future<void> removeFriend(String currentUid, String friendUid) async {
+    try {
+      // 1. Atomically delete mutual friendship documents on both accounts
+      final batch = _firestore.batch();
+      final ownDoc = _firestore
+          .collection('users')
+          .doc(currentUid)
+          .collection('friends')
+          .doc(friendUid);
+      final reciprocalDoc = _firestore
+          .collection('users')
+          .doc(friendUid)
+          .collection('friends')
+          .doc(currentUid);
+
+      batch.delete(ownDoc);
+      batch.delete(reciprocalDoc);
+      await batch.commit();
+
+      // 2. Update local cache for immediate UI reactivity
       final cached = await getCachedFriends(currentUid);
       final updated = cached.where((f) => f.uid != friendUid).toList();
       await saveCachedFriends(currentUid, updated);

@@ -62,6 +62,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   Timer? _uiTimer;
   int _matchmakingSeconds = 60;
   StreamSubscription<String?>? _matchmakingSubscription;
+  final Set<String> _invitedFriendUids = {};
 
   @override
   void initState() {
@@ -1269,104 +1270,306 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                     .toList();
                 if (friends.isEmpty) {
                   return Center(
-                    child: Text(
-                      'No friends found.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        fontSize: 11,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.imperialAmber.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.imperialAmber.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.vpn_key_rounded,
+                              color: AppColors.imperialAmber,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'INVITE PLAYERS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Direct invites can only be sent to friends.\nShare your Room Code for non-friends to join!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 11,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: code));
+                              HapticFeedback.lightImpact();
+                              AppSnackBar.show(
+                                context,
+                                message: 'Room code $code copied to clipboard!',
+                                isSuccess: true,
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.white24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.copy,
+                                    size: 14,
+                                    color: AppColors.primaryCyan,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'COPY CODE: $code',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          InkWell(
+                            onTap: () => ShareHelper.shareJoiningCode(context, code),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.starPlatinum,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.share,
+                                    size: 14,
+                                    color: AppColors.systemBackground,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'SHARE CODE',
+                                    style: TextStyle(
+                                      color: AppColors.systemBackground,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
                 }
 
-                return ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: friends.length,
-                  itemBuilder: (context, index) {
-                    final friend = friends[index];
-                    return StreamBuilder<Map<String, dynamic>>(
-                      stream: socialService.watchUserStatus(friend.uid),
-                      builder: (context, statusSnapshot) {
-                        final statusData = statusSnapshot.data;
-                        final isOnline = statusData?['status'] == 'online';
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: friends.length,
+                        itemBuilder: (context, index) {
+                          final friend = friends[index];
+                          final isAlreadyInvited = _invitedFriendUids.contains(friend.uid);
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.02),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: Colors.white10,
-                                    backgroundImage: friend.photoURL != null
-                                        ? NetworkImage(friend.photoURL!)
-                                        : null,
-                                    child: friend.photoURL == null
-                                        ? const Icon(
-                                            Icons.person,
-                                            size: 16,
-                                            color: Colors.white54,
-                                          )
-                                        : null,
-                                  ),
-                                  Positioned(
-                                    right: -1,
-                                    bottom: -1,
-                                    child: AppStatusBadge(
-                                      isOnline: isOnline,
-                                      size: 10,
+                          return StreamBuilder<Map<String, dynamic>>(
+                            stream: socialService.watchUserStatus(friend.uid),
+                            builder: (context, statusSnapshot) {
+                              final statusData = statusSnapshot.data;
+                              final isOnline = statusData?['status'] == 'online';
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.02),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 14,
+                                          backgroundColor: Colors.white10,
+                                          backgroundImage: friend.photoURL != null
+                                              ? NetworkImage(friend.photoURL!)
+                                              : null,
+                                          child: friend.photoURL == null
+                                              ? const Icon(
+                                                  Icons.person,
+                                                  size: 16,
+                                                  color: Colors.white54,
+                                                )
+                                              : null,
+                                        ),
+                                        Positioned(
+                                          right: -1,
+                                          bottom: -1,
+                                          child: AppStatusBadge(
+                                            isOnline: isOnline,
+                                            size: 10,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  friend.displayName ?? 'Unknown Emperor',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        friend.displayName ?? 'Unknown Emperor',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      constraints: const BoxConstraints(),
+                                      padding: EdgeInsets.zero,
+                                      tooltip: isAlreadyInvited
+                                          ? 'Invite Sent'
+                                          : (isOnline ? 'Invite Friend' : 'Offline'),
+                                      icon: Icon(
+                                        isAlreadyInvited
+                                            ? Icons.check_circle_rounded
+                                            : Icons.add_circle,
+                                        color: isAlreadyInvited
+                                            ? AppColors.imperialJade
+                                            : (isOnline
+                                                ? AppColors.imperialJade
+                                                : Colors.white10),
+                                        size: 20,
+                                      ),
+                                      onPressed: (isOnline && !isAlreadyInvited)
+                                          ? () async {
+                                              HapticFeedback.lightImpact();
+                                              setState(() {
+                                                _invitedFriendUids.add(friend.uid);
+                                              });
+                                              try {
+                                                await socialService.sendInvite(
+                                                  targetUid: friend.uid,
+                                                  gameId: gameId,
+                                                  joiningCode: code,
+                                                );
+                                                if (context.mounted) {
+                                                  AppSnackBar.show(
+                                                    context,
+                                                    message:
+                                                        'Invite sent to ${friend.displayName ?? "Friend"}!',
+                                                    isSuccess: true,
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  setState(() {
+                                                    _invitedFriendUids.remove(friend.uid);
+                                                  });
+                                                  AppSnackBar.show(
+                                                    context,
+                                                    message: e
+                                                        .toString()
+                                                        .replaceAll('Exception: ', ''),
+                                                    isError: true,
+                                                  );
+                                                }
+                                              }
+                                            }
+                                          : null,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              IconButton(
-                                constraints: const BoxConstraints(),
-                                padding: EdgeInsets.zero,
-                                icon: Icon(
-                                  Icons.add_circle,
-                                  color: isOnline
-                                      ? AppColors.imperialJade
-                                      : Colors.white10,
-                                  size: 20,
-                                ),
-                                onPressed: isOnline
-                                    ? () {
-                                        socialService.sendInvite(
-                                          targetUid: friend.uid,
-                                          gameId: gameId,
-                                          joiningCode: code,
-                                        );
-                                        AppSnackBar.show(
-                                          context,
-                                          message: 'Invite sent!',
-                                        );
-                                      }
-                                    : null,
-                              ),
-                            ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.vpn_key_rounded,
+                            size: 13,
+                            color: AppColors.imperialAmber,
                           ),
-                        );
-                      },
-                    );
-                  },
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Not a friend? Share code $code to join',
+                              style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: code));
+                              HapticFeedback.lightImpact();
+                              AppSnackBar.show(
+                                context,
+                                message: 'Room code copied to clipboard!',
+                                isSuccess: true,
+                              );
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              child: Icon(
+                                Icons.copy,
+                                size: 14,
+                                color: AppColors.primaryCyan,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

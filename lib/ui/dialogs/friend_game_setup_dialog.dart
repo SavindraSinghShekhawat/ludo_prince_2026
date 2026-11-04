@@ -285,7 +285,9 @@ class _FriendGameSetupDialogState extends ConsumerState<FriendGameSetupDialog> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Room will open with $_maxPlayers slots. You can invite more friends from the lobby.',
+                    widget.targetUids.isNotEmpty
+                        ? 'Room will open with $_maxPlayers slots. You can invite more friends or share your room code from the lobby.'
+                        : 'Room will open with $_maxPlayers slots. You can share your room joining code with opponents from the lobby.',
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 12,

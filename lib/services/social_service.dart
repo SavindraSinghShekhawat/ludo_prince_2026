@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'firebase_service.dart';
+import 'profile_service.dart';
 import 'package:ludo_prince/utils/app_logger.dart';
 
 enum UserStatus { online, offline, inLobby, inGame }
@@ -80,6 +81,14 @@ class SocialService {
     final user = _auth?.currentUser;
     final db = _database;
     if (user == null || db == null) return;
+
+    // Strict friendship rule: in-game match invites can only be sent to confirmed friends
+    final isFriend = await profileService.isFriend(user.uid, targetUid);
+    if (!isFriend) {
+      throw Exception(
+        'Direct game invites can only be sent to friends. Share your room code to play with others.',
+      );
+    }
 
     final inviteRef = db.ref('invites/$targetUid').push();
     await inviteRef.set({
