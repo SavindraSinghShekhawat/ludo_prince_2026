@@ -165,8 +165,9 @@ class FriendRequestsDialog extends ConsumerWidget {
             icon: Icons.check,
             color: AppColors.imperialJade,
             onTap: () async {
+              final notifier = ref.read(notificationProvider.notifier);
               await profileService.acceptFriendRequest(request);
-              ref.read(notificationProvider.notifier).removeNotification(request.id);
+              notifier.removeNotification(request.id);
               if (context.mounted) {
                 AppSnackBar.show(
                   context,
@@ -181,8 +182,9 @@ class FriendRequestsDialog extends ConsumerWidget {
             icon: Icons.close,
             color: AppColors.crimsonVelvet,
             onTap: () async {
+              final notifier = ref.read(notificationProvider.notifier);
               await profileService.declineFriendRequest(request.id);
-              ref.read(notificationProvider.notifier).removeNotification(request.id);
+              notifier.removeNotification(request.id);
               if (context.mounted) {
                 AppSnackBar.show(
                   context,

@@ -114,5 +114,51 @@ void main() {
         isFalse,
       );
     });
+
+    testWidgets('Tapping ACCEPT on friend request toast does not throw unmounted ref error', (tester) async {
+      final friendNotification = AppNotification(
+        id: 'friend_req_404',
+        title: 'Friend Request',
+        message: 'Anee wants to be friends',
+        type: NotificationType.friendRequest,
+        timestamp: DateTime.now(),
+        data: {
+          'fromUid': 'user_anee',
+          'fromName': 'Anee',
+        },
+      );
+
+      final container = ProviderContainer();
+      container.read(notificationProvider.notifier).addNotification(friendNotification);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            navigatorKey: NotificationRouter.navigatorKey,
+            home: const Scaffold(
+              body: Stack(
+                children: [
+                  AppNotificationHost(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('ACCEPT'), findsOneWidget);
+
+      // Tap ACCEPT
+      await tester.tap(find.text('ACCEPT'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      // Allow AppSnackBar auto-dismiss timer to complete
+      await tester.pump(const Duration(seconds: 8));
+
+      // The toast should dismiss without uncaught unmounted ref error
+      expect(tester.takeException(), isNull);
+    });
   });
 }

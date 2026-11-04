@@ -80,8 +80,9 @@ class TopNotificationToast extends ConsumerWidget {
         type: MaterialType.transparency,
         child: GestureDetector(
           onTap: () {
-            ref.read(notificationProvider.notifier).dismissToast();
-            _handleNotificationClick(ref, notification);
+            final notifier = ref.read(notificationProvider.notifier);
+            notifier.dismissToast();
+            _handleNotificationClick(notifier, notification);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -166,12 +167,11 @@ class TopNotificationToast extends ConsumerWidget {
                               bgColor: Colors.white.withValues(alpha: 0.08),
                               borderColor: Colors.white.withValues(alpha: 0.15),
                               onTap: () async {
-                                ref.read(notificationProvider.notifier).dismissToast();
+                                final notifier = ref.read(notificationProvider.notifier);
+                                notifier.dismissToast();
                                 try {
                                   await profileService.declineFriendRequest(notification.id);
-                                  ref
-                                      .read(notificationProvider.notifier)
-                                      .removeNotification(notification.id);
+                                  notifier.removeNotification(notification.id);
                                   final rootContext =
                                       NotificationRouter.navigatorKey.currentContext;
                                   if (rootContext != null && rootContext.mounted) {
@@ -191,7 +191,8 @@ class TopNotificationToast extends ConsumerWidget {
                               bgColor: AppColors.imperialJade.withValues(alpha: 0.15),
                               borderColor: AppColors.imperialJade.withValues(alpha: 0.4),
                               onTap: () async {
-                                ref.read(notificationProvider.notifier).dismissToast();
+                                final notifier = ref.read(notificationProvider.notifier);
+                                notifier.dismissToast();
                                 final currentUser = Firebase.apps.isNotEmpty
                                     ? FirebaseAuth.instance.currentUser
                                     : null;
@@ -206,9 +207,7 @@ class TopNotificationToast extends ConsumerWidget {
                                 );
                                 try {
                                   await profileService.acceptFriendRequest(req);
-                                  ref
-                                      .read(notificationProvider.notifier)
-                                      .removeNotification(notification.id);
+                                  notifier.removeNotification(notification.id);
                                   final rootContext =
                                       NotificationRouter.navigatorKey.currentContext;
                                   if (rootContext != null && rootContext.mounted) {
@@ -245,22 +244,21 @@ class TopNotificationToast extends ConsumerWidget {
                               bgColor: Colors.white.withValues(alpha: 0.08),
                               borderColor: Colors.white.withValues(alpha: 0.15),
                               onTap: () async {
-                                ref.read(notificationProvider.notifier).dismissToast();
+                                final notifier = ref.read(notificationProvider.notifier);
+                                notifier.dismissToast();
                                 await socialService.respondToInvite(
                                   notification.id,
                                   false,
                                 );
-                                ref
-                                    .read(notificationProvider.notifier)
-                                    .removeNotification(notification.id);
+                                notifier.removeNotification(notification.id);
                                 final rootContext =
                                     NotificationRouter.navigatorKey.currentContext;
-                                if (rootContext != null && rootContext.mounted) {
-                                  AppSnackBar.show(
-                                    rootContext,
-                                    message: 'Game invite declined.',
-                                  );
-                                }
+                                  if (rootContext != null && rootContext.mounted) {
+                                    AppSnackBar.show(
+                                      rootContext,
+                                      message: 'Game invite declined.',
+                                    );
+                                  }
                               },
                             ),
                             const SizedBox(width: 8),
@@ -272,8 +270,9 @@ class TopNotificationToast extends ConsumerWidget {
                               borderColor:
                                   AppColors.imperialAmber.withValues(alpha: 0.5),
                               onTap: () {
-                                ref.read(notificationProvider.notifier).dismissToast();
-                                _handleNotificationClick(ref, notification);
+                                final notifier = ref.read(notificationProvider.notifier);
+                                notifier.dismissToast();
+                                _handleNotificationClick(notifier, notification);
                               },
                             ),
                           ],
@@ -363,10 +362,10 @@ class TopNotificationToast extends ConsumerWidget {
   }
 
   static void _handleNotificationClick(
-    WidgetRef ref,
+    NotificationNotifier notifier,
     AppNotification n,
   ) async {
-    ref.read(notificationProvider.notifier).markAsRead(n.id);
+    notifier.markAsRead(n.id);
     final rootContext = NotificationRouter.navigatorKey.currentContext;
     if (rootContext == null) return;
 

@@ -125,8 +125,9 @@ class InviteDialog extends ConsumerWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
+                      final notifier = ref.read(notificationProvider.notifier);
                       await socialService.respondToInvite(inviteId, true);
-                      ref.read(notificationProvider.notifier).removeNotification(inviteId);
+                      notifier.removeNotification(inviteId);
                       if (!context.mounted) return;
                       Navigator.pop(context);
 

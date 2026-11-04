@@ -599,10 +599,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                   return;
                 }
                 try {
+                  final notifier = ref.read(notificationProvider.notifier);
                   await profileService.acceptFriendRequest(request);
-                  ref
-                      .read(notificationProvider.notifier)
-                      .markAsRead(request.id);
+                  notifier.markAsRead(request.id);
                   if (mounted) {
                     AppSnackBar.show(
                       context,
@@ -913,10 +912,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                     return;
                   }
                   try {
+                    final notifier = ref.read(notificationProvider.notifier);
                     await profileService.acceptFriendRequest(incomingRequest);
-                    ref
-                        .read(notificationProvider.notifier)
-                        .markAsRead(incomingRequest.id);
+                    notifier.markAsRead(incomingRequest.id);
                     if (mounted) {
                       AppSnackBar.show(
                         context,

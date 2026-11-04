@@ -233,6 +233,7 @@ class NotificationInboxDialog extends ConsumerWidget {
                       children: [
                         InkWell(
                           onTap: () async {
+                            final notifier = ref.read(notificationProvider.notifier);
                             final currentUser = FirebaseAuth.instance.currentUser;
                             final req = FriendRequest(
                               id: n.id,
@@ -243,9 +244,7 @@ class NotificationInboxDialog extends ConsumerWidget {
                             );
                             try {
                               await profileService.acceptFriendRequest(req);
-                              ref
-                                  .read(notificationProvider.notifier)
-                                  .removeNotification(n.id);
+                              notifier.removeNotification(n.id);
                               if (context.mounted) {
                                 AppSnackBar.show(
                                   context,
@@ -302,11 +301,10 @@ class NotificationInboxDialog extends ConsumerWidget {
                         const SizedBox(width: 8),
                         InkWell(
                           onTap: () async {
+                            final notifier = ref.read(notificationProvider.notifier);
                             try {
                               await profileService.declineFriendRequest(n.id);
-                              ref
-                                  .read(notificationProvider.notifier)
-                                  .removeNotification(n.id);
+                              notifier.removeNotification(n.id);
                               if (context.mounted) {
                                 AppSnackBar.show(
                                   context,
